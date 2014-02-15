@@ -21,3 +21,11 @@ function passwHash($password, $salt) {
         return FALSE;
     }
 }
+
+// it checks database prefix
+function pregPref($prefix) {
+    if (is_string($prefix) && preg_match('/^[a-zA-Z\d]{1,20}$/', $prefix)) {
+        return TRUE;
+    }
+    return FALSE;
+}
