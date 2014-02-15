@@ -29,3 +29,11 @@ function pregPref($prefix) {
     }
     return FALSE;
 }
+
+// it checks user name
+function pregUName($username) {
+    if (is_string($username) && preg_match('/^[a-zA-Z0-9]{3,20}$/', $username)) {
+        return TRUE;
+    }
+    return FALSE;
+}
