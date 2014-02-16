@@ -32,7 +32,7 @@ function pregPref($prefix) {
 
 // it checks user name
 function pregUName($username) {
-    if (is_string($username) && preg_match('/^[a-zA-Z0-9]{3,20}$/', $username)) {
+    if (is_string($username) && preg_match('/^[a-zA-Z\d]{3,20}$/', $username)) {
         return TRUE;
     }
     return FALSE;
@@ -41,6 +41,14 @@ function pregUName($username) {
 // it checks group name
 function pregGName($groupname) {
     if (is_string($groupname) && preg_match('/^[-a-zA-Z\d\s_]{1,50}$/', $groupname)) {
+        return TRUE;
+    }
+    return FALSE;
+}
+
+// it checks entered password
+function pregPassw($password) {
+    if (is_string($password) && preg_match('/^[-+=_a-zA-Z\d@.,?!;:"\'~`|#№*$%&^\][(){}<>\/\\\]{8,50}$/', $password)) {
         return TRUE;
     }
     return FALSE;
