@@ -54,4 +54,20 @@ class Logging {
         }
         return TRUE;
     }
+    
+    public static function clearLog() {
+        if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('function execution was terminated because of using of limited authentication');
+            return FALSE;
+        }
+        self::$dblink->query("TRUNCATE TABLE `".MECCANO_TPREF."_core_log_records` ;");
+        if (self::$dblink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('log was not cleared | '.self::$dblink->error);
+            return FALSE;
+        }
+        if (!self::newRecord('core_clearlog')) {
+            return FALSE;
+        }
+        return TRUE;
+    }
 }
