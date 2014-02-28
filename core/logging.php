@@ -70,4 +70,32 @@ class Logging {
         }
         return TRUE;
     }
+    
+    public static function sumLog($rpp = 20) { // rpp - records per page
+        if (!is_integer($rpp)) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('value of records per page must be integer');
+            return FALSE;
+        }
+        if ($rpp < 1) {
+            $rpp = 1;
+        }
+        $qResult = self::$dblink->query("SELECT COUNT(`id`) FROM `".MECCANO_TPREF."_core_log_records` ;");
+        if (self::$dblink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('total records couldn\'t be counted | '.self::$dblink->error);
+            return FALSE;
+        }
+        list($totalRecs) = $qResult->fetch_array(MYSQLI_NUM);
+        $totalPages = $totalRecs/$rpp;
+        $remainer = fmod($totalRecs, $rpp);
+        if ($totalPages<1 && $totalPages>0) {
+            $totalPages = 1;
+        }
+        elseif ($totalPages>1 && $remainer != 0) {
+            $totalPages += 1;
+        }
+        elseif ($totalPages == 0) {
+            $totalPages = 1;
+        }
+        return array((int) $totalRecs, (int) $totalPages);
+    }
 }
