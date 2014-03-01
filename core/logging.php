@@ -98,4 +98,62 @@ class Logging {
         }
         return array((int) $totalRecs, (int) $totalPages);
     }
+    
+    public static function getPage($pageNumber, $totalPages, $rpp = 20, $orderBy = 'id', $ascent = FALSE) {
+        if (!is_integer($pageNumber) || !is_integer($totalPages) || !is_integer($rpp)) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('values of $pageNumber, $totalPages, $rpp must be integers');
+            return FALSE;
+        }
+        $rightEntry = array('id', 'user', 'event', 'time');
+        if (is_string($orderBy)) {
+            if (!in_array($orderBy, $rightEntry, TRUE)) {
+            $orderBy = 'id';
+            }
+        }
+        elseif (is_array($orderBy)) {
+            $arrayLen = count($orderBy);
+            if (count(array_intersect($orderBy, $rightEntry))) {
+                $orderList = '';
+                foreach ($orderBy as $value) {
+                    $orderList = $orderList.$value.'`, `';
+                }
+                $orderBy = substr($orderList, 0, -4);
+            }
+            else {
+                $orderBy = 'id';
+            }
+        }
+        else {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('value of $orderBy must be string or array');
+            return FALSE;
+        }
+        if ($pageNumber < 1) {
+            $pageNumber = 1;
+        }
+        elseif ($pageNumber>$totalPages && $totalPages) {
+            $pageNumber = $totalPages;
+        }
+        if ($totalPages < 1) {
+            $totalPages = 1;
+        }
+        if ($rpp < 1) {
+            $rpp = 1;
+        }
+        if ($ascent == TRUE) {
+            $direct = '';
+        }
+        elseif ($ascent == FALSE) {
+            $direct = 'DESC';
+        }
+        $start = ($pageNumber - 1) * $rpp;
+        $qResult = self::$dblink->query("SELECT `L`.`id` `id`, `time`, REPLACE(`description`, '%d', `insertion`) `event`, `user` "
+                . "FROM `".MECCANO_TPREF."_core_log_records` `L` "
+                . "INNER JOIN `".MECCANO_TPREF."_core_log_description` `LD` ON `L`.`did` = `LD`.`id`"
+                . " ORDER BY `$orderBy` $direct LIMIT $start, $rpp;");
+        if (self::$dblink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('log events couldn\'t be gotten | '.self::$dblink->error);
+            return FALSE;
+        }
+        return $qResult;
+    }
 }
