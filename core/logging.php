@@ -35,7 +35,7 @@ class Logging {
     
     public static function newRecord($event, $insertion = '') {
         if (!is_string($event) || !is_string($insertion)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('one or more of received arguments isn\'t strings');
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('newRecord: one or more of received arguments aren\'t strings');
             return FALSE;
         }
         if (isset($_SESSION['core_auth_limited'])) {
@@ -49,7 +49,7 @@ class Logging {
                     . " WHERE `event`='$event'), '$insertion') ;");
         }
         if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('your query for new record was not executed | '.self::$dblink->error);
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('newRecord: your query for new record was not executed | '.self::$dblink->error);
             return FALSE;
         }
         return TRUE;
@@ -57,12 +57,12 @@ class Logging {
     
     public static function clearLog() {
         if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('function execution was terminated because of using of limited authentication');
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('clearLog: function execution was terminated because of using of limited authentication');
             return FALSE;
         }
         self::$dblink->query("TRUNCATE TABLE `".MECCANO_TPREF."_core_log_records` ;");
         if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('log was not cleared | '.self::$dblink->error);
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('clearLog: log was not cleared | '.self::$dblink->error);
             return FALSE;
         }
         if (!self::newRecord('core_clearLog')) {
@@ -73,7 +73,7 @@ class Logging {
     
     public static function sumLog($rpp = 20) { // rpp - records per page
         if (!is_integer($rpp)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('value of records per page must be integer');
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('sumLog: value of records per page must be integer');
             return FALSE;
         }
         if ($rpp < 1) {
@@ -81,7 +81,7 @@ class Logging {
         }
         $qResult = self::$dblink->query("SELECT COUNT(`id`) FROM `".MECCANO_TPREF."_core_log_records` ;");
         if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('total records couldn\'t be counted | '.self::$dblink->error);
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('sumLog: total records couldn\'t be counted | '.self::$dblink->error);
             return FALSE;
         }
         list($totalRecs) = $qResult->fetch_array(MYSQLI_NUM);
@@ -101,7 +101,7 @@ class Logging {
     
     public static function getPage($pageNumber, $totalPages, $rpp = 20, $orderBy = 'id', $ascent = FALSE) {
         if (!is_integer($pageNumber) || !is_integer($totalPages) || !is_integer($rpp)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('values of $pageNumber, $totalPages, $rpp must be integers');
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getPage: values of $pageNumber, $totalPages, $rpp must be integers');
             return FALSE;
         }
         $rightEntry = array('id', 'user', 'event', 'time');
@@ -124,7 +124,7 @@ class Logging {
             }
         }
         else {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('value of $orderBy must be string or array');
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getPage: value of $orderBy must be string or array');
             return FALSE;
         }
         if ($pageNumber < 1) {
@@ -151,7 +151,7 @@ class Logging {
                 . "INNER JOIN `".MECCANO_TPREF."_core_log_description` `LD` ON `L`.`did` = `LD`.`id`"
                 . " ORDER BY `$orderBy` $direct LIMIT $start, $rpp;");
         if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('log events couldn\'t be gotten | '.self::$dblink->error);
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getPage: log page couldn\'t be gotten | '.self::$dblink->error);
             return FALSE;
         }
         return $qResult;
@@ -159,11 +159,11 @@ class Logging {
     
     public static function newEvent($event, $description) {
         if (!is_string($event) || !is_string($description)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('one or more of received arguments are\'t strings');
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('newEvent: one or more of received arguments aren\'t strings');
             return FALSE;
         }
         if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('function execution was terminated because of using of limited authentication');
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('newEvent: function execution was terminated because of using of limited authentication');
             return FALSE;
         }
         $event = self::$dblink->real_escape_string($event);
@@ -171,7 +171,7 @@ class Logging {
         self::$dblink->query("INSERT INTO `".MECCANO_TPREF."_core_log_description` (`event`, `description`) "
                 . "VALUES ('$event', '$description');");
         if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('new event wasn\'t added | '.self::$dblink->error);
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('newEvent: new event wasn\'t added | '.self::$dblink->error);
             return FALSE;
         }
         if (!self::newRecord('core_newEvent', $event)) {
@@ -182,11 +182,11 @@ class Logging {
     
     public static function delEvent($event) {
         if (!is_string($event)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('received argument isn\'t string');
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('delEvent: received argument isn\'t string');
             return FALSE;
         }
         if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('function execution was terminated because of using of limited authentication');
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('delEvent: function execution was terminated because of using of limited authentication');
             return FALSE;
         }
         $event = self::$dblink->real_escape_string($event);
@@ -198,12 +198,12 @@ class Logging {
         foreach ($queries as $value) {
             self::$dblink->query($value);
             if (self::$dblink->errno) {
-                self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('event couldn\'t be deleted | '.self::$dblink->error);
+                self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('delEvent: event couldn\'t be deleted | '.self::$dblink->error);
                 return FALSE;
             }
         }
         if (!self::$dblink->affected_rows) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('defined event doesn\'t exist');
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('delEvent: defined event doesn\'t exist');
             return FALSE;
         }
         if (!self::newRecord('core_delEvent', $event)) {
