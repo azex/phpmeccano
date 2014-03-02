@@ -179,4 +179,36 @@ class Logging {
         }
         return TRUE;
     }
+    
+    public static function delEvent($event) {
+        if (!is_string($event)) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('received argument isn\'t string');
+            return FALSE;
+        }
+        if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('function execution was terminated because of using of limited authentication');
+            return FALSE;
+        }
+        $event = self::$dblink->real_escape_string($event);
+        $queries = array(
+            "DELETE FROM `".MECCANO_TPREF."_core_log_records`"
+                . "WHERE `did`=(SELECT `id` FROM `".MECCANO_TPREF."_core_log_description` WHERE `event`='$event');",
+            "DELETE FROM `".MECCANO_TPREF."_core_log_description` WHERE `event`='$event';"
+        );
+        foreach ($queries as $value) {
+            self::$dblink->query($value);
+            if (self::$dblink->errno) {
+                self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('event couldn\'t be deleted | '.self::$dblink->error);
+                return FALSE;
+            }
+        }
+        if (!self::$dblink->affected_rows) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('defined event doesn\'t exist');
+            return FALSE;
+        }
+        if (!self::newRecord('core_delEvent', $event)) {
+            return FALSE;
+        }
+        return TRUE;
+    }
 }
