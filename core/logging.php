@@ -65,7 +65,7 @@ class Logging {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('log was not cleared | '.self::$dblink->error);
             return FALSE;
         }
-        if (!self::newRecord('core_clearlog')) {
+        if (!self::newRecord('core_clearLog')) {
             return FALSE;
         }
         return TRUE;
@@ -155,5 +155,28 @@ class Logging {
             return FALSE;
         }
         return $qResult;
+    }
+    
+    public static function newEvent($event, $description) {
+        if (!is_string($event) || !is_string($description)) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('one or more of received arguments are\'t strings');
+            return FALSE;
+        }
+        if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('function execution was terminated because of using of limited authentication');
+            return FALSE;
+        }
+        $event = self::$dblink->real_escape_string($event);
+        $description = self::$dblink->real_escape_string($description);
+        self::$dblink->query("INSERT INTO `".MECCANO_TPREF."_core_log_description` (`event`, `description`) "
+                . "VALUES ('$event', '$description');");
+        if (self::$dblink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('new event wasn\'t added | '.self::$dblink->error);
+            return FALSE;
+        }
+        if (!self::newRecord('core_newEvent', $event)) {
+            return FALSE;
+        }
+        return TRUE;
     }
 }
