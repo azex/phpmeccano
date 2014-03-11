@@ -39,6 +39,10 @@ class Auth {
     }
     
     public static function userLogin($username, $password, $useLog = FALSE, $useCookie = TRUE, $cookieTime = 'mounth') {
+        if (isset($_SESSION['core_auth_userid'])) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('finish current session before starting new');
+            return FALSE;
+        }
         if (!pregUName($username)) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('username can contain only letters and numbers and has length from 3 to 20');
             return FALSE;
@@ -116,6 +120,9 @@ class Auth {
             }
             setcookie('core_auth_usi', $usi, $term, '/');
         }
+        if ($useLog) {
+            Logging::newRecord('core_authLogin', $username);
+        }
         $_SESSION['core_auth_last_time'] = $authTime;
         $_SESSION['core_auth_last_ip'] = $ip;
         //
@@ -126,9 +133,48 @@ class Auth {
         $_SESSION['core_auth_password'] = (int) $passId;
         $_SESSION['core_auth_ip'] = $_SERVER['REMOTE_ADDR'];
         $_SESSION['core_auth_uagent'] = $_SERVER['HTTP_USER_AGENT'];
-        if ($useLog) {
-            Logging::newRecord('core_authLogin', $username);
-        }
         return TRUE;
+    }
+    
+    public static function isSession() {
+        if (isset($_SESSION['core_auth_userid'])) {
+            if ($_SESSION['core_auth_ip'] != $_SERVER['REMOTE_ADDR'] || $_SESSION['core_auth_uagent'] != $_SERVER['HTTP_USER_AGENT']) {
+                self::userLogout();
+                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('session probably is stolen');
+                return FALSE;
+            }
+            $qResult = self::$dblink->query("SELECT `g`.`groupname`, `u`.`id`, `p`.`password` "
+                    . "FROM `".MECCANO_TPREF."_core_userman_groups` `g` "
+                    . "JOIN `".MECCANO_TPREF."_core_userman_users` `u` "
+                    . "ON `g`.`id`=`u`.`groupid` "
+                    . "JOIN `".MECCANO_TPREF."_core_userman_userpass` `p` "
+                    . "ON `p`.`userid`=`u`.`id` "
+                    . "WHERE `u`.`id`=".$_SESSION['core_auth_userid']." "
+                    . "AND `u`.`active`=1 "
+                    . "AND `g`.`active`=1 "
+                    . "AND `p`.id=".$_SESSION['core_auth_password']." ;");
+            if (!self::$dblink->affected_rows) {
+                self::userLogout();
+                return FALSE;
+            }
+            return TRUE;
+        }
+        return FALSE;
+    }
+    
+    public static function userLogout() {
+        if (isset($_SESSION['core_auth_uname'])) {
+            $usi = makeIdent($_SESSION['core_auth_uname']);
+            self::$dblink->query("UPDATE `".MECCANO_TPREF."_core_auth_usi` "
+                    . "SET `usi`='$usi' "
+                    . "WHERE `id`=".$_SESSION['core_auth_password']." ;");
+            if (self::$dblink->errno) {
+                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('can\'t reset unique session identifier');
+                return FALSE;
+            }
+            session_unset(); session_destroy();
+            return TRUE;
+        }
+        return FALSE;
     }
 }
