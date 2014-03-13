@@ -130,6 +130,7 @@ class Auth {
         $_SESSION['core_auth_userid'] = (int) $userId;
         $_SESSION['core_auth_limited'] = (int) $limited;
         // control parameters
+        $_SESSION['core_auth_usi'] = $usi;
         $_SESSION['core_auth_password'] = (int) $passId;
         $_SESSION['core_auth_ip'] = $_SERVER['REMOTE_ADDR'];
         $_SESSION['core_auth_uagent'] = $_SERVER['HTTP_USER_AGENT'];
@@ -149,10 +150,13 @@ class Auth {
                     . "ON `g`.`id`=`u`.`groupid` "
                     . "JOIN `".MECCANO_TPREF."_core_userman_userpass` `p` "
                     . "ON `p`.`userid`=`u`.`id` "
+                    . "JOIN `".MECCANO_TPREF."_core_auth_usi` `s` "
+                    . "ON `s`.`id`=`p`.`id` "
                     . "WHERE `u`.`id`=".$_SESSION['core_auth_userid']." "
                     . "AND `u`.`active`=1 "
                     . "AND `g`.`active`=1 "
-                    . "AND `p`.id=".$_SESSION['core_auth_password']." ;");
+                    . "AND `p`.`id`=".$_SESSION['core_auth_password']." "
+                    . "AND `s`.`usi`='".$_SESSION['core_auth_usi']."' ;");
             if (self::$dblink->errno) {
                 self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('can\'t check user availability | '.self::$dblink->error);
                 return FALSE;
@@ -167,14 +171,23 @@ class Auth {
     }
     
     public static function userLogout() {
-        if (isset($_SESSION['core_auth_uname'])) {
-            $usi = makeIdent($_SESSION['core_auth_uname']);
-            self::$dblink->query("UPDATE `".MECCANO_TPREF."_core_auth_usi` "
-                    . "SET `usi`='$usi' "
-                    . "WHERE `id`=".$_SESSION['core_auth_password']." ;");
+        if (isset($_SESSION['core_auth_userid'])) {
+            $qResult = self::$dblink->query("SELECT `id` "
+                    . "FROM `".MECCANO_TPREF."_core_auth_usi` "
+                    . "WHERE `usi`='".$_SESSION['core_auth_usi']."' ;");
             if (self::$dblink->errno) {
-                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('can\'t reset unique session identifier | '.self::$dblink->error);
+                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('can\'t check unique session identifier | '.self::$dblink->error);
                 return FALSE;
+            }
+            if (self::$dblink->affected_rows) {
+                $usi = makeIdent($_SESSION['core_auth_uname']);
+                self::$dblink->query("UPDATE `".MECCANO_TPREF."_core_auth_usi` "
+                        . "SET `usi`='$usi' "
+                        . "WHERE `id`=".$_SESSION['core_auth_password']." ;");
+                if (self::$dblink->errno) {
+                    self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('can\'t reset unique session identifier | '.self::$dblink->error);
+                    return FALSE;
+                }
             }
             setcookie('core_auth_usi', '', (time() - 3600), '/');
             session_unset(); session_destroy();
@@ -217,6 +230,7 @@ class Auth {
             $_SESSION['core_auth_userid'] = (int) $userId;
             $_SESSION['core_auth_limited'] = (int) $limited;
             // control parameters
+            $_SESSION['core_auth_usi'] = $_COOKIE['core_auth_usi'];
             $_SESSION['core_auth_password'] = (int) $passId;
             $_SESSION['core_auth_ip'] = $_SERVER['REMOTE_ADDR'];
             $_SESSION['core_auth_uagent'] = $_SERVER['HTTP_USER_AGENT'];
