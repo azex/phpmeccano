@@ -53,3 +53,10 @@ function pregPassw($password) {
     }
     return FALSE;
 }
+
+function pregIdent($ident) {
+    if (is_string($ident) && preg_match('/^[a-zA-Z\d]{40}$/', $ident)) {
+        return TRUE;
+    }
+    return FALSE;
+}
