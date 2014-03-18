@@ -189,7 +189,11 @@ class Auth {
                     return FALSE;
                 }
             }
-            setcookie('core_auth_usi', '', (time() - 3600), '/');
+            if (isset($_COOKIE)) {
+                foreach ($_COOKIE as $key => $value) {
+                    setcookie($key, '', (time() - 3600), '/');
+                }
+            }
             session_unset(); session_destroy();
             return TRUE;
         }
