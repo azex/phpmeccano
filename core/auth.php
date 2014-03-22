@@ -40,15 +40,15 @@ class Auth {
     
     public static function userLogin($username, $password, $useLog = FALSE, $useCookie = TRUE, $cookieTime = 'mounth') {
         if (isset($_SESSION['core_auth_userid'])) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('finish current session before starting new');
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('userLogin: finish current session before starting new');
             return FALSE;
         }
         if (!pregUName($username)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('username can contain only letters and numbers and has length from 3 to 20');
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('userLogin: username can contain only letters and numbers and has length from 3 to 20');
             return FALSE;
         }
         if (!pregPassw($password)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('password can contain only letters, numbers and common symbols and has length from 8 to 50');
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('userLogin: password can contain only letters, numbers and common symbols and has length from 8 to 50');
             return FALSE;
         }
         $curTime = time();
@@ -70,11 +70,11 @@ class Auth {
                 . "AND `u`.`active`=1 "
                 . "AND `g`.`active`=1 ;");
         if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('can\'t confirm username | '.self::$dblink->error);
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('userLogin: can\'t confirm username | '.self::$dblink->error);
             return FALSE;
         }
         if (!self::$dblink->affected_rows) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('invalid username or user (group) is disabled');
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('userLogin: invalid username or user (group) is disabled');
             return FALSE;
         }
         list($userId, $salt) = $qResult->fetch_array(MYSQL_NUM);
@@ -85,11 +85,11 @@ class Auth {
                 . "ON `u`.`id`=`p`.`userid` "
                 . "WHERE `u`.`id`=$userId AND `p`.`password`='$passwEncoded' ;");
         if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('can\'t confirm password | '.self::$dblink->error);
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('userLogin: can\'t confirm password | '.self::$dblink->error);
             return FALSE;
         }
         if (!self::$dblink->affected_rows) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('invalid password');
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('userLogin: invalid password');
             return FALSE;
         }
         list($username, $passId, $limited) = $qResult->fetch_array(MYSQLI_NUM);
@@ -97,7 +97,7 @@ class Auth {
                 . "FROM `".MECCANO_TPREF."_core_auth_iptime` "
                 . "WHERE `id`=$userId ;");
         if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('can\'t get ip and time of the last authentication | '.self::$dblink->error);
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('userLogin: can\'t get ip and time of the last authentication | '.self::$dblink->error);
             return FALSE;
         }
         list($ip, $authTime) = $qResult->fetch_array(MYSQLI_NUM);
@@ -105,7 +105,7 @@ class Auth {
                 . "SET `ip`='".$_SERVER['REMOTE_ADDR']."', `time`=CURRENT_TIMESTAMP "
                 . "WHERE `id`=$userId ;");
         if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('can\'t update authentication record | '.self::$dblink->error);
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('userLogin: can\'t update authentication record | '.self::$dblink->error);
             return FALSE;
         }
         $usi = makeIdent($username);
@@ -115,7 +115,7 @@ class Auth {
                     . "SET `usi`='$usi', `endtime`=FROM_UNIXTIME($term) "
                     . "WHERE `id`=$passId ;");
             if (self::$dblink->errno) {
-                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('can\'t set unique session identifier | '.self::$dblink->error);
+                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('userLogin: can\'t set unique session identifier | '.self::$dblink->error);
                 return FALSE;
             }
             setcookie('core_auth_usi', $usi, $term, '/');
@@ -141,7 +141,7 @@ class Auth {
         if (isset($_SESSION['core_auth_userid'])) {
             if ($_SESSION['core_auth_ip'] != $_SERVER['REMOTE_ADDR'] || $_SESSION['core_auth_uagent'] != $_SERVER['HTTP_USER_AGENT']) {
                 self::userLogout();
-                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('session probably is stolen');
+                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('isSession: session probably is stolen');
                 return FALSE;
             }
             $qResult = self::$dblink->query("SELECT `g`.`groupname`, `u`.`id`, `p`.`password` "
@@ -158,7 +158,7 @@ class Auth {
                     . "AND `p`.`id`=".$_SESSION['core_auth_password']." "
                     . "AND `s`.`usi`='".$_SESSION['core_auth_usi']."' ;");
             if (self::$dblink->errno) {
-                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('can\'t check user availability | '.self::$dblink->error);
+                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('isSession: can\'t check user availability | '.self::$dblink->error);
                 return FALSE;
             }
             if (!self::$dblink->affected_rows) {
@@ -176,7 +176,7 @@ class Auth {
                     . "FROM `".MECCANO_TPREF."_core_auth_usi` "
                     . "WHERE `usi`='".$_SESSION['core_auth_usi']."' ;");
             if (self::$dblink->errno) {
-                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('can\'t check unique session identifier | '.self::$dblink->error);
+                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('userLogout: can\'t check unique session identifier | '.self::$dblink->error);
                 return FALSE;
             }
             if (self::$dblink->affected_rows) {
@@ -185,7 +185,7 @@ class Auth {
                         . "SET `usi`='$usi' "
                         . "WHERE `id`=".$_SESSION['core_auth_password']." ;");
                 if (self::$dblink->errno) {
-                    self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('can\'t reset unique session identifier | '.self::$dblink->error);
+                    self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('userLogout: can\'t reset unique session identifier | '.self::$dblink->error);
                     return FALSE;
                 }
             }
@@ -217,7 +217,7 @@ class Auth {
                     . "AND `u`.`active`=1 "
                     . "AND `g`.`active`=1 ;");
             if (self::$dblink->errno) {
-                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('can\'t get user data | '.self::$dblink->error);
+                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('getSession: can\'t get user data | '.self::$dblink->error);
                 return FALSE;
             }
             if (!self::$dblink->affected_rows) {

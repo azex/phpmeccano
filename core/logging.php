@@ -57,7 +57,7 @@ class Logging {
     
     public static function clearLog() {
         if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('clearLog: function execution was terminated because of using of limited authentication');
+            self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('clearLog: function execution was terminated because of using of limited authentication');
             return FALSE;
         }
         self::$dblink->query("TRUNCATE TABLE `".MECCANO_TPREF."_core_log_records` ;");
@@ -148,8 +148,8 @@ class Logging {
         $start = ($pageNumber - 1) * $rpp;
         $qResult = self::$dblink->query("SELECT `L`.`id` `id`, `time`, REPLACE(`description`, '%d', `insertion`) `event`, `user` "
                 . "FROM `".MECCANO_TPREF."_core_log_records` `L` "
-                . "INNER JOIN `".MECCANO_TPREF."_core_log_description` `LD` ON `L`.`did` = `LD`.`id`"
-                . " ORDER BY `$orderBy` $direct LIMIT $start, $rpp;");
+                . "INNER JOIN `".MECCANO_TPREF."_core_log_description` `LD` ON `L`.`did` = `LD`.`id` "
+                . "ORDER BY `$orderBy` $direct LIMIT $start, $rpp;");
         if (self::$dblink->errno) {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getPage: log page couldn\'t be gotten | '.self::$dblink->error);
             return FALSE;
@@ -163,7 +163,7 @@ class Logging {
             return FALSE;
         }
         if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('newEvent: function execution was terminated because of using of limited authentication');
+            self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('newEvent: function execution was terminated because of using of limited authentication');
             return FALSE;
         }
         $event = self::$dblink->real_escape_string($event);
@@ -186,7 +186,7 @@ class Logging {
             return FALSE;
         }
         if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('delEvent: function execution was terminated because of using of limited authentication');
+            self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('delEvent: function execution was terminated because of using of limited authentication');
             return FALSE;
         }
         $event = self::$dblink->real_escape_string($event);
