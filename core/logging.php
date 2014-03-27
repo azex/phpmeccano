@@ -211,4 +211,53 @@ class Logging {
         }
         return TRUE;
     }
+    
+    public static function getAllAsXML($orderBy = 'id', $ascent = FALSE) {
+        $rightEntry = array('id', 'user', 'event', 'time');
+        if (is_string($orderBy)) {
+            if (!in_array($orderBy, $rightEntry, TRUE)) {
+            $orderBy = 'id';
+            }
+        }
+        elseif (is_array($orderBy)) {
+            $arrayLen = count($orderBy);
+            if (count(array_intersect($orderBy, $rightEntry))) {
+                $orderList = '';
+                foreach ($orderBy as $value) {
+                    $orderList = $orderList.$value.'`, `';
+                }
+                $orderBy = substr($orderList, 0, -4);
+            }
+            else {
+                $orderBy = 'id';
+            }
+        }
+        else {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getAllAsXML: value of $orderBy must be string or array');
+            return FALSE;
+        }
+        if ($ascent == TRUE) {
+            $direct = '';
+        }
+        elseif ($ascent == FALSE) {
+            $direct = 'DESC';
+        }
+        $qResult = self::$dblink->query("SELECT `L`.`id` `id`, `time`, REPLACE(`description`, '%d', `insertion`) `event`, `user` "
+                . "FROM `".MECCANO_TPREF."_core_log_records` `L` "
+                . "INNER JOIN `".MECCANO_TPREF."_core_log_description` `LD` ON `L`.`did` = `LD`.`id` "
+                . "ORDER BY `$orderBy` $direct ;");
+        if (self::$dblink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getAllAsXML: log records couldn\'t be gotten | '.self::$dblink->error);
+            return FALSE;
+        }
+        $xml = new \SimpleXMLElement('<log />');
+        while ($row = $qResult->fetch_array(MYSQL_NUM)) {
+            $rec = $xml->addChild('record');
+            $rec->addChild('id', $row[0]);
+            $rec->addChild('time', $row[1]);
+            $rec->addChild('event', $row[2]);
+            $rec->addChild('user', $row[3]);
+        }
+        return $xml;
+    }
 }
