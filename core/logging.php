@@ -250,13 +250,16 @@ class Logging {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getAllAsXML: log records couldn\'t be gotten | '.self::$dblink->error);
             return FALSE;
         }
-        $xml = new \SimpleXMLElement('<log />');
+        $xml = new \DOMDocument('1.0', 'utf-8');
+        $logNode = $xml->createElement('log');
+        $xml->appendChild($logNode);
         while ($row = $qResult->fetch_array(MYSQL_NUM)) {
-            $rec = $xml->addChild('record');
-            $rec->addChild('id', $row[0]);
-            $rec->addChild('time', $row[1]);
-            $rec->addChild('event', $row[2]);
-            $rec->addChild('user', $row[3]);
+            $recordNode = $xml->createElement('record');
+            $logNode->appendChild($recordNode);
+            $recordNode->appendChild($xml->createElement('id', $row[0]));
+            $recordNode->appendChild($xml->createElement('time', $row[1]));
+            $recordNode->appendChild($xml->createElement('event', $row[2]));
+            $recordNode->appendChild($xml->createElement('user', $row[3]));
         }
         return $xml;
     }
