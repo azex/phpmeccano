@@ -185,6 +185,19 @@ class Logging {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('delEvent: received argument isn\'t string');
             return FALSE;
         }
+        $sysEvents = array("core_misc",
+            "core_newGroup",
+            "core_delGroup",
+            "core_newUser",
+            "core_delUser",
+            "core_authLogin",
+            "core_clearLog",
+            "core_newEvent",
+            "core_delEvent");
+        if (in_array($event, $sysEvents)) {
+            self::setErrId(ERROR_SYSTEM_INTERVENTION);            self::setErrExp('delEvent: it is impossible to delete system event');
+            return FALSE;
+        }
         if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
             self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('delEvent: function execution was terminated because of using of limited authentication');
             return FALSE;
