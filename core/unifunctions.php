@@ -60,3 +60,26 @@ function pregIdent($ident) {
     }
     return FALSE;
 }
+
+function openRead($path) {
+    if (is_file($path) && is_readable($path)) {
+        $handle = fopen($path, 'r');
+        $data = fread($handle, filesize($path));
+        fclose($handle);
+        return $data;
+    }
+    return FALSE;
+}
+
+function xmlTransform($xml, $xsl) {
+    $xmlDOM = new \DOMDocument();
+    $xslDOM = new \DOMDocument();
+    if ($xmlDOM->loadXML($xml) && $xslDOM->loadXML($xsl)) {
+        $xslt = new \XSLTProcessor();
+        $xslt->importStylesheet($xslDOM);
+        if ($transformed = $xslt->transformToDoc($xmlDOM)) {
+            return $transformed;
+        }
+    }
+    return FALSE;
+}
