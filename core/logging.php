@@ -154,7 +154,18 @@ class Logging {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getPage: log page couldn\'t be gotten | '.self::$dblink->error);
             return FALSE;
         }
-        return $qResult;
+        $xml = new \DOMDocument('1.0', 'utf-8');
+        $logNode = $xml->createElement('log');
+        $xml->appendChild($logNode);
+        while ($row = $qResult->fetch_array(MYSQL_NUM)) {
+            $recordNode = $xml->createElement('record');
+            $logNode->appendChild($recordNode);
+            $recordNode->appendChild($xml->createElement('id', $row[0]));
+            $recordNode->appendChild($xml->createElement('time', $row[1]));
+            $recordNode->appendChild($xml->createElement('event', $row[2]));
+            $recordNode->appendChild($xml->createElement('user', $row[3]));
+        }
+        return $xml;
     }
     
     public static function newEvent($event, $description) {
@@ -225,7 +236,7 @@ class Logging {
         return TRUE;
     }
     
-    public static function getAllAsXML($orderBy = 'id', $ascent = FALSE) {
+    public static function getAll($orderBy = 'id', $ascent = FALSE) {
         $rightEntry = array('id', 'user', 'event', 'time');
         if (is_string($orderBy)) {
             if (!in_array($orderBy, $rightEntry, TRUE)) {
@@ -246,7 +257,7 @@ class Logging {
             }
         }
         else {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getAllAsXML: value of $orderBy must be string or array');
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getAll: value of $orderBy must be string or array');
             return FALSE;
         }
         if ($ascent == TRUE) {
@@ -260,7 +271,7 @@ class Logging {
                 . "INNER JOIN `".MECCANO_TPREF."_core_log_description` `LD` ON `L`.`did` = `LD`.`id` "
                 . "ORDER BY `$orderBy` $direct ;");
         if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getAllAsXML: log records couldn\'t be gotten | '.self::$dblink->error);
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getAll: log records couldn\'t be gotten | '.self::$dblink->error);
             return FALSE;
         }
         $xml = new \DOMDocument('1.0', 'utf-8');
