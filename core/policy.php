@@ -100,4 +100,31 @@ class Policy {
         return TRUE;
     }
     
+    public static function delPolicy($name) {
+        if (!is_string($name)) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('delPolicy: name must be string');
+            return FALSE;
+        }
+        $plugName = self::$dblink->real_escape_string($name);
+        $queries = array(
+            "DELETE FROM `".MECCANO_TPREF."_core_policy_access` "
+            . "WHERE `funcid` "
+            . "IN (SELECT `id` "
+            . "FROM `".MECCANO_TPREF."_core_policy_summary_list` "
+            . "WHERE `name`='$plugName') ;",
+            "DELETE FROM `".MECCANO_TPREF."_core_policy_summary_list` "
+            . "WHERE `name`='$plugName' ;");
+        foreach ($queries as $value) {
+            self::$dblink->query($value);
+            if (self::$dblink->errno) {
+                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('delPolicy: something went wrong | '.self::$dblink->error);
+                return FALSE;
+            }
+        }
+        if (!self::$dblink->affected_rows) {
+            return FALSE;
+        }
+        return TRUE;
+    }
+    
 }
