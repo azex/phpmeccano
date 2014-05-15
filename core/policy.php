@@ -53,16 +53,16 @@ class Policy {
         $newFuncs = array_diff($functions, $dbFuncs);
         // deleting of outdated policies
         foreach ($oldFuncs as $funcId) {
-            self::$dblink->query("DELETE FROM `".MECCANO_TPREF."_core_policy_summary_list` "
-                    . "WHERE `id`=$funcId ;");
-            if (self::$dblink->errno) {
-                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('installPolicy: can\'t delete policy | '.self::$dblink->error);
-                return FALSE;
-            }
             self::$dblink->query("DELETE FROM `".MECCANO_TPREF."_core_policy_access` "
                     . "WHERE `funcid`=$funcId ;");
             if (self::$dblink->errno) {
-                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('installPolicy: can\'t delete policy | '.self::$dblink->error);
+                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('installPolicy: can\'t delete group policy | '.self::$dblink->error);
+                return FALSE;
+            }
+            self::$dblink->query("DELETE FROM `".MECCANO_TPREF."_core_policy_summary_list` "
+                    . "WHERE `id`=$funcId ;");
+            if (self::$dblink->errno) {
+                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('installPolicy: can\'t delete policy from summary list | '.self::$dblink->error);
                 return FALSE;
             }
         }
@@ -78,7 +78,7 @@ class Policy {
             self::$dblink->query("INSERT INTO `".MECCANO_TPREF."_core_policy_summary_list` (`name`, `func`) "
                     . "VALUES ('$pluginName', '$func') ;");
             if (self::$dblink->errno) {
-                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('installPolicy: can\'t install policy | '.self::$dblink->error);
+                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('installPolicy: can\'t install policy to summary list | '.self::$dblink->error);
                 return FALSE;
             }
             $insertId = self::$dblink->insert_id;
@@ -92,7 +92,7 @@ class Policy {
                 self::$dblink->query("INSERT INTO `".MECCANO_TPREF."_core_policy_access` (`groupid`, `funcid`, `access`) "
                         . "VALUES ($groupId, $insertId, $access) ;");
                 if (self::$dblink->errno) {
-                    self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('installPolicy: can\'t install policy | '.self::$dblink->error);
+                    self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('installPolicy: can\'t install group policy | '.self::$dblink->error);
                     return FALSE;
                 }
             }
