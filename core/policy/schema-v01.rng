@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+
+<grammar datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes" xmlns="http://relaxng.org/ns/structure/1.0" >
+    <start>
+        <element name="policy">
+            <element name="plugin">
+                <attribute name="name">
+                    <ref name="plugFuncName" />
+                </attribute>
+                <oneOrMore>
+                    <element name="function">
+                        <ref name="plugFuncName" />
+                    </element>
+                </oneOrMore>
+            </element>
+        </element>
+    </start>
+    <define name="plugFuncName">
+        <data type="string">
+            <param name="minLength">3</param>
+            <param name="maxLength">30</param>
+        </data>
+    </define>
+</grammar>
