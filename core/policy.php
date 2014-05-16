@@ -155,4 +155,22 @@ class Policy {
         }
         return TRUE;
     }
+    
+    public static function delGroup($id) {
+        if (!is_integer($id)) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('delGroup: id must be integer');
+            return FALSE;
+        }
+        self::$dblink->query("DELETE FROM `".MECCANO_TPREF."_core_policy_access` "
+                . "WHERE `groupid`=$id ;");
+        if (self::$dblink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp('addPolicy: can\'t delete policy | '.self::$dblink->error);
+            return FALSE;
+        }
+        if (!self::$dblink->affected_rows) {
+            self::setErrId(ERROR_INCORRECT_DATA);        self::setErrExp('delGroup: defined group doesn\'t exist');
+            return FALSE;
+        }
+        return TRUE;
+    }
 }
