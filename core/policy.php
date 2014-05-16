@@ -122,9 +122,37 @@ class Policy {
             }
         }
         if (!self::$dblink->affected_rows) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('delPolicy: defined name doesn\'t exist');
             return FALSE;
         }
         return TRUE;
     }
     
+    public static function addGroup($id) {
+        if (!is_integer($id)) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('addGroup: id must be integer');
+            return FALSE;
+        }
+        $qIsGroup = self::$dblink->query("SELECT `g`.`id` FROM `".MECCANO_TPREF."_core_userman_groups` `g` "
+                . "WHERE `g`.`id`=$id "
+                . "AND NOT EXISTS ("
+                . "SELECT `a`.`id` "
+                . "FROM `".MECCANO_TPREF."_core_policy_access` `a` "
+                . "WHERE `a`.`groupid`=$id LIMIT 1) ;");
+        if (!self::$dblink->affected_rows) {
+            self::setErrId(ERROR_INCORRECT_DATA);        self::setErrExp('addGroup: defined group doesn\'t exist or already was added');
+            return FALSE;
+        }
+        $qDbFuncs = self::$dblink->query("SELECT `id` "
+            . "FROM `".MECCANO_TPREF."_core_policy_summary_list` ;");
+        while (list($row) = $qDbFuncs->fetch_row()) {
+            self::$dblink->query("INSERT INTO `".MECCANO_TPREF."_core_policy_access` (`groupid`, `funcid`) "
+                    . "VALUES ($id, $row) ;");
+            if (self::$dblink->errno) {
+                self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp('addPolicy: can\'t add policy | '.self::$dblink->error);
+                return FALSE;
+            }
+        }
+        return TRUE;
+    }
 }
