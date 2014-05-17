@@ -173,4 +173,36 @@ class Policy {
         }
         return TRUE;
     }
+    
+    public static function funcAccess($id, $groupid, $access = TRUE) {
+        if (!is_integer($id) || !is_integer($groupid)) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('funcAccess: incorect type of incoming parameters');
+            return FALSE;
+        }
+        if ($access) {
+            self::$dblink->query("UPDATE `".MECCANO_TPREF."_core_policy_access` "
+                    . "SET `access`=1 "
+                    . "WHERE `funcid`=$id "
+                    . "AND `groupid`=$groupid ;");
+        }
+        elseif (!$access && $groupid!=1) {
+            self::$dblink->query("UPDATE `".MECCANO_TPREF."_core_policy_access` "
+                    . "SET `access`=0 "
+                    . "WHERE `funcid`=$id "
+                    . "AND `groupid`=$groupid ;");
+        }
+        else {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('funcAccess: access can\'t be disabled for system group');
+            return FALSE;
+        }
+        if (self::$dblink->errno) {
+            self::setErrId(ERROR_SYSTEM_INTERVENTION);            self::setErrExp('funcAccess: access wasn\'t changed | '.self::$dblink->error);
+            return FALSE;
+        }
+        if (!self::$dblink->affected_rows) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('funcAccess: function or group don\'t exist or access flag wasn\'t changed');
+            return FALSE;
+        }
+        return TRUE;
+    }
 }
