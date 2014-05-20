@@ -205,4 +205,27 @@ class Policy {
         }
         return TRUE;
     }
+    
+    public static function policyList($name, $groupid) {
+        if (!is_string($name) || !is_integer($groupid)) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('policyList: incorect type of incoming parameters');
+            return FALSE;
+        }
+        $plugName =  self::$dblink->real_escape_string($name);
+        $qList = self::$dblink->query("SELECT `s`.`func`, `a`.`access` "
+                . "FROM `".MECCANO_TPREF."_core_policy_summary_list` `s` "
+                . "JOIN `".MECCANO_TPREF."_core_policy_access` `a` "
+                . "ON `s`.`id`=`a`.`funcid` "
+                . "WHERE `s`.`name`='$plugName' "
+                . "AND `a`.`groupid`=$groupid ;");
+        if (self::$dblink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('policyList: something went wrong | '.self::$dblink->error);
+            return FALSE;
+        }
+        if (!self::$dblink->affected_rows) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('policyList: name or group don\'t exist');
+            return FALSE;
+        }
+        return $qList;
+    }
 }
