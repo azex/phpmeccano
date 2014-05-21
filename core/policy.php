@@ -23,6 +23,13 @@ class Policy {
         self::$errexp = $exp;
     }
     
+    private static function pregName($name) {
+        if (is_string($name) && preg_match('/^[a-zA-Z_]{1,30}$/', $name)) {
+            return TRUE;
+        }
+        return FALSE;
+    }
+
     public static function errId() {
         return self::$errid;
     }
@@ -101,7 +108,7 @@ class Policy {
     }
     
     public static function delPolicy($name) {
-        if (!is_string($name)) {
+        if (!self::pregName($name)) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('delPolicy: name must be string');
             return FALSE;
         }
@@ -174,22 +181,28 @@ class Policy {
         return TRUE;
     }
     
-    public static function funcAccess($id, $groupid, $access = TRUE) {
-        if (!is_integer($id) || !is_integer($groupid)) {
+    public static function funcAccess($name, $func, $groupid, $access = TRUE) {
+        if (!is_integer($groupid) || !self::pregName($name) || !self::pregName($func)) {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('funcAccess: incorect type of incoming parameters');
             return FALSE;
         }
         if ($access) {
-            self::$dblink->query("UPDATE `".MECCANO_TPREF."_core_policy_access` "
-                    . "SET `access`=1 "
-                    . "WHERE `funcid`=$id "
-                    . "AND `groupid`=$groupid ;");
+            self::$dblink->query("UPDATE `".MECCANO_TPREF."_core_policy_access` `a` "
+                    . "JOIN `".MECCANO_TPREF."_core_policy_summary_list` `s` "
+                    . "ON `a`.`funcid`=`s`.`id` "
+                    . "SET `a`.`access`=1 "
+                    . "WHERE `s`.`func`='$func' "
+                    . "AND  `s`.`name`='$name' "
+                    . "AND `a`.`groupid`=$groupid ;");
         }
         elseif (!$access && $groupid!=1) {
-            self::$dblink->query("UPDATE `".MECCANO_TPREF."_core_policy_access` "
-                    . "SET `access`=0 "
-                    . "WHERE `funcid`=$id "
-                    . "AND `groupid`=$groupid ;");
+            self::$dblink->query("UPDATE `".MECCANO_TPREF."_core_policy_access` `a` "
+                    . "JOIN `".MECCANO_TPREF."_core_policy_summary_list` `s` "
+                    . "ON `a`.`funcid`=`s`.`id` "
+                    . "SET `a`.`access`=0 "
+                    . "WHERE `s`.`func`='$func' "
+                    . "AND  `s`.`name`='$name' "
+                    . "AND `a`.`groupid`=$groupid ;");
         }
         else {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('funcAccess: access can\'t be disabled for system group');
@@ -200,14 +213,14 @@ class Policy {
             return FALSE;
         }
         if (!self::$dblink->affected_rows) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('funcAccess: function or group don\'t exist or access flag wasn\'t changed');
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('funcAccess: plugin name, function or group don\'t exist or access flag wasn\'t changed');
             return FALSE;
         }
         return TRUE;
     }
     
     public static function policyList($name, $groupid) {
-        if (!is_string($name) || !is_integer($groupid)) {
+        if (!self::pregName($name) || !is_integer($groupid)) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('policyList: incorect type of incoming parameters');
             return FALSE;
         }
