@@ -241,4 +241,35 @@ class Policy {
         }
         return $qList;
     }
+    
+    public static function checkAccess($name, $func, $username) {
+        if (!self::pregName($name) || !self::pregName($func) || !pregUName($username)) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('checkAccess: check incoming parameters');
+            return FALSE;
+        }
+        $qAccess = self::$dblink->query("SELECT `a`.`access` "
+                . "FROM `".MECCANO_TPREF."_core_policy_access` `a` "
+                . "JOIN `".MECCANO_TPREF."_core_policy_summary_list` `s` "
+                . "ON `a`.`funcid`=`s`.`id` "
+                . "JOIN `".MECCANO_TPREF."_core_userman_groups` `g` "
+                . "ON `a`.`groupid`=`g`.`id` "
+                . "JOIN `".MECCANO_TPREF."_core_userman_users` `u` "
+                . "ON `g`.`id`=`u`.`groupid` "
+                . "WHERE `u`.`username`='$username' "
+                . "AND `u`.`active`=1 "
+                . "AND `g`.`active`=1 "
+                . "AND `s`.`name`='$name' "
+                . "AND `s`.`func`='$func' "
+                . "LIMIT 1 ;");
+        if (self::$dblink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('checkAccess: something went wrong | '.self::$dblink->error);
+            return FALSE;
+        }
+        if (!self::$dblink->affected_rows) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('checkAccess: policy was not found');
+            return FALSE;
+        }
+        list($access) = $qAccess->fetch_row();
+        return (int) $access;
+    }
 }
