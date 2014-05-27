@@ -199,6 +199,8 @@ class Logging {
         $sysEvents = array("core_misc",
             "core_newGroup",
             "core_delGroup",
+            "core_enGroup",
+            "core_disGroup",
             "core_newUser",
             "core_delUser",
             "core_authLogin",
