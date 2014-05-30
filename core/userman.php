@@ -214,4 +214,44 @@ class UserMan {
         }
         return FALSE;
     }
+    
+    public static function userStatus($id, $active, $log = TRUE) {
+        if (!is_integer($id) || $id<1) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('userStatus: user id must be integer and greater than zero');
+            return FALSE;
+        }
+        if ($active) {
+            $active = 1;
+        }
+        elseif (!$active && $id>1) {
+            $active = 0;
+        }
+        else {
+            self::setErrId(ERROR_SYSTEM_INTERVENTION);            self::setErrExp('userStatus: system user can\'t be disabled');
+            return FALSE;
+        }
+        self::$dblink->query("UPDATE `".MECCANO_TPREF."_core_userman_users` "
+                . "SET `active`=$active "
+                . "WHERE `id`=$id ;");
+        if (self::$dblink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('userStatus: status wasn\'t changed | '.self::$dblink->error);
+            return FALSE;
+        }
+        if (!self::$dblink->affected_rows) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('userStatus: incorrect user status or group doesn\'t exist');
+            return FALSE;
+        }
+        if ($log) {
+            if ($active) {
+                $l = Logging::newRecord('core_enUser', "$id");
+            }
+            else {
+                $l = Logging::newRecord('core_disUser', "$id");
+            }
+            if (!$l) {
+                self::setErrId(ERROR_NOT_CRITICAL);            self::setErrExp(Logging::errExp());
+            }
+        }
+        return TRUE;
+    }
 }

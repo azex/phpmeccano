@@ -205,6 +205,8 @@ class Logging {
             "core_disGroup",
             "core_newUser",
             "core_delUser",
+            "core_enUser",
+            "core_disUser",
             "core_authLogin",
             "core_clearLog",
             "core_newEvent",
