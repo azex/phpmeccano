@@ -36,6 +36,7 @@ class UserMan {
         return self::$errexp;
     }
     
+    //group methods
     public static function createGroup($groupname, $description, $log = TRUE) {
         if (!pregGName($groupname) || !is_string($description)) {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('createGroup: incorect type of incoming parameters');
@@ -97,5 +98,64 @@ class UserMan {
             }
         }
         return TRUE;
+    }
+    
+    //user methods
+    public static function createUser($username, $password, $email, $groupId, $log = TRUE) {
+        if (!pregUName($username) || !pregPassw($password) || !filter_var($email, FILTER_VALIDATE_EMAIL) || !is_integer($groupId)) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('createUser: incorrect incoming parameters');
+            return FALSE;
+        }
+        self::$dblink->query("SELECT `u`.`id`, `i`.`id` "
+                . "FROM `".MECCANO_TPREF."_core_userman_users` `u`, `".MECCANO_TPREF."_core_userman_userinfo` `i` "
+                . "WHERE `u`.`username`='$username' "
+                . "OR `i`.`email`='$email' "
+                . "LIMIT 1;");
+        if (self::$dblink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('createUser: can\'t check username and email | '.self::$dblink->error);
+            return FALSE;
+        }
+        if (self::$dblink->affected_rows) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('createUser: username or email are already in use');
+            return FALSE;
+        }
+        self::$dblink->query("SELECT `id` "
+                . "FROM `".MECCANO_TPREF."_core_userman_groups` "
+                . "WHERE `id`=$groupId ;");
+        if (self::$dblink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('createUser: can\'t check group | '.self::$dblink->error);
+            return FALSE;
+        }
+        if (!self::$dblink->affected_rows) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('createUser: defined group doesn\'t exist');
+            return FALSE;
+        }
+        $salt = makeSalt($username);
+        $passw = passwHash($password, $salt);
+        $usi = makeIdent($username);
+        $sql = array(
+            'userid' => "INSERT INTO `".MECCANO_TPREF."_core_userman_users` (`username`, `groupid`, `salt`) "
+            . "VALUES ('$username', '$groupId', '$salt') ;",
+            'mail' => "INSERT INTO `".MECCANO_TPREF."_core_userman_userinfo` (`id`, `email`) "
+            . "VALUES (LAST_INSERT_ID(), '$email') ;",
+            'passw' => "INSERT INTO `".MECCANO_TPREF."_core_userman_userpass` (`userid`, `password`) "
+            . "VALUES (LAST_INSERT_ID(), '$passw') ;",
+            'usi' => "INSERT INTO `".MECCANO_TPREF."_core_auth_usi` (`id`, `usi`) "
+            . "VALUES (LAST_INSERT_ID(), '$usi') ;"
+            );
+        foreach ($sql as $key => $value) {
+            self::$dblink->query($value);
+            if (self::$dblink->errno) {
+                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('createUser: something went wrong | '.self::$dblink->error);
+                return FALSE;
+            }
+            if ($key == 'userid') {
+                $userid = self::$dblink->insert_id;
+            }
+        }
+        if ($log && !Logging::newRecord('core_newUser', $username)) {
+            self::setErrId(ERROR_NOT_CRITICAL);            self::setErrExp(Logging::errExp());
+        }
+        return $userid;
     }
 }
