@@ -54,7 +54,7 @@ class UserMan {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp(Policy::errExp());
             return FALSE;
         }
-        if ($log && !Logging::newRecord('core_newGroup', $groupname)) {
+        if ($log && !Logging::newRecord('core_newGroup', $groupname." | id: $groupId")) {
             self::setErrId(ERROR_NOT_CRITICAL);            self::setErrExp(Logging::errExp());
         }
         return $groupId;
@@ -153,7 +153,7 @@ class UserMan {
                 $userid = self::$dblink->insert_id;
             }
         }
-        if ($log && !Logging::newRecord('core_newUser', $username)) {
+        if ($log && !Logging::newRecord('core_newUser', $username." | id: $userid")) {
             self::setErrId(ERROR_NOT_CRITICAL);            self::setErrExp(Logging::errExp());
         }
         return $userid;
