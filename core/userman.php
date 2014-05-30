@@ -100,8 +100,26 @@ class UserMan {
         return TRUE;
     }
     
+    public static function groupExists($groupname) {
+        if (!pregGName($groupname)) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('groupExists: incorrect group name');
+            return FALSE;
+        }
+        self::$dblink->query("SELECT `id` "
+                . "FROM `".MECCANO_TPREF."_core_userman_groups` "
+                . "WHERE `groupname`='$groupname' ;");
+        if (self::$dblink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('groupExists: can\'t check group existense | '.self::$dblink->error);
+            return FALSE;
+        }
+        if (self::$dblink->affected_rows) {
+            return TRUE;
+        }
+        return FALSE;
+    }
+    
     //user methods
-    public static function createUser($username, $password, $email, $groupId, $log = TRUE) {
+    public static function createUser($username, $password, $email, $groupId, $active = TRUE, $log = TRUE) {
         if (!pregUName($username) || !pregPassw($password) || !filter_var($email, FILTER_VALIDATE_EMAIL) || !is_integer($groupId)) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('createUser: incorrect incoming parameters');
             return FALSE;
@@ -133,9 +151,11 @@ class UserMan {
         $salt = makeSalt($username);
         $passw = passwHash($password, $salt);
         $usi = makeIdent($username);
+        if ($active) { $active = 1; }
+        else { $active = 0; }
         $sql = array(
-            'userid' => "INSERT INTO `".MECCANO_TPREF."_core_userman_users` (`username`, `groupid`, `salt`) "
-            . "VALUES ('$username', '$groupId', '$salt') ;",
+            'userid' => "INSERT INTO `".MECCANO_TPREF."_core_userman_users` (`username`, `groupid`, `salt`, `active`) "
+            . "VALUES ('$username', '$groupId', '$salt', $active) ;",
             'mail' => "INSERT INTO `".MECCANO_TPREF."_core_userman_userinfo` (`id`, `email`) "
             . "VALUES (LAST_INSERT_ID(), '$email') ;",
             'passw' => "INSERT INTO `".MECCANO_TPREF."_core_userman_userpass` (`userid`, `password`) "
@@ -157,5 +177,41 @@ class UserMan {
             self::setErrId(ERROR_NOT_CRITICAL);            self::setErrExp(Logging::errExp());
         }
         return $userid;
+    }
+    
+    public static function userExists($username) {
+        if (!pregUName($username)) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('userExists: incorrect username');
+            return FALSE;
+        }
+        self::$dblink->query("SELECT `id` "
+                . "FROM `".MECCANO_TPREF."_core_userman_users` "
+                . "WHERE `username`='$username' ;");
+        if (self::$dblink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('userExists: can\'t check user existense | '.self::$dblink->error);
+            return FALSE;
+        }
+        if (self::$dblink->affected_rows) {
+            return TRUE;
+        }
+        return FALSE;
+    }
+    
+    public static function mailExists($email) {
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('userExists: incorrect email');
+            return FALSE;
+        }
+        self::$dblink->query("SELECT `id` "
+                . "FROM `".MECCANO_TPREF."_core_userman_userinfo` "
+                . "WHERE `email`='$email' ;");
+        if (self::$dblink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('userExists: can\'t check email existense | '.self::$dblink->error);
+            return FALSE;
+        }
+        if (self::$dblink->affected_rows) {
+            return TRUE;
+        }
+        return FALSE;
     }
 }
