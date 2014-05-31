@@ -145,10 +145,7 @@ class UserMan {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('moveGroupTo: can\'t move users to another group |'.self::$dblink->error);
             return FALSE;
         }
-        if (self::$dblink->affected_rows) {
-            return TRUE;
-        }
-        return FALSE;
+        return self::$dblink->affected_rows;
     }
     
     //user methods
@@ -287,5 +284,34 @@ class UserMan {
             }
         }
         return TRUE;
+    }
+    
+    public static function moveUserTo($id, $destId) {
+        if (!is_integer($id) || !is_integer($destId) || $destId<1 || $destId == $id) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('moveUserTo: fincorrect incoming parameters');
+            return FALSE;
+        }
+        if ($id == 1) {
+            self::setErrId(ERROR_SYSTEM_INTERVENTION);            self::setErrExp('moveUserTo: can\'t move system user');
+            return FALSE;
+        }
+        self::$dblink->query("SELECT `id` FROM `".MECCANO_TPREF."_core_userman_groups` "
+                . "WHERE `id`=$destId ;");
+        if (self::$dblink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('moveUserTo: can\'t check destination group existence |'.self::$dblink->error);
+            return FALSE;
+        }
+        if (!self::$dblink->affected_rows) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('moveUserTo: destination group doesn\'t exist');
+            return FALSE;
+        }
+        self::$dblink->query("UPDATE `".MECCANO_TPREF."_core_userman_users` "
+                . "SET `groupid`=$destId "
+                . "WHERE `id`=$id ;");
+        if (self::$dblink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('moveUserTo: can\'t move user to another group |'.self::$dblink->error);
+            return FALSE;
+        }
+        return self::$dblink->affected_rows;
     }
 }
