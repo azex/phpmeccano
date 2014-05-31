@@ -105,11 +105,44 @@ class UserMan {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('groupExists: incorrect group name');
             return FALSE;
         }
-        self::$dblink->query("SELECT `id` "
+        $qId = self::$dblink->query("SELECT `id` "
                 . "FROM `".MECCANO_TPREF."_core_userman_groups` "
                 . "WHERE `groupname`='$groupname' ;");
         if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('groupExists: can\'t check group existense | '.self::$dblink->error);
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('groupExists: can\'t check group existence | '.self::$dblink->error);
+            return FALSE;
+        }
+        if (self::$dblink->affected_rows) {
+            $id = $qId->fetch_row();
+            return (int) $id[0];
+        }
+        return FALSE;
+    }
+    
+    public static function moveGroupTo($id, $destId) {
+        if (!is_integer($id) || !is_integer($destId) || $destId<1 || $destId == $id) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('moveGroupTo: incorrect incoming parameters');
+            return FALSE;
+        }
+        if ($id == 1) {
+            self::setErrId(ERROR_SYSTEM_INTERVENTION);            self::setErrExp('moveGroupTo: can\'t move system group');
+            return FALSE;
+        }
+        self::$dblink->query("SELECT `id` FROM `".MECCANO_TPREF."_core_userman_groups` "
+                . "WHERE `id`=$destId ;");
+        if (self::$dblink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('moveGroupTo: can\'t check destination group existence |'.self::$dblink->error);
+            return FALSE;
+        }
+        if (!self::$dblink->affected_rows) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('moveGroupTo: destination group doesn\'t exist');
+            return FALSE;
+        }
+        self::$dblink->query("UPDATE `".MECCANO_TPREF."_core_userman_users` "
+                . "SET `groupid`=$destId "
+                . "WHERE `groupid`=$id ;");
+        if (self::$dblink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('moveGroupTo: can\'t move users to another group |'.self::$dblink->error);
             return FALSE;
         }
         if (self::$dblink->affected_rows) {
@@ -184,15 +217,16 @@ class UserMan {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('userExists: incorrect username');
             return FALSE;
         }
-        self::$dblink->query("SELECT `id` "
+        $qId = self::$dblink->query("SELECT `id` "
                 . "FROM `".MECCANO_TPREF."_core_userman_users` "
                 . "WHERE `username`='$username' ;");
         if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('userExists: can\'t check user existense | '.self::$dblink->error);
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('userExists: can\'t check user existence | '.self::$dblink->error);
             return FALSE;
         }
         if (self::$dblink->affected_rows) {
-            return TRUE;
+            $id = $qId->fetch_row();
+            return (int) $id[0];
         }
         return FALSE;
     }
@@ -206,7 +240,7 @@ class UserMan {
                 . "FROM `".MECCANO_TPREF."_core_userman_userinfo` "
                 . "WHERE `email`='$email' ;");
         if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('userExists: can\'t check email existense | '.self::$dblink->error);
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('userExists: can\'t check email existence | '.self::$dblink->error);
             return FALSE;
         }
         if (self::$dblink->affected_rows) {
