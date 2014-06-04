@@ -186,6 +186,8 @@ class UserMan {
         $sql = array(
             'userid' => "INSERT INTO `".MECCANO_TPREF."_core_userman_users` (`username`, `groupid`, `salt`, `active`) "
             . "VALUES ('$username', '$groupId', '$salt', $active) ;",
+            'iptime' => "INSERT INTO `".MECCANO_TPREF."_core_auth_iptime` (`id`, `ip`) "
+            . "VALUES (LAST_INSERT_ID(), '0.0.0.0') ;",
             'mail' => "INSERT INTO `".MECCANO_TPREF."_core_userman_userinfo` (`id`, `email`) "
             . "VALUES (LAST_INSERT_ID(), '$email') ;",
             'passw' => "INSERT INTO `".MECCANO_TPREF."_core_userman_userpass` (`userid`, `password`) "
@@ -288,7 +290,7 @@ class UserMan {
     
     public static function moveUserTo($id, $destId) {
         if (!is_integer($id) || !is_integer($destId) || $destId<1 || $destId == $id) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('moveUserTo: fincorrect incoming parameters');
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('moveUserTo: incorrect incoming parameters');
             return FALSE;
         }
         if ($id == 1) {
@@ -313,5 +315,50 @@ class UserMan {
             return FALSE;
         }
         return self::$dblink->affected_rows;
+    }
+    
+    public static function delUser($id, $log = TRUE) {
+        if (!is_integer($id)) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('delUser: identifier must be integer');
+            return FALSE;
+        }
+        if ($id == 1) {
+            self::setErrId(ERROR_SYSTEM_INTERVENTION);            self::setErrExp('delUser: can\'t delete system user');
+            return FALSE;
+        }
+        $qName = self::$dblink->query("SELECT `username` "
+                . "FROM `".MECCANO_TPREF."_core_userman_users` "
+                . "WHERE `id`=$id ;");
+        if (!self::$dblink->affected_rows) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('delUser: defined user doesn\'t exist');
+            return FALSE;
+        }
+        $sql = array(
+            "DELETE FROM `".MECCANO_TPREF."_core_auth_usi` "
+            . "WHERE `id` IN "
+            . "(SELECT `id` "
+            . "FROM `".MECCANO_TPREF."_core_userman_userpass` "
+            . "WHERE `userid`=$id) ;",
+            "DELETE FROM `".MECCANO_TPREF."_core_userman_userpass` "
+            . "WHERE `userid`=$id ;",
+            "DELETE FROM `".MECCANO_TPREF."_core_userman_userinfo` "
+            . "WHERE `id`=$id ;",
+            "DELETE FROM `".MECCANO_TPREF."_core_auth_iptime` "
+            . "WHERE `id`=$id ;",
+            "DELETE FROM `".MECCANO_TPREF."_core_userman_users` "
+            . "WHERE `id`=$id ;"
+        );
+        foreach ($sql as $value) {
+            self::$dblink->query($value);
+            if (self::$dblink->errno) {
+                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('delUser: something went wrong | '.self::$dblink->error);
+                return FALSE;
+            }
+        }
+        list($username) = $qName->fetch_row();
+        if ($log && !Logging::newRecord('core_delUser', $username." | id: $id")) {
+            self::setErrId(ERROR_NOT_CRITICAL);            self::setErrExp(Logging::errExp());
+        }
+        return TRUE;
     }
 }
