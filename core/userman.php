@@ -396,4 +396,33 @@ class UserMan {
         $groupNode->appendChild($xml->createElement('name', $row[3]));
         return $xml;
     }
+    
+    public static function userPasswords($id) {
+        if (!is_integer($id)) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('userPasswords: id must be integer');
+            return FALSE;
+        }
+        $qPassw = self::$dblink->query("SELECT `id`, `description`, `limited` "
+                . "FROM `".MECCANO_TPREF."_core_userman_userpass` "
+                . "WHERE `userid` = $id ;");
+        if (self::$dblink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('userPasswords: '.self::$dblink->error);
+            return FALSE;
+        }
+        if (!self::$dblink->affected_rows) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('userPasswords: defined user doesn\'t exist');
+            return FALSE;
+        }
+        $xml = new \DOMDocument('1.0', 'utf-8');
+        $securityNode = $xml->createElement('security');
+        $xml->appendChild($securityNode);
+        while ($row = $qPassw->fetch_row()) {
+            $passwNode = $xml->createElement('password');
+            $securityNode->appendChild($passwNode);
+            $passwNode->appendChild($xml->createElement('id', $row[0]));
+            $passwNode->appendChild($xml->createElement('description', $row[1]));
+            $passwNode->appendChild($xml->createElement('limited', $row[2]));
+        }
+        return $xml;
+    }
 }
