@@ -60,15 +60,15 @@ class UserMan {
         return $groupId;
     }
     
-    public static function groupStatus($id, $active, $log = TRUE) {
-        if (!is_integer($id) || $id<1) {
+    public static function groupStatus($groupId, $active, $log = TRUE) {
+        if (!is_integer($groupId) || $groupId<1) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('groupStatus: group id must be integer and greater than zero');
             return FALSE;
         }
         if ($active) {
             $active = 1;
         }
-        elseif (!$active && $id>1) {
+        elseif (!$active && $groupId>1) {
             $active = 0;
         }
         else {
@@ -77,7 +77,7 @@ class UserMan {
         }
         self::$dblink->query("UPDATE `".MECCANO_TPREF."_core_userman_groups` "
                 . "SET `active`=$active "
-                . "WHERE `id`=$id ;");
+                . "WHERE `id`=$groupId ;");
         if (self::$dblink->errno) {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('groupStatus: status wasn\'t changed | '.self::$dblink->error);
             return FALSE;
@@ -88,10 +88,10 @@ class UserMan {
         }
         if ($log) {
             if ($active) {
-                $l = Logging::newRecord('core_enGroup', "$id");
+                $l = Logging::newRecord('core_enGroup', "$groupId");
             }
             else {
-                $l = Logging::newRecord('core_disGroup', "$id");
+                $l = Logging::newRecord('core_disGroup', "$groupId");
             }
             if (!$l) {
                 self::setErrId(ERROR_NOT_CRITICAL);            self::setErrExp(Logging::errExp());
@@ -119,12 +119,12 @@ class UserMan {
         return FALSE;
     }
     
-    public static function moveGroupTo($id, $destId) {
-        if (!is_integer($id) || !is_integer($destId) || $destId<1 || $destId == $id) {
+    public static function moveGroupTo($groupId, $destId) {
+        if (!is_integer($groupId) || !is_integer($destId) || $destId<1 || $destId == $groupId) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('moveGroupTo: incorrect incoming parameters');
             return FALSE;
         }
-        if ($id == 1) {
+        if ($groupId == 1) {
             self::setErrId(ERROR_SYSTEM_INTERVENTION);            self::setErrExp('moveGroupTo: can\'t move system group');
             return FALSE;
         }
@@ -140,7 +140,7 @@ class UserMan {
         }
         self::$dblink->query("UPDATE `".MECCANO_TPREF."_core_userman_users` "
                 . "SET `groupid`=$destId "
-                . "WHERE `groupid`=$id ;");
+                . "WHERE `groupid`=$groupId ;");
         if (self::$dblink->errno) {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('moveGroupTo: can\'t move users to another group |'.self::$dblink->error);
             return FALSE;
@@ -248,15 +248,15 @@ class UserMan {
         return FALSE;
     }
     
-    public static function userStatus($id, $active, $log = TRUE) {
-        if (!is_integer($id) || $id<1) {
+    public static function userStatus($userId, $active, $log = TRUE) {
+        if (!is_integer($userId) || $userId<1) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('userStatus: user id must be integer and greater than zero');
             return FALSE;
         }
         if ($active) {
             $active = 1;
         }
-        elseif (!$active && $id>1) {
+        elseif (!$active && $userId>1) {
             $active = 0;
         }
         else {
@@ -265,7 +265,7 @@ class UserMan {
         }
         self::$dblink->query("UPDATE `".MECCANO_TPREF."_core_userman_users` "
                 . "SET `active`=$active "
-                . "WHERE `id`=$id ;");
+                . "WHERE `id`=$userId ;");
         if (self::$dblink->errno) {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('userStatus: status wasn\'t changed | '.self::$dblink->error);
             return FALSE;
@@ -276,10 +276,10 @@ class UserMan {
         }
         if ($log) {
             if ($active) {
-                $l = Logging::newRecord('core_enUser', "$id");
+                $l = Logging::newRecord('core_enUser', "$userId");
             }
             else {
-                $l = Logging::newRecord('core_disUser', "$id");
+                $l = Logging::newRecord('core_disUser', "$userId");
             }
             if (!$l) {
                 self::setErrId(ERROR_NOT_CRITICAL);            self::setErrExp(Logging::errExp());
@@ -288,12 +288,12 @@ class UserMan {
         return TRUE;
     }
     
-    public static function moveUserTo($id, $destId) {
-        if (!is_integer($id) || !is_integer($destId) || $destId<1 || $destId == $id) {
+    public static function moveUserTo($userId, $destId) {
+        if (!is_integer($userId) || !is_integer($destId) || $destId<1 || $destId == $userId) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('moveUserTo: incorrect incoming parameters');
             return FALSE;
         }
-        if ($id == 1) {
+        if ($userId == 1) {
             self::setErrId(ERROR_SYSTEM_INTERVENTION);            self::setErrExp('moveUserTo: can\'t move system user');
             return FALSE;
         }
@@ -309,7 +309,7 @@ class UserMan {
         }
         self::$dblink->query("UPDATE `".MECCANO_TPREF."_core_userman_users` "
                 . "SET `groupid`=$destId "
-                . "WHERE `id`=$id ;");
+                . "WHERE `id`=$userId ;");
         if (self::$dblink->errno) {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('moveUserTo: can\'t move user to another group |'.self::$dblink->error);
             return FALSE;
@@ -317,18 +317,18 @@ class UserMan {
         return self::$dblink->affected_rows;
     }
     
-    public static function delUser($id, $log = TRUE) {
-        if (!is_integer($id)) {
+    public static function delUser($userId, $log = TRUE) {
+        if (!is_integer($userId)) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('delUser: identifier must be integer');
             return FALSE;
         }
-        if ($id == 1) {
+        if ($userId == 1) {
             self::setErrId(ERROR_SYSTEM_INTERVENTION);            self::setErrExp('delUser: can\'t delete system user');
             return FALSE;
         }
         $qName = self::$dblink->query("SELECT `username` "
                 . "FROM `".MECCANO_TPREF."_core_userman_users` "
-                . "WHERE `id`=$id ;");
+                . "WHERE `id`=$userId ;");
         if (!self::$dblink->affected_rows) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('delUser: defined user doesn\'t exist');
             return FALSE;
@@ -338,15 +338,15 @@ class UserMan {
             . "WHERE `id` IN "
             . "(SELECT `id` "
             . "FROM `".MECCANO_TPREF."_core_userman_userpass` "
-            . "WHERE `userid`=$id) ;",
+            . "WHERE `userid`=$userId) ;",
             "DELETE FROM `".MECCANO_TPREF."_core_userman_userpass` "
-            . "WHERE `userid`=$id ;",
+            . "WHERE `userid`=$userId ;",
             "DELETE FROM `".MECCANO_TPREF."_core_userman_userinfo` "
-            . "WHERE `id`=$id ;",
+            . "WHERE `id`=$userId ;",
             "DELETE FROM `".MECCANO_TPREF."_core_auth_iptime` "
-            . "WHERE `id`=$id ;",
+            . "WHERE `id`=$userId ;",
             "DELETE FROM `".MECCANO_TPREF."_core_userman_users` "
-            . "WHERE `id`=$id ;"
+            . "WHERE `id`=$userId ;"
         );
         foreach ($sql as $value) {
             self::$dblink->query($value);
@@ -356,14 +356,14 @@ class UserMan {
             }
         }
         list($username) = $qName->fetch_row();
-        if ($log && !Logging::newRecord('core_delUser', $username." | id: $id")) {
+        if ($log && !Logging::newRecord('core_delUser', $username." | id: $userId")) {
             self::setErrId(ERROR_NOT_CRITICAL);            self::setErrExp(Logging::errExp());
         }
         return TRUE;
     }
     
-    public static function aboutUser($id) {
-        if (!is_integer($id)) {
+    public static function aboutUser($userId) {
+        if (!is_integer($userId)) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('aboutUser: id must be integer');
             return FALSE;
         }
@@ -371,8 +371,8 @@ class UserMan {
                 . "FROM `".MECCANO_TPREF."_core_userman_userinfo` `i`, `".MECCANO_TPREF."_core_userman_users` `u` "
                 . "JOIN `".MECCANO_TPREF."_core_userman_groups` `g` "
                 . "ON `u`.`groupid`=`g`.`id` "
-                . "WHERE `i`.`id`=$id "
-                . "AND `u`.`id`=$id "
+                . "WHERE `i`.`id`=$userId "
+                . "AND `u`.`id`=$userId "
                 . "LIMIT 1 ;");
         if (!self::$dblink->affected_rows) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('aboutUser: defined user doesn\'t exist');
@@ -397,14 +397,14 @@ class UserMan {
         return $xml;
     }
     
-    public static function userPasswords($id) {
-        if (!is_integer($id)) {
+    public static function userPasswords($userId) {
+        if (!is_integer($userId)) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('userPasswords: id must be integer');
             return FALSE;
         }
         $qPassw = self::$dblink->query("SELECT `id`, `description`, `limited` "
                 . "FROM `".MECCANO_TPREF."_core_userman_userpass` "
-                . "WHERE `userid` = $id ;");
+                . "WHERE `userid` = $userId ;");
         if (self::$dblink->errno) {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('userPasswords: '.self::$dblink->error);
             return FALSE;
@@ -426,18 +426,18 @@ class UserMan {
         return $xml;
     }
     
-    public static function addPassword($id, $password, $description='') {
+    public static function addPassword($userId, $password, $description='') {
         if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
             self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('addPassword: function execution was terminated because of using of limited authentication');
             return FALSE;
         }
-        if (!is_integer($id) || !pregPassw($password) || !is_string($description)) {
+        if (!is_integer($userId) || !pregPassw($password) || !is_string($description)) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('addPassword: incorrect incoming parameters');
             return FALSE;
         }
         $qHash = self::$dblink->query("SELECT `salt` "
                 . "FROM `".MECCANO_TPREF."_core_userman_users` "
-                . "WHERE `id`=$id ;");
+                . "WHERE `id`=$userId ;");
         if (self::$dblink->errno) {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('addPassword: can\'t check defined user');
             return FALSE;
@@ -450,7 +450,7 @@ class UserMan {
         $passwHash = passwHash($password, $salt);
         $description = self::$dblink->real_escape_string($description);
         self::$dblink->query("INSERT INTO `".MECCANO_TPREF."_core_userman_userpass` (`userid`, `password`, `description`, `limited`) "
-                . "VALUES($id, '$passwHash', '$description', 1) ;");
+                . "VALUES($userId, '$passwHash', '$description', 1) ;");
         if (self::$dblink->errno) {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('addPassword: can\'t add password | '.self::$dblink->error);
             return FALSE;
