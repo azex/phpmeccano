@@ -190,8 +190,8 @@ class UserMan {
             . "VALUES (LAST_INSERT_ID(), '0.0.0.0') ;",
             'mail' => "INSERT INTO `".MECCANO_TPREF."_core_userman_userinfo` (`id`, `email`) "
             . "VALUES (LAST_INSERT_ID(), '$email') ;",
-            'passw' => "INSERT INTO `".MECCANO_TPREF."_core_userman_userpass` (`userid`, `password`) "
-            . "VALUES (LAST_INSERT_ID(), '$passw') ;",
+            'passw' => "INSERT INTO `".MECCANO_TPREF."_core_userman_userpass` (`userid`, `password`, `limited`) "
+            . "VALUES (LAST_INSERT_ID(), '$passw', 0) ;",
             'usi' => "INSERT INTO `".MECCANO_TPREF."_core_auth_usi` (`id`, `usi`) "
             . "VALUES (LAST_INSERT_ID(), '$usi') ;"
             );
@@ -424,5 +424,45 @@ class UserMan {
             $passwNode->appendChild($xml->createElement('limited', $row[2]));
         }
         return $xml;
+    }
+    
+    public static function addPassword($id, $password, $description='') {
+        if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
+            self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('addPassword: function execution was terminated because of using of limited authentication');
+            return FALSE;
+        }
+        if (!is_integer($id) || !pregPassw($password) || !is_string($description)) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('addPassword: incorrect incoming parameters');
+            return FALSE;
+        }
+        $qHash = self::$dblink->query("SELECT `salt` "
+                . "FROM `".MECCANO_TPREF."_core_userman_users` "
+                . "WHERE `id`=$id ;");
+        if (self::$dblink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('addPassword: can\'t check defined user');
+            return FALSE;
+        }
+        if (!self::$dblink->affected_rows) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('addPassword: defined user doesn\'t exist');
+            return FALSE;
+        }
+        list($salt) = $qHash->fetch_row();
+        $passwHash = passwHash($password, $salt);
+        $description = self::$dblink->real_escape_string($description);
+        self::$dblink->query("INSERT INTO `".MECCANO_TPREF."_core_userman_userpass` (`userid`, `password`, `description`, `limited`) "
+                . "VALUES($id, '$passwHash', '$description', 1) ;");
+        if (self::$dblink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('addPassword: can\'t add password | '.self::$dblink->error);
+            return FALSE;
+        }
+        $insertId = (int) self::$dblink->insert_id;
+        $usi = makeIdent("$insertId");
+        self::$dblink->query("INSERT INTO `".MECCANO_TPREF."_core_auth_usi` (`id`, `usi`) "
+                . "VALUES($insertId, '$usi') ;");
+        if (self::$dblink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('addPassword: can\'t create unique session identifier | '.self::$dblink->error);
+            return FALSE;
+        }
+        return $insertId;
     }
 }
