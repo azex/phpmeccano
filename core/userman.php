@@ -493,4 +493,44 @@ class UserMan {
         }
         return $insertId;
     }
+    
+    public static function delPassword($passwId, $userId) {
+        if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
+            self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('delPassword: function execution was terminated because of using of limited authentication');
+            return FALSE;
+        }
+        if (!is_integer($passwId) || !is_integer($userId)) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('delPassword: incorrect incoming parameters');
+            return FALSE;
+        }
+        $qLimited = self::$dblink->query("SELECT `limited` "
+                . "FROM `".MECCANO_TPREF."_core_userman_userpass` "
+                . "WHERE `id`=$passwId "
+                . "AND `userid`=$userId ;");
+        if (self::$dblink->errno) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('delPassword: can\'t check limitation status of the password | '.self::$dblink->error);
+            return FALSE;
+        }
+        if (!self::$dblink->affected_rows) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('delPassword: check incoming parageters');
+            return FALSE;
+        }
+        list($limited) = $qLimited->fetch_row();
+        if (!$limited) {
+            self::setErrId(ERROR_SYSTEM_INTERVENTION);            self::setErrExp('delPassword: impossible to delete primary password');
+            return FALSE;
+        }
+        $sql = array("DELETE FROM `".MECCANO_TPREF."_core_auth_usi` "
+            . "WHERE `id`=$passwId ;",
+            "DELETE FROM `".MECCANO_TPREF."_core_userman_userpass` "
+            . "WHERE `id`=$passwId ;");
+        foreach ($sql as $value) {
+            self::$dblink->query($value);
+            if (self::$dblink->errno) {
+                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('delPassword: '.self::$dblink->error);
+                return FALSE;
+            }
+        }
+        return TRUE;
+    }
 }
