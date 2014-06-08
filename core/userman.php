@@ -38,6 +38,10 @@ class UserMan {
     
     //group methods
     public static function createGroup($groupname, $description, $log = TRUE) {
+        if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
+            self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('createGroup: function execution was terminated because of using of limited authentication');
+            return FALSE;
+        }
         if (!pregGName($groupname) || !is_string($description)) {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('createGroup: incorect type of incoming parameters');
             return FALSE;
@@ -61,6 +65,10 @@ class UserMan {
     }
     
     public static function groupStatus($groupId, $active, $log = TRUE) {
+        if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
+            self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('groupStatus: function execution was terminated because of using of limited authentication');
+            return FALSE;
+        }
         if (!is_integer($groupId) || $groupId<1) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('groupStatus: group id must be integer and greater than zero');
             return FALSE;
@@ -120,6 +128,10 @@ class UserMan {
     }
     
     public static function moveGroupTo($groupId, $destId) {
+        if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
+            self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('moveGroupTo: function execution was terminated because of using of limited authentication');
+            return FALSE;
+        }
         if (!is_integer($groupId) || !is_integer($destId) || $destId<1 || $destId == $groupId) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('moveGroupTo: incorrect incoming parameters');
             return FALSE;
@@ -150,6 +162,10 @@ class UserMan {
     
     //user methods
     public static function createUser($username, $password, $email, $groupId, $active = TRUE, $log = TRUE) {
+        if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
+            self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('createUser: function execution was terminated because of using of limited authentication');
+            return FALSE;
+        }
         if (!pregUName($username) || !pregPassw($password) || !filter_var($email, FILTER_VALIDATE_EMAIL) || !is_integer($groupId)) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('createUser: incorrect incoming parameters');
             return FALSE;
@@ -249,6 +265,10 @@ class UserMan {
     }
     
     public static function userStatus($userId, $active, $log = TRUE) {
+        if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
+            self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('userStatus: function execution was terminated because of using of limited authentication');
+            return FALSE;
+        }
         if (!is_integer($userId) || $userId<1) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('userStatus: user id must be integer and greater than zero');
             return FALSE;
@@ -289,6 +309,10 @@ class UserMan {
     }
     
     public static function moveUserTo($userId, $destId) {
+        if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
+            self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('moveUserTo: function execution was terminated because of using of limited authentication');
+            return FALSE;
+        }
         if (!is_integer($userId) || !is_integer($destId) || $destId<1 || $destId == $userId) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('moveUserTo: incorrect incoming parameters');
             return FALSE;
@@ -318,6 +342,10 @@ class UserMan {
     }
     
     public static function delUser($userId, $log = TRUE) {
+        if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
+            self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('delUser: function execution was terminated because of using of limited authentication');
+            return FALSE;
+        }
         if (!is_integer($userId)) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('delUser: identifier must be integer');
             return FALSE;
