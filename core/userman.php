@@ -467,7 +467,7 @@ class UserMan {
                 . "FROM `".MECCANO_TPREF."_core_userman_users` "
                 . "WHERE `id`=$userId ;");
         if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('addPassword: can\'t check defined user');
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('addPassword: can\'t check defined user | '.self::$dblink->error);
             return FALSE;
         }
         if (!self::$dblink->affected_rows) {
@@ -512,7 +512,7 @@ class UserMan {
             return FALSE;
         }
         if (!self::$dblink->affected_rows) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('delPassword: check incoming parageters');
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('delPassword: check incoming parameters');
             return FALSE;
         }
         list($limited) = $qLimited->fetch_row();
@@ -530,6 +530,43 @@ class UserMan {
                 self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('delPassword: '.self::$dblink->error);
                 return FALSE;
             }
+        }
+        return TRUE;
+    }
+    
+    public static function setPassword($passwId, $userId, $password){
+        if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
+            self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('setPassword: function execution was terminated because of using of limited authentication');
+            return FALSE;
+        }
+        if (!is_integer($passwId) || !is_integer($userId) || !pregPassw($password)) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('setPassword: incorrect incoming parameters');
+            return FALSE;
+        }
+        $qHash = self::$dblink->query("SELECT `salt` "
+                . "FROM `".MECCANO_TPREF."_core_userman_users` "
+                . "WHERE `id`=$userId ;");
+        if (self::$dblink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('setPassword: can\'t check defined user');
+            return FALSE;
+        }
+        if (!self::$dblink->affected_rows) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('setPassword: defined user doesn\'t exist');
+            return FALSE;
+        }
+        list($salt) = $qHash->fetch_row();
+        $passwHash = passwHash($password, $salt);
+        self::$dblink->query("UPDATE `".MECCANO_TPREF."_core_userman_userpass` "
+                . "SET `password`='$passwHash' "
+                . "WHERE `id`=$passwId "
+                . "AND `userid`=$userId ;");
+        if (self::$dblink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('setPassword: can\'t update password | '.self::$dblink->error);
+            return FALSE;
+        }
+        if (!self::$dblink->affected_rows) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('setPassword: defined password doesn\'t exist or password was repeated');
+            return FALSE;
         }
         return TRUE;
     }
