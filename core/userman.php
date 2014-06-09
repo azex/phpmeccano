@@ -616,4 +616,24 @@ class UserMan {
         }
         return TRUE;
     }
+    
+    public static function setFullName($userId, $name) {
+        if (!is_integer($userId) || !is_string($name)) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('setFullName: incorrect incoming parameters');
+            return FALSE;
+        }
+        $name = self::$dblink->real_escape_string($name);
+        self::$dblink->query("UPDATE `".MECCANO_TPREF."_core_userman_userinfo` "
+                . "SET `fullname`='$name' "
+                . "WHERE `id`=$userId ;");
+        if (self::$dblink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('setFullName: can\'t set name');
+            return FALSE;
+        }
+        if (!self::$dblink->affected_rows) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('setFullName: defined user doesn\'t exist or name was repeated');
+            return FALSE;
+        }
+        return TRUE;
+    }
 }
