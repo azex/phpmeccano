@@ -593,4 +593,27 @@ class UserMan {
         }
         return TRUE;
     }
+    
+    public static function setUserMail($userId, $email) {
+        if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
+            self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('setUserMail: function execution was terminated because of using of limited authentication');
+            return FALSE;
+        }
+        if (!is_integer($userId) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('setUserMail: incorrect incoming parameters');
+            return FALSE;
+        }
+        self::$dblink->query("UPDATE `".MECCANO_TPREF."_core_userman_userinfo` "
+                . "SET `email`='$email' "
+                . "WHERE `id`=$userId ;");
+        if (self::$dblink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('setUserMail: can\'t set email');
+            return FALSE;
+        }
+        if (!self::$dblink->affected_rows) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('setUserMail: defined user doesn\'t exist or email was repeated');
+            return FALSE;
+        }
+        return TRUE;
+    }
 }
