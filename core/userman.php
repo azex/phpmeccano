@@ -543,7 +543,7 @@ class UserMan {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('setPassword: incorrect incoming parameters');
             return FALSE;
         }
-        $qHash = self::$dblink->query("SELECT `salt` "
+        $qSalt = self::$dblink->query("SELECT `salt` "
                 . "FROM `".MECCANO_TPREF."_core_userman_users` "
                 . "WHERE `id`=$userId ;");
         if (self::$dblink->errno) {
@@ -554,7 +554,7 @@ class UserMan {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('setPassword: defined user doesn\'t exist');
             return FALSE;
         }
-        list($salt) = $qHash->fetch_row();
+        list($salt) = $qSalt->fetch_row();
         $passwHash = passwHash($password, $salt);
         self::$dblink->query("UPDATE `".MECCANO_TPREF."_core_userman_userpass` "
                 . "SET `password`='$passwHash' "
@@ -584,7 +584,7 @@ class UserMan {
                 . "SET `username`='$username' "
                 . "WHERE `id`=$userId ;");
         if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('setUserName: can\'t set username');
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('setUserName: can\'t set username | '.self::$dblink->error);
             return FALSE;
         }
         if (!self::$dblink->affected_rows) {
@@ -607,7 +607,7 @@ class UserMan {
                 . "SET `email`='$email' "
                 . "WHERE `id`=$userId ;");
         if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('setUserMail: can\'t set email');
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('setUserMail: can\'t set email | '.self::$dblink->error);
             return FALSE;
         }
         if (!self::$dblink->affected_rows) {
@@ -627,11 +627,56 @@ class UserMan {
                 . "SET `fullname`='$name' "
                 . "WHERE `id`=$userId ;");
         if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('setFullName: can\'t set name');
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('setFullName: can\'t set name | '.self::$dblink->error);
             return FALSE;
         }
         if (!self::$dblink->affected_rows) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('setFullName: defined user doesn\'t exist or name was repeated');
+            return FALSE;
+        }
+        return TRUE;
+    }
+    
+    public static function changePassword($passwId, $userId, $oldPassw, $newPassw){
+        if (!is_integer($passwId) || !is_integer($userId) || !pregPassw($oldPassw) || !pregPassw($newPassw)) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('changePassword: incorrect incoming parameters');
+            return FALSE;
+        }
+        $qSalt = self::$dblink->query("SELECT `salt` "
+                . "FROM `".MECCANO_TPREF."_core_userman_users` "
+                . "WHERE `id`=$userId ;");
+        if (self::$dblink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('changePassword: can\'t check defined user | '.self::$dblink->error);
+            return FALSE;
+        }
+        if (!self::$dblink->affected_rows) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('changePassword: defined user doesn\'t exist');
+            return FALSE;
+        }
+        list($salt) = $qSalt->fetch_row();
+        $oldPasswHash = passwHash($oldPassw, $salt);
+        $newPasswHash = passwHash($newPassw, $salt);
+        if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
+            self::$dblink->query("UPDATE `".MECCANO_TPREF."_core_userman_userpass` "
+                    . "SET `password`='$newPasswHash' "
+                    . "WHERE `id`=$passwId "
+                    . "AND `userid`=$userId "
+                    . "AND `password`='$oldPasswHash' "
+                    . "AND `limited`=1 ;");
+        }
+        else {
+            self::$dblink->query("UPDATE `".MECCANO_TPREF."_core_userman_userpass` "
+                    . "SET `password`='$newPasswHash' "
+                    . "WHERE `id`=$passwId "
+                    . "AND `userid`=$userId "
+                    . "AND `password`='$oldPasswHash' ;");
+        }
+        if (self::$dblink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('changePassword: can\'t update password | '.self::$dblink->error);
+            return FALSE;
+        }
+        if (!self::$dblink->affected_rows) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('changePassword: defined password doesn\'t exist, new password repeats existing, was received invalid old password or usage of limited authentication');
             return FALSE;
         }
         return TRUE;
