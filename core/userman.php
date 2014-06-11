@@ -194,6 +194,29 @@ class UserMan {
         $userNode->appendChild($xml->createElement('sum', $sum[0]));
         return $xml;
     }
+    
+    public static function setGroupName($groupId, $groupname) {
+        if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
+            self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('setGroupName: function execution was terminated because of using of limited authentication');
+            return FALSE;
+        }
+        if (!is_integer($groupId) || !pregGName($groupname)) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('setGroupName: incorrect incoming parameters');
+            return FALSE;
+        }
+        self::$dblink->query("UPDATE `".MECCANO_TPREF."_core_userman_groups` "
+                . "SET `groupname`='$groupname' "
+                . "WHERE `id`=$groupId ;");
+        if (self::$dblink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('setGroupName: can\'t set groupname | '.self::$dblink->error);
+            return FALSE;
+        }
+        if (!self::$dblink->affected_rows) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('setGroupName: defined group doesn\'t exist or groupname was repeated');
+            return FALSE;
+        }
+        return TRUE;
+    }
 
     //user methods
     public static function createUser($username, $password, $email, $groupId, $active = TRUE, $log = TRUE) {
