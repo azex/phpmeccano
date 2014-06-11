@@ -160,6 +160,41 @@ class UserMan {
         return self::$dblink->affected_rows;
     }
     
+    public static function aboutGroup($groupId) {
+        if (!is_integer($groupId)) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('aboutGroup: identifier must be integer');
+            return FALSE;
+        }
+        $qAbout = self::$dblink->query("SELECT `groupname`, `description`, `active` "
+                . "FROM `".MECCANO_TPREF."_core_userman_groups` "
+                . "WHERE `id`=$groupId");
+        if (self::$dblink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('aboutGroup: something went wrong | '.self::$dblink->error);
+            return FALSE;
+        }
+        if (!self::$dblink->affected_rows) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('aboutGroup: defined group doesn\'t exist');
+            return FALSE;
+        }
+        $qSum = self::$dblink->query("SELECT COUNT(`id`) "
+                . "FROM `".MECCANO_TPREF."_core_userman_users` "
+                . "WHERE `groupid`=$groupId ;");
+        $about = $qAbout->fetch_row();
+        $sum = $qSum->fetch_row();
+        $xml = new \DOMDocument('1.0', 'utf-8');
+        $aboutNode = $xml->createElement('about');
+        $xml->appendChild($aboutNode);
+        $groupNode = $xml->createElement('group');
+        $aboutNode->appendChild($groupNode);
+        $groupNode->appendChild($xml->createElement('name', $about[0]));
+        $groupNode->appendChild($xml->createElement('description', $about[1]));
+        $groupNode->appendChild($xml->createElement('active', $about[2]));
+        $userNode = $xml->createElement('user');
+        $aboutNode->appendChild($userNode);
+        $userNode->appendChild($xml->createElement('sum', $sum[0]));
+        return $xml;
+    }
+
     //user methods
     public static function createUser($username, $password, $email, $groupId, $active = TRUE, $log = TRUE) {
         if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
@@ -395,33 +430,34 @@ class UserMan {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('aboutUser: id must be integer');
             return FALSE;
         }
-        $qAbout = self::$dblink->query("SELECT `i`.`fullname`, `i`.`email`, `g`.`id`, `g`.`groupname` "
+        $qAbout = self::$dblink->query("SELECT `i`.`fullname`, `i`.`email`, `u`.`active`, `g`.`id`, `g`.`groupname` "
                 . "FROM `".MECCANO_TPREF."_core_userman_userinfo` `i`, `".MECCANO_TPREF."_core_userman_users` `u` "
                 . "JOIN `".MECCANO_TPREF."_core_userman_groups` `g` "
                 . "ON `u`.`groupid`=`g`.`id` "
                 . "WHERE `i`.`id`=$userId "
                 . "AND `u`.`id`=$userId "
                 . "LIMIT 1 ;");
-        if (!self::$dblink->affected_rows) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('aboutUser: defined user doesn\'t exist');
-            return FALSE;
-        }
         if (self::$dblink->errno) {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('aboutUser: something went wrong | '.self::$dblink->error);
             return FALSE;
         }
-        $row = $qAbout->fetch_row();
+        if (!self::$dblink->affected_rows) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('aboutUser: defined user doesn\'t exist');
+            return FALSE;
+        }
+        $about = $qAbout->fetch_row();
         $xml = new \DOMDocument('1.0', 'utf-8');
         $aboutNode = $xml->createElement('about');
         $xml->appendChild($aboutNode);
         $userNode = $xml->createElement('user');
         $aboutNode->appendChild($userNode);
-        $userNode->appendChild($xml->createElement('fullname', $row[0]));
-        $userNode->appendChild($xml->createElement('email', $row[1]));
+        $userNode->appendChild($xml->createElement('fullname', $about[0]));
+        $userNode->appendChild($xml->createElement('email', $about[1]));
+        $userNode->appendChild($xml->createElement('active', $about[2]));
         $groupNode = $xml->createElement('group');
         $aboutNode->appendChild($groupNode);
-        $groupNode->appendChild($xml->createElement('id', $row[2]));
-        $groupNode->appendChild($xml->createElement('name', $row[3]));
+        $groupNode->appendChild($xml->createElement('id', $about[3]));
+        $groupNode->appendChild($xml->createElement('name', $about[4]));
         return $xml;
     }
     
