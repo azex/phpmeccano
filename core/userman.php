@@ -217,6 +217,30 @@ class UserMan {
         }
         return TRUE;
     }
+    
+    public static function setGroupDesc($groupId, $description) {
+        if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
+            self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('setGroupDesc: function execution was terminated because of using of limited authentication');
+            return FALSE;
+        }
+        if (!is_integer($groupId) || !is_string($description)) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('setGroupDesc: incorrect incoming parameters');
+            return FALSE;
+        }
+        $description = self::$dblink->real_escape_string($description);
+        self::$dblink->query("UPDATE `".MECCANO_TPREF."_core_userman_groups` "
+                . "SET `description`='$description' "
+                . "WHERE `id`=$groupId ;");
+        if (self::$dblink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('setGroupDesc: can\'t set description | '.self::$dblink->error);
+            return FALSE;
+        }
+        if (!self::$dblink->affected_rows) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('setGroupDesc: defined group doesn\'t exist or description was repeated');
+            return FALSE;
+        }
+        return TRUE;
+    }
 
     //user methods
     public static function createUser($username, $password, $email, $groupId, $active = TRUE, $log = TRUE) {
