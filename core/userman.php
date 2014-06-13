@@ -317,6 +317,73 @@ class UserMan {
         }
         return array((int) $totalGroups, (int) $totalPages);
     }
+    
+    public static function getGroups($pageNumber, $totalGroups, $gpp = 20, $orderBy = 'id', $ascent = FALSE) {
+        if (!is_integer($pageNumber) || !is_integer($totalGroups) || !is_integer($gpp)) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getGroups: values of $pageNumber, $totalGroups, $gpp must be integers');
+            return FALSE;
+        }
+        $rightEntry = array('id', 'group', 'time');
+        if (is_string($orderBy)) {
+            if (!in_array($orderBy, $rightEntry, TRUE)) {
+            $orderBy = 'id';
+            }
+        }
+        elseif (is_array($orderBy)) {
+            $arrayLen = count($orderBy);
+            if (count(array_intersect($orderBy, $rightEntry))) {
+                $orderList = '';
+                foreach ($orderBy as $value) {
+                    $orderList = $orderList.$value.'`, `';
+                }
+                $orderBy = substr($orderList, 0, -4);
+            }
+            else {
+                $orderBy = 'id';
+            }
+        }
+        else {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getGroups: value of $orderBy must be string or array');
+            return FALSE;
+        }
+        if ($pageNumber < 1) {
+            $pageNumber = 1;
+        }
+        elseif ($pageNumber>$totalGroups && $totalGroups) {
+            $pageNumber = $totalGroups;
+        }
+        if ($totalGroups < 1) {
+            $totalGroups = 1;
+        }
+        if ($gpp < 1) {
+            $gpp = 1;
+        }
+        if ($ascent == TRUE) {
+            $direct = '';
+        }
+        elseif ($ascent == FALSE) {
+            $direct = 'DESC';
+        }
+        $start = ($pageNumber - 1) * $gpp;
+        $qResult = self::$dblink->query("SELECT  `g`.`id` `id`, `g`.`groupname` `group`, `g`.`creationtime` `time` "
+                . "FROM `".MECCANO_TPREF."_core_userman_groups` `g` "
+                . "ORDER BY `$orderBy` $direct LIMIT $start, $gpp;");
+        if (self::$dblink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getGroups: group info page couldn\'t be gotten | '.self::$dblink->error);
+            return FALSE;
+        }
+        $xml = new \DOMDocument('1.0', 'utf-8');
+        $groupsNode = $xml->createElement('groups');
+        $xml->appendChild($groupsNode);
+        while ($row = $qResult->fetch_array(MYSQL_NUM)) {
+            $groupNode = $xml->createElement('group');
+            $groupsNode->appendChild($groupNode);
+            $groupNode->appendChild($xml->createElement('id', $row[0]));
+            $groupNode->appendChild($xml->createElement('group', $row[1]));
+            $groupNode->appendChild($xml->createElement('time', $row[2]));
+        }
+        return $xml;
+    }
 
     //user methods
     public static function createUser($username, $password, $email, $groupId, $active = TRUE, $log = TRUE) {
