@@ -915,4 +915,62 @@ class UserMan {
         }
         return $xml;
     }
+    
+    public static function getAllUsers($orderBy = 'id', $ascent = FALSE) {
+        $rightEntry = array('id', 'username', 'time', 'name', 'email', 'group', 'gid');
+        if (is_string($orderBy)) {
+            if (!in_array($orderBy, $rightEntry, TRUE)) {
+            $orderBy = 'id';
+            }
+        }
+        elseif (is_array($orderBy)) {
+            $arrayLen = count($orderBy);
+            if (count(array_intersect($orderBy, $rightEntry))) {
+                $orderList = '';
+                foreach ($orderBy as $value) {
+                    $orderList = $orderList.$value.'`, `';
+                }
+                $orderBy = substr($orderList, 0, -4);
+            }
+            else {
+                $orderBy = 'id';
+            }
+        }
+        else {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getAllUsers: value of $orderBy must be string or array');
+            return FALSE;
+        }
+        if ($ascent == TRUE) {
+            $direct = '';
+        }
+        elseif ($ascent == FALSE) {
+            $direct = 'DESC';
+        }
+        $qResult = self::$dblink->query("SELECT `u`.`id` `id`, `u`.`username` `username`, `i`.`fullname` `name`, `i`.`email` `email`, `g`.`groupname` `group`, `u`.`groupid` `gid`, `u`.`creationtime` `time` "
+                . "FROM `".MECCANO_TPREF."_core_userman_users` `u` "
+                . "JOIN `".MECCANO_TPREF."_core_userman_userinfo` `i` "
+                . "ON `u`.`id` = `i`.`id` "
+                . "JOIN `".MECCANO_TPREF."_core_userman_groups` `g` "
+                . "ON `u`.`groupid` = `g`.`id` "
+                . "ORDER BY `$orderBy` $direct ;");
+        if (self::$dblink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getUsers: user info page couldn\'t be gotten | '.self::$dblink->error);
+            return FALSE;
+        }
+        $xml = new \DOMDocument('1.0', 'utf-8');
+        $usersNode = $xml->createElement('users');
+        $xml->appendChild($usersNode);
+        while ($row = $qResult->fetch_array(MYSQL_NUM)) {
+            $userNode = $xml->createElement('user');
+            $usersNode->appendChild($userNode);
+            $userNode->appendChild($xml->createElement('id', $row[0]));
+            $userNode->appendChild($xml->createElement('username', $row[1]));
+            $userNode->appendChild($xml->createElement('fullname', $row[2]));
+            $userNode->appendChild($xml->createElement('email', $row[3]));
+            $userNode->appendChild($xml->createElement('group', $row[4]));
+            $userNode->appendChild($xml->createElement('gid', $row[5]));
+            $userNode->appendChild($xml->createElement('time', $row[6]));
+        }
+        return $xml;
+    }
 }
