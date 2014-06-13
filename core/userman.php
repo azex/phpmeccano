@@ -812,4 +812,32 @@ class UserMan {
         }
         return TRUE;
     }
+    
+    public static function sumUsers($upp = 20) { // upp - users per page
+        if (!is_integer($upp)) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('sumUsers: value of users per page must be integer');
+            return FALSE;
+        }
+        if ($upp < 1) {
+            $upp = 1;
+        }
+        $qResult = self::$dblink->query("SELECT COUNT(`id`) FROM `".MECCANO_TPREF."_core_userman_users` ;");
+        if (self::$dblink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('sumUsers: total users couldn\'t be counted | '.self::$dblink->error);
+            return FALSE;
+        }
+        list($totalUsers) = $qResult->fetch_array(MYSQLI_NUM);
+        $totalPages = $totalUsers/$upp;
+        $remainer = fmod($totalUsers, $upp);
+        if ($totalPages<1 && $totalPages>0) {
+            $totalPages = 1;
+        }
+        elseif ($totalPages>1 && $remainer != 0) {
+            $totalPages += 1;
+        }
+        elseif ($totalPages == 0) {
+            $totalPages = 1;
+        }
+        return array((int) $totalUsers, (int) $totalPages);
+    }
 }
