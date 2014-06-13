@@ -840,4 +840,79 @@ class UserMan {
         }
         return array((int) $totalUsers, (int) $totalPages);
     }
+    
+    public static function getUsers($pageNumber, $totalUsers, $upp = 20, $orderBy = 'id', $ascent = FALSE) {
+        if (!is_integer($pageNumber) || !is_integer($totalUsers) || !is_integer($upp)) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getUsers: values of $pageNumber, $totalUsers, $upp must be integers');
+            return FALSE;
+        }
+        $rightEntry = array('id', 'username', 'time', 'name', 'email', 'group', 'gid');
+        if (is_string($orderBy)) {
+            if (!in_array($orderBy, $rightEntry, TRUE)) {
+            $orderBy = 'id';
+            }
+        }
+        elseif (is_array($orderBy)) {
+            $arrayLen = count($orderBy);
+            if (count(array_intersect($orderBy, $rightEntry))) {
+                $orderList = '';
+                foreach ($orderBy as $value) {
+                    $orderList = $orderList.$value.'`, `';
+                }
+                $orderBy = substr($orderList, 0, -4);
+            }
+            else {
+                $orderBy = 'id';
+            }
+        }
+        else {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getUsers: value of $orderBy must be string or array');
+            return FALSE;
+        }
+        if ($pageNumber < 1) {
+            $pageNumber = 1;
+        }
+        elseif ($pageNumber>$totalUsers && $totalUsers) {
+            $pageNumber = $totalUsers;
+        }
+        if ($totalUsers < 1) {
+            $totalUsers = 1;
+        }
+        if ($upp < 1) {
+            $upp = 1;
+        }
+        if ($ascent == TRUE) {
+            $direct = '';
+        }
+        elseif ($ascent == FALSE) {
+            $direct = 'DESC';
+        }
+        $start = ($pageNumber - 1) * $upp;
+        $qResult = self::$dblink->query("SELECT `u`.`id` `id`, `u`.`username` `username`, `i`.`fullname` `name`, `i`.`email` `email`, `g`.`groupname` `group`, `u`.`groupid` `gid`, `u`.`creationtime` `time` "
+                . "FROM `".MECCANO_TPREF."_core_userman_users` `u` "
+                . "JOIN `".MECCANO_TPREF."_core_userman_userinfo` `i` "
+                . "ON `u`.`id` = `i`.`id` "
+                . "JOIN `".MECCANO_TPREF."_core_userman_groups` `g` "
+                . "ON `u`.`groupid` = `g`.`id` "
+                . "ORDER BY `$orderBy` $direct LIMIT $start, $upp;");
+        if (self::$dblink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getUsers: user info page couldn\'t be gotten | '.self::$dblink->error);
+            return FALSE;
+        }
+        $xml = new \DOMDocument('1.0', 'utf-8');
+        $usersNode = $xml->createElement('users');
+        $xml->appendChild($usersNode);
+        while ($row = $qResult->fetch_array(MYSQL_NUM)) {
+            $userNode = $xml->createElement('user');
+            $usersNode->appendChild($userNode);
+            $userNode->appendChild($xml->createElement('id', $row[0]));
+            $userNode->appendChild($xml->createElement('username', $row[1]));
+            $userNode->appendChild($xml->createElement('fullname', $row[2]));
+            $userNode->appendChild($xml->createElement('email', $row[3]));
+            $userNode->appendChild($xml->createElement('group', $row[4]));
+            $userNode->appendChild($xml->createElement('gid', $row[5]));
+            $userNode->appendChild($xml->createElement('time', $row[6]));
+        }
+        return $xml;
+    }
 }
