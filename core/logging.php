@@ -38,6 +38,8 @@ class Logging {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('newRecord: one or more of received arguments aren\'t strings');
             return FALSE;
         }
+        $event = self::$dblink->real_escape_string($event);
+        $insertion = self::$dblink->real_escape_string($insertion);
         if (isset($_SESSION['core_auth_limited'])) {
             self::$dblink->query("INSERT INTO `".MECCANO_TPREF."_core_log_records` (`did`, `insertion`, `user`) "
                     . "VALUES ((SELECT `id` FROM `".MECCANO_TPREF."_core_log_description`"
@@ -199,8 +201,12 @@ class Logging {
         $sysEvents = array("core_misc",
             "core_newGroup",
             "core_delGroup",
+            "core_enGroup",
+            "core_disGroup",
             "core_newUser",
             "core_delUser",
+            "core_enUser",
+            "core_disUser",
             "core_authLogin",
             "core_clearLog",
             "core_newEvent",
