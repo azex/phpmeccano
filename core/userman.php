@@ -241,6 +241,54 @@ class UserMan {
         }
         return TRUE;
     }
+    
+    public static function delGroup($groupId, $log = TRUE) {
+        if (!is_integer($groupId)) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('delGroup: identifier must be integer');
+            return FALSE;
+        }
+        $qUsers = self::$dblink->query("SELECT COUNT(`id`) "
+                . "FROM `".MECCANO_TPREF."_core_userman_users` "
+                . "WHERE `groupid`=$groupId ;");
+        if (self::$dblink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('delGroup: can\'t check existence of users in the group | '.self::$dblink->error);
+            return FALSE;
+        }
+        $users = $qUsers->fetch_row();
+        if ($users[0]) {
+            self::setErrId(ERROR_SYSTEM_INTERVENTION);            self::setErrExp('delGroup: the group contains users');
+            return FALSE;
+        }
+        if (!Policy::delGroup($groupId)) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp(Policy::errExp());
+            return FALSE;
+        }
+        $sql = array(
+            "SELECT `groupname` "
+            . "FROM `".MECCANO_TPREF."_core_userman_groups` "
+            . "WHERE `id`=$groupId ;", 
+            "DELETE FROM `".MECCANO_TPREF."_core_userman_groups` "
+            . "WHERE `id`=$groupId ;"
+        );
+        foreach ($sql as $key => $value) {
+            $qGroup = self::$dblink->query($value);
+            if (self::$dblink->errno) {
+                self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('delGroup: '.self::$dblink->error);
+                return FALSE;
+            }
+            if (!self::$dblink->affected_rows) {
+                self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('delGroup: defined group doesn\'t exist');
+                return FALSE;
+            }
+            if ($key == 0) {
+                list($groupname) = $qGroup->fetch_row();
+            }
+        }
+        if ($log && !Logging::newRecord('core_delGroup', $groupname." | id: $groupId")) {
+            self::setErrId(ERROR_NOT_CRITICAL);            self::setErrExp(Logging::errExp());
+        }
+        return TRUE;
+    }
 
     //user methods
     public static function createUser($username, $password, $email, $groupId, $active = TRUE, $log = TRUE) {
