@@ -165,7 +165,7 @@ class UserMan {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('aboutGroup: identifier must be integer');
             return FALSE;
         }
-        $qAbout = self::$dblink->query("SELECT `groupname`, `description`, `active` "
+        $qAbout = self::$dblink->query("SELECT `groupname`, `description`, `creationtime`, `active` "
                 . "FROM `".MECCANO_TPREF."_core_userman_groups` "
                 . "WHERE `id`=$groupId");
         if (self::$dblink->errno) {
@@ -182,16 +182,13 @@ class UserMan {
         $about = $qAbout->fetch_row();
         $sum = $qSum->fetch_row();
         $xml = new \DOMDocument('1.0', 'utf-8');
-        $aboutNode = $xml->createElement('about');
+        $aboutNode = $xml->createElement('group');
         $xml->appendChild($aboutNode);
-        $groupNode = $xml->createElement('group');
-        $aboutNode->appendChild($groupNode);
-        $groupNode->appendChild($xml->createElement('name', $about[0]));
-        $groupNode->appendChild($xml->createElement('description', $about[1]));
-        $groupNode->appendChild($xml->createElement('active', $about[2]));
-        $userNode = $xml->createElement('user');
-        $aboutNode->appendChild($userNode);
-        $userNode->appendChild($xml->createElement('sum', $sum[0]));
+        $aboutNode->appendChild($xml->createElement('name', $about[0]));
+        $aboutNode->appendChild($xml->createElement('description', $about[1]));
+        $aboutNode->appendChild($xml->createElement('time', $about[2]));
+        $aboutNode->appendChild($xml->createElement('active', $about[3]));
+        $aboutNode->appendChild($xml->createElement('usum', $sum[0]));
         return $xml;
     }
     
@@ -323,7 +320,7 @@ class UserMan {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getGroups: values of $pageNumber, $totalGroups, $gpp must be integers');
             return FALSE;
         }
-        $rightEntry = array('id', 'group', 'time');
+        $rightEntry = array('id', 'name', 'time', 'active');
         if (is_string($orderBy)) {
             if (!in_array($orderBy, $rightEntry, TRUE)) {
             $orderBy = 'id';
@@ -365,8 +362,8 @@ class UserMan {
             $direct = 'DESC';
         }
         $start = ($pageNumber - 1) * $gpp;
-        $qResult = self::$dblink->query("SELECT  `g`.`id` `id`, `g`.`groupname` `group`, `g`.`creationtime` `time` "
-                . "FROM `".MECCANO_TPREF."_core_userman_groups` `g` "
+        $qResult = self::$dblink->query("SELECT  `id`, `groupname` `name`, `creationtime` `time`, `active` "
+                . "FROM `".MECCANO_TPREF."_core_userman_groups` "
                 . "ORDER BY `$orderBy` $direct LIMIT $start, $gpp;");
         if (self::$dblink->errno) {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getGroups: group info page couldn\'t be gotten | '.self::$dblink->error);
@@ -379,8 +376,9 @@ class UserMan {
             $groupNode = $xml->createElement('group');
             $groupsNode->appendChild($groupNode);
             $groupNode->appendChild($xml->createElement('id', $row[0]));
-            $groupNode->appendChild($xml->createElement('group', $row[1]));
+            $groupNode->appendChild($xml->createElement('name', $row[1]));
             $groupNode->appendChild($xml->createElement('time', $row[2]));
+            $groupNode->appendChild($xml->createElement('active', $row[3]));
         }
         return $xml;
     }
@@ -415,9 +413,8 @@ class UserMan {
         elseif ($ascent == FALSE) {
             $direct = 'DESC';
         }
-        $start = ($pageNumber - 1) * $gpp;
-        $qResult = self::$dblink->query("SELECT  `g`.`id` `id`, `g`.`groupname` `group`, `g`.`creationtime` `time` "
-                . "FROM `".MECCANO_TPREF."_core_userman_groups` `g` "
+        $qResult = self::$dblink->query("SELECT  `id`, `groupname` `name`, `creationtime` `time`, `active` "
+                . "FROM `".MECCANO_TPREF."_core_userman_groups` "
                 . "ORDER BY `$orderBy` $direct ;");
         if (self::$dblink->errno) {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getGroups: group info page couldn\'t be gotten | '.self::$dblink->error);
@@ -430,8 +427,9 @@ class UserMan {
             $groupNode = $xml->createElement('group');
             $groupsNode->appendChild($groupNode);
             $groupNode->appendChild($xml->createElement('id', $row[0]));
-            $groupNode->appendChild($xml->createElement('group', $row[1]));
+            $groupNode->appendChild($xml->createElement('name', $row[1]));
             $groupNode->appendChild($xml->createElement('time', $row[2]));
+            $groupNode->appendChild($xml->createElement('active', $row[3]));
         }
         return $xml;
     }
@@ -527,7 +525,7 @@ class UserMan {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('userExists: incorrect email');
             return FALSE;
         }
-        self::$dblink->query("SELECT `id` "
+        $qId = self::$dblink->query("SELECT `id` "
                 . "FROM `".MECCANO_TPREF."_core_userman_userinfo` "
                 . "WHERE `email`='$email' ;");
         if (self::$dblink->errno) {
@@ -535,7 +533,8 @@ class UserMan {
             return FALSE;
         }
         if (self::$dblink->affected_rows) {
-            return TRUE;
+            $id = $qId->fetch_row();
+            return (int) $id[0];
         }
         return FALSE;
     }
@@ -671,7 +670,7 @@ class UserMan {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('aboutUser: id must be integer');
             return FALSE;
         }
-        $qAbout = self::$dblink->query("SELECT `i`.`fullname`, `i`.`email`, `u`.`active`, `g`.`id`, `g`.`groupname` "
+        $qAbout = self::$dblink->query("SELECT `u`.`username`, `i`.`fullname`, `i`.`email`, `u`.`creationtime`, `u`.`active`, `g`.`id`, `g`.`groupname` "
                 . "FROM `".MECCANO_TPREF."_core_userman_userinfo` `i`, `".MECCANO_TPREF."_core_userman_users` `u` "
                 . "JOIN `".MECCANO_TPREF."_core_userman_groups` `g` "
                 . "ON `u`.`groupid`=`g`.`id` "
@@ -688,17 +687,15 @@ class UserMan {
         }
         $about = $qAbout->fetch_row();
         $xml = new \DOMDocument('1.0', 'utf-8');
-        $aboutNode = $xml->createElement('about');
+        $aboutNode = $xml->createElement('user');
         $xml->appendChild($aboutNode);
-        $userNode = $xml->createElement('user');
-        $aboutNode->appendChild($userNode);
-        $userNode->appendChild($xml->createElement('fullname', $about[0]));
-        $userNode->appendChild($xml->createElement('email', $about[1]));
-        $userNode->appendChild($xml->createElement('active', $about[2]));
-        $groupNode = $xml->createElement('group');
-        $aboutNode->appendChild($groupNode);
-        $groupNode->appendChild($xml->createElement('id', $about[3]));
-        $groupNode->appendChild($xml->createElement('name', $about[4]));
+        $aboutNode->appendChild($xml->createElement('username', $about[0]));
+        $aboutNode->appendChild($xml->createElement('fullname', $about[1]));
+        $aboutNode->appendChild($xml->createElement('email', $about[2]));
+        $aboutNode->appendChild($xml->createElement('time', $about[3]));
+        $aboutNode->appendChild($xml->createElement('active', $about[4]));
+        $aboutNode->appendChild($xml->createElement('gid', $about[5]));
+        $aboutNode->appendChild($xml->createElement('group', $about[6]));
         return $xml;
     }
     
@@ -992,7 +989,7 @@ class UserMan {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getUsers: values of $pageNumber, $totalUsers, $upp must be integers');
             return FALSE;
         }
-        $rightEntry = array('id', 'username', 'time', 'name', 'email', 'group', 'gid');
+        $rightEntry = array('id', 'username', 'time', 'name', 'email', 'group', 'gid', 'active');
         if (is_string($orderBy)) {
             if (!in_array($orderBy, $rightEntry, TRUE)) {
             $orderBy = 'id';
@@ -1034,7 +1031,7 @@ class UserMan {
             $direct = 'DESC';
         }
         $start = ($pageNumber - 1) * $upp;
-        $qResult = self::$dblink->query("SELECT `u`.`id` `id`, `u`.`username` `username`, `i`.`fullname` `name`, `i`.`email` `email`, `g`.`groupname` `group`, `u`.`groupid` `gid`, `u`.`creationtime` `time` "
+        $qResult = self::$dblink->query("SELECT `u`.`id` `id`, `u`.`username` `username`, `i`.`fullname` `name`, `i`.`email` `email`, `g`.`groupname` `group`, `u`.`groupid` `gid`, `u`.`creationtime` `time`, `u`.`active` "
                 . "FROM `".MECCANO_TPREF."_core_userman_users` `u` "
                 . "JOIN `".MECCANO_TPREF."_core_userman_userinfo` `i` "
                 . "ON `u`.`id` = `i`.`id` "
@@ -1058,12 +1055,13 @@ class UserMan {
             $userNode->appendChild($xml->createElement('group', $row[4]));
             $userNode->appendChild($xml->createElement('gid', $row[5]));
             $userNode->appendChild($xml->createElement('time', $row[6]));
+            $userNode->appendChild($xml->createElement('active', $row[7]));
         }
         return $xml;
     }
     
     public static function getAllUsers($orderBy = 'id', $ascent = FALSE) {
-        $rightEntry = array('id', 'username', 'time', 'name', 'email', 'group', 'gid');
+        $rightEntry = array('id', 'username', 'time', 'name', 'email', 'group', 'gid', 'active');
         if (is_string($orderBy)) {
             if (!in_array($orderBy, $rightEntry, TRUE)) {
             $orderBy = 'id';
@@ -1092,7 +1090,7 @@ class UserMan {
         elseif ($ascent == FALSE) {
             $direct = 'DESC';
         }
-        $qResult = self::$dblink->query("SELECT `u`.`id` `id`, `u`.`username` `username`, `i`.`fullname` `name`, `i`.`email` `email`, `g`.`groupname` `group`, `u`.`groupid` `gid`, `u`.`creationtime` `time` "
+        $qResult = self::$dblink->query("SELECT `u`.`id` `id`, `u`.`username` `username`, `i`.`fullname` `name`, `i`.`email` `email`, `g`.`groupname` `group`, `u`.`groupid` `gid`, `u`.`creationtime` `time`, `u`.`active` "
                 . "FROM `".MECCANO_TPREF."_core_userman_users` `u` "
                 . "JOIN `".MECCANO_TPREF."_core_userman_userinfo` `i` "
                 . "ON `u`.`id` = `i`.`id` "
@@ -1116,6 +1114,7 @@ class UserMan {
             $userNode->appendChild($xml->createElement('group', $row[4]));
             $userNode->appendChild($xml->createElement('gid', $row[5]));
             $userNode->appendChild($xml->createElement('time', $row[6]));
+            $userNode->appendChild($xml->createElement('active', $row[7]));
         }
         return $xml;
     }
