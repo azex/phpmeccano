@@ -38,7 +38,7 @@ class Auth {
         return self::$errexp;
     }
     
-    public static function userLogin($username, $password, $useLog = FALSE, $useCookie = TRUE, $cookieTime = 'mounth') {
+    public static function userLogin($username, $password, $log = FALSE, $useCookie = TRUE, $cookieTime = 'month') {
         if (isset($_SESSION['core_auth_userid'])) {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('userLogin: finish current session before starting new');
             return FALSE;
@@ -56,7 +56,7 @@ class Auth {
             'day' => $curTime+86400,
             'week' => $curTime+604800,
             'two-weeks' => $curTime+1209600,
-            'mounth' => $curTime+2592000,
+            'month' => $curTime+2592000,
             'half-year' => $curTime+15552000,
             'year' => $curTime+31536000);
         if (!isset($terms[$cookieTime])) {
@@ -120,7 +120,7 @@ class Auth {
             }
             setcookie('core_auth_usi', $usi, $term, '/');
         }
-        if ($useLog) {
+        if ($log) {
             Logging::newRecord('core_authLogin', $username);
         }
         $_SESSION['core_auth_last_time'] = $authTime;
@@ -200,7 +200,7 @@ class Auth {
         return FALSE;
     }
     
-    public static function getSession($useLog = FALSE) {
+    public static function getSession($log = FALSE) {
         if (!isset($_SESSION['core_auth_userid']) && isset($_COOKIE['core_auth_usi']) && pregIdent($_COOKIE['core_auth_usi'])) {
             $qResult = self::$dblink->query("SELECT `p`.`id`, `p`.`limited`, `u`.`id`, `u`.`username`, `t`.`ip`, `t`.`time` "
                     . "FROM `".MECCANO_TPREF."_core_auth_usi` `s` "
@@ -224,7 +224,7 @@ class Auth {
                 return FALSE;
             }
             list($passId, $limited, $userId, $username, $ip, $authTime) = $qResult->fetch_array(MYSQLI_NUM);
-            if ($useLog) {
+            if ($log) {
                 Logging::newRecord('core_authLogin', $username);
             }
             $_SESSION['core_auth_last_time'] = $authTime;
