@@ -205,11 +205,11 @@ class Policy {
                     . "AND `a`.`groupid`=$groupid ;");
         }
         else {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('funcAccess: access can\'t be disabled for system group');
+            self::setErrId(ERROR_SYSTEM_INTERVENTION);            self::setErrExp('funcAccess: access can\'t be disabled for system group');
             return FALSE;
         }
         if (self::$dblink->errno) {
-            self::setErrId(ERROR_SYSTEM_INTERVENTION);            self::setErrExp('funcAccess: access wasn\'t changed | '.self::$dblink->error);
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('funcAccess: access wasn\'t changed | '.self::$dblink->error);
             return FALSE;
         }
         if (!self::$dblink->affected_rows) {
