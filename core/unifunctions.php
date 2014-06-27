@@ -83,3 +83,39 @@ function xmlTransform($xml, $xsl) {
     }
     return FALSE;
 }
+
+// general information about session
+function authUserId() {
+    if (isset($_SESSION['core_auth_userid'])) {
+        return $_SESSION['core_auth_userid'];
+    }
+    return FALSE;
+}
+
+function authUName() {
+    if (isset($_SESSION['core_auth_uname'])) {
+        return $_SESSION['core_auth_uname'];
+    }
+    return FALSE;
+}
+
+function authLimited() {
+    if (isset($_SESSION['core_auth_limited'])) {
+        return $_SESSION['core_auth_limited'];
+    }
+    return FALSE;
+}
+
+function authLastTime() {
+    if (isset($_SESSION['core_auth_last_time'])) {
+        return $_SESSION['core_auth_last_time'];
+    }
+    return FALSE;
+}
+
+function authLastIp() {
+    if (isset($_SESSION['core_auth_last_ip'])) {
+        return $_SESSION['core_auth_last_ip'];
+    }
+    return FALSE;
+}
