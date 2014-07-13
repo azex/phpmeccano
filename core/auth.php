@@ -94,21 +94,6 @@ class Auth {
             return FALSE;
         }
         list($username, $passId, $limited) = $qResult->fetch_array(MYSQLI_NUM);
-        $qResult = self::$dblink->query("SELECT `ip`, `time` "
-                . "FROM `".MECCANO_TPREF."_core_auth_iptime` "
-                . "WHERE `id`=$userId ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('userLogin: can\'t get ip and time of the last authentication | '.self::$dblink->error);
-            return FALSE;
-        }
-        list($ip, $authTime) = $qResult->fetch_array(MYSQLI_NUM);
-        self::$dblink->query("UPDATE `".MECCANO_TPREF."_core_auth_iptime` "
-                . "SET `ip`='".$_SERVER['REMOTE_ADDR']."', `time`=CURRENT_TIMESTAMP "
-                . "WHERE `id`=$userId ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('userLogin: can\'t update authentication record | '.self::$dblink->error);
-            return FALSE;
-        }
         $usi = makeIdent($username);
         if ($useCookie) {
             $term = $terms[$cookieTime];
@@ -124,9 +109,6 @@ class Auth {
         if ($log) {
             Logging::newRecord('core_authLogin', $username);
         }
-        $_SESSION['core_auth_last_time'] = $authTime;
-        $_SESSION['core_auth_last_ip'] = $ip;
-        //
         $_SESSION['core_auth_uname'] = $username;
         $_SESSION['core_auth_userid'] = (int) $userId;
         $_SESSION['core_auth_limited'] = (int) $limited;
@@ -206,14 +188,12 @@ class Auth {
     public static function getSession($log = FALSE) {
         self::$errid = 0;        self::$errexp = '';
         if (!isset($_SESSION['core_auth_userid']) && isset($_COOKIE['core_auth_usi']) && pregIdent($_COOKIE['core_auth_usi'])) {
-            $qResult = self::$dblink->query("SELECT `p`.`id`, `p`.`limited`, `u`.`id`, `u`.`username`, `t`.`ip`, `t`.`time` "
+            $qResult = self::$dblink->query("SELECT `p`.`id`, `p`.`limited`, `u`.`id`, `u`.`username` "
                     . "FROM `".MECCANO_TPREF."_core_auth_usi` `s` "
                     . "JOIN `".MECCANO_TPREF."_core_userman_userpass` `p` "
                     . "ON `p`.`id`=`s`.`id` "
                     . "JOIN `".MECCANO_TPREF."_core_userman_users` `u` "
                     . "ON `u`.`id`=`p`.`userid` "
-                    . "JOIN `".MECCANO_TPREF."_core_auth_iptime` `t` "
-                    . "ON `t`.`id`=`u`.`id` "
                     . "JOIN `".MECCANO_TPREF."_core_userman_groups` `g` "
                     . "ON `g`.`id`=`u`.`groupid` "
                     . "WHERE `s`.`usi`='".$_COOKIE['core_auth_usi']."' "
@@ -227,13 +207,10 @@ class Auth {
             if (!self::$dblink->affected_rows) {
                 return FALSE;
             }
-            list($passId, $limited, $userId, $username, $ip, $authTime) = $qResult->fetch_array(MYSQLI_NUM);
+            list($passId, $limited, $userId, $username) = $qResult->fetch_array(MYSQLI_NUM);
             if ($log) {
                 Logging::newRecord('core_authLogin', $username);
             }
-            $_SESSION['core_auth_last_time'] = $authTime;
-            $_SESSION['core_auth_last_ip'] = $ip;
-            //
             $_SESSION['core_auth_uname'] = $username;
             $_SESSION['core_auth_userid'] = (int) $userId;
             $_SESSION['core_auth_limited'] = (int) $limited;
