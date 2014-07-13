@@ -39,6 +39,7 @@ class Policy {
     }
     
     public static function installPolicy($policy) {
+        self::$errid = 0;        self::$errexp = '';
         if (!$policy->relaxNGValidate(MECCANO_CORE_DIR.'/policy/schema-v01.rng')) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('createPlicy: incorrect policy structure');
             return FALSE;
@@ -108,6 +109,7 @@ class Policy {
     }
     
     public static function delPolicy($name) {
+        self::$errid = 0;        self::$errexp = '';
         if (!self::pregName($name)) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('delPolicy: name must be string');
             return FALSE;
@@ -136,6 +138,7 @@ class Policy {
     }
     
     public static function addGroup($id) {
+        self::$errid = 0;        self::$errexp = '';
         if (!is_integer($id)) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('addGroup: id must be integer');
             return FALSE;
@@ -164,6 +167,7 @@ class Policy {
     }
     
     public static function delGroup($id) {
+        self::$errid = 0;        self::$errexp = '';
         if (!is_integer($id)) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('delGroup: id must be integer');
             return FALSE;
@@ -182,6 +186,7 @@ class Policy {
     }
     
     public static function funcAccess($name, $func, $groupid, $access = TRUE) {
+        self::$errid = 0;        self::$errexp = '';
         if (!is_integer($groupid) || !self::pregName($name) || !self::pregName($func)) {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('funcAccess: incorect type of incoming parameters');
             return FALSE;
@@ -220,6 +225,7 @@ class Policy {
     }
     
     public static function policyList($name, $groupid) {
+        self::$errid = 0;        self::$errexp = '';
         if (!self::pregName($name) || !is_integer($groupid)) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('policyList: incorect type of incoming parameters');
             return FALSE;
@@ -243,6 +249,7 @@ class Policy {
     }
     
     public static function checkAccess($name, $func, $username) {
+        self::$errid = 0;        self::$errexp = '';
         if (!self::pregName($name) || !self::pregName($func) || !pregUName($username)) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('checkAccess: check incoming parameters');
             return FALSE;

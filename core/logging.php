@@ -34,6 +34,7 @@ class Logging {
     }
     
     public static function newRecord($event, $insertion = '') {
+        self::$errid = 0;        self::$errexp = '';
         if (!is_string($event) || !is_string($insertion)) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('newRecord: one or more of received arguments aren\'t strings');
             return FALSE;
@@ -58,6 +59,7 @@ class Logging {
     }
     
     public static function clearLog() {
+        self::$errid = 0;        self::$errexp = '';
         if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
             self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('clearLog: function execution was terminated because of using of limited authentication');
             return FALSE;
@@ -74,6 +76,7 @@ class Logging {
     }
     
     public static function sumLog($rpp = 20) { // rpp - records per page
+        self::$errid = 0;        self::$errexp = '';
         if (!is_integer($rpp)) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('sumLog: value of records per page must be integer');
             return FALSE;
@@ -102,6 +105,7 @@ class Logging {
     }
     
     public static function getPage($pageNumber, $totalPages, $rpp = 20, $orderBy = 'id', $ascent = FALSE) {
+        self::$errid = 0;        self::$errexp = '';
         if (!is_integer($pageNumber) || !is_integer($totalPages) || !is_integer($rpp)) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getPage: values of $pageNumber, $totalPages, $rpp must be integers');
             return FALSE;
@@ -171,6 +175,7 @@ class Logging {
     }
     
     public static function newEvent($event, $description) {
+        self::$errid = 0;        self::$errexp = '';
         if (!is_string($event) || !is_string($description)) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('newEvent: one or more of received arguments aren\'t strings');
             return FALSE;
@@ -194,6 +199,7 @@ class Logging {
     }
     
     public static function delEvent($event) {
+        self::$errid = 0;        self::$errexp = '';
         if (!is_string($event)) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('delEvent: received argument isn\'t string');
             return FALSE;
@@ -243,6 +249,7 @@ class Logging {
     }
     
     public static function getAll($orderBy = 'id', $ascent = FALSE) {
+        self::$errid = 0;        self::$errexp = '';
         $rightEntry = array('id', 'user', 'event', 'time');
         if (is_string($orderBy)) {
             if (!in_array($orderBy, $rightEntry, TRUE)) {
@@ -250,7 +257,6 @@ class Logging {
             }
         }
         elseif (is_array($orderBy)) {
-            $arrayLen = count($orderBy);
             if (count(array_intersect($orderBy, $rightEntry))) {
                 $orderList = '';
                 foreach ($orderBy as $value) {
