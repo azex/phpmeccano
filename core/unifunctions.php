@@ -105,17 +105,3 @@ function authLimited() {
     }
     return FALSE;
 }
-
-function authLastTime() {
-    if (isset($_SESSION['core_auth_last_time'])) {
-        return $_SESSION['core_auth_last_time'];
-    }
-    return FALSE;
-}
-
-function authLastIp() {
-    if (isset($_SESSION['core_auth_last_ip'])) {
-        return $_SESSION['core_auth_last_ip'];
-    }
-    return FALSE;
-}

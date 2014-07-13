@@ -487,8 +487,6 @@ class UserMan {
         $sql = array(
             'userid' => "INSERT INTO `".MECCANO_TPREF."_core_userman_users` (`username`, `groupid`, `salt`, `active`) "
             . "VALUES ('$username', '$groupId', '$salt', $active) ;",
-            'iptime' => "INSERT INTO `".MECCANO_TPREF."_core_auth_iptime` (`id`, `ip`) "
-            . "VALUES (LAST_INSERT_ID(), '0.0.0.0') ;",
             'mail' => "INSERT INTO `".MECCANO_TPREF."_core_userman_userinfo` (`id`, `email`) "
             . "VALUES (LAST_INSERT_ID(), '$email') ;",
             'passw' => "INSERT INTO `".MECCANO_TPREF."_core_userman_userpass` (`userid`, `password`, `limited`) "
@@ -661,8 +659,6 @@ class UserMan {
             "DELETE FROM `".MECCANO_TPREF."_core_userman_userpass` "
             . "WHERE `userid`=$userId ;",
             "DELETE FROM `".MECCANO_TPREF."_core_userman_userinfo` "
-            . "WHERE `id`=$userId ;",
-            "DELETE FROM `".MECCANO_TPREF."_core_auth_iptime` "
             . "WHERE `id`=$userId ;",
             "DELETE FROM `".MECCANO_TPREF."_core_userman_users` "
             . "WHERE `id`=$userId ;"
