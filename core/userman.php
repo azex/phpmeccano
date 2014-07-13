@@ -38,6 +38,7 @@ class UserMan {
     
     //group methods
     public static function createGroup($groupname, $description, $log = TRUE) {
+        self::$errid = 0;        self::$errexp = '';
         if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
             self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('createGroup: function execution was terminated because of using of limited authentication');
             return FALSE;
@@ -65,6 +66,7 @@ class UserMan {
     }
     
     public static function groupStatus($groupId, $active, $log = TRUE) {
+        self::$errid = 0;        self::$errexp = '';
         if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
             self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('groupStatus: function execution was terminated because of using of limited authentication');
             return FALSE;
@@ -109,6 +111,7 @@ class UserMan {
     }
     
     public static function groupExists($groupname) {
+        self::$errid = 0;        self::$errexp = '';
         if (!pregGName($groupname)) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('groupExists: incorrect group name');
             return FALSE;
@@ -128,6 +131,7 @@ class UserMan {
     }
     
     public static function moveGroupTo($groupId, $destId) {
+        self::$errid = 0;        self::$errexp = '';
         if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
             self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('moveGroupTo: function execution was terminated because of using of limited authentication');
             return FALSE;
@@ -161,6 +165,7 @@ class UserMan {
     }
     
     public static function aboutGroup($groupId) {
+        self::$errid = 0;        self::$errexp = '';
         if (!is_integer($groupId)) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('aboutGroup: identifier must be integer');
             return FALSE;
@@ -193,6 +198,7 @@ class UserMan {
     }
     
     public static function setGroupName($groupId, $groupname) {
+        self::$errid = 0;        self::$errexp = '';
         if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
             self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('setGroupName: function execution was terminated because of using of limited authentication');
             return FALSE;
@@ -216,6 +222,7 @@ class UserMan {
     }
     
     public static function setGroupDesc($groupId, $description) {
+        self::$errid = 0;        self::$errexp = '';
         if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
             self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('setGroupDesc: function execution was terminated because of using of limited authentication');
             return FALSE;
@@ -240,6 +247,7 @@ class UserMan {
     }
     
     public static function delGroup($groupId, $log = TRUE) {
+        self::$errid = 0;        self::$errexp = '';
         if (!is_integer($groupId)) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('delGroup: identifier must be integer');
             return FALSE;
@@ -287,7 +295,8 @@ class UserMan {
         return TRUE;
     }
     
-    public static function sumGroups($gpp = 20) { // upp - users per page
+    public static function sumGroups($gpp = 20) { // gpp - groups per page
+        self::$errid = 0;        self::$errexp = '';
         if (!is_integer($gpp)) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('sumGroups: value of groups per page must be integer');
             return FALSE;
@@ -316,6 +325,7 @@ class UserMan {
     }
     
     public static function getGroups($pageNumber, $totalGroups, $gpp = 20, $orderBy = 'id', $ascent = FALSE) {
+        self::$errid = 0;        self::$errexp = '';
         if (!is_integer($pageNumber) || !is_integer($totalGroups) || !is_integer($gpp)) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getGroups: values of $pageNumber, $totalGroups, $gpp must be integers');
             return FALSE;
@@ -384,6 +394,7 @@ class UserMan {
     }
     
     public static function getAllGroups($orderBy = 'id', $ascent = FALSE) {
+        self::$errid = 0;        self::$errexp = '';
         $rightEntry = array('id', 'group', 'time');
         if (is_string($orderBy)) {
             if (!in_array($orderBy, $rightEntry, TRUE)) {
@@ -391,7 +402,6 @@ class UserMan {
             }
         }
         elseif (is_array($orderBy)) {
-            $arrayLen = count($orderBy);
             if (count(array_intersect($orderBy, $rightEntry))) {
                 $orderList = '';
                 foreach ($orderBy as $value) {
@@ -436,6 +446,7 @@ class UserMan {
 
     //user methods
     public static function createUser($username, $password, $email, $groupId, $active = TRUE, $log = TRUE) {
+        self::$errid = 0;        self::$errexp = '';
         if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
             self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('createUser: function execution was terminated because of using of limited authentication');
             return FALSE;
@@ -502,6 +513,7 @@ class UserMan {
     }
     
     public static function userExists($username) {
+        self::$errid = 0;        self::$errexp = '';
         if (!pregUName($username)) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('userExists: incorrect username');
             return FALSE;
@@ -521,6 +533,7 @@ class UserMan {
     }
     
     public static function mailExists($email) {
+        self::$errid = 0;        self::$errexp = '';
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('userExists: incorrect email');
             return FALSE;
@@ -540,6 +553,7 @@ class UserMan {
     }
     
     public static function userStatus($userId, $active, $log = TRUE) {
+        self::$errid = 0;        self::$errexp = '';
         if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
             self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('userStatus: function execution was terminated because of using of limited authentication');
             return FALSE;
@@ -584,6 +598,7 @@ class UserMan {
     }
     
     public static function moveUserTo($userId, $destId) {
+        self::$errid = 0;        self::$errexp = '';
         if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
             self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('moveUserTo: function execution was terminated because of using of limited authentication');
             return FALSE;
@@ -617,6 +632,7 @@ class UserMan {
     }
     
     public static function delUser($userId, $log = TRUE) {
+        self::$errid = 0;        self::$errexp = '';
         if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
             self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('delUser: function execution was terminated because of using of limited authentication');
             return FALSE;
@@ -666,6 +682,7 @@ class UserMan {
     }
     
     public static function aboutUser($userId) {
+        self::$errid = 0;        self::$errexp = '';
         if (!is_integer($userId)) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('aboutUser: id must be integer');
             return FALSE;
@@ -700,6 +717,7 @@ class UserMan {
     }
     
     public static function userPasswords($userId) {
+        self::$errid = 0;        self::$errexp = '';
         if (!is_integer($userId)) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('userPasswords: id must be integer');
             return FALSE;
@@ -729,6 +747,7 @@ class UserMan {
     }
     
     public static function addPassword($userId, $password, $description='') {
+        self::$errid = 0;        self::$errexp = '';
         if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
             self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('addPassword: function execution was terminated because of using of limited authentication');
             return FALSE;
@@ -769,6 +788,7 @@ class UserMan {
     }
     
     public static function delPassword($passwId, $userId) {
+        self::$errid = 0;        self::$errexp = '';
         if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
             self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('delPassword: function execution was terminated because of using of limited authentication');
             return FALSE;
@@ -809,6 +829,7 @@ class UserMan {
     }
     
     public static function setPassword($passwId, $userId, $password){
+        self::$errid = 0;        self::$errexp = '';
         if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
             self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('setPassword: function execution was terminated because of using of limited authentication');
             return FALSE;
@@ -846,6 +867,7 @@ class UserMan {
     }
     
     public static function setUserName($userId, $username) {
+        self::$errid = 0;        self::$errexp = '';
         if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
             self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('setUserName: function execution was terminated because of using of limited authentication');
             return FALSE;
@@ -869,6 +891,7 @@ class UserMan {
     }
     
     public static function setUserMail($userId, $email) {
+        self::$errid = 0;        self::$errexp = '';
         if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
             self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('setUserMail: function execution was terminated because of using of limited authentication');
             return FALSE;
@@ -892,6 +915,7 @@ class UserMan {
     }
     
     public static function setFullName($userId, $name) {
+        self::$errid = 0;        self::$errexp = '';
         if (!is_integer($userId) || !is_string($name)) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('setFullName: incorrect incoming parameters');
             return FALSE;
@@ -912,6 +936,7 @@ class UserMan {
     }
     
     public static function changePassword($passwId, $userId, $oldPassw, $newPassw){
+        self::$errid = 0;        self::$errexp = '';
         if (!is_integer($passwId) || !is_integer($userId) || !pregPassw($oldPassw) || !pregPassw($newPassw)) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('changePassword: incorrect incoming parameters');
             return FALSE;
@@ -957,6 +982,7 @@ class UserMan {
     }
     
     public static function sumUsers($upp = 20) { // upp - users per page
+        self::$errid = 0;        self::$errexp = '';
         if (!is_integer($upp)) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('sumUsers: value of users per page must be integer');
             return FALSE;
@@ -985,6 +1011,7 @@ class UserMan {
     }
     
     public static function getUsers($pageNumber, $totalUsers, $upp = 20, $orderBy = 'id', $ascent = FALSE) {
+        self::$errid = 0;        self::$errexp = '';
         if (!is_integer($pageNumber) || !is_integer($totalUsers) || !is_integer($upp)) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getUsers: values of $pageNumber, $totalUsers, $upp must be integers');
             return FALSE;
@@ -1061,6 +1088,7 @@ class UserMan {
     }
     
     public static function getAllUsers($orderBy = 'id', $ascent = FALSE) {
+        self::$errid = 0;        self::$errexp = '';
         $rightEntry = array('id', 'username', 'time', 'name', 'email', 'group', 'gid', 'active');
         if (is_string($orderBy)) {
             if (!in_array($orderBy, $rightEntry, TRUE)) {
@@ -1068,7 +1096,6 @@ class UserMan {
             }
         }
         elseif (is_array($orderBy)) {
-            $arrayLen = count($orderBy);
             if (count(array_intersect($orderBy, $rightEntry))) {
                 $orderList = '';
                 foreach ($orderBy as $value) {

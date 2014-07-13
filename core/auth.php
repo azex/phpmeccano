@@ -39,6 +39,7 @@ class Auth {
     }
     
     public static function userLogin($username, $password, $log = FALSE, $useCookie = TRUE, $cookieTime = 'month') {
+        self::$errid = 0;        self::$errexp = '';
         if (isset($_SESSION['core_auth_userid'])) {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('userLogin: finish current session before starting new');
             return FALSE;
@@ -138,6 +139,7 @@ class Auth {
     }
     
     public static function isSession() {
+        self::$errid = 0;        self::$errexp = '';
         if (isset($_SESSION['core_auth_userid'])) {
             if ($_SESSION['core_auth_ip'] != $_SERVER['REMOTE_ADDR'] || $_SESSION['core_auth_uagent'] != $_SERVER['HTTP_USER_AGENT']) {
                 self::userLogout();
@@ -171,6 +173,7 @@ class Auth {
     }
     
     public static function userLogout() {
+        self::$errid = 0;        self::$errexp = '';
         if (isset($_SESSION['core_auth_userid'])) {
             $qResult = self::$dblink->query("SELECT `id` "
                     . "FROM `".MECCANO_TPREF."_core_auth_usi` "
@@ -201,6 +204,7 @@ class Auth {
     }
     
     public static function getSession($log = FALSE) {
+        self::$errid = 0;        self::$errexp = '';
         if (!isset($_SESSION['core_auth_userid']) && isset($_COOKIE['core_auth_usi']) && pregIdent($_COOKIE['core_auth_usi'])) {
             $qResult = self::$dblink->query("SELECT `p`.`id`, `p`.`limited`, `u`.`id`, `u`.`username`, `t`.`ip`, `t`.`time` "
                     . "FROM `".MECCANO_TPREF."_core_auth_usi` `s` "
