@@ -91,7 +91,7 @@ class UserMan {
             return FALSE;
         }
         if (!self::$dblink->affected_rows) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('groupStatus: incorrect group status or group doesn\'t exist');
+            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('groupStatus: incorrect group status or group doesn\'t exist');
             return FALSE;
         }
         if ($log) {
@@ -147,7 +147,7 @@ class UserMan {
             return FALSE;
         }
         if (!self::$dblink->affected_rows) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('moveGroupTo: destination group doesn\'t exist');
+            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('moveGroupTo: destination group doesn\'t exist');
             return FALSE;
         }
         self::$dblink->query("UPDATE `".MECCANO_TPREF."_core_userman_users` "
@@ -173,7 +173,7 @@ class UserMan {
             return FALSE;
         }
         if (!self::$dblink->affected_rows) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('aboutGroup: defined group doesn\'t exist');
+            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('aboutGroup: defined group doesn\'t exist');
             return FALSE;
         }
         $qSum = self::$dblink->query("SELECT COUNT(`id`) "
@@ -209,7 +209,7 @@ class UserMan {
             return FALSE;
         }
         if (!self::$dblink->affected_rows) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('setGroupName: defined group doesn\'t exist or groupname was repeated');
+            self::setErrId(ERROR_ALREADY_EXISTS);            self::setErrExp('setGroupName: defined group doesn\'t exist or groupname was repeated');
             return FALSE;
         }
         return TRUE;
@@ -233,7 +233,7 @@ class UserMan {
             return FALSE;
         }
         if (!self::$dblink->affected_rows) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('setGroupDesc: defined group doesn\'t exist or description was repeated');
+            self::setErrId(ERROR_ALREADY_EXISTS);            self::setErrExp('setGroupDesc: defined group doesn\'t exist or description was repeated');
             return FALSE;
         }
         return TRUE;
@@ -274,7 +274,7 @@ class UserMan {
                 return FALSE;
             }
             if (!self::$dblink->affected_rows) {
-                self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('delGroup: defined group doesn\'t exist');
+                self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('delGroup: defined group doesn\'t exist');
                 return FALSE;
             }
             if ($key == 0) {
@@ -454,7 +454,7 @@ class UserMan {
             return FALSE;
         }
         if (self::$dblink->affected_rows) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('createUser: username or email are already in use');
+            self::setErrId(ERROR_ALREADY_EXISTS);            self::setErrExp('createUser: username or email are already in use');
             return FALSE;
         }
         self::$dblink->query("SELECT `id` "
@@ -465,7 +465,7 @@ class UserMan {
             return FALSE;
         }
         if (!self::$dblink->affected_rows) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('createUser: defined group doesn\'t exist');
+            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('createUser: defined group doesn\'t exist');
             return FALSE;
         }
         $salt = makeSalt($username);
@@ -566,7 +566,7 @@ class UserMan {
             return FALSE;
         }
         if (!self::$dblink->affected_rows) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('userStatus: incorrect user status or group doesn\'t exist');
+            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('userStatus: incorrect user status or group doesn\'t exist');
             return FALSE;
         }
         if ($log) {
@@ -603,7 +603,7 @@ class UserMan {
             return FALSE;
         }
         if (!self::$dblink->affected_rows) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('moveUserTo: destination group doesn\'t exist');
+            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('moveUserTo: destination group doesn\'t exist');
             return FALSE;
         }
         self::$dblink->query("UPDATE `".MECCANO_TPREF."_core_userman_users` "
@@ -633,7 +633,7 @@ class UserMan {
                 . "FROM `".MECCANO_TPREF."_core_userman_users` "
                 . "WHERE `id`=$userId ;");
         if (!self::$dblink->affected_rows) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('delUser: defined user doesn\'t exist');
+            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('delUser: defined user doesn\'t exist');
             return FALSE;
         }
         $sql = array(
@@ -682,7 +682,7 @@ class UserMan {
             return FALSE;
         }
         if (!self::$dblink->affected_rows) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('aboutUser: defined user doesn\'t exist');
+            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('aboutUser: defined user doesn\'t exist');
             return FALSE;
         }
         $about = $qAbout->fetch_row();
@@ -712,7 +712,7 @@ class UserMan {
             return FALSE;
         }
         if (!self::$dblink->affected_rows) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('userPasswords: defined user doesn\'t exist');
+            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('userPasswords: defined user doesn\'t exist');
             return FALSE;
         }
         $xml = new \DOMDocument('1.0', 'utf-8');
@@ -745,7 +745,7 @@ class UserMan {
             return FALSE;
         }
         if (!self::$dblink->affected_rows) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('addPassword: defined user doesn\'t exist');
+            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('addPassword: defined user doesn\'t exist');
             return FALSE;
         }
         list($salt) = $qHash->fetch_row();
@@ -786,7 +786,7 @@ class UserMan {
             return FALSE;
         }
         if (!self::$dblink->affected_rows) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('delPassword: check incoming parameters');
+            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('delPassword: check incoming parameters');
             return FALSE;
         }
         list($limited) = $qLimited->fetch_row();
@@ -825,7 +825,7 @@ class UserMan {
             return FALSE;
         }
         if (!self::$dblink->affected_rows) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('setPassword: defined user doesn\'t exist');
+            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('setPassword: defined user doesn\'t exist');
             return FALSE;
         }
         list($salt) = $qSalt->fetch_row();
@@ -839,7 +839,7 @@ class UserMan {
             return FALSE;
         }
         if (!self::$dblink->affected_rows) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('setPassword: defined password doesn\'t exist or password was repeated');
+            self::setErrId(ERROR_ALREADY_EXISTS);            self::setErrExp('setPassword: defined password doesn\'t exist or password was repeated');
             return FALSE;
         }
         return TRUE;
@@ -862,7 +862,7 @@ class UserMan {
             return FALSE;
         }
         if (!self::$dblink->affected_rows) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('setUserName: defined user doesn\'t exist or username was repeated');
+            self::setErrId(ERROR_ALREADY_EXISTS);            self::setErrExp('setUserName: defined user doesn\'t exist or username was repeated');
             return FALSE;
         }
         return TRUE;
@@ -885,7 +885,7 @@ class UserMan {
             return FALSE;
         }
         if (!self::$dblink->affected_rows) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('setUserMail: defined user doesn\'t exist or email was repeated');
+            self::setErrId(ERROR_ALREADY_EXISTS);            self::setErrExp('setUserMail: defined user doesn\'t exist or email was repeated');
             return FALSE;
         }
         return TRUE;
@@ -905,7 +905,7 @@ class UserMan {
             return FALSE;
         }
         if (!self::$dblink->affected_rows) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('setFullName: defined user doesn\'t exist or name was repeated');
+            self::setErrId(ERROR_ALREADY_EXISTS);            self::setErrExp('setFullName: defined user doesn\'t exist or name was repeated');
             return FALSE;
         }
         return TRUE;
@@ -924,7 +924,7 @@ class UserMan {
             return FALSE;
         }
         if (!self::$dblink->affected_rows) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('changePassword: defined user doesn\'t exist');
+            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('changePassword: defined user doesn\'t exist');
             return FALSE;
         }
         list($salt) = $qSalt->fetch_row();
@@ -950,7 +950,7 @@ class UserMan {
             return FALSE;
         }
         if (!self::$dblink->affected_rows) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('changePassword: defined password doesn\'t exist, new password repeats existing, was received invalid old password or usage of limited authentication');
+            self::setErrId(ERROR_ALREADY_EXISTS);            self::setErrExp('changePassword: defined password doesn\'t exist, new password repeats existing, was received invalid old password or usage of limited authentication');
             return FALSE;
         }
         return TRUE;

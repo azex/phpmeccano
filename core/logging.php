@@ -233,7 +233,7 @@ class Logging {
             }
         }
         if (!self::$dblink->affected_rows) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('delEvent: defined event doesn\'t exist');
+            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('delEvent: defined event doesn\'t exist');
             return FALSE;
         }
         if (!self::newRecord('core_delEvent', $event)) {
