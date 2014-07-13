@@ -62,7 +62,7 @@ class UserMan {
         if ($log && !Logging::newRecord('core_newGroup', $groupname." | id: $groupId")) {
             self::setErrId(ERROR_NOT_CRITICAL);            self::setErrExp(Logging::errExp());
         }
-        return $groupId;
+        return (int) $groupId;
     }
     
     public static function groupStatus($groupId, $active, $log = TRUE) {
@@ -161,7 +161,7 @@ class UserMan {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('moveGroupTo: can\'t move users to another group |'.self::$dblink->error);
             return FALSE;
         }
-        return self::$dblink->affected_rows;
+        return (int) self::$dblink->affected_rows;
     }
     
     public static function aboutGroup($groupId) {
@@ -509,7 +509,7 @@ class UserMan {
         if ($log && !Logging::newRecord('core_newUser', $username." | id: $userid")) {
             self::setErrId(ERROR_NOT_CRITICAL);            self::setErrExp(Logging::errExp());
         }
-        return $userid;
+        return (int) $userid;
     }
     
     public static function userExists($username) {
@@ -628,7 +628,7 @@ class UserMan {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('moveUserTo: can\'t move user to another group |'.self::$dblink->error);
             return FALSE;
         }
-        return self::$dblink->affected_rows;
+        return (int) self::$dblink->affected_rows;
     }
     
     public static function delUser($userId, $log = TRUE) {
@@ -784,7 +784,7 @@ class UserMan {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('addPassword: can\'t create unique session identifier | '.self::$dblink->error);
             return FALSE;
         }
-        return $insertId;
+        return (int) $insertId;
     }
     
     public static function delPassword($passwId, $userId) {
