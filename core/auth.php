@@ -74,7 +74,7 @@ class Auth {
             return FALSE;
         }
         if (!self::$dblink->affected_rows) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('userLogin: invalid username or user (group) is disabled');
+            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('userLogin: invalid username or user (group) is disabled');
             return FALSE;
         }
         list($userId, $salt) = $qResult->fetch_array(MYSQL_NUM);
@@ -89,7 +89,7 @@ class Auth {
             return FALSE;
         }
         if (!self::$dblink->affected_rows) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('userLogin: invalid password');
+            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('userLogin: invalid password');
             return FALSE;
         }
         list($username, $passId, $limited) = $qResult->fetch_array(MYSQLI_NUM);

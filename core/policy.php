@@ -129,7 +129,7 @@ class Policy {
             }
         }
         if (!self::$dblink->affected_rows) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('delPolicy: defined name doesn\'t exist');
+            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('delPolicy: defined name doesn\'t exist');
             return FALSE;
         }
         return TRUE;
@@ -147,7 +147,7 @@ class Policy {
                 . "FROM `".MECCANO_TPREF."_core_policy_access` `a` "
                 . "WHERE `a`.`groupid`=$id LIMIT 1) ;");
         if (!self::$dblink->affected_rows) {
-            self::setErrId(ERROR_INCORRECT_DATA);        self::setErrExp('addGroup: defined group doesn\'t exist or already was added');
+            self::setErrId(ERROR_ALREADY_EXISTS);        self::setErrExp('addGroup: defined group doesn\'t exist or already was added');
             return FALSE;
         }
         $qDbFuncs = self::$dblink->query("SELECT `id` "
@@ -175,7 +175,7 @@ class Policy {
             return FALSE;
         }
         if (!self::$dblink->affected_rows) {
-            self::setErrId(ERROR_INCORRECT_DATA);        self::setErrExp('delGroup: defined group doesn\'t exist');
+            self::setErrId(ERROR_NOT_FOUND);        self::setErrExp('delGroup: defined group doesn\'t exist');
             return FALSE;
         }
         return TRUE;
@@ -213,7 +213,7 @@ class Policy {
             return FALSE;
         }
         if (!self::$dblink->affected_rows) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('funcAccess: plugin name, function or group don\'t exist or access flag wasn\'t changed');
+            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('funcAccess: plugin name, function or group don\'t exist or access flag wasn\'t changed');
             return FALSE;
         }
         return TRUE;
@@ -236,7 +236,7 @@ class Policy {
             return FALSE;
         }
         if (!self::$dblink->affected_rows) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('policyList: name or group don\'t exist');
+            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('policyList: name or group don\'t exist');
             return FALSE;
         }
         return $qList;
@@ -266,7 +266,7 @@ class Policy {
             return FALSE;
         }
         if (!self::$dblink->affected_rows) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('checkAccess: policy was not found');
+            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('checkAccess: policy was not found');
             return FALSE;
         }
         list($access) = $qAccess->fetch_row();
