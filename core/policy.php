@@ -24,7 +24,7 @@ class Policy {
     }
     
     private static function pregName($name) {
-        if (is_string($name) && preg_match('/^[a-zA-Z_]{1,30}$/', $name)) {
+        if (is_string($name) && preg_match('/^[a-zA-Z\d_]{3,30}$/', $name)) {
             return TRUE;
         }
         return FALSE;
@@ -67,6 +67,12 @@ class Policy {
                 self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('installPolicy: can\'t delete group policy | '.self::$dblink->error);
                 return FALSE;
             }
+            self::$dblink->query("DELETE FROM `".MECCANO_TPREF."_core_policy_nosession` "
+                    . "WHERE `funcid`=$funcId ;");
+            if (self::$dblink->errno) {
+                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('installPolicy: can\'t delete policy for inactive session | '.self::$dblink->error);
+                return FALSE;
+            }
             self::$dblink->query("DELETE FROM `".MECCANO_TPREF."_core_policy_summary_list` "
                     . "WHERE `id`=$funcId ;");
             if (self::$dblink->errno) {
@@ -90,6 +96,12 @@ class Policy {
                 return FALSE;
             }
             $insertId = self::$dblink->insert_id;
+            self::$dblink->query("INSERT INTO `".MECCANO_TPREF."_core_policy_nosession` (`funcid`, `access`) "
+                    . "VALUES ($insertId, 0) ;");
+            if (self::$dblink->errno) {
+                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('installPolicy: can\'t install policy for inactive session | '.self::$dblink->error);
+                return FALSE;
+            }
             foreach ($groupIds as $groupId) {
                 if ($groupId == 1) {
                     $access = 1;
@@ -116,11 +128,14 @@ class Policy {
         }
         $plugName = self::$dblink->real_escape_string($name);
         $queries = array(
-            "DELETE FROM `".MECCANO_TPREF."_core_policy_access` "
-            . "WHERE `funcid` "
-            . "IN (SELECT `id` "
-            . "FROM `".MECCANO_TPREF."_core_policy_summary_list` "
-            . "WHERE `name`='$plugName') ;",
+            "DELETE `a` FROM `".MECCANO_TPREF."_core_policy_access` `a` "
+            . "JOIN `".MECCANO_TPREF."_core_policy_summary_list` `s` "
+            . "ON `s`.`id`=`a`.`funcid` "
+            . "WHERE `s`.`name`='$plugName' ;",
+            "DELETE `n` FROM `".MECCANO_TPREF."_core_policy_nosession` `n` "
+            . "JOIN `".MECCANO_TPREF."_core_policy_summary_list` `s` "
+            . "ON `s`.`id`=`n`.`funcid` "
+            . "WHERE `s`.`name`='$plugName' ;",
             "DELETE FROM `".MECCANO_TPREF."_core_policy_summary_list` "
             . "WHERE `name`='$plugName' ;");
         foreach ($queries as $value) {
@@ -187,11 +202,25 @@ class Policy {
     
     public static function funcAccess($name, $func, $groupid, $access = TRUE) {
         self::$errid = 0;        self::$errexp = '';
-        if (!is_integer($groupid) || !self::pregName($name) || !self::pregName($func)) {
+        if (!(is_integer($groupid) || is_bool($groupid)) || !self::pregName($name) || !self::pregName($func)) {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('funcAccess: incorect type of incoming parameters');
             return FALSE;
         }
-        if ($access) {
+        if (is_bool($groupid)) {
+            if ($access) {
+                $access = 1;
+            }
+            else {
+                $access = 0;
+            }
+            self::$dblink->query("UPDATE `".MECCANO_TPREF."_core_policy_nosession` `n` "
+                    . "JOIN `".MECCANO_TPREF."_core_policy_summary_list` `s` "
+                    . "ON `n`.`funcid`=`s`.`id` "
+                    . "SET `n`.`access`=$access "
+                    . "WHERE `s`.`func`='$func' "
+                    . "AND  `s`.`name`='$name' ;");
+        }
+        elseif ($access) {
             self::$dblink->query("UPDATE `".MECCANO_TPREF."_core_policy_access` `a` "
                     . "JOIN `".MECCANO_TPREF."_core_policy_summary_list` `s` "
                     . "ON `a`.`funcid`=`s`.`id` "
@@ -226,17 +255,26 @@ class Policy {
     
     public static function policyList($name, $groupid) {
         self::$errid = 0;        self::$errexp = '';
-        if (!self::pregName($name) || !is_integer($groupid)) {
+        if (!self::pregName($name) || !(is_integer($groupid) || is_bool($groupid))) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('policyList: incorect type of incoming parameters');
             return FALSE;
         }
         $plugName =  self::$dblink->real_escape_string($name);
-        $qList = self::$dblink->query("SELECT `s`.`func`, `a`.`access` "
-                . "FROM `".MECCANO_TPREF."_core_policy_summary_list` `s` "
-                . "JOIN `".MECCANO_TPREF."_core_policy_access` `a` "
-                . "ON `s`.`id`=`a`.`funcid` "
-                . "WHERE `s`.`name`='$plugName' "
-                . "AND `a`.`groupid`=$groupid ;");
+        if (is_bool($groupid)) {
+            $qList = self::$dblink->query("SELECT `s`.`func`, `n`.`access` "
+                    . "FROM `".MECCANO_TPREF."_core_policy_summary_list` `s` "
+                    . "JOIN `".MECCANO_TPREF."_core_policy_nosession` `n` "
+                    . "ON `s`.`id`=`n`.`funcid` "
+                    . "WHERE `s`.`name`='$plugName' ;");
+        }
+        else {
+            $qList = self::$dblink->query("SELECT `s`.`func`, `a`.`access` "
+                    . "FROM `".MECCANO_TPREF."_core_policy_summary_list` `s` "
+                    . "JOIN `".MECCANO_TPREF."_core_policy_access` `a` "
+                    . "ON `s`.`id`=`a`.`funcid` "
+                    . "WHERE `s`.`name`='$plugName' "
+                    . "AND `a`.`groupid`=$groupid ;");
+        }
         if (self::$dblink->errno) {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('policyList: something went wrong | '.self::$dblink->error);
             return FALSE;
@@ -248,26 +286,35 @@ class Policy {
         return $qList;
     }
     
-    public static function checkAccess($name, $func, $username) {
+    public static function checkAccess($name, $func) {
         self::$errid = 0;        self::$errexp = '';
-        if (!self::pregName($name) || !self::pregName($func) || !pregUName($username)) {
+        if (!self::pregName($name) || !self::pregName($func)) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('checkAccess: check incoming parameters');
             return FALSE;
         }
-        $qAccess = self::$dblink->query("SELECT `a`.`access` "
-                . "FROM `".MECCANO_TPREF."_core_policy_access` `a` "
-                . "JOIN `".MECCANO_TPREF."_core_policy_summary_list` `s` "
-                . "ON `a`.`funcid`=`s`.`id` "
-                . "JOIN `".MECCANO_TPREF."_core_userman_groups` `g` "
-                . "ON `a`.`groupid`=`g`.`id` "
-                . "JOIN `".MECCANO_TPREF."_core_userman_users` `u` "
-                . "ON `g`.`id`=`u`.`groupid` "
-                . "WHERE `u`.`username`='$username' "
-                . "AND `u`.`active`=1 "
-                . "AND `g`.`active`=1 "
-                . "AND `s`.`name`='$name' "
-                . "AND `s`.`func`='$func' "
-                . "LIMIT 1 ;");
+        if (isset($_SESSION['core_auth_userid'])) {
+            $qAccess = self::$dblink->query("SELECT `a`.`access` "
+                    . "FROM `".MECCANO_TPREF."_core_policy_access` `a` "
+                    . "JOIN `".MECCANO_TPREF."_core_policy_summary_list` `s` "
+                    . "ON `a`.`funcid`=`s`.`id` "
+                    . "JOIN `".MECCANO_TPREF."_core_userman_groups` `g` "
+                    . "ON `a`.`groupid`=`g`.`id` "
+                    . "JOIN `".MECCANO_TPREF."_core_userman_users` `u` "
+                    . "ON `g`.`id`=`u`.`groupid` "
+                    . "WHERE `u`.`id`=".$_SESSION['core_auth_userid']." "
+                    . "AND `s`.`name`='$name' "
+                    . "AND `s`.`func`='$func' "
+                    . "LIMIT 1 ;");
+        }
+        else {
+            $qAccess = self::$dblink->query("SELECT `n`.`access` "
+                    . "FROM `".MECCANO_TPREF."_core_policy_nosession` `n` "
+                    . "JOIN `".MECCANO_TPREF."_core_policy_summary_list` `s` "
+                    . "ON `n`.`funcid`=`s`.`id` "
+                    . "WHERE `s`.`name`='$name' "
+                    . "AND `s`.`func`='$func' "
+                    . "LIMIT 1 ;");
+        }
         if (self::$dblink->errno) {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('checkAccess: something went wrong | '.self::$dblink->error);
             return FALSE;
