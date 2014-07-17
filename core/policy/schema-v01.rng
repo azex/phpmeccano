@@ -17,8 +17,7 @@
     </start>
     <define name="plugFuncName">
         <data type="string">
-            <param name="minLength">3</param>
-            <param name="maxLength">30</param>
+            <param name="pattern">[a-zA-Z0-9_]{3,30}</param>
         </data>
     </define>
 </grammar>
