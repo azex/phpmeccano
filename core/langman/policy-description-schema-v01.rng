@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+
+<grammar datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes" xmlns="http://relaxng.org/ns/structure/1.0" >
+    <start>
+        <element name="description">
+            <attribute name="plugin">
+                <ref name="plugFuncName" />
+            </attribute>
+            <oneOrMore>
+                <element name="function">
+                    <attribute name="name">
+                        <ref name="plugFuncName" />
+                    </attribute>
+                    <oneOrMore>
+                        <element name="language">
+                            <attribute name="code">
+                                <data type="string">
+                                    <param name="pattern">[a-z]{2}-[A-Z]{2}</param>
+                                </data>
+                            </attribute>
+                            <element name="short">
+                                <data type="string">
+                                    <param name="minLength">1</param>
+                                    <param name="maxLength">128</param>
+                                </data>
+                            </element>
+                            <element name="detailed">
+                                <data type="string">
+                                    <param name="minLength">0</param>
+                                    <param name="maxLength">1024</param>
+                                </data>
+                            </element>
+                        </element>
+                    </oneOrMore>
+                </element>
+            </oneOrMore>
+        </element>
+    </start>
+    <define name="plugFuncName">
+        <data type="string">
+            <param name="pattern">[a-zA-Z0-9_]{3,30}</param>
+        </data>
+    </define>
+</grammar>

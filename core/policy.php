@@ -22,13 +22,6 @@ class Policy {
     private static function setErrExp($exp) {
         self::$errexp = $exp;
     }
-    
-    private static function pregName($name) {
-        if (is_string($name) && preg_match('/^[a-zA-Z\d_]{3,30}$/', $name)) {
-            return TRUE;
-        }
-        return FALSE;
-    }
 
     public static function errId() {
         return self::$errid;
@@ -61,6 +54,12 @@ class Policy {
         $newFuncs = array_diff($functions, $dbFuncs);
         // deleting of outdated policies
         foreach ($oldFuncs as $funcId) {
+            self::$dblink->query("DELETE FROM `".MECCANO_TPREF."_core_langman_policy_description` "
+                    . "WHERE `policyid`=$funcId ;");
+            if (self::$dblink->errno) {
+                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('installPolicy: can\'t delete policy description | '.self::$dblink->error);
+                return FALSE;
+            }
             self::$dblink->query("DELETE FROM `".MECCANO_TPREF."_core_policy_access` "
                     . "WHERE `funcid`=$funcId ;");
             if (self::$dblink->errno) {
@@ -122,12 +121,16 @@ class Policy {
     
     public static function delPolicy($name) {
         self::$errid = 0;        self::$errexp = '';
-        if (!self::pregName($name)) {
+        if (!pregPlugin($name)) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('delPolicy: name must be string');
             return FALSE;
         }
         $plugName = self::$dblink->real_escape_string($name);
         $queries = array(
+            "DELETE `d` FROM `".MECCANO_TPREF."_core_langman_policy_description` `d` "
+            . "JOIN `".MECCANO_TPREF."_core_policy_summary_list` `s` "
+            . "ON `s`.`id`=`d`.`policyid` "
+            . "WHERE `s`.`name`='$plugName' ;",
             "DELETE `a` FROM `".MECCANO_TPREF."_core_policy_access` `a` "
             . "JOIN `".MECCANO_TPREF."_core_policy_summary_list` `s` "
             . "ON `s`.`id`=`a`.`funcid` "
@@ -202,7 +205,7 @@ class Policy {
     
     public static function funcAccess($name, $func, $groupid, $access = TRUE) {
         self::$errid = 0;        self::$errexp = '';
-        if (!(is_integer($groupid) || is_bool($groupid)) || !self::pregName($name) || !self::pregName($func)) {
+        if (!(is_integer($groupid) || is_bool($groupid)) || !pregPlugin($name) || !pregPlugin($func)) {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('funcAccess: incorect type of incoming parameters');
             return FALSE;
         }
@@ -253,42 +256,9 @@ class Policy {
         return TRUE;
     }
     
-    public static function policyList($name, $groupid) {
-        self::$errid = 0;        self::$errexp = '';
-        if (!self::pregName($name) || !(is_integer($groupid) || is_bool($groupid))) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('policyList: incorect type of incoming parameters');
-            return FALSE;
-        }
-        $plugName =  self::$dblink->real_escape_string($name);
-        if (is_bool($groupid)) {
-            $qList = self::$dblink->query("SELECT `s`.`func`, `n`.`access` "
-                    . "FROM `".MECCANO_TPREF."_core_policy_summary_list` `s` "
-                    . "JOIN `".MECCANO_TPREF."_core_policy_nosession` `n` "
-                    . "ON `s`.`id`=`n`.`funcid` "
-                    . "WHERE `s`.`name`='$plugName' ;");
-        }
-        else {
-            $qList = self::$dblink->query("SELECT `s`.`func`, `a`.`access` "
-                    . "FROM `".MECCANO_TPREF."_core_policy_summary_list` `s` "
-                    . "JOIN `".MECCANO_TPREF."_core_policy_access` `a` "
-                    . "ON `s`.`id`=`a`.`funcid` "
-                    . "WHERE `s`.`name`='$plugName' "
-                    . "AND `a`.`groupid`=$groupid ;");
-        }
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('policyList: something went wrong | '.self::$dblink->error);
-            return FALSE;
-        }
-        if (!self::$dblink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('policyList: name or group don\'t exist');
-            return FALSE;
-        }
-        return $qList;
-    }
-    
     public static function checkAccess($name, $func) {
         self::$errid = 0;        self::$errexp = '';
-        if (!self::pregName($name) || !self::pregName($func)) {
+        if (!pregPlugin($name) || !pregPlugin($func)) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('checkAccess: check incoming parameters');
             return FALSE;
         }

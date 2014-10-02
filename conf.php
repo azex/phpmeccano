@@ -12,3 +12,6 @@ define('MECCANO_TPREF', 'meccano');
 // system folders
 define('MECCANO_ROOT_DIR', dirname(__FILE__));
 define('MECCANO_CORE_DIR', MECCANO_ROOT_DIR.'/core');
+
+//default language
+define('MECCANO_DEF_LANG', 'en-US');
