@@ -266,7 +266,7 @@ class LangMan {
         $plugName = $titles->getElementsByTagName('titles')->item(0)->getAttribute('plugin');
         // checking if plugin exists
         $qPlugin = self::$dblink->query("SELECT `id` "
-                . "FROM `".MECCANO_TPREF."_core_install_plugins` "
+                . "FROM `".MECCANO_TPREF."_core_plugins_install` "
                 . "WHERE `name`='$plugName' ;");
         if (self::$dblink->errno) {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('installTitles: '.self::$dblink->error);
@@ -289,7 +289,7 @@ class LangMan {
             // renaming of the section
             if ($sectionOldName = $sectionNode->getAttribute('oldname')) {
                 self::$dblink->query("UPDATE `".MECCANO_TPREF."_core_langman_title_sections` `s` "
-                        . "JOIN `".MECCANO_TPREF."_core_install_plugins` `p` "
+                        . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
                         . "ON `s`.`plugid`=`p`.`id` "
                         . "SET `s`.`section`='$sectionName' "
                         . "WHERE `p`.`name`='$plugName' "
@@ -314,7 +314,7 @@ class LangMan {
         // getting list of installed section if the the pugin is installed
         $qSections = self::$dblink->query("SELECT `s`.`section`, `s`.`static`, `s`.`id` "
                 . "FROM `".MECCANO_TPREF."_core_langman_title_sections` `s` "
-                . "JOIN `".MECCANO_TPREF."_core_install_plugins` `p` "
+                . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `p`.`name`='$plugName' ;");
         $dbSectionTypes = array();
@@ -474,7 +474,7 @@ class LangMan {
         $plugName = $texts->getElementsByTagName('texts')->item(0)->getAttribute('plugin');
         // checking if plugin exists
         $qPlugin = self::$dblink->query("SELECT `id` "
-                . "FROM `".MECCANO_TPREF."_core_install_plugins` "
+                . "FROM `".MECCANO_TPREF."_core_plugins_install` "
                 . "WHERE `name`='$plugName' ;");
         if (self::$dblink->errno) {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('installTexts: '.self::$dblink->error);
@@ -497,7 +497,7 @@ class LangMan {
             // renaming of the section
             if ($sectionOldName = $sectionNode->getAttribute('oldname')) {
                 self::$dblink->query("UPDATE `".MECCANO_TPREF."_core_langman_text_sections` `s` "
-                        . "JOIN `".MECCANO_TPREF."_core_install_plugins` `p` "
+                        . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
                         . "ON `s`.`plugid`=`p`.`id` "
                         . "SET `s`.`section`='$sectionName' "
                         . "WHERE `p`.`name`='$plugName' "
@@ -524,7 +524,7 @@ class LangMan {
         // getting list of installed section if the the pugin is installed
         $qSections = self::$dblink->query("SELECT `s`.`section`, `s`.`static`, `s`.`id` "
                 . "FROM `".MECCANO_TPREF."_core_langman_text_sections` `s` "
-                . "JOIN `".MECCANO_TPREF."_core_install_plugins` `p` "
+                . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `p`.`name`='$plugName' ;");
         $dbSectionTypes = array();
@@ -674,7 +674,7 @@ class LangMan {
         }
         // checking if plugin exists
         $qPlugin = self::$dblink->query("SELECT `id` "
-                . "FROM `".MECCANO_TPREF."_core_install_plugins` "
+                . "FROM `".MECCANO_TPREF."_core_plugins_install` "
                 . "WHERE `name`='$name' ;");
         if (self::$dblink->errno) {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('delPlugin: '.self::$dblink->error);
@@ -691,17 +691,17 @@ class LangMan {
             . "ON `n`.`id`=`t`.`nameid` "
             . "JOIN `".MECCANO_TPREF."_core_langman_title_sections` `s` "
             . "ON `s`.`id`=`n`.`sid` "
-            . "JOIN `".MECCANO_TPREF."_core_install_plugins` `p` "
+            . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
             . "ON `p`.`id`=`s`.`plugid` "
             . "WHERE `p`.`name`='$name' ;", 
             "DELETE `n` FROM `".MECCANO_TPREF."_core_langman_title_names` `n` "
             . "JOIN `".MECCANO_TPREF."_core_langman_title_sections` `s` "
             . "ON `s`.`id`=`n`.`sid` "
-            . "JOIN `".MECCANO_TPREF."_core_install_plugins` `p` "
+            . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
             . "ON `p`.`id`=`s`.`plugid` "
             . "WHERE `p`.`name`='$name' ;", 
             "DELETE `s` FROM `".MECCANO_TPREF."_core_langman_title_sections` `s` "
-            . "JOIN `".MECCANO_TPREF."_core_install_plugins` `p` "
+            . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
             . "ON `p`.`id`=`s`.`plugid` "
             . "WHERE `p`.`name`='$name' ;", 
             "DELETE `t` FROM `".MECCANO_TPREF."_core_langman_texts` `t` "
@@ -709,17 +709,17 @@ class LangMan {
             . "ON `n`.`id`=`t`.`nameid` "
             . "JOIN `".MECCANO_TPREF."_core_langman_text_sections` `s` "
             . "ON `s`.`id`=`n`.`sid` "
-            . "JOIN `".MECCANO_TPREF."_core_install_plugins` `p` "
+            . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
             . "ON `p`.`id`=`s`.`plugid` "
             . "WHERE `p`.`name`='$name' ;", 
             "DELETE `n` FROM `".MECCANO_TPREF."_core_langman_text_names` `n` "
             . "JOIN `".MECCANO_TPREF."_core_langman_text_sections` `s` "
             . "ON `s`.`id`=`n`.`sid` "
-            . "JOIN `".MECCANO_TPREF."_core_install_plugins` `p` "
+            . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
             . "ON `p`.`id`=`s`.`plugid` "
             . "WHERE `p`.`name`='$name' ;", 
             "DELETE `s` FROM `".MECCANO_TPREF."_core_langman_text_sections` `s` "
-            . "JOIN `".MECCANO_TPREF."_core_install_plugins` `p` "
+            . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
             . "ON `p`.`id`=`s`.`plugid` "
             . "WHERE `p`.`name`='$name' ;"
         );
@@ -741,7 +741,7 @@ class LangMan {
         }
         // checking if plugin exists
         $qPlugin = self::$dblink->query("SELECT `id` "
-                . "FROM `".MECCANO_TPREF."_core_install_plugins` "
+                . "FROM `".MECCANO_TPREF."_core_plugins_install` "
                 . "WHERE `name`='$plugin' ;");
         if (self::$dblink->errno) {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('delPlugin: '.self::$dblink->error);
@@ -807,7 +807,7 @@ class LangMan {
         }
         // checking if plugin exists
         $qPlugin = self::$dblink->query("SELECT `id` "
-                . "FROM `".MECCANO_TPREF."_core_install_plugins` "
+                . "FROM `".MECCANO_TPREF."_core_plugins_install` "
                 . "WHERE `name`='$plugin' ;");
         if (self::$dblink->errno) {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('delPlugin: '.self::$dblink->error);
@@ -872,7 +872,7 @@ class LangMan {
         }
         $qIdentifiers = self::$dblink->query("SELECT `s`.`id` "
                 . "FROM `".MECCANO_TPREF."_core_langman_title_sections` `s` "
-                . "JOIN `".MECCANO_TPREF."_core_install_plugins` `p` "
+                . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `s`.`section`='$section' "
                 . "AND `s`.`static`=0 "
@@ -938,7 +938,7 @@ class LangMan {
         }
         $qIdentifiers = self::$dblink->query("SELECT `s`.`id` "
                 . "FROM `".MECCANO_TPREF."_core_langman_text_sections` `s` "
-                . "JOIN `".MECCANO_TPREF."_core_install_plugins` `p` "
+                . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `s`.`section`='$section' "
                 . "AND `s`.`static`=0 "
@@ -1006,7 +1006,7 @@ class LangMan {
                 . "FROM `".MECCANO_TPREF."_core_langman_title_names` `n` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_title_sections` `s` "
                 . "ON `s`.`id`=`n`.`sid` "
-                . "JOIN `".MECCANO_TPREF."_core_install_plugins` `p` "
+                . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `n`.`name`='$name'"
                 . "AND `s`.`section`='$section' "
@@ -1077,7 +1077,7 @@ class LangMan {
                 . "FROM `".MECCANO_TPREF."_core_langman_text_names` `n` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_text_sections` `s` "
                 . "ON `s`.`id`=`n`.`sid` "
-                . "JOIN `".MECCANO_TPREF."_core_install_plugins` `p` "
+                . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `n`.`name`='$name'"
                 . "AND `s`.`section`='$section' "
@@ -1139,9 +1139,9 @@ class LangMan {
         return TRUE;
     }
     
-    public static function updateTitle($tid, $title) {
+    public static function updateTitle($id, $title) {
         self::$errid = 0;        self::$errexp = '';
-        if (!is_integer($tid) || !is_string($title)) {
+        if (!is_integer($id) || !is_string($title)) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('updateTitle: incorrect incoming parameters');
             return FALSE;
         }
@@ -1152,7 +1152,7 @@ class LangMan {
                 . "JOIN `".MECCANO_TPREF."_core_langman_title_sections` `s` "
                 . "ON `s`.`id`=`n`.`sid` "
                 . "SET `t`.`title`='$title' "
-                . "WHERE `t`.`id`=$tid "
+                . "WHERE `t`.`id`=$id "
                 . "AND `s`.`static`=0 ;");
         if (self::$dblink->errno) {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('updateTitle: can\'t update title | '.self::$dblink->error);
@@ -1165,9 +1165,9 @@ class LangMan {
         return TRUE;
     }
     
-    public static function updateText($tid, $title, $document) {
+    public static function updateText($id, $title, $document) {
         self::$errid = 0;        self::$errexp = '';
-        if (!is_integer($tid) || !is_string($title) || !is_string($document)) {
+        if (!is_integer($id) || !is_string($title) || !is_string($document)) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('updateText: incorrect incoming parameters');
             return FALSE;
         }
@@ -1179,7 +1179,7 @@ class LangMan {
                 . "JOIN `".MECCANO_TPREF."_core_langman_text_sections` `s` "
                 . "ON `s`.`id`=`n`.`sid` "
                 . "SET `t`.`title`='$title', `t`.`document`='$document' "
-                . "WHERE `t`.`id`=$tid "
+                . "WHERE `t`.`id`=$id "
                 . "AND `s`.`static`=0 ;");
         if (self::$dblink->errno) {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('updateText: can\'t update text | '.self::$dblink->error);
@@ -1209,7 +1209,7 @@ class LangMan {
                 . "ON `n`.`id`=`t`.`nameid` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_title_sections` `s` "
                 . "ON `s`.`id`=`n`.`sid` "
-                . "JOIN `".MECCANO_TPREF."_core_install_plugins` `p` "
+                . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `l`.`code`='$code' "
                 . "AND `n`.`name`='$name' "
@@ -1244,7 +1244,7 @@ class LangMan {
                 . "ON `n`.`id`=`t`.`nameid` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_text_sections` `s` "
                 . "ON `s`.`id`=`n`.`sid` "
-                . "JOIN `".MECCANO_TPREF."_core_install_plugins` `p` "
+                . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `l`.`code`='$code' "
                 . "AND `n`.`name`='$name' "
@@ -1262,10 +1262,10 @@ class LangMan {
         return array('title' => $title, 'document' => $document, 'created' => $created, 'edited' => $edited);
     }
     
-    public static function getTitlesBySection($section, $plugin, $code = NULL) {
+    public static function getTitles($section, $plugin, $code = NULL) {
         self::$errid = 0;        self::$errexp = '';
         if (!pregName40($section) || !pregName40($plugin) || !(is_null($code) || pregLang($code))) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getTitlesBySection: incorrect incoming parameters');
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getTitles: incorrect incoming parameters');
             return FALSE;
         }
         if (is_null($code)) {
@@ -1279,17 +1279,17 @@ class LangMan {
                 . "ON `l`.`id`=`t`.`codeid` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_title_sections` `s` "
                 . "ON `s`.`id`=`n`.`sid` "
-                . "JOIN `".MECCANO_TPREF."_core_install_plugins` `p` "
+                . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `p`.`name`='$plugin' "
                 . "AND `s`.`section`='$section' "
                 . "AND `l`.`code`='$code' ;");
         if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getTitlesBySection: can\'t get section | '.self::$dblink->error);
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getTitles: can\'t get section | '.self::$dblink->error);
             return FALSE;
         }
         if (!self::$dblink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('getTitlesBySection: can\'t find defined section');
+            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('getTitles: can\'t find defined section');
             return FALSE;
         }
         $titles = array();
@@ -1299,10 +1299,10 @@ class LangMan {
         return $titles;
     }
     
-    public static function getAllTextsBySectionXML($section, $plugin, $orderBy = 'id', $ascent = FALSE, $code = NULL) {
+    public static function getAllTextsXML($section, $plugin, $orderBy = 'id', $ascent = FALSE, $code = NULL) {
         self::$errid = 0;        self::$errexp = '';
         if (!pregName40($section) || !pregName40($plugin) || !(is_null($code) || pregLang($code))) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getAllTextsBySectionXML: incorrect incoming parameters');
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getAllTextsXML: incorrect incoming parameters');
             return FALSE;
         }
         if (is_null($code)) {
@@ -1327,7 +1327,7 @@ class LangMan {
             }
         }
         else {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getAllTextsBySectionXML: value of $orderBy must be string or array');
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getAllTextsXML: value of $orderBy must be string or array');
             return FALSE;
         }
         if ($ascent == TRUE) {
@@ -1344,18 +1344,18 @@ class LangMan {
                 . "ON `l`.`id`=`t`.`codeid` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_text_sections` `s` "
                 . "ON `s`.`id`=`n`.`sid` "
-                . "JOIN `".MECCANO_TPREF."_core_install_plugins` `p` "
+                . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `p`.`name`='$plugin' "
                 . "AND `s`.`section`='$section' "
                 . "AND `l`.`code`='$code' "
                 . "ORDER BY `$orderBy` $direct ;");
         if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getAllTextsBySectionXML: can\'t get section | '.self::$dblink->error);
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getAllTextsXML: can\'t get section | '.self::$dblink->error);
             return FALSE;
         }
         if (!self::$dblink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('getAllTextsBySectionXML: can\'t find defined section');
+            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('getAllTextsXML: can\'t find defined section');
             return FALSE;
         }
         $xml = new \DOMDocument('1.0', 'utf-8');
@@ -1394,10 +1394,10 @@ class LangMan {
         return array('title' => $title, 'document' => $document, 'created' => $created, 'edited' => $edited);
     }
     
-    public static function sumTextsBySection($section, $plugin, $rpp = 20, $code = NULL) {
+    public static function sumTexts($section, $plugin, $rpp = 20, $code = NULL) {
         self::$errid = 0;        self::$errexp = '';
         if (!pregName40($section) || !pregName40($plugin) || !is_integer($rpp) || !(is_null($code) || pregLang($code))) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getTextsBySection: incorrect incoming parameters');
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getTexts: incorrect incoming parameters');
             return FALSE;
         }
         if (is_null($code)) {
@@ -1414,17 +1414,17 @@ class LangMan {
                 . "ON `n`.`id`=`t`.`nameid` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_text_sections` `s` "
                 . "ON `s`.`id` =`n`.`sid` "
-                . "JOIN `".MECCANO_TPREF."_core_install_plugins` `p` "
+                . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `l`.`code`='$code' "
                 . "AND `p`.`name`='$plugin' "
                 . "AND `s`.`section`='$section' ;");
         if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('sumTextsBySection: '.self::$dblink->error);
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('sumTexts: '.self::$dblink->error);
             return FALSE;
         }
         if (!self::$dblink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('sumTextsBySection: no one text was found');
+            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('sumTexts: no one text was found');
             return FALSE;
         }
         list($totalTexts) = $qTexts->fetch_row();
@@ -1442,7 +1442,7 @@ class LangMan {
         return array('records' => (int) $totalTexts, 'pages' => (int) $totalPages);
     }
     
-    public static function getTextsBySectionXML($section, $plugin, $pageNumber, $totalPages, $rpp = 20, $orderBy = 'id', $ascent = FALSE, $code = NULL) {
+    public static function getTextsXML($section, $plugin, $pageNumber, $totalPages, $rpp = 20, $orderBy = 'id', $ascent = FALSE, $code = NULL) {
         self::$errid = 0;        self::$errexp = '';
         if (!pregName40($section) || 
                 !pregName40($plugin) || 
@@ -1450,7 +1450,7 @@ class LangMan {
                 !is_integer($totalPages) || 
                 !is_integer($rpp) || 
                 !(is_null($code) || pregLang($code))) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getTextsBySectionXML: incorrect incoming parameters');
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getTextsXML: incorrect incoming parameters');
             return FALSE;
         }
         if (is_null($code)) {
@@ -1475,7 +1475,7 @@ class LangMan {
             }
         }
         else {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getTextsBySectionXML: value of $orderBy must be string or array');
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getTextsXML: value of $orderBy must be string or array');
             return FALSE;
         }
         if ($pageNumber < 1) {
@@ -1505,18 +1505,18 @@ class LangMan {
                 . "ON `l`.`id`=`t`.`codeid` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_text_sections` `s` "
                 . "ON `s`.`id`=`n`.`sid` "
-                . "JOIN `".MECCANO_TPREF."_core_install_plugins` `p` "
+                . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `p`.`name`='$plugin' "
                 . "AND `s`.`section`='$section' "
                 . "AND `l`.`code`='$code' "
                 . "ORDER BY `$orderBy` $direct LIMIT $start, $rpp ;");
         if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getTextsBySectionXML: can\'t get section | '.self::$dblink->error);
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getTextsXML: can\'t get section | '.self::$dblink->error);
             return FALSE;
         }
         if (!self::$dblink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('getTextsBySectionXML: can\'t find defined section');
+            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('getTextsXML: can\'t find defined section');
             return FALSE;
         }
         $xml = new \DOMDocument('1.0', 'utf-8');
@@ -1534,10 +1534,10 @@ class LangMan {
         return $xml;
     }
     
-    public static function getTextsBySection($section, $plugin, $code = NULL) {
+    public static function getTexts($section, $plugin, $code = NULL) {
         self::$errid = 0;        self::$errexp = '';
         if (!pregName40($section) || !pregName40($plugin) || !(is_null($code) || pregLang($code))) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getTextsBySection: incorrect incoming parameters');
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getTexts: incorrect incoming parameters');
             return FALSE;
         }
         if (is_null($code)) {
@@ -1551,17 +1551,17 @@ class LangMan {
                 . "ON `l`.`id`=`t`.`codeid` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_text_sections` `s` "
                 . "ON `s`.`id`=`n`.`sid` "
-                . "JOIN `".MECCANO_TPREF."_core_install_plugins` `p` "
+                . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `p`.`name`='$plugin' "
                 . "AND `s`.`section`='$section' "
                 . "AND `l`.`code`='$code' ;");
         if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getTextsBySection: can\'t get section | '.self::$dblink->error);
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getTexts: can\'t get section | '.self::$dblink->error);
             return FALSE;
         }
         if (!self::$dblink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('getTextsBySection: can\'t find defined section');
+            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('getTexts: can\'t find defined section');
             return FALSE;
         }
         $texts = array();
@@ -1571,10 +1571,10 @@ class LangMan {
         return $texts;
     }
     
-    public static function sumTitlesBySection($section, $plugin, $rpp = 20, $code = NULL) {
+    public static function sumTitles($section, $plugin, $rpp = 20, $code = NULL) {
         self::$errid = 0;        self::$errexp = '';
         if (!pregName40($section) || !pregName40($plugin) || !is_integer($rpp) || !(is_null($code) || pregLang($code))) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getTitlesBySection: incorrect incoming parameters');
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getTitles: incorrect incoming parameters');
             return FALSE;
         }
         if (is_null($code)) {
@@ -1591,17 +1591,17 @@ class LangMan {
                 . "ON `n`.`id`=`t`.`nameid` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_title_sections` `s` "
                 . "ON `s`.`id` =`n`.`sid` "
-                . "JOIN `".MECCANO_TPREF."_core_install_plugins` `p` "
+                . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `l`.`code`='$code' "
                 . "AND `p`.`name`='$plugin' "
                 . "AND `s`.`section`='$section' ;");
         if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('sumTitlesBySection: '.self::$dblink->error);
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('sumTitles: '.self::$dblink->error);
             return FALSE;
         }
         if (!self::$dblink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('sumTitlesBySection: no one title was found');
+            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('sumTitles: no one title was found');
             return FALSE;
         }
         list($totalTitles) = $qTitles->fetch_row();
@@ -1619,7 +1619,7 @@ class LangMan {
         return array('records' => (int) $totalTitles, 'pages' => (int) $totalPages);
     }
     
-    public static function getTitlesBySectionXML($section, $plugin, $pageNumber, $totalPages, $rpp = 20, $orderBy = 'id', $ascent = FALSE, $code = NULL) {
+    public static function getTitlesXML($section, $plugin, $pageNumber, $totalPages, $rpp = 20, $orderBy = 'id', $ascent = FALSE, $code = NULL) {
         self::$errid = 0;        self::$errexp = '';
         if (!pregName40($section) || 
                 !pregName40($plugin) || 
@@ -1627,7 +1627,7 @@ class LangMan {
                 !is_integer($totalPages) || 
                 !is_integer($rpp) || 
                 !(is_null($code) || pregLang($code))) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getTitlesBySectionXML: incorrect incoming parameters');
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getTitlesXML: incorrect incoming parameters');
             return FALSE;
         }
         if (is_null($code)) {
@@ -1652,7 +1652,7 @@ class LangMan {
             }
         }
         else {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getTitlesBySectionXML: value of $orderBy must be string or array');
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getTitlesXML: value of $orderBy must be string or array');
             return FALSE;
         }
         if ($pageNumber < 1) {
@@ -1682,18 +1682,18 @@ class LangMan {
                 . "ON `l`.`id`=`t`.`codeid` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_title_sections` `s` "
                 . "ON `s`.`id`=`n`.`sid` "
-                . "JOIN `".MECCANO_TPREF."_core_install_plugins` `p` "
+                . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `p`.`name`='$plugin' "
                 . "AND `s`.`section`='$section' "
                 . "AND `l`.`code`='$code' "
                 . "ORDER BY `$orderBy` $direct LIMIT $start, $rpp ;");
         if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getTitlesBySectionXML: can\'t get section | '.self::$dblink->error);
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getTitlesXML: can\'t get section | '.self::$dblink->error);
             return FALSE;
         }
         if (!self::$dblink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('getTitlesBySectionXML: can\'t find defined section');
+            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('getTitlesXML: can\'t find defined section');
             return FALSE;
         }
         $xml = new \DOMDocument('1.0', 'utf-8');
@@ -1709,10 +1709,10 @@ class LangMan {
         return $xml;
     }
     
-    public static function getAllTitlesBySectionXML($section, $plugin, $orderBy = 'id', $ascent = FALSE, $code = NULL) {
+    public static function getAllTitlesXML($section, $plugin, $orderBy = 'id', $ascent = FALSE, $code = NULL) {
         self::$errid = 0;        self::$errexp = '';
         if (!pregName40($section) || !pregName40($plugin) || !(is_null($code) || pregLang($code))) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getAllTitlesBySectionXML: incorrect incoming parameters');
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getAllTitlesXML: incorrect incoming parameters');
             return FALSE;
         }
         if (is_null($code)) {
@@ -1737,7 +1737,7 @@ class LangMan {
             }
         }
         else {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getAllTitlesBySectionXML: value of $orderBy must be string or array');
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getAllTitlesXML: value of $orderBy must be string or array');
             return FALSE;
         }
         if ($ascent == TRUE) {
@@ -1754,18 +1754,18 @@ class LangMan {
                 . "ON `l`.`id`=`t`.`codeid` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_title_sections` `s` "
                 . "ON `s`.`id`=`n`.`sid` "
-                . "JOIN `".MECCANO_TPREF."_core_install_plugins` `p` "
+                . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `p`.`name`='$plugin' "
                 . "AND `s`.`section`='$section' "
                 . "AND `l`.`code`='$code' "
                 . "ORDER BY `$orderBy` $direct ;");
         if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getAllTitlesBySectionXML: can\'t get section | '.self::$dblink->error);
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getAllTitlesXML: can\'t get section | '.self::$dblink->error);
             return FALSE;
         }
         if (!self::$dblink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('getAllTitlesBySectionXML: can\'t find defined section');
+            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('getAllTitlesXML: can\'t find defined section');
             return FALSE;
         }
         $xml = new \DOMDocument('1.0', 'utf-8');
@@ -1890,7 +1890,7 @@ class LangMan {
         }
         $qSections = self::$dblink->query("SELECT count(`s`.`id`) "
                 . "FROM `".MECCANO_TPREF."_core_langman_text_sections` `s` "
-                . "JOIN `".MECCANO_TPREF."_core_install_plugins` `p` "
+                . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `p`.`name`='$plugin' ;");
         if (self::$dblink->errno) {
@@ -1919,7 +1919,7 @@ class LangMan {
     public static function getTextSectionsXML($plugin, $pageNumber, $totalPages, $rpp = 20, $orderBy = 'id', $ascent = FALSE) {
         self::$errid = 0;        self::$errexp = '';
         if (!pregPlugin($plugin) || !is_integer($pageNumber) || !is_integer($totalPages) || !is_integer($rpp)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getTextsBySectionXML: incorrect incoming parameters');
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getTextsXML: incorrect incoming parameters');
             return FALSE;
         }
         $rightEntry = array('id', 'name', 'static');
@@ -1941,7 +1941,7 @@ class LangMan {
             }
         }
         else {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getAllTextsBySectionXML: value of $orderBy must be string or array');
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getAllTextsXML: value of $orderBy must be string or array');
             return FALSE;
         }
         if ($ascent == TRUE) {
@@ -1952,16 +1952,16 @@ class LangMan {
         }
         $qSections = self::$dblink->query("SELECT `s`.`id` `id`, `s`.`section` `name`, `s`.`static` `static`, (SELECT COUNT(`id`) FROM `".MECCANO_TPREF."_core_langman_text_names` WHERE `sid`=`s`.`id`) `contains` "
                 . "FROM `".MECCANO_TPREF."_core_langman_text_sections` `s` "
-                . "JOIN `".MECCANO_TPREF."_core_install_plugins` `p` "
+                . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `p`.`name`='$plugin' "
                 . "ORDER BY `$orderBy` $direct ;");
         if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getAllTextsBySectionXML: can\'t get sections | '.self::$dblink->error);
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getAllTextsXML: can\'t get sections | '.self::$dblink->error);
             return FALSE;
         }
         if (!self::$dblink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('getAllTextsBySectionXML: can\'t find defined plugin');
+            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('getAllTextsXML: can\'t find defined plugin');
             return FALSE;
         }
         $xml = new \DOMDocument('1.0', 'utf-8');
@@ -1992,7 +1992,7 @@ class LangMan {
         }
         $qSections = self::$dblink->query("SELECT count(`s`.`id`) "
                 . "FROM `".MECCANO_TPREF."_core_langman_title_sections` `s` "
-                . "JOIN `".MECCANO_TPREF."_core_install_plugins` `p` "
+                . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `p`.`name`='$plugin' ;");
         if (self::$dblink->errno) {
@@ -2021,7 +2021,7 @@ class LangMan {
     public static function getTitleSectionsXML($plugin, $pageNumber, $totalPages, $rpp = 20, $orderBy = 'id', $ascent = FALSE) {
         self::$errid = 0;        self::$errexp = '';
         if (!pregPlugin($plugin) || !is_integer($pageNumber) || !is_integer($totalPages) || !is_integer($rpp)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getTitlesBySectionXML: incorrect incoming parameters');
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getTitlesXML: incorrect incoming parameters');
             return FALSE;
         }
         $rightEntry = array('id', 'name', 'static');
@@ -2043,7 +2043,7 @@ class LangMan {
             }
         }
         else {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getAllTitlesBySectionXML: value of $orderBy must be string or array');
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getAllTitlesXML: value of $orderBy must be string or array');
             return FALSE;
         }
         if ($ascent == TRUE) {
@@ -2054,16 +2054,16 @@ class LangMan {
         }
         $qSections = self::$dblink->query("SELECT `s`.`id` `id`, `s`.`section` `name`, `s`.`static` `static`, (SELECT COUNT(`id`) FROM `".MECCANO_TPREF."_core_langman_title_names` WHERE `sid`=`s`.`id`) `contains` "
                 . "FROM `".MECCANO_TPREF."_core_langman_title_sections` `s` "
-                . "JOIN `".MECCANO_TPREF."_core_install_plugins` `p` "
+                . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `p`.`name`='$plugin' "
                 . "ORDER BY `$orderBy` $direct ;");
         if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getAllTitlesBySectionXML: can\'t get sections | '.self::$dblink->error);
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getAllTitlesXML: can\'t get sections | '.self::$dblink->error);
             return FALSE;
         }
         if (!self::$dblink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('getAllTitlesBySectionXML: can\'t find defined plugin');
+            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('getAllTitlesXML: can\'t find defined plugin');
             return FALSE;
         }
         $xml = new \DOMDocument('1.0', 'utf-8');
@@ -2096,7 +2096,7 @@ class LangMan {
                 . "FROM `".MECCANO_TPREF."_core_langman_text_names` `n` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_text_sections` `s` "
                 . "ON `s`.`id`=`n`.`sid` "
-                . "JOIN `".MECCANO_TPREF."_core_install_plugins` `p` "
+                . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `p`.`name`='$plugin' "
                 . "AND `s`.`section`='$section' ;");
@@ -2165,7 +2165,7 @@ class LangMan {
                 . "FROM `".MECCANO_TPREF."_core_langman_text_names` `n` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_text_sections` `s` "
                 . "ON `s`.`id`=`n`.`sid` "
-                . "JOIN `".MECCANO_TPREF."_core_install_plugins` `p` "
+                . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `p`.`name`='$plugin' AND `s`.`section`='$section' "
                 . "ORDER BY `$orderBy` $direct ;");
@@ -2209,7 +2209,7 @@ class LangMan {
                 . "FROM `".MECCANO_TPREF."_core_langman_title_names` `n` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_title_sections` `s` "
                 . "ON `s`.`id`=`n`.`sid` "
-                . "JOIN `".MECCANO_TPREF."_core_install_plugins` `p` "
+                . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `p`.`name`='$plugin' "
                 . "AND `s`.`section`='$section' ;");
@@ -2278,7 +2278,7 @@ class LangMan {
                 . "FROM `".MECCANO_TPREF."_core_langman_title_names` `n` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_title_sections` `s` "
                 . "ON `s`.`id`=`n`.`sid` "
-                . "JOIN `".MECCANO_TPREF."_core_install_plugins` `p` "
+                . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `p`.`name`='$plugin' AND `s`.`section`='$section' "
                 . "ORDER BY `$orderBy` $direct ;");
