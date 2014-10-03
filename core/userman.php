@@ -445,13 +445,13 @@ class UserMan {
     }
 
     //user methods
-    public static function createUser($username, $password, $email, $groupId, $active = TRUE, $log = TRUE) {
+    public static function createUser($username, $password, $email, $groupId, $active = TRUE, $langCode = MECCANO_DEF_LANG, $log = TRUE) {
         self::$errid = 0;        self::$errexp = '';
         if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
             self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('createUser: function execution was terminated because of using of limited authentication');
             return FALSE;
         }
-        if (!pregUName($username) || !pregPassw($password) || !filter_var($email, FILTER_VALIDATE_EMAIL) || !is_integer($groupId)) {
+        if (!pregUName($username) || !pregPassw($password) || !filter_var($email, FILTER_VALIDATE_EMAIL) || !is_integer($groupId) || !pregLang($langCode)) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('createUser: incorrect incoming parameters');
             return FALSE;
         }
@@ -468,6 +468,18 @@ class UserMan {
             self::setErrId(ERROR_ALREADY_EXISTS);            self::setErrExp('createUser: username or email are already in use');
             return FALSE;
         }
+        $qLang = self::$dblink->query("SELECT `id` "
+                . "FROM `".MECCANO_TPREF."_core_langman_languages` "
+                . "WHERE `code`='$langCode' ;");
+        if (self::$dblink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('createUser: can\'t check defined language | '.self::$dblink->error);
+            return FALSE;
+        }
+        if (!self::$dblink->affected_rows) {
+            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('createUser: defined language doesn\'t exist');
+            return FALSE;
+        }
+        list($langId) = $qLang->fetch_row();
         self::$dblink->query("SELECT `id` "
                 . "FROM `".MECCANO_TPREF."_core_userman_groups` "
                 . "WHERE `id`=$groupId ;");
@@ -485,8 +497,8 @@ class UserMan {
         if ($active) { $active = 1; }
         else { $active = 0; }
         $sql = array(
-            'userid' => "INSERT INTO `".MECCANO_TPREF."_core_userman_users` (`username`, `groupid`, `salt`, `active`) "
-            . "VALUES ('$username', '$groupId', '$salt', $active) ;",
+            'userid' => "INSERT INTO `".MECCANO_TPREF."_core_userman_users` (`username`, `groupid`, `salt`, `active`, `langid`) "
+            . "VALUES ('$username', '$groupId', '$salt', $active, $langId) ;",
             'mail' => "INSERT INTO `".MECCANO_TPREF."_core_userman_userinfo` (`id`, `email`) "
             . "VALUES (LAST_INSERT_ID(), '$email') ;",
             'passw' => "INSERT INTO `".MECCANO_TPREF."_core_userman_userpass` (`userid`, `password`, `limited`) "

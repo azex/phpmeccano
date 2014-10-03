@@ -63,10 +63,12 @@ class Auth {
         if (!isset($terms[$cookieTime])) {
             $useCookie = FALSE;
         }
-        $qResult = self::$dblink->query("SELECT `u`.`id`, `u`.`salt` "
+        $qResult = self::$dblink->query("SELECT `u`.`id`, `u`.`salt`, `l`.`code` "
                 . "FROM `".MECCANO_TPREF."_core_userman_groups` `g` "
                 . "JOIN `".MECCANO_TPREF."_core_userman_users` `u` "
                 . "ON `g`.`id`=`u`.`groupid` "
+                . "JOIN `".MECCANO_TPREF."_core_langman_languages` `l` "
+                . "ON `u`.`langid`=`l`.`id` "
                 . "WHERE `u`.`username`='$username' "
                 . "AND `u`.`active`=1 "
                 . "AND `g`.`active`=1 ;");
@@ -78,7 +80,7 @@ class Auth {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('userLogin: invalid username or user (group) is disabled');
             return FALSE;
         }
-        list($userId, $salt) = $qResult->fetch_array(MYSQL_NUM);
+        list($userId, $salt, $lang) = $qResult->fetch_array(MYSQL_NUM);
         $passwEncoded = passwHash($password, $salt);
         $qResult = self::$dblink->query("SELECT `u`.`username`, `p`.`id`, `p`.`limited` "
                 . "FROM `".MECCANO_TPREF."_core_userman_users` `u` "
@@ -112,6 +114,7 @@ class Auth {
         $_SESSION['core_auth_uname'] = $username;
         $_SESSION['core_auth_userid'] = (int) $userId;
         $_SESSION['core_auth_limited'] = (int) $limited;
+        $_SESSION['core_auth_lang'] = $lang;
         // control parameters
         $_SESSION['core_auth_usi'] = $usi;
         $_SESSION['core_auth_password'] = (int) $passId;
@@ -188,12 +191,14 @@ class Auth {
     public static function getSession($log = FALSE) {
         self::$errid = 0;        self::$errexp = '';
         if (!isset($_SESSION['core_auth_userid']) && isset($_COOKIE['core_auth_usi']) && pregIdent($_COOKIE['core_auth_usi'])) {
-            $qResult = self::$dblink->query("SELECT `p`.`id`, `p`.`limited`, `u`.`id`, `u`.`username` "
+            $qResult = self::$dblink->query("SELECT `p`.`id`, `p`.`limited`, `u`.`id`, `u`.`username`, `l`.`code` "
                     . "FROM `".MECCANO_TPREF."_core_auth_usi` `s` "
                     . "JOIN `".MECCANO_TPREF."_core_userman_userpass` `p` "
                     . "ON `p`.`id`=`s`.`id` "
                     . "JOIN `".MECCANO_TPREF."_core_userman_users` `u` "
                     . "ON `u`.`id`=`p`.`userid` "
+                    . "JOIN `".MECCANO_TPREF."_core_langman_languages` `l` "
+                    . "ON `u`.`langid`=`l`.`id` "
                     . "JOIN `".MECCANO_TPREF."_core_userman_groups` `g` "
                     . "ON `g`.`id`=`u`.`groupid` "
                     . "WHERE `s`.`usi`='".$_COOKIE['core_auth_usi']."' "
@@ -207,13 +212,14 @@ class Auth {
             if (!self::$dblink->affected_rows) {
                 return FALSE;
             }
-            list($passId, $limited, $userId, $username) = $qResult->fetch_array(MYSQLI_NUM);
+            list($passId, $limited, $userId, $username, $lang) = $qResult->fetch_array(MYSQLI_NUM);
             if ($log) {
                 Logging::newRecord('core_authLogin', $username);
             }
             $_SESSION['core_auth_uname'] = $username;
             $_SESSION['core_auth_userid'] = (int) $userId;
             $_SESSION['core_auth_limited'] = (int) $limited;
+            $_SESSION['core_auth_lang'] = $lang;
             // control parameters
             $_SESSION['core_auth_usi'] = $_COOKIE['core_auth_usi'];
             $_SESSION['core_auth_password'] = (int) $passId;

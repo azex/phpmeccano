@@ -1,0 +1,73 @@
+<?xml version="1.0"?>
+
+<grammar datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes" xmlns="http://relaxng.org/ns/structure/1.0" >
+    <start>
+        <element name="titles">
+            <attribute name="plugin">
+                <data type="string">
+                    <param name="pattern">[a-zA-Z0-9_]{3,30}</param>
+                </data>
+            </attribute>
+            <oneOrMore>
+                <choice>
+                    <element name="section">
+                        <attribute name="name">
+                            <data type="string">
+                                <param name="pattern">[a-zA-Z0-9_]{3,40}</param>
+                            </data>
+                        </attribute>
+                        <optional>
+                            <attribute name="oldname">
+                                <data type="string">
+                                    <param name="pattern">[a-zA-Z0-9_]{3,40}</param>
+                                </data>
+                            </attribute>
+                        </optional>
+                        <attribute name="static">
+                            <value>1</value>
+                        </attribute>
+                        <oneOrMore>
+                            <element name="title">
+                                <attribute name="name">
+                                    <data type="string">
+                                        <param name="pattern">[a-zA-Z0-9_]{3,40}</param>
+                                    </data>
+                                </attribute>
+                                <oneOrMore>
+                                    <element name="language">
+                                        <attribute name="code">
+                                            <data type="string">
+                                                <param name="pattern">[a-z]{2}-[A-Z]{2}</param>
+                                            </data>
+                                        </attribute>
+                                        <data type="string">
+                                            <param name="minLength">1</param>
+                                            <param name="maxLength">128</param>
+                                        </data>
+                                    </element>
+                                </oneOrMore>
+                            </element>
+                        </oneOrMore>
+                    </element>
+                    <element name="section">
+                        <attribute name="name">
+                            <data type="string">
+                                <param name="pattern">[a-zA-Z0-9_]{3,40}</param>
+                            </data>
+                        </attribute>
+                        <optional>
+                            <attribute name="oldname">
+                                <data type="string">
+                                    <param name="pattern">[a-zA-Z0-9_]{3,40}</param>
+                                </data>
+                            </attribute>
+                        </optional>
+                        <attribute name="static">
+                            <value>0</value>
+                        </attribute>
+                    </element>
+                </choice>
+            </oneOrMore>
+        </element>
+    </start>
+</grammar>

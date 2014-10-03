@@ -54,6 +54,7 @@ function pregPassw($password) {
     return FALSE;
 }
 
+// it checks entered identifier
 function pregIdent($ident) {
     if (is_string($ident) && preg_match('/^[a-zA-Z\d]{40}$/', $ident)) {
         return TRUE;
@@ -61,6 +62,31 @@ function pregIdent($ident) {
     return FALSE;
 }
 
+// it checks entered language code
+function pregLang($code) {
+    if (is_string($code) && preg_match('/^[a-z]{2}-[A-Z]{2}$/', $code)) {
+        return TRUE;
+    }
+    return FALSE;
+}
+
+// it checks entered plugin name
+function pregPlugin($name) {
+    if (is_string($name) && preg_match('/^[a-zA-Z\d_]{3,30}$/', $name)) {
+        return TRUE;
+    }
+    return FALSE;
+}
+
+// it checks name identifiers with length from 3 to 40 characters
+function pregName40($name) {
+    if (is_string($name) && preg_match('/^[a-zA-Z\d_]{3,40}$/', $name)) {
+        return TRUE;
+    }
+    return FALSE;
+}
+
+// it reads and returns content of defined file
 function openRead($path) {
     if (is_file($path) && is_readable($path)) {
         $handle = fopen($path, 'r');
@@ -71,6 +97,7 @@ function openRead($path) {
     return FALSE;
 }
 
+// transform XML with XSLT
 function xmlTransform($xml, $xsl) {
     $xmlDOM = new \DOMDocument();
     $xslDOM = new \DOMDocument();
@@ -92,6 +119,7 @@ function authUserId() {
     return FALSE;
 }
 
+// returns username if there is active session
 function authUName() {
     if (isset($_SESSION['core_auth_uname'])) {
         return $_SESSION['core_auth_uname'];
@@ -99,9 +127,18 @@ function authUName() {
     return FALSE;
 }
 
+// returns session type if there is active session
 function authLimited() {
     if (isset($_SESSION['core_auth_limited'])) {
         return $_SESSION['core_auth_limited'];
+    }
+    return FALSE;
+}
+
+// returns language code if there is active session
+function authLang() {
+    if (isset($_SESSION['core_auth_lang'])) {
+        return $_SESSION['core_auth_lang'];
     }
     return FALSE;
 }
