@@ -186,10 +186,6 @@ class Files {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp("move: source [$sourcePath] was not found");
             return FALSE;
         }
-        if ($sourcePath == $destPath) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp("move: unable to replace item with itself");
-            return FALSE;
-        }
         // source is file or symbolic link
         if (is_file($sourcePath) || is_link($sourcePath)) {
             if (is_dir($destPath)) {
@@ -243,6 +239,10 @@ class Files {
                 if (is_writable($destDirPath)) {
                     mkdir($destPath);
                 }
+                elseif (!is_dir($destDirPath)) {
+                    self::setErrId(ERROR_NOT_FOUND);                    self::setErrExp("move: directory [$destDirPath] does not exist");
+                    return FALSE;
+                }
                 else {
                     self::setErrId(ERROR_RESTRICTED_ACCESS);                self::setErrExp("move: destination directory [$destDirPath] is write-protected");
                     return FALSE;
@@ -254,6 +254,14 @@ class Files {
             }
             elseif (!is_writable($destPath)) {
                 self::setErrId(ERROR_RESTRICTED_ACCESS);                self::setErrExp("move: destination directory [$destPath] is write-protected");
+                return FALSE;
+            }
+            $sourceReal = realpath($sourcePath);
+            $destReal = realpath($destPath);
+            $sourceLen = strlen($sourceReal);
+            $destLen = strlen($destReal);
+            if (($sourceReal == $destReal) || (($sourceLen < $destLen) && ($sourceReal == substr($destReal, 0, $sourceLen)))) {
+                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp("move: unable to move directory [$sourcePath] into itself");
                 return FALSE;
             }
             $stack = array($sourcePath);
@@ -318,6 +326,84 @@ class Files {
                     }
                     elseif (!$destDirWriteStatus && !$skipWriteProtected) {
                         self::setErrId(ERROR_RESTRICTED_ACCESS);                        self::setErrExp("move: unable to move file [$sourceFullPath] because destination directory [$destDirPath] is write-protected");
+                        return FALSE;
+                    }
+                }
+            }
+            $dirTree = array_reverse($dirTree);
+            foreach ($dirTree as $dirPath) {
+                $parentDir = dirname($dirPath);
+                $parentDirWriteStatus = is_writable($parentDir);
+                $dirIsNotEmpty = array_diff(scandir($dirPath), array('.', '..'));
+                if ($dirIsNotEmpty && !$skipConflicts) {
+                    self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp("source directory [$dirPath] is not empty");
+                    return  FALSE;
+                }
+                elseif (!$parentDirWriteStatus && !$skipWriteProtected) {
+                    self::setErrId(ERROR_RESTRICTED_ACCESS);                    self::setErrExp("unable to remove directory [$dirPath] because parent directory [$parentDir] is write-protected");
+                    return  FALSE;
+                }
+                elseif (!$dirIsNotEmpty && $parentDirWriteStatus) {
+                    rmdir($dirPath);
+                }
+            }
+            return TRUE;
+        }
+    }
+    
+    public static function remove($sourcePath, $skipNotReadable = FALSE, $skipWriteProtected = FALSE, $skipConflicts = FALSE) {
+        self::$errid = 0;        self::$errexp = '';
+        $sourcePath = rtrim(preg_replace('#[/]+#', '/', $sourcePath), '/');
+        if (!file_exists($sourcePath)) {
+            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp("remove: source [$sourcePath] was not found");
+            return FALSE;
+        }
+        // source is file or symbolic link
+        if (is_file($sourcePath) || is_link($sourcePath)) {
+            $sourceDirPath = dirname($sourcePath);
+            if (!is_writable($sourceDirPath)) {
+                self::setErrId(ERROR_RESTRICTED_ACCESS);                    self::setErrExp("remove: source directory [$sourceDirPath] is write-protected");
+                return FALSE;
+            }
+            unlink($sourcePath);
+            return TRUE;
+        }
+        // source is directory
+        elseif (is_dir($sourcePath)) {
+            if (!is_readable($sourcePath)) {
+                self::setErrId(ERROR_RESTRICTED_ACCESS);                self::setErrExp("remove: source directory [$sourcePath] is not readable");
+                return FALSE;
+            }
+            $stack = array($sourcePath);
+            $divPosition = strlen($sourcePath) + 1;
+            while (count($stack)) {
+                $sourceDirPath = array_pop($stack);
+                $sourceDirWriteStatus = is_writable($sourceDirPath);
+                $dirTree[] = $sourceDirPath;
+                foreach (array_diff(scandir($sourceDirPath), array('.', '..')) as $sourceItemName) {
+                    $sourceFullPath = "$sourceDirPath/$sourceItemName";
+                    if ((is_file($sourceFullPath) || is_link($sourceFullPath))) {
+                        $sourceIsNotDir = 1;
+                    }
+                    else {
+                        $sourceIsNotDir = 0;
+                    }
+                    // file handling
+                    if ($sourceIsNotDir && $sourceDirWriteStatus) {
+                        unlink($sourceFullPath);
+                    }
+                    // directory handling
+                    elseif (!$sourceIsNotDir) {
+                        if (is_readable($sourceFullPath)) {
+                            $stack[] = $sourceFullPath;
+                        }
+                        elseif (!$skipNotReadable) {
+                            self::setErrId(ERROR_RESTRICTED_ACCESS);                self::setErrExp("remove: unable to read directory [$sourceFullPath]");
+                            return FALSE;
+                        }
+                    }
+                    elseif (!$sourceDirWriteStatus && !$skipWriteProtected) {
+                        self::setErrId(ERROR_RESTRICTED_ACCESS);                        self::setErrExp("remove: unable to remove file [$sourceFullPath] because source directory [$sourceDirPath] is write-protected");
                         return FALSE;
                     }
                 }
