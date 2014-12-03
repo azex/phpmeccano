@@ -18,7 +18,7 @@ require_once 'swconst.php';
 class Files {
     private static $errid = 0; // error's id
     private static $errexp = ''; // error's explanation
-    
+
     private static function setErrId($id) {
         self::$errid = $id;
     }
@@ -34,11 +34,11 @@ class Files {
     public static function errExp() {
         return self::$errexp;
     }
-    
-    public static function copy($sourcePath, $destPath, $mergeDirs = FALSE, $rewriteFiles = FALSE, $skipNotReadable = FALSE, $skipNotWritable = FALSE, $skipConflicts = FALSE) {
+
+    public static function copy($sourcePath, $destPath, $mergeDirs = FALSE, $rewriteFiles = FALSE, $skipExistentFiles = FALSE, $skipNotReadable = FALSE, $skipWriteProtected = FALSE, $skipConflicts = FALSE) {
         self::$errid = 0;        self::$errexp = '';
-        $sourcePath = rtrim(preg_replace('#(/+)|(\\\+)#', '/', $sourcePath), '/');
-        $destPath = rtrim(preg_replace('#(/+)|(\\\+)#', '/', $destPath), '/');
+        $sourcePath = rtrim(preg_replace('#[/]+#', '/', $sourcePath), '/');
+        $destPath = rtrim(preg_replace('#[/]+#', '/', $destPath), '/');
         if (!file_exists($sourcePath)) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('copy: source was not found');
             return FALSE;
@@ -47,13 +47,101 @@ class Files {
             self::setErrId(ERROR_RESTRICTED_ACCESS);                self::setErrExp('copy: source is not readable');
             return FALSE;
         }
+        // source is symbolic link
         if (is_link($sourcePath)) {
-            self::setErrId(ERROR_INCORRECT_DATA);        self::setErrExp('copy: unable to copy symbolic link');
-            return FALSE;
+            if (is_dir($destPath) && !is_link($destPath)) {
+                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp("copy: unable to replace directory [$destPath] with file");
+                return FALSE;
+            }
+            else {
+                $destDirPath = dirname($destPath);
+                if (is_dir($destDirPath)) {
+                    $destDirWriteStatus = is_writable($destDirPath);
+                }
+                else {
+                    self::setErrId(ERROR_NOT_FOUND);                    self::setErrExp("copy: directory [$destDirPath] was not found");
+                    return FALSE;
+                }
+                if (!$destDirWriteStatus) {
+                    self::setErrId(ERROR_RESTRICTED_ACCESS);                    self::setErrExp("copy: destination directory [$destDirPath] is write-protected");
+                    return FALSE;
+                }
+                else {
+                    if (is_file($destPath) || is_link($destPath)) {
+                        if (!$rewriteFiles) {
+                            self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp('copy: rewriting of files is not allowed');
+                            return FALSE;
+                        }
+                        unlink($destPath);
+                        $sourceLinkTarget = readlink($sourcePath);
+                        symlink($sourceLinkTarget, $destPath);
+                        return TRUE;
+                    }
+                    else {
+                        $sourceLinkTarget = readlink($sourcePath);
+                        symlink($sourceLinkTarget, $destPath);
+                        return TRUE;
+                    }
+                }
+            }
         }
-        elseif (is_dir($sourcePath)) { // source is directory
-            if (is_file($destPath) || is_link($destPath)) {
-                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('copy: unable to replace file/link with directory');
+        // source is file
+        elseif (is_file($sourcePath)) {
+            if (is_dir($destPath) && !is_link($destPath)) {
+                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp("copy: unable to replace directory [$destPath] with file");
+                return FALSE;
+            }
+            else {
+                $destDirPath = dirname($destPath);
+                if (is_dir($destDirPath)) {
+                    $destDirWriteStatus = is_writable($destDirPath);
+                }
+                else {
+                    self::setErrId(ERROR_NOT_FOUND);                    self::setErrExp("copy: directory [$destDirPath] was not found");
+                    return FALSE;
+                }
+                if (is_link($destPath)) {
+                    if (!$rewriteFiles) {
+                        self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp('copy: rewriting of files is not allowed');
+                        return FALSE;
+                    }
+                    if (!$destDirWriteStatus) {
+                        self::setErrId(ERROR_RESTRICTED_ACCESS);                    self::setErrExp("copy: destination directory [$destDirPath] is write-protected");
+                        return FALSE;
+                    }
+                    unlink($destPath);
+                    copy($sourcePath, $destPath);
+                    return TRUE;
+                }
+                elseif (is_file($destPath)) {
+                    $destFileWriteStatus = is_writable($destPath);
+                    if (!$rewriteFiles) {
+                        self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp("copy: rewriting of files is not allowed");
+                        return FALSE;
+                    }
+                    elseif ($destFileWriteStatus) {
+                        copy($sourcePath, $destPath);
+                        return TRUE;
+                    }
+                    elseif (!$destFileWriteStatus) {
+                        self::setErrId(ERROR_RESTRICTED_ACCESS);                        self::setErrExp("copy: destination file [$destPath] is write-protected");
+                        return  FALSE;
+                    }
+                }
+                else {
+                    if (!$destDirWriteStatus) {
+                        self::setErrId(ERROR_RESTRICTED_ACCESS);                    self::setErrExp("copy: destination directory [$destDirPath] is write-protected");
+                        return FALSE;
+                    }
+                    copy($sourcePath, $destPath);
+                    return TRUE;
+                }
+            }
+        }
+        // source is directory
+        else {
+            if (is_file($destPath)) {
+                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('copy: unable to replace file with directory');
                 return FALSE;
             }
             $destDirPath = dirname($destPath);
@@ -67,7 +155,7 @@ class Files {
                 }
             }
             elseif (!is_writable($destPath)) {
-                self::setErrId(ERROR_RESTRICTED_ACCESS);                self::setErrExp('copy: destination directory is not writable');
+                self::setErrId(ERROR_RESTRICTED_ACCESS);                self::setErrExp("copy: destination directory [$destPath] is write-protected");
                 return FALSE;
             }
             elseif (!$mergeDirs) {
@@ -78,103 +166,141 @@ class Files {
             $divPosition = strlen($sourcePath) + 1;
             while (count($stack)) {
                 $sourceDirPath = array_pop($stack);
-                foreach (array_diff(scandir($sourceDirPath), array('.', '..')) as $sourceItemName) {
+                $destDirPath = rtrim("$destPath/".substr($sourceDirPath, $divPosition), "/");
+                $destDirWriteStatus = is_writable($destDirPath);
+                $sourceDirContent = array_diff(scandir($sourceDirPath), array('.', '..'));
+                foreach ($sourceDirContent as $sourceItemName) {
                     $sourceFullPath = "$sourceDirPath/$sourceItemName";
-                    $destFullPath = "$destPath/".  substr($sourceFullPath, $divPosition);
-                    if (is_file($sourceFullPath) && !is_link($sourceFullPath)) { // file handling
-                        if (is_link($destFullPath) && !$skipConflicts) {
-                            self::setErrId(ERROR_ALREADY_EXISTS);                self::setErrExp("copy: unable to copy file [$sourceFullPath] instead of link [$destFullPath]");
+                    $destFullPath = "$destDirPath/$sourceItemName";
+                    $sourceItemReadStatus = is_readable($sourceFullPath);
+                    if (is_link($sourceFullPath)) {// link handling
+                        if (is_dir($destFullPath) && !is_link($destFullPath) && !$skipConflicts) {
+                            self::setErrId(ERROR_ALREADY_EXISTS);                self::setErrExp("copy: unable to replace directory [$destFullPath] with link [$sourceFullPath]");
                             return FALSE;
                         }
-                        elseif (is_dir($destFullPath) && !$skipConflicts) {
-                            self::setErrId(ERROR_ALREADY_EXISTS);                self::setErrExp("copy: unable to copy file [$sourceFullPath] instead of directory [$destFullPath]");
+                        elseif (is_file($destFullPath) || is_link($destFullPath)) {
+                            if ($rewriteFiles && $destDirWriteStatus && $sourceItemReadStatus) {
+                                unlink($destFullPath);
+                                $sourceLinkTarget = readlink($sourceFullPath);
+                                symlink($sourceLinkTarget, $destFullPath);
+                            }
+                            elseif ($rewriteFiles && !$sourceItemReadStatus && !$skipNotReadable) {
+                                self::setErrId(ERROR_RESTRICTED_ACCESS);                                self::setErrExp("copy: unable to read link [$sourceFullPath]");
+                                return FALSE;
+                            }
+                            elseif ($rewriteFiles && !$destDirWriteStatus && !$skipWriteProtected) {
+                                self::setErrId(ERROR_RESTRICTED_ACCESS);                                    self::setErrExp("copy: directory [$destDirPath] is write-protected");
+                                return FALSE;
+                            }
+                            elseif (!$skipExistentFiles) {
+                                self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp("copy: file [$destFullPath] already exists");
+                                return FALSE;
+                            }
+                        }
+                        elseif (!is_dir($destFullPath) && $destDirWriteStatus && $sourceItemReadStatus) {
+                            $sourceLinkTarget = readlink($sourceFullPath);
+                            symlink($sourceLinkTarget, $destFullPath);
+                        }
+                        elseif (!$sourceItemReadStatus && !$skipNotReadable) {
+                            self::setErrId(ERROR_RESTRICTED_ACCESS);                                self::setErrExp("copy: unable to read link [$sourceFullPath]");
                             return FALSE;
                         }
-                        elseif (is_readable($sourceFullPath) && !file_exists($destFullPath)) {
-                            copy($sourceFullPath, $destFullPath);
-                        }
-                        elseif (is_readable($sourceFullPath) && is_file($destFullPath) && is_writable($destFullPath) && $rewriteFiles) {
-                            copy($sourceFullPath, $destFullPath);
-                        }
-                        elseif (is_readable($sourceFullPath) && is_file($destFullPath) && !is_writable($destFullPath) && !$skipNotWritable && $rewriteFiles) {
-                            self::setErrId(ERROR_RESTRICTED_ACCESS);                self::setErrExp("copy: unable to rewrite [$destFullPath]");
-                            return FALSE;
-                        }
-                        elseif (!is_readable($sourceFullPath) && !$skipNotReadable) {
-                            self::setErrId(ERROR_RESTRICTED_ACCESS);                self::setErrExp("copy: unable to read file [$sourceFullPath]");
+                        elseif (!$destDirWriteStatus && !$skipWriteProtected) {
+                            self::setErrId(ERROR_RESTRICTED_ACCESS);                                self::setErrExp("copy: directory [$destDirPath] is write-protected");
                             return FALSE;
                         }
                     }
-                    elseif (is_dir($sourceFullPath) && !is_link($sourceFullPath)) { // directory handling
-                        if ((is_file($destFullPath) || is_link($destFullPath)) && !$skipConflicts) {
-                            self::setErrId(ERROR_ALREADY_EXISTS);                self::setErrExp("copy: unable to copy directory [$sourceFullPath] instead of file [$destFullPath]");
+                    elseif (is_file($sourceFullPath)) { // file handling
+                        if (is_dir($destFullPath) && !is_link($destFullPath) && !$skipConflicts) {
+                            self::setErrId(ERROR_ALREADY_EXISTS);                self::setErrExp("copy: unable to replace directory [$destFullPath] with file [$sourceFullPath]");
                             return FALSE;
                         }
-                        elseif (is_readable($sourceFullPath) && is_dir($destFullPath) && is_writable($destFullPath)) {
+                        //
+                        elseif (is_link($destFullPath)) {
+                            if ($rewriteFiles && $destDirWriteStatus && $sourceItemReadStatus) {
+                                unlink($destFullPath);
+                                $sourceLinkTarget = readlink($sourceFullPath);
+                                symlink($sourceLinkTarget, $destFullPath);
+                            }
+                            elseif ($rewriteFiles && !$sourceItemReadStatus && !$skipNotReadable) {
+                                self::setErrId(ERROR_RESTRICTED_ACCESS);                                self::setErrExp("copy: unable to read file [$sourceFullPath]");
+                                return FALSE;
+                            }
+                            elseif ($rewriteFiles && !$destDirWriteStatus && !$skipWriteProtected) {
+                                self::setErrId(ERROR_RESTRICTED_ACCESS);                                    self::setErrExp("copy: directory [$destDirPath] is write-protected");
+                                return FALSE;
+                            }
+                            elseif (!$skipExistentFiles) {
+                                self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp("copy: file [$destFullPath] already exists");
+                                return FALSE;
+                            }
+                        }
+                        elseif (is_file($destFullPath)) {
+                            $destFileWriteStatus = is_writable($destFullPath);
+                            if ($rewriteFiles && $sourceItemReadStatus && $destFileWriteStatus) {
+                                copy($sourceFullPath, $destFullPath);
+                            }
+                            elseif ($rewriteFiles && !$sourceItemReadStatus && !$skipNotReadable) {
+                                self::setErrId(ERROR_RESTRICTED_ACCESS);                                self::setErrExp("copy: unable to read file [$sourceFullPath]");
+                                return FALSE;
+                            }
+                            elseif ($rewriteFiles && !$destFileWriteStatus && !$skipWriteProtected) {
+                                self::setErrId(ERROR_RESTRICTED_ACCESS);                                    self::setErrExp("copy: file [$destFullPath] is write-protected");
+                                return FALSE;
+                            }
+                            elseif (!$skipExistentFiles) {
+                                self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp("copy: file [$destFullPath] already exists");
+                                return FALSE;
+                            }
+                        }
+                        elseif (!is_dir($destFullPath) && $destDirWriteStatus && $sourceItemReadStatus) {
+                            copy($sourceFullPath, $destFullPath);
+                        }
+                        elseif (!$destDirWriteStatus && !$skipWriteProtected) {
+                            self::setErrId(ERROR_RESTRICTED_ACCESS);                                self::setErrExp("copy: directory [$destDirPath] is write-protected");
+                            return FALSE;
+                        }
+                        elseif (!$sourceItemReadStatus && !$skipNotReadable) {
+                            self::setErrId(ERROR_RESTRICTED_ACCESS);                            self::setErrExp("copy: unable to read file [$sourceFullPath]");
+                            return FALSE;
+                        }
+                    }
+                    elseif (is_dir($sourceFullPath)) { // directory handling
+                        $fileConflict = is_file($destFullPath);
+                        if ($fileConflict && !$skipConflicts) {
+                            self::setErrId(ERROR_ALREADY_EXISTS);                self::setErrExp("copy: unable to replace file [$destFullPath] with directory [$sourceFullPath]");
+                            return FALSE;
+                        }
+                        elseif ($sourceItemReadStatus && is_dir($destFullPath)) {
                             $stack[] = $sourceFullPath;
                         }
-                        elseif (is_readable($sourceFullPath) && !file_exists($destFullPath)) {
+                        elseif ($sourceItemReadStatus && !is_dir($destFullPath) && !$fileConflict && $destDirWriteStatus) {
                             $stack[] = $sourceFullPath;
                             mkdir($destFullPath);
                         }
-                        elseif (!is_readable($sourceFullPath) && !is_dir($destFullPath) && !is_file($destFullPath) && $skipNotReadable) {
-                            mkdir($destFullPath);
-                        }
-                        elseif (!is_readable($sourceFullPath) && !$skipNotReadable) {
+                        elseif (!$sourceItemReadStatus && !$skipNotReadable) {
                             self::setErrId(ERROR_RESTRICTED_ACCESS);                self::setErrExp("copy: unable to read directory [$sourceFullPath]");
                             return FALSE;
                         }
-                        elseif (is_dir($destFullPath) && !is_writable($destFullPath) && !$skipNotWritable) {
-                            self::setErrId(ERROR_RESTRICTED_ACCESS);                self::setErrExp("copy: unable to write into [$destFullPath]");
+                        elseif (is_dir($destFullPath) && !is_writable($destFullPath) && !$skipWriteProtected) {
+                            self::setErrId(ERROR_RESTRICTED_ACCESS);                self::setErrExp("copy: directory [$destFullPath] is write-protected");
                             return FALSE;
                         }
+                        elseif (!$destDirWriteStatus && !$skipWriteProtected) {
+                            self::setErrId(ERROR_RESTRICTED_ACCESS);                            self::setErrExp("copy: directory [$destDirPath] is write-protected");
+                            return FALSE;
+                        }
+                    }
+                    elseif (!$skipNotReadable) {
+                        self::setErrId(ERROR_RESTRICTED_ACCESS);                        self::setErrExp("copy: directory [$sourceDirPath] lists files only");
+                        return FALSE;
+                    }
+                    else {
+                        $sourceDirContent = array();
                     }
                 }
             }
             return TRUE;
-        }
-        elseif (is_file($sourcePath)) { // source is file
-            if (is_dir($destPath)) {
-                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('copy: unable to replace directory with file');
-                return FALSE;
-            }
-            else {
-                if (is_file($destPath) && !is_link($destPath)) {
-                    if (!is_writable($destPath)) {
-                        self::setErrId(ERROR_RESTRICTED_ACCESS);                    self::setErrExp('copy: unable to replace destination file');
-                        return FALSE;
-                    }
-                    elseif (!$rewriteFiles) {
-                        self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp('copy: replacing of files is not allowed');
-                        return FALSE;
-                    }
-                    else {
-                        copy($sourcePath, $destPath);
-                        return TRUE;
-                    }
-                }
-                else {
-                    $destDirPath = dirname($destPath);
-                    if (is_dir($destDirPath) && !is_link($destDirPath)) {
-                        if (!is_writable($destDirPath)) {
-                            self::setErrId(ERROR_RESTRICTED_ACCESS);                    self::setErrExp('copy: destination directory is write-protected');
-                            return FALSE;
-                        }
-                        else {
-                            copy($sourcePath, $destPath);
-                            return TRUE;
-                        }
-                    }
-                    elseif (is_link($destDirPath)) {
-                        self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp('copy: unable to copy file into the link');
-                        return FALSE;
-                    }
-                    else {
-                        self::setErrId(ERROR_NOT_FOUND);                    self::setErrExp('copy: destination directory was not found');
-                        return FALSE;
-                    }
-                }
-            }
         }
     }
     
@@ -286,13 +412,13 @@ class Files {
                             self::setErrId(ERROR_ALREADY_EXISTS);                self::setErrExp("move: unable to replace directory [$destFullPath] with file [$sourceFullPath]");
                             return FALSE;
                         }
-                        elseif (!file_exists($destFullPath)) {
+                        elseif (!is_file($destFullPath)) {
                             if (!@rename($sourceFullPath, $destFullPath) && !$skipNotReadable) {
                                 self::setErrId(ERROR_RESTRICTED_ACCESS);                    self::setErrExp("move: unable to move file [$sourceFullPath]. Probably you tried to move not readable file to another disk partition.");
                                 return FALSE;
                             }
                         }
-                        elseif (file_exists($destFullPath) && $replaceFiles) {
+                        elseif (is_file($destFullPath) && $replaceFiles) {
                             if (!@rename($sourceFullPath, $destFullPath) && !$skipNotReadable) {
                                 self::setErrId(ERROR_RESTRICTED_ACCESS);                    self::setErrExp("move: unable to move file [$sourceFullPath]. Probably you tried to move not readable file to another disk partition.");
                                 return FALSE;
@@ -307,7 +433,7 @@ class Files {
                         elseif (is_readable($sourceFullPath) && is_dir($destFullPath)) {
                             $stack[] = $sourceFullPath;
                         }
-                        elseif (is_readable($sourceFullPath) && !file_exists($destFullPath) && $destDirWriteStatus) {
+                        elseif (is_readable($sourceFullPath) && !is_dir($destFullPath) && $destDirWriteStatus) {
                             $stack[] = $sourceFullPath;
                             mkdir($destFullPath);
                         }
@@ -336,11 +462,11 @@ class Files {
                 $parentDirWriteStatus = is_writable($parentDir);
                 $dirIsNotEmpty = array_diff(scandir($dirPath), array('.', '..'));
                 if ($dirIsNotEmpty && !$skipConflicts) {
-                    self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp("source directory [$dirPath] is not empty");
+                    self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp("move: source directory [$dirPath] is not empty");
                     return  FALSE;
                 }
                 elseif (!$parentDirWriteStatus && !$skipWriteProtected) {
-                    self::setErrId(ERROR_RESTRICTED_ACCESS);                    self::setErrExp("unable to remove directory [$dirPath] because parent directory [$parentDir] is write-protected");
+                    self::setErrId(ERROR_RESTRICTED_ACCESS);                    self::setErrExp("move: unable to remove directory [$dirPath] because parent directory [$parentDir] is write-protected");
                     return  FALSE;
                 }
                 elseif (!$dirIsNotEmpty && $parentDirWriteStatus) {
@@ -414,11 +540,11 @@ class Files {
                 $parentDirWriteStatus = is_writable($parentDir);
                 $dirIsNotEmpty = array_diff(scandir($dirPath), array('.', '..'));
                 if ($dirIsNotEmpty && !$skipConflicts) {
-                    self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp("source directory [$dirPath] is not empty");
+                    self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp("remove: source directory [$dirPath] is not empty");
                     return  FALSE;
                 }
                 elseif (!$parentDirWriteStatus && !$skipWriteProtected) {
-                    self::setErrId(ERROR_RESTRICTED_ACCESS);                    self::setErrExp("unable to remove directory [$dirPath] because parent directory [$parentDir] is write-protected");
+                    self::setErrId(ERROR_RESTRICTED_ACCESS);                    self::setErrExp("remove: unable to remove directory [$dirPath] because parent directory [$parentDir] is write-protected");
                     return  FALSE;
                 }
                 elseif (!$dirIsNotEmpty && $parentDirWriteStatus) {
