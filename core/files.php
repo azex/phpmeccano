@@ -304,7 +304,7 @@ class Files {
         }
     }
     
-    public static function move($sourcePath, $destPath, $mergeDirs = FALSE, $replaceFiles = FALSE, $skipNotReadable = FALSE, $skipWriteProtected = FALSE, $skipConflicts = FALSE) {
+    public static function move($sourcePath, $destPath, $mergeDirs = FALSE, $replaceFiles = FALSE, $skipExistentFiles = FALSE, $skipNotReadable = FALSE, $skipWriteProtected = FALSE, $skipConflicts = FALSE) {
         self::$errid = 0;        self::$errexp = '';
         $sourcePath = rtrim(preg_replace('#[/]+#', '/', $sourcePath), '/');
         $destPath = rtrim(preg_replace('#[/]+#', '/', $destPath), '/');
@@ -408,21 +408,31 @@ class Files {
                         $sourceIsNotDir = 0;
                     }
                     if ($sourceIsNotDir && $sourceDirWriteStatus && $destDirWriteStatus) { // file handling
+                        if (is_file($destFullPath) || is_link($destFullPath)) {
+                            $destIsFile = 1;
+                        }
+                        else {
+                            $destIsFile = 0;
+                        }
                         if ((is_dir($destFullPath) && !is_link($destFullPath)) && !$skipConflicts) {
                             self::setErrId(ERROR_ALREADY_EXISTS);                self::setErrExp("move: unable to replace directory [$destFullPath] with file [$sourceFullPath]");
                             return FALSE;
                         }
-                        elseif (!is_file($destFullPath)) {
+                        elseif (!$destIsFile) {
                             if (!@rename($sourceFullPath, $destFullPath) && !$skipNotReadable) {
                                 self::setErrId(ERROR_RESTRICTED_ACCESS);                    self::setErrExp("move: unable to move file [$sourceFullPath]. Probably you tried to move not readable file to another disk partition.");
                                 return FALSE;
                             }
                         }
-                        elseif (is_file($destFullPath) && $replaceFiles) {
+                        elseif ($destIsFile && $replaceFiles) {
                             if (!@rename($sourceFullPath, $destFullPath) && !$skipNotReadable) {
                                 self::setErrId(ERROR_RESTRICTED_ACCESS);                    self::setErrExp("move: unable to move file [$sourceFullPath]. Probably you tried to move not readable file to another disk partition.");
                                 return FALSE;
                             }
+                        }
+                        elseif ($destIsFile && !$skipExistentFiles) {
+                            self::setErrId(ERROR_NOT_EXECUTED);                                self::setErrExp("move: file [$destFullPath] already exists");
+                            return FALSE;
                         }
                     }
                     elseif (!$sourceIsNotDir) { // directory handling
@@ -554,5 +564,4 @@ class Files {
             return TRUE;
         }
     }
-    
 }
