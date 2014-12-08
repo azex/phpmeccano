@@ -162,6 +162,14 @@ class Files {
                 self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('copy: merging of directories is not allowed');
                 return FALSE;
             }
+            $sourceReal = realpath($sourcePath);
+            $destReal = realpath($destPath);
+            $sourceLen = strlen($sourceReal);
+            $destLen = strlen($destReal);
+            if (($sourceReal == $destReal) || (($sourceLen < $destLen) && ($sourceReal == substr($destReal, 0, $sourceLen)))) {
+                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp("copy: unable to copy directory [$sourcePath] into itself");
+                return FALSE;
+            }
             $stack = array($sourcePath);
             $divPosition = strlen($sourcePath) + 1;
             while (count($stack)) {
