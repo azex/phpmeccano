@@ -5,14 +5,14 @@ namespace core;
 class Policy {
     private static $errid = 0; // error's id
     private static $errexp = ''; // error's explanation
-    private static $dblink; // database link
+    private static $dbLink; // database link
     
-    public function __construct($dblink = FALSE) {
-        self::$dblink = $dblink;
+    public function __construct($dbLink) {
+        self::$dbLink = $dbLink;
     }
     
-    public static function setDbLink($dblink) {
-        self::$dblink = $dblink;
+    public static function setDbLink($dbLink) {
+        self::$dbLink = $dbLink;
     }
     
     private static function setErrId($id) {
@@ -43,7 +43,7 @@ class Policy {
         foreach ($funcNames as $func) {
             $functions[] = $func->nodeValue;
         }
-        $qDbFuncs = self::$dblink->query("SELECT `id`, `func` "
+        $qDbFuncs = self::$dbLink->query("SELECT `id`, `func` "
                 . "FROM `".MECCANO_TPREF."_core_policy_summary_list` "
                 . "WHERE `name`='$pluginName' ;");
         $dbFuncs = array();
@@ -54,33 +54,33 @@ class Policy {
         $newFuncs = array_diff($functions, $dbFuncs);
         // deleting of outdated policies
         foreach ($oldFuncs as $funcId) {
-            self::$dblink->query("DELETE FROM `".MECCANO_TPREF."_core_langman_policy_description` "
+            self::$dbLink->query("DELETE FROM `".MECCANO_TPREF."_core_langman_policy_description` "
                     . "WHERE `policyid`=$funcId ;");
-            if (self::$dblink->errno) {
-                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('installPolicy: can\'t delete policy description | '.self::$dblink->error);
+            if (self::$dbLink->errno) {
+                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('installPolicy: can\'t delete policy description | '.self::$dbLink->error);
                 return FALSE;
             }
-            self::$dblink->query("DELETE FROM `".MECCANO_TPREF."_core_policy_access` "
+            self::$dbLink->query("DELETE FROM `".MECCANO_TPREF."_core_policy_access` "
                     . "WHERE `funcid`=$funcId ;");
-            if (self::$dblink->errno) {
-                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('installPolicy: can\'t delete group policy | '.self::$dblink->error);
+            if (self::$dbLink->errno) {
+                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('installPolicy: can\'t delete group policy | '.self::$dbLink->error);
                 return FALSE;
             }
-            self::$dblink->query("DELETE FROM `".MECCANO_TPREF."_core_policy_nosession` "
+            self::$dbLink->query("DELETE FROM `".MECCANO_TPREF."_core_policy_nosession` "
                     . "WHERE `funcid`=$funcId ;");
-            if (self::$dblink->errno) {
-                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('installPolicy: can\'t delete policy for inactive session | '.self::$dblink->error);
+            if (self::$dbLink->errno) {
+                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('installPolicy: can\'t delete policy for inactive session | '.self::$dbLink->error);
                 return FALSE;
             }
-            self::$dblink->query("DELETE FROM `".MECCANO_TPREF."_core_policy_summary_list` "
+            self::$dbLink->query("DELETE FROM `".MECCANO_TPREF."_core_policy_summary_list` "
                     . "WHERE `id`=$funcId ;");
-            if (self::$dblink->errno) {
-                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('installPolicy: can\'t delete policy from summary list | '.self::$dblink->error);
+            if (self::$dbLink->errno) {
+                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('installPolicy: can\'t delete policy from summary list | '.self::$dbLink->error);
                 return FALSE;
             }
         }
         // getting of the group identifiers
-        $qGroupIds = self::$dblink->query("SELECT `id` "
+        $qGroupIds = self::$dbLink->query("SELECT `id` "
                 . "FROM `".MECCANO_TPREF."_core_userman_groups` ;");
         $groupIds = array();
         while ($row = $qGroupIds->fetch_row()) {
@@ -88,17 +88,17 @@ class Policy {
         }
         // installing of new policies
         foreach ($newFuncs as $func) {
-            self::$dblink->query("INSERT INTO `".MECCANO_TPREF."_core_policy_summary_list` (`name`, `func`) "
+            self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_policy_summary_list` (`name`, `func`) "
                     . "VALUES ('$pluginName', '$func') ;");
-            if (self::$dblink->errno) {
-                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('installPolicy: can\'t install policy to summary list | '.self::$dblink->error);
+            if (self::$dbLink->errno) {
+                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('installPolicy: can\'t install policy to summary list | '.self::$dbLink->error);
                 return FALSE;
             }
-            $insertId = self::$dblink->insert_id;
-            self::$dblink->query("INSERT INTO `".MECCANO_TPREF."_core_policy_nosession` (`funcid`, `access`) "
+            $insertId = self::$dbLink->insert_id;
+            self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_policy_nosession` (`funcid`, `access`) "
                     . "VALUES ($insertId, 0) ;");
-            if (self::$dblink->errno) {
-                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('installPolicy: can\'t install policy for inactive session | '.self::$dblink->error);
+            if (self::$dbLink->errno) {
+                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('installPolicy: can\'t install policy for inactive session | '.self::$dbLink->error);
                 return FALSE;
             }
             foreach ($groupIds as $groupId) {
@@ -108,10 +108,10 @@ class Policy {
                 else {
                     $access = 0;
                 }
-                self::$dblink->query("INSERT INTO `".MECCANO_TPREF."_core_policy_access` (`groupid`, `funcid`, `access`) "
+                self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_policy_access` (`groupid`, `funcid`, `access`) "
                         . "VALUES ($groupId, $insertId, $access) ;");
-                if (self::$dblink->errno) {
-                    self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('installPolicy: can\'t install group policy | '.self::$dblink->error);
+                if (self::$dbLink->errno) {
+                    self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('installPolicy: can\'t install group policy | '.self::$dbLink->error);
                     return FALSE;
                 }
             }
@@ -125,7 +125,7 @@ class Policy {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('delPolicy: name must be string');
             return FALSE;
         }
-        $plugName = self::$dblink->real_escape_string($name);
+        $plugName = self::$dbLink->real_escape_string($name);
         $queries = array(
             "DELETE `d` FROM `".MECCANO_TPREF."_core_langman_policy_description` `d` "
             . "JOIN `".MECCANO_TPREF."_core_policy_summary_list` `s` "
@@ -142,13 +142,13 @@ class Policy {
             "DELETE FROM `".MECCANO_TPREF."_core_policy_summary_list` "
             . "WHERE `name`='$plugName' ;");
         foreach ($queries as $value) {
-            self::$dblink->query($value);
-            if (self::$dblink->errno) {
-                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('delPolicy: something went wrong | '.self::$dblink->error);
+            self::$dbLink->query($value);
+            if (self::$dbLink->errno) {
+                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('delPolicy: something went wrong | '.self::$dbLink->error);
                 return FALSE;
             }
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('delPolicy: defined name doesn\'t exist');
             return FALSE;
         }
@@ -161,23 +161,23 @@ class Policy {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('addGroup: id must be integer');
             return FALSE;
         }
-        $qIsGroup = self::$dblink->query("SELECT `g`.`id` FROM `".MECCANO_TPREF."_core_userman_groups` `g` "
+        $qIsGroup = self::$dbLink->query("SELECT `g`.`id` FROM `".MECCANO_TPREF."_core_userman_groups` `g` "
                 . "WHERE `g`.`id`=$id "
                 . "AND NOT EXISTS ("
                 . "SELECT `a`.`id` "
                 . "FROM `".MECCANO_TPREF."_core_policy_access` `a` "
                 . "WHERE `a`.`groupid`=$id LIMIT 1) ;");
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_ALREADY_EXISTS);        self::setErrExp('addGroup: defined group doesn\'t exist or already was added');
             return FALSE;
         }
-        $qDbFuncs = self::$dblink->query("SELECT `id` "
+        $qDbFuncs = self::$dbLink->query("SELECT `id` "
             . "FROM `".MECCANO_TPREF."_core_policy_summary_list` ;");
         while (list($row) = $qDbFuncs->fetch_row()) {
-            self::$dblink->query("INSERT INTO `".MECCANO_TPREF."_core_policy_access` (`groupid`, `funcid`) "
+            self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_policy_access` (`groupid`, `funcid`) "
                     . "VALUES ($id, $row) ;");
-            if (self::$dblink->errno) {
-                self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp('addPolicy: can\'t add policy | '.self::$dblink->error);
+            if (self::$dbLink->errno) {
+                self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp('addPolicy: can\'t add policy | '.self::$dbLink->error);
                 return FALSE;
             }
         }
@@ -190,13 +190,13 @@ class Policy {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('delGroup: id must be integer');
             return FALSE;
         }
-        self::$dblink->query("DELETE FROM `".MECCANO_TPREF."_core_policy_access` "
+        self::$dbLink->query("DELETE FROM `".MECCANO_TPREF."_core_policy_access` "
                 . "WHERE `groupid`=$id ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp('addPolicy: can\'t delete policy | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp('addPolicy: can\'t delete policy | '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);        self::setErrExp('delGroup: defined group doesn\'t exist');
             return FALSE;
         }
@@ -216,7 +216,7 @@ class Policy {
             else {
                 $access = 0;
             }
-            self::$dblink->query("UPDATE `".MECCANO_TPREF."_core_policy_nosession` `n` "
+            self::$dbLink->query("UPDATE `".MECCANO_TPREF."_core_policy_nosession` `n` "
                     . "JOIN `".MECCANO_TPREF."_core_policy_summary_list` `s` "
                     . "ON `n`.`funcid`=`s`.`id` "
                     . "SET `n`.`access`=$access "
@@ -224,7 +224,7 @@ class Policy {
                     . "AND  `s`.`name`='$name' ;");
         }
         elseif ($access) {
-            self::$dblink->query("UPDATE `".MECCANO_TPREF."_core_policy_access` `a` "
+            self::$dbLink->query("UPDATE `".MECCANO_TPREF."_core_policy_access` `a` "
                     . "JOIN `".MECCANO_TPREF."_core_policy_summary_list` `s` "
                     . "ON `a`.`funcid`=`s`.`id` "
                     . "SET `a`.`access`=1 "
@@ -233,7 +233,7 @@ class Policy {
                     . "AND `a`.`groupid`=$groupid ;");
         }
         elseif (!$access && $groupid!=1) {
-            self::$dblink->query("UPDATE `".MECCANO_TPREF."_core_policy_access` `a` "
+            self::$dbLink->query("UPDATE `".MECCANO_TPREF."_core_policy_access` `a` "
                     . "JOIN `".MECCANO_TPREF."_core_policy_summary_list` `s` "
                     . "ON `a`.`funcid`=`s`.`id` "
                     . "SET `a`.`access`=0 "
@@ -245,11 +245,11 @@ class Policy {
             self::setErrId(ERROR_SYSTEM_INTERVENTION);            self::setErrExp('funcAccess: access can\'t be disabled for system group');
             return FALSE;
         }
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('funcAccess: access wasn\'t changed | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('funcAccess: access wasn\'t changed | '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('funcAccess: plugin name, function or group don\'t exist or access flag wasn\'t changed');
             return FALSE;
         }
@@ -263,7 +263,7 @@ class Policy {
             return FALSE;
         }
         if (isset($_SESSION['core_auth_userid'])) {
-            $qAccess = self::$dblink->query("SELECT `a`.`access` "
+            $qAccess = self::$dbLink->query("SELECT `a`.`access` "
                     . "FROM `".MECCANO_TPREF."_core_policy_access` `a` "
                     . "JOIN `".MECCANO_TPREF."_core_policy_summary_list` `s` "
                     . "ON `a`.`funcid`=`s`.`id` "
@@ -277,7 +277,7 @@ class Policy {
                     . "LIMIT 1 ;");
         }
         else {
-            $qAccess = self::$dblink->query("SELECT `n`.`access` "
+            $qAccess = self::$dbLink->query("SELECT `n`.`access` "
                     . "FROM `".MECCANO_TPREF."_core_policy_nosession` `n` "
                     . "JOIN `".MECCANO_TPREF."_core_policy_summary_list` `s` "
                     . "ON `n`.`funcid`=`s`.`id` "
@@ -285,11 +285,11 @@ class Policy {
                     . "AND `s`.`func`='$func' "
                     . "LIMIT 1 ;");
         }
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('checkAccess: something went wrong | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('checkAccess: something went wrong | '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('checkAccess: policy was not found');
             return FALSE;
         }

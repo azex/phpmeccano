@@ -8,15 +8,15 @@ require_once 'unifunctions.php';
 class LangMan {
     private static $errid = 0; // error's id
     private static $errexp = ''; // error's explanation
-    private static $dblink; // database link
+    private static $dbLink; // database link
     private static $language = MECCANO_DEF_LANG; // current language
     
-    public function __construct($dblink = FALSE) {
-        self::$dblink = $dblink;
+    public function __construct($dbLink) {
+        self::$dbLink = $dbLink;
     }
     
-    public static function setDbLink($dblink) {
-        self::$dblink = $dblink;
+    public static function setDbLink($dbLink) {
+        self::$dbLink = $dbLink;
     }
 
     private static function setErrId($id) {
@@ -41,11 +41,11 @@ class LangMan {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('addLang: incorrect incoming parameters');
             return FALSE;
         }
-        $name = self::$dblink->real_escape_string(htmlspecialchars($name));
-        self::$dblink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_languages` (`code`, `name`) "
+        $name = self::$dbLink->real_escape_string(htmlspecialchars($name));
+        self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_languages` (`code`, `name`) "
                 . "VALUES('$code', '$name') ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('addLang: '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('addLang: '.self::$dbLink->error);
             return FALSE;
         }
         return TRUE;
@@ -85,19 +85,19 @@ class LangMan {
                 . "FROM `".MECCANO_TPREF."_core_langman_languages` "
                 . "WHERE `code`='$code') ;");
         foreach ($sql as $value) {
-            self::$dblink->query($value);
-            if (self::$dblink->errno) {
-                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('delLang: '.self::$dblink->error);
+            self::$dbLink->query($value);
+            if (self::$dbLink->errno) {
+                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('delLang: '.self::$dbLink->error);
                 return FALSE;
             }
         }
-        self::$dblink->query("DELETE FROM `".MECCANO_TPREF."_core_langman_languages` "
+        self::$dbLink->query("DELETE FROM `".MECCANO_TPREF."_core_langman_languages` "
                 . "WHERE `code`='$code' ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('delLang: '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('delLang: '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('delLang: defined language code was not found');
             return FALSE;
         }
@@ -110,14 +110,14 @@ class LangMan {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('setLang: incorrect language code');
             return FALSE;
         }
-        $qCode = self::$dblink->query("SELECT `id` "
+        $qCode = self::$dbLink->query("SELECT `id` "
                 . "FROM `".MECCANO_TPREF."_core_langman_languages` "
                 . "WHERE `code`='$code' ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('setLang: can\'t get language code | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('setLang: can\'t get language code | '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('setLang: can\'t find defined language');
             return FALSE;
         }
@@ -127,13 +127,13 @@ class LangMan {
 
         public static function langList() {
         self::$errid = 0;        self::$errexp = '';
-        $qLang = self::$dblink->query("SELECT `id`, `code`, `name` "
+        $qLang = self::$dbLink->query("SELECT `id`, `code`, `name` "
                 . "FROM `".MECCANO_TPREF."_core_langman_languages` ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('langList: '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('langList: '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('langList: there wasn\'t found any language');
             return FALSE;
         }
@@ -157,9 +157,9 @@ class LangMan {
             return FALSE;
         }
         //getting of the list of available languages
-        $qAvaiLang = self::$dblink->query("SELECT `id`, `code` FROM `".MECCANO_TPREF."_core_langman_languages` ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('installPolicyDesc: can\'t get list of available languages: '.self::$dblink->error);
+        $qAvaiLang = self::$dbLink->query("SELECT `id`, `code` FROM `".MECCANO_TPREF."_core_langman_languages` ;");
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('installPolicyDesc: can\'t get list of available languages: '.self::$dbLink->error);
             return FALSE;
         }
         $avaiLang = array();
@@ -168,11 +168,11 @@ class LangMan {
         }
         //getting of list of installed policies
         $plugName = $description->getElementsByTagName('description')->item(0)->getAttribute('plugin'); //getting of plugin name
-        $qPolicies = self::$dblink->query("SELECT `id`, `func` "
+        $qPolicies = self::$dbLink->query("SELECT `id`, `func` "
                 . "FROM `".MECCANO_TPREF."_core_policy_summary_list` "
                 . "WHERE `name`='$plugName' ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('installPolicyDesc: can\'t get list of available languages | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('installPolicyDesc: can\'t get list of available languages | '.self::$dbLink->error);
             return FALSE;
         }
         $plugPolicies = array(); // installed policies
@@ -191,32 +191,32 @@ class LangMan {
                     $langCode = $lang->getAttribute('code');
                     if (isset($avaiLang[$langCode])) {
                         $codeId = $avaiLang[$langCode];
-                        $shortDesc = self::$dblink->real_escape_string($lang->getElementsByTagName('short')->item(0)->nodeValue); // short description
-                        $detailedDesc = self::$dblink->real_escape_string($lang->getElementsByTagName('detailed')->item(0)->nodeValue); //detailed description
-                        $qDesc = self::$dblink->query("SELECT `id` "
+                        $shortDesc = self::$dbLink->real_escape_string($lang->getElementsByTagName('short')->item(0)->nodeValue); // short description
+                        $detailedDesc = self::$dbLink->real_escape_string($lang->getElementsByTagName('detailed')->item(0)->nodeValue); //detailed description
+                        $qDesc = self::$dbLink->query("SELECT `id` "
                                 . "FROM `".MECCANO_TPREF."_core_langman_policy_description` "
                                 . "WHERE `policyid`=$policyId "
                                 . "AND `codeid`=$codeId LIMIT 1 ;");
-                        if (self::$dblink->errno) {
-                            self::setErrId(ERROR_NOT_EXECUTED);                            self::setErrExp('installPolicyDesc: '.self::$dblink->error);
+                        if (self::$dbLink->errno) {
+                            self::setErrId(ERROR_NOT_EXECUTED);                            self::setErrExp('installPolicyDesc: '.self::$dbLink->error);
                             return FALSE;
                         }
-                        if (self::$dblink->affected_rows) {
-                            self::$dblink->query("UPDATE `".MECCANO_TPREF."_core_langman_policy_description` "
+                        if (self::$dbLink->affected_rows) {
+                            self::$dbLink->query("UPDATE `".MECCANO_TPREF."_core_langman_policy_description` "
                                     . "SET `short`='$shortDesc', `detailed`='$detailedDesc' "
                                     . "WHERE `policyid`=$policyId "
                                     . "AND `codeid`=$codeId");
-                            if (self::$dblink->errno) {
-                                self::setErrId(ERROR_NOT_EXECUTED);                                self::setErrExp('installPolicyDesc: can\'t update description | '.self::$dblink->error);
+                            if (self::$dbLink->errno) {
+                                self::setErrId(ERROR_NOT_EXECUTED);                                self::setErrExp('installPolicyDesc: can\'t update description | '.self::$dbLink->error);
                                 return FALSE;
                             }
                         }
                         else {
-                            self::$dblink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_policy_description` "
+                            self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_policy_description` "
                                     . "(`codeid`, `policyid`, `short`, `detailed`) "
                                     . "VALUES ($codeId, $policyId, '$shortDesc', '$detailedDesc') ;");
-                            if (self::$dblink->errno) {
-                                self::setErrId(ERROR_NOT_EXECUTED);                                self::setErrExp('installPolicyDesc: can\'t install description | '.self::$dblink->error);
+                            if (self::$dbLink->errno) {
+                                self::setErrId(ERROR_NOT_EXECUTED);                                self::setErrExp('installPolicyDesc: can\'t install description | '.self::$dbLink->error);
                                 return FALSE;
                             }
                         }
@@ -227,16 +227,16 @@ class LangMan {
                 }
                 if (!$isDefault) { // if there is not description for default language
                     $codeId = $avaiLang[MECCANO_DEF_LANG];
-                    $qDesc = self::$dblink->query("SELECT `id` "
+                    $qDesc = self::$dbLink->query("SELECT `id` "
                             . "FROM `".MECCANO_TPREF."_core_langman_policy_description` "
                             . "WHERE `policyid`=$policyId "
                             . "AND `codeid`=$codeId LIMIT 1 ;");
-                    if (!self::$dblink->affected_rows) {
-                        self::$dblink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_policy_description` "
+                    if (!self::$dbLink->affected_rows) {
+                        self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_policy_description` "
                                 . "(`codeid`, `policyid`, `short`, `detailed`) "
                                 . "VALUES ($codeId, $policyId, '$funcName', '$funcName') ;");
-                        if (self::$dblink->errno) {
-                            self::setErrId(ERROR_NOT_EXECUTED);                                self::setErrExp('installPolicyDesc: can\'t install description | '.self::$dblink->error);
+                        if (self::$dbLink->errno) {
+                            self::setErrId(ERROR_NOT_EXECUTED);                                self::setErrExp('installPolicyDesc: can\'t install description | '.self::$dbLink->error);
                             return FALSE;
                         }
                     }
@@ -253,9 +253,9 @@ class LangMan {
             return FALSE;
         }
         //getting list of available languages
-        $qAvaiLang = self::$dblink->query("SELECT `id`, `code` FROM `".MECCANO_TPREF."_core_langman_languages` ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('installPolicyDesc: can\'t get list of available languages: '.self::$dblink->error);
+        $qAvaiLang = self::$dbLink->query("SELECT `id`, `code` FROM `".MECCANO_TPREF."_core_langman_languages` ;");
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('installPolicyDesc: can\'t get list of available languages: '.self::$dbLink->error);
             return FALSE;
         }
         $avaiLang = array();
@@ -265,14 +265,14 @@ class LangMan {
         //getting name of the plugin
         $plugName = $titles->getElementsByTagName('titles')->item(0)->getAttribute('plugin');
         // checking if plugin exists
-        $qPlugin = self::$dblink->query("SELECT `id` "
+        $qPlugin = self::$dbLink->query("SELECT `id` "
                 . "FROM `".MECCANO_TPREF."_core_plugins_install` "
                 . "WHERE `name`='$plugName' ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('installTitles: '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('installTitles: '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('installTitles: can\'t find plugin');
             return FALSE;
         }
@@ -288,14 +288,14 @@ class LangMan {
             $sectionTypes[$sectionName] = $static;
             // renaming of the section
             if ($sectionOldName = $sectionNode->getAttribute('oldname')) {
-                self::$dblink->query("UPDATE `".MECCANO_TPREF."_core_langman_title_sections` `s` "
+                self::$dbLink->query("UPDATE `".MECCANO_TPREF."_core_langman_title_sections` `s` "
                         . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
                         . "ON `s`.`plugid`=`p`.`id` "
                         . "SET `s`.`section`='$sectionName' "
                         . "WHERE `p`.`name`='$plugName' "
                         . "AND `s`.`section`='$sectionOldName' ;");
-                if (self::$dblink->errno) {
-                    self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp('installTitles: can\'t rename section | '.self::$dblink->error);
+                if (self::$dbLink->errno) {
+                    self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp('installTitles: can\'t rename section | '.self::$dbLink->error);
                     return FALSE;
                 }
             }
@@ -312,7 +312,7 @@ class LangMan {
             }
         }
         // getting list of installed section if the the pugin is installed
-        $qSections = self::$dblink->query("SELECT `s`.`section`, `s`.`static`, `s`.`id` "
+        $qSections = self::$dbLink->query("SELECT `s`.`section`, `s`.`static`, `s`.`id` "
                 . "FROM `".MECCANO_TPREF."_core_langman_title_sections` `s` "
                 . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
@@ -341,9 +341,9 @@ class LangMan {
                 . "WHERE `section`='$value' ;"
             );
             foreach ($sql as $dQuery) {
-                self::$dblink->query($dQuery);
-                if (self::$dblink->errno) {
-                    self::errId(ERROR_NOT_EXECUTED);                    self::errExp('installTitles: can\'t delete outdated data | '.self::$dblink->error);
+                self::$dbLink->query($dQuery);
+                if (self::$dbLink->errno) {
+                    self::errId(ERROR_NOT_EXECUTED);                    self::errExp('installTitles: can\'t delete outdated data | '.self::$dbLink->error);
                     return FALSE;
                 }
             }
@@ -371,28 +371,28 @@ class LangMan {
                         . "WHERE `section`='$sectionName' ;"
                     );
                     foreach ($sql as $value) {
-                        self::$dblink->query($value);
-                        if (self::$dblink->errno) {
-                            self::setErrId(ERROR_NOT_EXECUTED);                            self::setErrExp('installTitles: can\'t clear data before updating titles | '.self::$dblink->error);
+                        self::$dbLink->query($value);
+                        if (self::$dbLink->errno) {
+                            self::setErrId(ERROR_NOT_EXECUTED);                            self::setErrExp('installTitles: can\'t clear data before updating titles | '.self::$dbLink->error);
                             return FALSE;
                         }
                     }
                     $sectionId = $dbSectionIds[$sectionName];
                     foreach ($titlePool as $titleName => $langPool) {
-                        self::$dblink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_title_names` (`sid`, `name`) "
+                        self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_title_names` (`sid`, `name`) "
                                 . "VALUES ($sectionId, '$titleName') ;");
-                        if (self::$dblink->errno) {
-                            self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp('installTitles: can\'t update name | '.self::$dblink->error);
+                        if (self::$dbLink->errno) {
+                            self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp('installTitles: can\'t update name | '.self::$dbLink->error);
                             return FALSE;
                         }
-                        $nameId = self::$dblink->insert_id;
+                        $nameId = self::$dbLink->insert_id;
                         foreach ($langPool as $langCode => $title) {
                             $codeId = $avaiLang[$langCode];
-                            $title = self::$dblink->real_escape_string($title);
-                            self::$dblink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_titles` (`codeid`, `nameid`, `title`) "
+                            $title = self::$dbLink->real_escape_string($title);
+                            self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_titles` (`codeid`, `nameid`, `title`) "
                                     . "VALUES ($codeId, $nameId, '$title') ;");
-                            if (self::$dblink->errno) {
-                                self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp('installTitles: can\'t update title | '.self::$dblink->error);
+                            if (self::$dbLink->errno) {
+                                self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp('installTitles: can\'t update title | '.self::$dbLink->error);
                                 return FALSE;
                             }
                         }
@@ -400,11 +400,11 @@ class LangMan {
                 }
                 // non static section
                 else {
-                    self::$dblink->query("UPDATE `".MECCANO_TPREF."_core_langman_title_sections` "
+                    self::$dbLink->query("UPDATE `".MECCANO_TPREF."_core_langman_title_sections` "
                             . "SET `static`=0 "
                             . "WHERE `section`='$sectionName' ;");
-                    if (self::$dblink->errno) {
-                        self::setErrId(ERROR_NOT_EXECUTED);                        self::setErrExp('installTitles: '.self::$dblink->error);
+                    if (self::$dbLink->errno) {
+                        self::setErrId(ERROR_NOT_EXECUTED);                        self::setErrExp('installTitles: '.self::$dbLink->error);
                         return FALSE;
                     }
                 }
@@ -413,28 +413,28 @@ class LangMan {
             else {
                 // static section section
                 if ($sectionTypes[$sectionName]) {
-                    self::$dblink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_title_sections` (`section`, `plugid`, `static`) "
+                    self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_title_sections` (`section`, `plugid`, `static`) "
                             . "VALUES ('$sectionName', $plugId, 1) ;");
-                    if (self::$dblink->errno) {
-                        self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp('installTitles: can\'t create section | '.self::$dblink->error);
+                    if (self::$dbLink->errno) {
+                        self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp('installTitles: can\'t create section | '.self::$dbLink->error);
                         return FALSE;
                     }
-                    $sectionId = self::$dblink->insert_id;
+                    $sectionId = self::$dbLink->insert_id;
                     foreach ($titlePool as $titleName => $langPool) {
-                        self::$dblink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_title_names` (`sid`, `name`) "
+                        self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_title_names` (`sid`, `name`) "
                                 . "VALUES ($sectionId, '$titleName') ;");
-                        if (self::$dblink->errno) {
-                            self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp('installTitles: can\'t create title name | '.self::$dblink->error);
+                        if (self::$dbLink->errno) {
+                            self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp('installTitles: can\'t create title name | '.self::$dbLink->error);
                             return FALSE;
                         }
-                        $nameId = self::$dblink->insert_id;
+                        $nameId = self::$dbLink->insert_id;
                         foreach ($langPool as $langCode => $title) {
                             $codeId = $avaiLang[$langCode];
-                            $title = self::$dblink->real_escape_string($title);
-                            self::$dblink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_titles` (`codeid`, `nameid`, `title`) "
+                            $title = self::$dbLink->real_escape_string($title);
+                            self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_titles` (`codeid`, `nameid`, `title`) "
                                     . "VALUES ($codeId, $nameId, '$title') ;");
-                            if (self::$dblink->errno) {
-                                self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp('installTitles: can\'t create title | '.self::$dblink->error);
+                            if (self::$dbLink->errno) {
+                                self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp('installTitles: can\'t create title | '.self::$dbLink->error);
                                 return FALSE;
                             }
                         }
@@ -442,10 +442,10 @@ class LangMan {
                 }
                 // non static section
                 else {
-                    self::$dblink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_title_sections` (`section`, `plugid`, `static`) "
+                    self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_title_sections` (`section`, `plugid`, `static`) "
                             . "VALUES ('$sectionName', $plugId, 0) ;");
-                    if (self::$dblink->errno) {
-                        self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp('installTitles: '.self::$dblink->error);
+                    if (self::$dbLink->errno) {
+                        self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp('installTitles: '.self::$dbLink->error);
                         return FALSE;
                     }
                 }
@@ -461,9 +461,9 @@ class LangMan {
             return FALSE;
         }
         //getting list of available languages
-        $qAvaiLang = self::$dblink->query("SELECT `id`, `code` FROM `".MECCANO_TPREF."_core_langman_languages` ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('installPolicyDesc: can\'t get list of available languages: '.self::$dblink->error);
+        $qAvaiLang = self::$dbLink->query("SELECT `id`, `code` FROM `".MECCANO_TPREF."_core_langman_languages` ;");
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('installPolicyDesc: can\'t get list of available languages: '.self::$dbLink->error);
             return FALSE;
         }
         $avaiLang = array();
@@ -473,14 +473,14 @@ class LangMan {
         //getting name of the plugin
         $plugName = $texts->getElementsByTagName('texts')->item(0)->getAttribute('plugin');
         // checking if plugin exists
-        $qPlugin = self::$dblink->query("SELECT `id` "
+        $qPlugin = self::$dbLink->query("SELECT `id` "
                 . "FROM `".MECCANO_TPREF."_core_plugins_install` "
                 . "WHERE `name`='$plugName' ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('installTexts: '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('installTexts: '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('installTexts: can\'t find plugin');
             return FALSE;
         }
@@ -496,14 +496,14 @@ class LangMan {
             $sectionTypes[$sectionName] = $static;
             // renaming of the section
             if ($sectionOldName = $sectionNode->getAttribute('oldname')) {
-                self::$dblink->query("UPDATE `".MECCANO_TPREF."_core_langman_text_sections` `s` "
+                self::$dbLink->query("UPDATE `".MECCANO_TPREF."_core_langman_text_sections` `s` "
                         . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
                         . "ON `s`.`plugid`=`p`.`id` "
                         . "SET `s`.`section`='$sectionName' "
                         . "WHERE `p`.`name`='$plugName' "
                         . "AND `s`.`section`='$sectionOldName' ;");
-                if (self::$dblink->errno) {
-                    self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp('installTexts: can\'t rename section | '.self::$dblink->error);
+                if (self::$dbLink->errno) {
+                    self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp('installTexts: can\'t rename section | '.self::$dbLink->error);
                     return FALSE;
                 }
             }
@@ -522,7 +522,7 @@ class LangMan {
             }
         }
         // getting list of installed section if the the pugin is installed
-        $qSections = self::$dblink->query("SELECT `s`.`section`, `s`.`static`, `s`.`id` "
+        $qSections = self::$dbLink->query("SELECT `s`.`section`, `s`.`static`, `s`.`id` "
                 . "FROM `".MECCANO_TPREF."_core_langman_text_sections` `s` "
                 . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
@@ -551,9 +551,9 @@ class LangMan {
                 . "WHERE `section`='$value' ;"
             );
             foreach ($sql as $dQuery) {
-                self::$dblink->query($dQuery);
-                if (self::$dblink->errno) {
-                    self::errId(ERROR_NOT_EXECUTED);                    self::errExp('installTexts: can\'t delete outdated data | '.self::$dblink->error);
+                self::$dbLink->query($dQuery);
+                if (self::$dbLink->errno) {
+                    self::errId(ERROR_NOT_EXECUTED);                    self::errExp('installTexts: can\'t delete outdated data | '.self::$dbLink->error);
                     return FALSE;
                 }
             }
@@ -581,29 +581,29 @@ class LangMan {
                         . "WHERE `section`='$sectionName' ;"
                     );
                     foreach ($sql as $value) {
-                        self::$dblink->query($value);
-                        if (self::$dblink->errno) {
-                            self::setErrId(ERROR_NOT_EXECUTED);                            self::setErrExp('installTexts: can\'t clear data before updating texts | '.self::$dblink->error);
+                        self::$dbLink->query($value);
+                        if (self::$dbLink->errno) {
+                            self::setErrId(ERROR_NOT_EXECUTED);                            self::setErrExp('installTexts: can\'t clear data before updating texts | '.self::$dbLink->error);
                             return FALSE;
                         }
                     }
                     $sectionId = $dbSectionIds[$sectionName];
                     foreach ($textPool as $textName => $langPool) {
-                        self::$dblink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_text_names` (`sid`, `name`) "
+                        self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_text_names` (`sid`, `name`) "
                                 . "VALUES ($sectionId, '$textName') ;");
-                        if (self::$dblink->errno) {
-                            self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp('installTexts: can\'t update name | '.self::$dblink->error);
+                        if (self::$dbLink->errno) {
+                            self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp('installTexts: can\'t update name | '.self::$dbLink->error);
                             return FALSE;
                         }
-                        $nameId = self::$dblink->insert_id;
+                        $nameId = self::$dbLink->insert_id;
                         foreach ($langPool as $langCode => $text) {
                             $codeId = $avaiLang[$langCode];
-                            $title = self::$dblink->real_escape_string($text[0]);
-                            $document = self::$dblink->real_escape_string($text[1]);
-                            self::$dblink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_texts` (`codeid`, `nameid`, `title`, `document`) "
+                            $title = self::$dbLink->real_escape_string($text[0]);
+                            $document = self::$dbLink->real_escape_string($text[1]);
+                            self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_texts` (`codeid`, `nameid`, `title`, `document`) "
                                     . "VALUES ($codeId, $nameId, '$title', '$document') ;");
-                            if (self::$dblink->errno) {
-                                self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp('installTexts: can\'t update text | '.self::$dblink->error);
+                            if (self::$dbLink->errno) {
+                                self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp('installTexts: can\'t update text | '.self::$dbLink->error);
                                 return FALSE;
                             }
                         }
@@ -611,11 +611,11 @@ class LangMan {
                 }
                 // non static section
                 else {
-                    self::$dblink->query("UPDATE `".MECCANO_TPREF."_core_langman_text_sections` "
+                    self::$dbLink->query("UPDATE `".MECCANO_TPREF."_core_langman_text_sections` "
                             . "SET `static`=0 "
                             . "WHERE `section`='$sectionName' ;");
-                    if (self::$dblink->errno) {
-                        self::setErrId(ERROR_NOT_EXECUTED);                        self::setErrExp('installTexts: '.self::$dblink->error);
+                    if (self::$dbLink->errno) {
+                        self::setErrId(ERROR_NOT_EXECUTED);                        self::setErrExp('installTexts: '.self::$dbLink->error);
                         return FALSE;
                     }
                 }
@@ -624,29 +624,29 @@ class LangMan {
             else {
                 // static section section
                 if ($sectionTypes[$sectionName]) {
-                    self::$dblink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_text_sections` (`section`, `plugid`, `static`) "
+                    self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_text_sections` (`section`, `plugid`, `static`) "
                             . "VALUES ('$sectionName', $plugId, 1) ;");
-                    if (self::$dblink->errno) {
-                        self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp('installTexts: can\'t create section | '.self::$dblink->error);
+                    if (self::$dbLink->errno) {
+                        self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp('installTexts: can\'t create section | '.self::$dbLink->error);
                         return FALSE;
                     }
-                    $sectionId = self::$dblink->insert_id;
+                    $sectionId = self::$dbLink->insert_id;
                     foreach ($textPool as $textName => $langPool) {
-                        self::$dblink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_text_names` (`sid`, `name`) "
+                        self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_text_names` (`sid`, `name`) "
                                 . "VALUES ($sectionId, '$textName') ;");
-                        if (self::$dblink->errno) {
-                            self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp('installTexts: can\'t create text name | '.self::$dblink->error);
+                        if (self::$dbLink->errno) {
+                            self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp('installTexts: can\'t create text name | '.self::$dbLink->error);
                             return FALSE;
                         }
-                        $nameId = self::$dblink->insert_id;
+                        $nameId = self::$dbLink->insert_id;
                         foreach ($langPool as $langCode => $text) {
                             $codeId = $avaiLang[$langCode];
-                            $title = self::$dblink->real_escape_string($text[0]);
-                            $document = self::$dblink->real_escape_string($text[1]);
-                            self::$dblink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_texts` (`codeid`, `nameid`, `title`, `document`) "
+                            $title = self::$dbLink->real_escape_string($text[0]);
+                            $document = self::$dbLink->real_escape_string($text[1]);
+                            self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_texts` (`codeid`, `nameid`, `title`, `document`) "
                                     . "VALUES ($codeId, $nameId, '$title', '$document') ;");
-                            if (self::$dblink->errno) {
-                                self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp('installTexts: can\'t create text | '.self::$dblink->error);
+                            if (self::$dbLink->errno) {
+                                self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp('installTexts: can\'t create text | '.self::$dbLink->error);
                                 return FALSE;
                             }
                         }
@@ -654,10 +654,10 @@ class LangMan {
                 }
                 // non static section
                 else {
-                    self::$dblink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_text_sections` (`section`, `plugid`, `static`) "
+                    self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_text_sections` (`section`, `plugid`, `static`) "
                             . "VALUES ('$sectionName', $plugId, 0) ;");
-                    if (self::$dblink->errno) {
-                        self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp('installTexts: '.self::$dblink->error);
+                    if (self::$dbLink->errno) {
+                        self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp('installTexts: '.self::$dbLink->error);
                         return FALSE;
                     }
                 }
@@ -673,14 +673,14 @@ class LangMan {
             return FALSE;
         }
         // checking if plugin exists
-        $qPlugin = self::$dblink->query("SELECT `id` "
+        $qPlugin = self::$dbLink->query("SELECT `id` "
                 . "FROM `".MECCANO_TPREF."_core_plugins_install` "
                 . "WHERE `name`='$name' ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('delPlugin: '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('delPlugin: '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('delPlugin: can\'t find plugin');
             return FALSE;
         }
@@ -724,9 +724,9 @@ class LangMan {
             . "WHERE `p`.`name`='$name' ;"
         );
         foreach ($sql as $key => $value) {
-            self::$dblink->query($value);
-            if (self::$dblink->errno) {
-                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp("delPlugin: query #$key ".self::$dblink->error);
+            self::$dbLink->query($value);
+            if (self::$dbLink->errno) {
+                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp("delPlugin: query #$key ".self::$dbLink->error);
                 return FALSE;
             }
         }
@@ -740,26 +740,26 @@ class LangMan {
             return FALSE;
         }
         // checking if plugin exists
-        $qPlugin = self::$dblink->query("SELECT `id` "
+        $qPlugin = self::$dbLink->query("SELECT `id` "
                 . "FROM `".MECCANO_TPREF."_core_plugins_install` "
                 . "WHERE `name`='$plugin' ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('delPlugin: '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('delPlugin: '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('addTitleSection: can\'t find plugin');
             return FALSE;
         }
         list($plugid) = $qPlugin->fetch_row();
         // creation of the new section
-        self::$dblink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_title_sections` (`plugid`, `section` , `static`) "
+        self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_title_sections` (`plugid`, `section` , `static`) "
                 . "VALUES ($plugid, '$section', 0) ;");
-        if (self::$dblink->errno) {
-            self::setErrExp(ERROR_NOT_EXECUTED);            self::setErrExp('addTitleSection: '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrExp(ERROR_NOT_EXECUTED);            self::setErrExp('addTitleSection: '.self::$dbLink->error);
             return FALSE;
         }
-        return (int) self::$dblink->insert_id;
+        return (int) self::$dbLink->insert_id;
     }
     
     public static function delTitleSection($sid) {
@@ -786,13 +786,13 @@ class LangMan {
                 . "AND `static`=0;"
         );
         foreach ($sql as $key => $value) {
-            self::$dblink->query($value);
-            if (self::$dblink->errno) {
-                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp("delTitleSection: query #$key ".self::$dblink->error);
+            self::$dbLink->query($value);
+            if (self::$dbLink->errno) {
+                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp("delTitleSection: query #$key ".self::$dbLink->error);
                 return FALSE;
             }
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('delTitleSection: defined section doesn\'t exist or your are trying to delete static section');
             return FALSE;
         }
@@ -806,26 +806,26 @@ class LangMan {
             return FALSE;
         }
         // checking if plugin exists
-        $qPlugin = self::$dblink->query("SELECT `id` "
+        $qPlugin = self::$dbLink->query("SELECT `id` "
                 . "FROM `".MECCANO_TPREF."_core_plugins_install` "
                 . "WHERE `name`='$plugin' ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('delPlugin: '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('delPlugin: '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('addTextSection: can\'t find plugin');
             return FALSE;
         }
         list($plugid) = $qPlugin->fetch_row();
         // creation of the new section
-        self::$dblink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_text_sections` (`plugid`, `section` , `static`) "
+        self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_text_sections` (`plugid`, `section` , `static`) "
                 . "VALUES ($plugid, '$section', 0) ;");
-        if (self::$dblink->errno) {
-            self::setErrExp(ERROR_NOT_EXECUTED);            self::setErrExp('addTextSection: '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrExp(ERROR_NOT_EXECUTED);            self::setErrExp('addTextSection: '.self::$dbLink->error);
             return FALSE;
         }
-        return (int) self::$dblink->insert_id;
+        return (int) self::$dbLink->insert_id;
     }
     public static function delTextSection($sid) {
         self::$errid = 0;        self::$errexp = '';
@@ -851,13 +851,13 @@ class LangMan {
                 . "AND `static`=0;"
         );
         foreach ($sql as $key => $value) {
-            self::$dblink->query($value);
-            if (self::$dblink->errno) {
-                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp("delTextSection: query #$key ".self::$dblink->error);
+            self::$dbLink->query($value);
+            if (self::$dbLink->errno) {
+                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp("delTextSection: query #$key ".self::$dbLink->error);
                 return FALSE;
             }
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('delTextSection: defined section doesn\'t exist or your are trying to delete static section');
             return FALSE;
         }
@@ -870,30 +870,30 @@ class LangMan {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('addTitleName: incorrect incoming parameters');
             return FALSE;
         }
-        $qIdentifiers = self::$dblink->query("SELECT `s`.`id` "
+        $qIdentifiers = self::$dbLink->query("SELECT `s`.`id` "
                 . "FROM `".MECCANO_TPREF."_core_langman_title_sections` `s` "
                 . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `s`.`section`='$section' "
                 . "AND `s`.`static`=0 "
                 . "AND `p`.`name`='$plugin' ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('addTitleName: can\'t check section and plugin | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('addTitleName: can\'t check section and plugin | '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('addTitleName: can\'t find matchable section and plugin or you are trying to create name in static section');
             return FALSE;
         }
         list($sid) = $qIdentifiers->fetch_row();
-        self::$dblink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_title_names` "
+        self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_title_names` "
                 . "(`sid`, `name`) "
                 . "VALUES ($sid, '$name') ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('addTitleName: can\'t create name | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('addTitleName: can\'t create name | '.self::$dbLink->error);
             return FALSE;
         }
-        return (int) self::$dblink->insert_id;
+        return (int) self::$dbLink->insert_id;
     }
     
     public static function delTitleName($nameid) {
@@ -917,13 +917,13 @@ class LangMan {
                 . "AND `s`.`static`=0;"
         );
         foreach ($sql as $key => $value) {
-            self::$dblink->query($value);
-            if (self::$dblink->errno) {
-                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp("delTitleName: query #$key ".self::$dblink->error);
+            self::$dbLink->query($value);
+            if (self::$dbLink->errno) {
+                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp("delTitleName: query #$key ".self::$dbLink->error);
                 return FALSE;
             }
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('delTitleName: defined tile name doesn\'t exist or your are trying to delete name from static section');
             return FALSE;
         }
@@ -936,30 +936,30 @@ class LangMan {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('addTextName: incorrect incoming parameters');
             return FALSE;
         }
-        $qIdentifiers = self::$dblink->query("SELECT `s`.`id` "
+        $qIdentifiers = self::$dbLink->query("SELECT `s`.`id` "
                 . "FROM `".MECCANO_TPREF."_core_langman_text_sections` `s` "
                 . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `s`.`section`='$section' "
                 . "AND `s`.`static`=0 "
                 . "AND `p`.`name`='$plugin' ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('addTextName: can\'t check section and plugin | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('addTextName: can\'t check section and plugin | '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('addTextName: can\'t find matchable section and plugin or you are trying to create name in static section');
             return FALSE;
         }
         list($sid) = $qIdentifiers->fetch_row();
-        self::$dblink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_text_names` "
+        self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_text_names` "
                 . "(`sid`, `name`) "
                 . "VALUES ($sid, '$name') ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('addTextName: can\'t create name | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('addTextName: can\'t create name | '.self::$dbLink->error);
             return FALSE;
         }
-        return (int) self::$dblink->insert_id;
+        return (int) self::$dbLink->insert_id;
     }
     
     public static function delTextName($nameid) {
@@ -983,13 +983,13 @@ class LangMan {
                 . "AND `s`.`static`=0;"
         );
         foreach ($sql as $key => $value) {
-            self::$dblink->query($value);
-            if (self::$dblink->errno) {
-                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp("delTextName: query #$key ".self::$dblink->error);
+            self::$dbLink->query($value);
+            if (self::$dbLink->errno) {
+                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp("delTextName: query #$key ".self::$dbLink->error);
                 return FALSE;
             }
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('delTextName: defined tile name doesn\'t exist or your are trying to delete name from static section');
             return FALSE;
         }
@@ -1002,7 +1002,7 @@ class LangMan {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('addTitle: incorrect incoming parameters');
             return FALSE;
         }
-        $qTitle = self::$dblink->query("SELECT `n`.`id` "
+        $qTitle = self::$dbLink->query("SELECT `n`.`id` "
                 . "FROM `".MECCANO_TPREF."_core_langman_title_names` `n` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_title_sections` `s` "
                 . "ON `s`.`id`=`n`.`sid` "
@@ -1012,11 +1012,11 @@ class LangMan {
                 . "AND `s`.`section`='$section' "
                 . "AND `s`.`static`=0 "
                 . "AND `p`.`name`='$plugin' ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('addTitle: can\'t get name identifier | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('addTitle: can\'t get name identifier | '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('addTitle: can\'t find name, section or plugin');
             return FALSE;
         }
@@ -1024,23 +1024,23 @@ class LangMan {
         if (is_null($code)) {
             $code = self::$language;
         }
-        $qLang = self::$dblink->query("SELECT `id` "
+        $qLang = self::$dbLink->query("SELECT `id` "
                 . "FROM `".MECCANO_TPREF."_core_langman_languages` "
                 . "WHERE `code`='$code' ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('addTitle: can\'t get language code identifier | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('addTitle: can\'t get language code identifier | '.self::$dbLink->error);
             return FALSE;
         }
         list($codeId) = $qLang->fetch_row();
-        $title = self::$dblink->real_escape_string($title);
-        self::$dblink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_titles` "
+        $title = self::$dbLink->real_escape_string($title);
+        self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_titles` "
                 . "(`title`, `nameid`, `codeid`) "
                 . "VALUES ('$title', $nameId, $codeId) ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('addTitle: can\'t insert title | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('addTitle: can\'t insert title | '.self::$dbLink->error);
             return FALSE;
         }
-        return (int) self::$dblink->insert_id;
+        return (int) self::$dbLink->insert_id;
     }
     
     public static function delTitle($tid) {
@@ -1049,18 +1049,18 @@ class LangMan {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('delTitle: incorrect title identifier');
             return FALSE;
         }
-        self::$dblink->query("DELETE `t` FROM `".MECCANO_TPREF."_core_langman_titles` `t` "
+        self::$dbLink->query("DELETE `t` FROM `".MECCANO_TPREF."_core_langman_titles` `t` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_title_names` `n` "
                 . "ON `n`.`id`=`t`.`nameid` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_title_sections` `s` "
                 . "ON `s`.`id`=`n`.`sid` "
                 . "WHERE `t`.`id`=$tid "
                 . "AND `s`.`static`=0 ;");
-        if (self::$dblink->errno) {
+        if (self::$dbLink->errno) {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('delTitle: can\'t delete defined title');
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('delTitle: can\'t find defined title');
             return FALSE;
         }
@@ -1073,7 +1073,7 @@ class LangMan {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('addText: incorrect incoming parameters');
             return FALSE;
         }
-        $qText = self::$dblink->query("SELECT `n`.`id` "
+        $qText = self::$dbLink->query("SELECT `n`.`id` "
                 . "FROM `".MECCANO_TPREF."_core_langman_text_names` `n` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_text_sections` `s` "
                 . "ON `s`.`id`=`n`.`sid` "
@@ -1083,11 +1083,11 @@ class LangMan {
                 . "AND `s`.`section`='$section' "
                 . "AND `s`.`static`=0 "
                 . "AND `p`.`name`='$plugin' ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('addText: can\'t get name identifier | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('addText: can\'t get name identifier | '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('addText: can\'t find name, section or plugin');
             return FALSE;
         }
@@ -1095,24 +1095,24 @@ class LangMan {
         if (is_null($code)) {
             $code = self::$language;
         }
-        $qLang = self::$dblink->query("SELECT `id` "
+        $qLang = self::$dbLink->query("SELECT `id` "
                 . "FROM `".MECCANO_TPREF."_core_langman_languages` "
                 . "WHERE `code`='$code' ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('addText: can\'t get language code identifier | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('addText: can\'t get language code identifier | '.self::$dbLink->error);
             return FALSE;
         }
         list($codeId) = $qLang->fetch_row();
-        $title = self::$dblink->real_escape_string($title);
-        $document = self::$dblink->real_escape_string($document);
-        self::$dblink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_texts` "
+        $title = self::$dbLink->real_escape_string($title);
+        $document = self::$dbLink->real_escape_string($document);
+        self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_texts` "
                 . "(`title`, `document`, `nameid`, `codeid`) "
                 . "VALUES ('$title', '$document', $nameId, $codeId) ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('addText: can\'t insert text | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('addText: can\'t insert text | '.self::$dbLink->error);
             return FALSE;
         }
-        return (int) self::$dblink->insert_id;
+        return (int) self::$dbLink->insert_id;
     }
     
     public static function delText($tid) {
@@ -1121,18 +1121,18 @@ class LangMan {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('delText: incorrect text identifier');
             return FALSE;
         }
-        self::$dblink->query("DELETE `t` FROM `".MECCANO_TPREF."_core_langman_texts` `t` "
+        self::$dbLink->query("DELETE `t` FROM `".MECCANO_TPREF."_core_langman_texts` `t` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_text_names` `n` "
                 . "ON `n`.`id`=`t`.`nameid` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_text_sections` `s` "
                 . "ON `s`.`id`=`n`.`sid` "
                 . "WHERE `t`.`id`=$tid "
                 . "AND `s`.`static`=0 ;");
-        if (self::$dblink->errno) {
+        if (self::$dbLink->errno) {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('delText: can\'t delete defined text');
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('delText: can\'t find defined text');
             return FALSE;
         }
@@ -1145,8 +1145,8 @@ class LangMan {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('updateTitle: incorrect incoming parameters');
             return FALSE;
         }
-        $title = self::$dblink->real_escape_string($title);
-        self::$dblink->query("UPDATE `".MECCANO_TPREF."_core_langman_titles` `t` "
+        $title = self::$dbLink->real_escape_string($title);
+        self::$dbLink->query("UPDATE `".MECCANO_TPREF."_core_langman_titles` `t` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_title_names` `n` "
                 . "ON `n`.`id`=`t`.`nameid` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_title_sections` `s` "
@@ -1154,11 +1154,11 @@ class LangMan {
                 . "SET `t`.`title`='$title' "
                 . "WHERE `t`.`id`=$id "
                 . "AND `s`.`static`=0 ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('updateTitle: can\'t update title | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('updateTitle: can\'t update title | '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('updateTitle: can\'t find defined title');
             return FALSE;
         }
@@ -1171,9 +1171,9 @@ class LangMan {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('updateText: incorrect incoming parameters');
             return FALSE;
         }
-        $title = self::$dblink->real_escape_string($title);
-        $document = self::$dblink->real_escape_string($document);
-        self::$dblink->query("UPDATE `".MECCANO_TPREF."_core_langman_texts` `t` "
+        $title = self::$dbLink->real_escape_string($title);
+        $document = self::$dbLink->real_escape_string($document);
+        self::$dbLink->query("UPDATE `".MECCANO_TPREF."_core_langman_texts` `t` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_text_names` `n` "
                 . "ON `n`.`id`=`t`.`nameid` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_text_sections` `s` "
@@ -1181,11 +1181,11 @@ class LangMan {
                 . "SET `t`.`title`='$title', `t`.`document`='$document' "
                 . "WHERE `t`.`id`=$id "
                 . "AND `s`.`static`=0 ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('updateText: can\'t update text | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('updateText: can\'t update text | '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('updateText: can\'t find defined text');
             return FALSE;
         }
@@ -1201,7 +1201,7 @@ class LangMan {
         if (is_null($code)) {
             $code = self::$language;
         }
-        $qTitle = self::$dblink->query("SELECT `t`.`title` "
+        $qTitle = self::$dbLink->query("SELECT `t`.`title` "
                 . "FROM `".MECCANO_TPREF."_core_langman_titles` `t` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_languages` `l` "
                 . "ON `l`.`id`=`t`.`codeid` "
@@ -1215,11 +1215,11 @@ class LangMan {
                 . "AND `n`.`name`='$name' "
                 . "AND `s`.`section`='$section' "
                 . "AND `p`.`name`='$plugin' ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getTitle: can\'t get title | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getTitle: can\'t get title | '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('getTitle: can\'t find defined title');
             return FALSE;
         }
@@ -1236,7 +1236,7 @@ class LangMan {
         if (is_null($code)) {
             $code = self::$language;
         }
-        $qText = self::$dblink->query("SELECT `t`.`title`, `t`.`document`, `t`.`created`, `t`.`edited` "
+        $qText = self::$dbLink->query("SELECT `t`.`title`, `t`.`document`, `t`.`created`, `t`.`edited` "
                 . "FROM `".MECCANO_TPREF."_core_langman_texts` `t` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_languages` `l` "
                 . "ON `l`.`id`=`t`.`codeid` "
@@ -1250,11 +1250,11 @@ class LangMan {
                 . "AND `n`.`name`='$name' "
                 . "AND `s`.`section`='$section' "
                 . "AND `p`.`name`='$plugin' ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getText: can\'t get text | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getText: can\'t get text | '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('getText: can\'t find defined text');
             return FALSE;
         }
@@ -1271,7 +1271,7 @@ class LangMan {
         if (is_null($code)) {
             $code = self::$language;
         }
-        $qTitles = self::$dblink->query("SELECT `n`.`name`, `t`.`title` "
+        $qTitles = self::$dbLink->query("SELECT `n`.`name`, `t`.`title` "
                 . "FROM `".MECCANO_TPREF."_core_langman_titles` `t` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_title_names` `n` "
                 . "ON `n`.`id`=`t`.`nameid` "
@@ -1284,11 +1284,11 @@ class LangMan {
                 . "WHERE `p`.`name`='$plugin' "
                 . "AND `s`.`section`='$section' "
                 . "AND `l`.`code`='$code' ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getTitles: can\'t get section | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getTitles: can\'t get section | '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('getTitles: can\'t find defined section');
             return FALSE;
         }
@@ -1336,7 +1336,7 @@ class LangMan {
         elseif ($ascent == FALSE) {
             $direct = 'DESC';
         }
-        $qTexts = self::$dblink->query("SELECT `t`.`id` `id`, `t`.`title` `title`, `n`.`name` `name`, `t`.`created` `created`, `t`.`edited` `edited` "
+        $qTexts = self::$dbLink->query("SELECT `t`.`id` `id`, `t`.`title` `title`, `n`.`name` `name`, `t`.`created` `created`, `t`.`edited` `edited` "
                 . "FROM `".MECCANO_TPREF."_core_langman_texts` `t` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_text_names` `n` "
                 . "ON `n`.`id`=`t`.`nameid` "
@@ -1350,11 +1350,11 @@ class LangMan {
                 . "AND `s`.`section`='$section' "
                 . "AND `l`.`code`='$code' "
                 . "ORDER BY `$orderBy` $direct ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getAllTextsXML: can\'t get section | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getAllTextsXML: can\'t get section | '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('getAllTextsXML: can\'t find defined section');
             return FALSE;
         }
@@ -1379,14 +1379,14 @@ class LangMan {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getTextById: identifier must be integer');
             return FALSE;
         }
-        $qText = self::$dblink->query("SELECT `title`, `document`, `created`, `edited` "
+        $qText = self::$dbLink->query("SELECT `title`, `document`, `created`, `edited` "
                 . "FROM `".MECCANO_TPREF."_core_langman_texts` "
                 . "WHERE `id`=$id ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getTextById: can\'t get text | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getTextById: can\'t get text | '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('getTextById: can\'t find defined text');
             return FALSE;
         }
@@ -1406,7 +1406,7 @@ class LangMan {
         if ($rpp < 1) {
             $rpp = 1;
         }
-        $qTexts = self::$dblink->query("SELECT count(`t`.`id`) "
+        $qTexts = self::$dbLink->query("SELECT count(`t`.`id`) "
                 . "FROM `".MECCANO_TPREF."_core_langman_texts` `t` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_languages` `l` "
                 . "ON `l`.`id`=`t`.`codeid` "
@@ -1419,11 +1419,11 @@ class LangMan {
                 . "WHERE `l`.`code`='$code' "
                 . "AND `p`.`name`='$plugin' "
                 . "AND `s`.`section`='$section' ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('sumTexts: '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('sumTexts: '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('sumTexts: no one text was found');
             return FALSE;
         }
@@ -1497,7 +1497,7 @@ class LangMan {
             $direct = 'DESC';
         }
         $start = ($pageNumber - 1) * $rpp;
-        $qTexts = self::$dblink->query("SELECT `t`.`id` `id`, `t`.`title` `title`, `n`.`name` `name`, `t`.`created` `created`, `t`.`edited` `edited` "
+        $qTexts = self::$dbLink->query("SELECT `t`.`id` `id`, `t`.`title` `title`, `n`.`name` `name`, `t`.`created` `created`, `t`.`edited` `edited` "
                 . "FROM `".MECCANO_TPREF."_core_langman_texts` `t` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_text_names` `n` "
                 . "ON `n`.`id`=`t`.`nameid` "
@@ -1511,11 +1511,11 @@ class LangMan {
                 . "AND `s`.`section`='$section' "
                 . "AND `l`.`code`='$code' "
                 . "ORDER BY `$orderBy` $direct LIMIT $start, $rpp ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getTextsXML: can\'t get section | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getTextsXML: can\'t get section | '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('getTextsXML: can\'t find defined section');
             return FALSE;
         }
@@ -1543,7 +1543,7 @@ class LangMan {
         if (is_null($code)) {
             $code = self::$language;
         }
-        $qTexts = self::$dblink->query("SELECT `n`.`name`, `t`.`title` "
+        $qTexts = self::$dbLink->query("SELECT `n`.`name`, `t`.`title` "
                 . "FROM `".MECCANO_TPREF."_core_langman_texts` `t` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_text_names` `n` "
                 . "ON `n`.`id`=`t`.`nameid` "
@@ -1556,11 +1556,11 @@ class LangMan {
                 . "WHERE `p`.`name`='$plugin' "
                 . "AND `s`.`section`='$section' "
                 . "AND `l`.`code`='$code' ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getTexts: can\'t get section | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getTexts: can\'t get section | '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('getTexts: can\'t find defined section');
             return FALSE;
         }
@@ -1583,7 +1583,7 @@ class LangMan {
         if ($rpp < 1) {
             $rpp = 1;
         }
-        $qTitles = self::$dblink->query("SELECT count(`t`.`id`) "
+        $qTitles = self::$dbLink->query("SELECT count(`t`.`id`) "
                 . "FROM `".MECCANO_TPREF."_core_langman_titles` `t` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_languages` `l` "
                 . "ON `l`.`id`=`t`.`codeid` "
@@ -1596,11 +1596,11 @@ class LangMan {
                 . "WHERE `l`.`code`='$code' "
                 . "AND `p`.`name`='$plugin' "
                 . "AND `s`.`section`='$section' ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('sumTitles: '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('sumTitles: '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('sumTitles: no one title was found');
             return FALSE;
         }
@@ -1674,7 +1674,7 @@ class LangMan {
             $direct = 'DESC';
         }
         $start = ($pageNumber - 1) * $rpp;
-        $qTitles = self::$dblink->query("SELECT `t`.`id` `id`, `t`.`title` `title`, `n`.`name` `name` "
+        $qTitles = self::$dbLink->query("SELECT `t`.`id` `id`, `t`.`title` `title`, `n`.`name` `name` "
                 . "FROM `".MECCANO_TPREF."_core_langman_titles` `t` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_title_names` `n` "
                 . "ON `n`.`id`=`t`.`nameid` "
@@ -1688,11 +1688,11 @@ class LangMan {
                 . "AND `s`.`section`='$section' "
                 . "AND `l`.`code`='$code' "
                 . "ORDER BY `$orderBy` $direct LIMIT $start, $rpp ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getTitlesXML: can\'t get section | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getTitlesXML: can\'t get section | '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('getTitlesXML: can\'t find defined section');
             return FALSE;
         }
@@ -1746,7 +1746,7 @@ class LangMan {
         elseif ($ascent == FALSE) {
             $direct = 'DESC';
         }
-        $qTitles = self::$dblink->query("SELECT `t`.`id` `id`, `t`.`title` `title`, `n`.`name` `name` "
+        $qTitles = self::$dbLink->query("SELECT `t`.`id` `id`, `t`.`title` `title`, `n`.`name` `name` "
                 . "FROM `".MECCANO_TPREF."_core_langman_titles` `t` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_title_names` `n` "
                 . "ON `n`.`id`=`t`.`nameid` "
@@ -1760,11 +1760,11 @@ class LangMan {
                 . "AND `s`.`section`='$section' "
                 . "AND `l`.`code`='$code' "
                 . "ORDER BY `$orderBy` $direct ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getAllTitlesXML: can\'t get section | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getAllTitlesXML: can\'t get section | '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('getAllTitlesXML: can\'t find defined section');
             return FALSE;
         }
@@ -1787,14 +1787,14 @@ class LangMan {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getTitleById: identifier must be integer');
             return FALSE;
         }
-        $qTitle = self::$dblink->query("SELECT `title` "
+        $qTitle = self::$dbLink->query("SELECT `title` "
                 . "FROM `".MECCANO_TPREF."_core_langman_titles` "
                 . "WHERE `id`=$id ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getTitleById: can\'t get title | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getTitleById: can\'t get title | '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('getTitleById: can\'t find defined title');
             return FALSE;
         }
@@ -1812,7 +1812,7 @@ class LangMan {
             $code = self::$language;
         }
         if (is_bool($groupid)) {
-            $qList = self::$dblink->query("SELECT `d`.`id`, `d`.`short`, `s`.`func`, `n`.`access` "
+            $qList = self::$dbLink->query("SELECT `d`.`id`, `d`.`short`, `s`.`func`, `n`.`access` "
                     . "FROM `".MECCANO_TPREF."_core_policy_summary_list` `s` "
                     . "JOIN `".MECCANO_TPREF."_core_policy_nosession` `n` "
                     . "ON `s`.`id`=`n`.`funcid` "
@@ -1824,7 +1824,7 @@ class LangMan {
                     . "AND `l`.`code`='$code' ;");
         }
         else {
-            $qList = self::$dblink->query("SELECT `d`.`id`, `d`.`short`, `s`.`func`, `a`.`access` "
+            $qList = self::$dbLink->query("SELECT `d`.`id`, `d`.`short`, `s`.`func`, `a`.`access` "
                     . "FROM `".MECCANO_TPREF."_core_policy_summary_list` `s` "
                     . "JOIN `".MECCANO_TPREF."_core_policy_access` `a` "
                     . "ON `s`.`id`=`a`.`funcid` "
@@ -1836,11 +1836,11 @@ class LangMan {
                     . "AND `a`.`groupid`=$groupid "
                     . "AND `l`.`code`='$code' ;");
         }
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('policyList: something went wrong | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('policyList: something went wrong | '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('policyList: name or group don\'t exist');
             return FALSE;
         }
@@ -1864,14 +1864,14 @@ class LangMan {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getPolicyDescById: identifier must be integer');
             return FALSE;
         }
-        $qDesc = self::$dblink->query("SELECT `short`, `detailed` "
+        $qDesc = self::$dbLink->query("SELECT `short`, `detailed` "
                 . "FROM `".MECCANO_TPREF."_core_langman_policy_description` "
                 . "WHERE `id`=$id ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getPolicyDescById: can\'t get description | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getPolicyDescById: can\'t get description | '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('getPolicyDescById: description was not found');
             return FALSE;
         }
@@ -1888,16 +1888,16 @@ class LangMan {
         if ($rpp < 1) {
             $rpp = 1;
         }
-        $qSections = self::$dblink->query("SELECT count(`s`.`id`) "
+        $qSections = self::$dbLink->query("SELECT count(`s`.`id`) "
                 . "FROM `".MECCANO_TPREF."_core_langman_text_sections` `s` "
                 . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `p`.`name`='$plugin' ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('sumTextSections: '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('sumTextSections: '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('sumTextSections: no one section was found');
             return FALSE;
         }
@@ -1950,17 +1950,17 @@ class LangMan {
         elseif ($ascent == FALSE) {
             $direct = 'DESC';
         }
-        $qSections = self::$dblink->query("SELECT `s`.`id` `id`, `s`.`section` `name`, `s`.`static` `static`, (SELECT COUNT(`id`) FROM `".MECCANO_TPREF."_core_langman_text_names` WHERE `sid`=`s`.`id`) `contains` "
+        $qSections = self::$dbLink->query("SELECT `s`.`id` `id`, `s`.`section` `name`, `s`.`static` `static`, (SELECT COUNT(`id`) FROM `".MECCANO_TPREF."_core_langman_text_names` WHERE `sid`=`s`.`id`) `contains` "
                 . "FROM `".MECCANO_TPREF."_core_langman_text_sections` `s` "
                 . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `p`.`name`='$plugin' "
                 . "ORDER BY `$orderBy` $direct ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getAllTextsXML: can\'t get sections | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getAllTextsXML: can\'t get sections | '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('getAllTextsXML: can\'t find defined plugin');
             return FALSE;
         }
@@ -1990,16 +1990,16 @@ class LangMan {
         if ($rpp < 1) {
             $rpp = 1;
         }
-        $qSections = self::$dblink->query("SELECT count(`s`.`id`) "
+        $qSections = self::$dbLink->query("SELECT count(`s`.`id`) "
                 . "FROM `".MECCANO_TPREF."_core_langman_title_sections` `s` "
                 . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `p`.`name`='$plugin' ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('sumTitleSections: '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('sumTitleSections: '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('sumTitleSections: no one section was found');
             return FALSE;
         }
@@ -2052,17 +2052,17 @@ class LangMan {
         elseif ($ascent == FALSE) {
             $direct = 'DESC';
         }
-        $qSections = self::$dblink->query("SELECT `s`.`id` `id`, `s`.`section` `name`, `s`.`static` `static`, (SELECT COUNT(`id`) FROM `".MECCANO_TPREF."_core_langman_title_names` WHERE `sid`=`s`.`id`) `contains` "
+        $qSections = self::$dbLink->query("SELECT `s`.`id` `id`, `s`.`section` `name`, `s`.`static` `static`, (SELECT COUNT(`id`) FROM `".MECCANO_TPREF."_core_langman_title_names` WHERE `sid`=`s`.`id`) `contains` "
                 . "FROM `".MECCANO_TPREF."_core_langman_title_sections` `s` "
                 . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `p`.`name`='$plugin' "
                 . "ORDER BY `$orderBy` $direct ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getAllTitlesXML: can\'t get sections | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getAllTitlesXML: can\'t get sections | '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('getAllTitlesXML: can\'t find defined plugin');
             return FALSE;
         }
@@ -2092,7 +2092,7 @@ class LangMan {
         if ($rpp < 1) {
             $rpp = 1;
         }
-        $qNames = self::$dblink->query("SELECT count(`n`.`id`) "
+        $qNames = self::$dbLink->query("SELECT count(`n`.`id`) "
                 . "FROM `".MECCANO_TPREF."_core_langman_text_names` `n` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_text_sections` `s` "
                 . "ON `s`.`id`=`n`.`sid` "
@@ -2100,11 +2100,11 @@ class LangMan {
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `p`.`name`='$plugin' "
                 . "AND `s`.`section`='$section' ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('sumTextNames: '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('sumTextNames: '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('sumTextNames: no one name was found');
             return FALSE;
         }
@@ -2157,7 +2157,7 @@ class LangMan {
         elseif ($ascent == FALSE) {
             $direct = 'DESC';
         }
-        $qNames = self::$dblink->query("SELECT `n`.`id`, `n`.`name`, "
+        $qNames = self::$dbLink->query("SELECT `n`.`id`, `n`.`name`, "
                 . "(SELECT GROUP_CONCAT(`l`.`code` ORDER BY `l`.`code` SEPARATOR ', ') "
                     . "FROM `".MECCANO_TPREF."_core_langman_languages` `l` "
                     . "JOIN `".MECCANO_TPREF."_core_langman_texts` `t` "
@@ -2169,11 +2169,11 @@ class LangMan {
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `p`.`name`='$plugin' AND `s`.`section`='$section' "
                 . "ORDER BY `$orderBy` $direct ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getTextNamesXML: can\'t get names | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getTextNamesXML: can\'t get names | '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('getTextNamesXML: can\'t find defined section');
             return FALSE;
         }
@@ -2205,7 +2205,7 @@ class LangMan {
         if ($rpp < 1) {
             $rpp = 1;
         }
-        $qNames = self::$dblink->query("SELECT count(`n`.`id`) "
+        $qNames = self::$dbLink->query("SELECT count(`n`.`id`) "
                 . "FROM `".MECCANO_TPREF."_core_langman_title_names` `n` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_title_sections` `s` "
                 . "ON `s`.`id`=`n`.`sid` "
@@ -2213,11 +2213,11 @@ class LangMan {
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `p`.`name`='$plugin' "
                 . "AND `s`.`section`='$section' ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('sumTitleNames: '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('sumTitleNames: '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('sumTitleNames: no one name was found');
             return FALSE;
         }
@@ -2270,7 +2270,7 @@ class LangMan {
         elseif ($ascent == FALSE) {
             $direct = 'DESC';
         }
-        $qNames = self::$dblink->query("SELECT `n`.`id`, `n`.`name`, "
+        $qNames = self::$dbLink->query("SELECT `n`.`id`, `n`.`name`, "
                 . "(SELECT GROUP_CONCAT(`l`.`code` ORDER BY `l`.`code` SEPARATOR ', ') "
                     . "FROM `".MECCANO_TPREF."_core_langman_languages` `l` "
                     . "JOIN `".MECCANO_TPREF."_core_langman_titles` `t` "
@@ -2282,11 +2282,11 @@ class LangMan {
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `p`.`name`='$plugin' AND `s`.`section`='$section' "
                 . "ORDER BY `$orderBy` $direct ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getTitleNamesXML: can\'t get names | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getTitleNamesXML: can\'t get names | '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('getTitleNamesXML: can\'t find defined section');
             return FALSE;
         }
