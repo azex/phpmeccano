@@ -10,14 +10,26 @@ require_once 'policy.php';
 class UserMan {
     private static $errid = 0; // error's id
     private static $errexp = ''; // error's explanation
-    private static $dblink; // database link
+    private static $dbLink; // database link
+    private static $logObject; // log object
+    private static $policyObject; // policy object
     
-    public function __construct($dblink = FALSE) {
-        self::$dblink = $dblink;
+    public function __construct($dbLink, $logObject, $policyObject) {
+        self::$dbLink = $dbLink;
+        self::$logObject = $logObject;
+        self::$policyObject = $policyObject;
     }
     
-    public static function setDbLink($dblink) {
-        self::$dblink = $dblink;
+    public static function setDbLink($dbLink) {
+        self::$dbLink = $dbLink;
+    }
+    
+    public static function setLogObject($logObject) {
+        self::$logObject = $logObject;
+    }
+    
+    public static function setPolicyObject($policyObject) {
+        self::$policyObject = $policyObject;
     }
     
     private static function setErrId($id) {
@@ -47,20 +59,20 @@ class UserMan {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('createGroup: incorect type of incoming parameters');
             return FALSE;
         }
-        $description = self::$dblink->real_escape_string($description);
-        self::$dblink->query("INSERT INTO `".MECCANO_TPREF."_core_userman_groups` (`groupname`, `description`) "
+        $description = self::$dbLink->real_escape_string($description);
+        self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_userman_groups` (`groupname`, `description`) "
                 . "VALUES ('$groupname', '$description') ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('createGroup: group wasn\'t created | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('createGroup: group wasn\'t created | '.self::$dbLink->error);
             return FALSE;
         }
-        $groupId = self::$dblink->insert_id;
-        if (!Policy::addGroup($groupId)) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp(Policy::errExp());
+        $groupId = self::$dbLink->insert_id;
+        if (!self::$policyObject->addGroup($groupId)) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp(self::$policyObject->errExp());
             return FALSE;
         }
-        if ($log && !Logging::newRecord('core_newGroup', $groupname." | id: $groupId")) {
-            self::setErrId(ERROR_NOT_CRITICAL);            self::setErrExp(Logging::errExp());
+        if ($log && !self::$logObject->newRecord('core_newGroup', $groupname." | id: $groupId")) {
+            self::setErrId(ERROR_NOT_CRITICAL);            self::setErrExp(self::$logObject->errExp());
         }
         return (int) $groupId;
     }
@@ -85,26 +97,26 @@ class UserMan {
             self::setErrId(ERROR_SYSTEM_INTERVENTION);            self::setErrExp('groupStatus: system group can\'t be disabled');
             return FALSE;
         }
-        self::$dblink->query("UPDATE `".MECCANO_TPREF."_core_userman_groups` "
+        self::$dbLink->query("UPDATE `".MECCANO_TPREF."_core_userman_groups` "
                 . "SET `active`=$active "
                 . "WHERE `id`=$groupId ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('groupStatus: status wasn\'t changed | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('groupStatus: status wasn\'t changed | '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('groupStatus: incorrect group status or group doesn\'t exist');
             return FALSE;
         }
         if ($log) {
             if ($active) {
-                $l = Logging::newRecord('core_enGroup', "$groupId");
+                $l = self::$logObject->newRecord('core_enGroup', "$groupId");
             }
             else {
-                $l = Logging::newRecord('core_disGroup', "$groupId");
+                $l = self::$logObject->newRecord('core_disGroup', "$groupId");
             }
             if (!$l) {
-                self::setErrId(ERROR_NOT_CRITICAL);            self::setErrExp(Logging::errExp());
+                self::setErrId(ERROR_NOT_CRITICAL);            self::setErrExp(self::$logObject->errExp());
             }
         }
         return TRUE;
@@ -116,14 +128,14 @@ class UserMan {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('groupExists: incorrect group name');
             return FALSE;
         }
-        $qId = self::$dblink->query("SELECT `id` "
+        $qId = self::$dbLink->query("SELECT `id` "
                 . "FROM `".MECCANO_TPREF."_core_userman_groups` "
                 . "WHERE `groupname`='$groupname' ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('groupExists: can\'t check group existence | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('groupExists: can\'t check group existence | '.self::$dbLink->error);
             return FALSE;
         }
-        if (self::$dblink->affected_rows) {
+        if (self::$dbLink->affected_rows) {
             $id = $qId->fetch_row();
             return (int) $id[0];
         }
@@ -144,24 +156,24 @@ class UserMan {
             self::setErrId(ERROR_SYSTEM_INTERVENTION);            self::setErrExp('moveGroupTo: can\'t move system group');
             return FALSE;
         }
-        self::$dblink->query("SELECT `id` FROM `".MECCANO_TPREF."_core_userman_groups` "
+        self::$dbLink->query("SELECT `id` FROM `".MECCANO_TPREF."_core_userman_groups` "
                 . "WHERE `id`=$destId ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('moveGroupTo: can\'t check destination group existence |'.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('moveGroupTo: can\'t check destination group existence |'.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('moveGroupTo: destination group doesn\'t exist');
             return FALSE;
         }
-        self::$dblink->query("UPDATE `".MECCANO_TPREF."_core_userman_users` "
+        self::$dbLink->query("UPDATE `".MECCANO_TPREF."_core_userman_users` "
                 . "SET `groupid`=$destId "
                 . "WHERE `groupid`=$groupId ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('moveGroupTo: can\'t move users to another group |'.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('moveGroupTo: can\'t move users to another group |'.self::$dbLink->error);
             return FALSE;
         }
-        return (int) self::$dblink->affected_rows;
+        return (int) self::$dbLink->affected_rows;
     }
     
     public static function aboutGroup($groupId) {
@@ -170,18 +182,18 @@ class UserMan {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('aboutGroup: identifier must be integer');
             return FALSE;
         }
-        $qAbout = self::$dblink->query("SELECT `groupname`, `description`, `creationtime`, `active` "
+        $qAbout = self::$dbLink->query("SELECT `groupname`, `description`, `creationtime`, `active` "
                 . "FROM `".MECCANO_TPREF."_core_userman_groups` "
                 . "WHERE `id`=$groupId");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('aboutGroup: something went wrong | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('aboutGroup: something went wrong | '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('aboutGroup: defined group doesn\'t exist');
             return FALSE;
         }
-        $qSum = self::$dblink->query("SELECT COUNT(`id`) "
+        $qSum = self::$dbLink->query("SELECT COUNT(`id`) "
                 . "FROM `".MECCANO_TPREF."_core_userman_users` "
                 . "WHERE `groupid`=$groupId ;");
         $about = $qAbout->fetch_row();
@@ -207,14 +219,14 @@ class UserMan {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('setGroupName: incorrect incoming parameters');
             return FALSE;
         }
-        self::$dblink->query("UPDATE `".MECCANO_TPREF."_core_userman_groups` "
+        self::$dbLink->query("UPDATE `".MECCANO_TPREF."_core_userman_groups` "
                 . "SET `groupname`='$groupname' "
                 . "WHERE `id`=$groupId ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('setGroupName: can\'t set groupname | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('setGroupName: can\'t set groupname | '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_ALREADY_EXISTS);            self::setErrExp('setGroupName: defined group doesn\'t exist or groupname was repeated');
             return FALSE;
         }
@@ -231,15 +243,15 @@ class UserMan {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('setGroupDesc: incorrect incoming parameters');
             return FALSE;
         }
-        $description = self::$dblink->real_escape_string($description);
-        self::$dblink->query("UPDATE `".MECCANO_TPREF."_core_userman_groups` "
+        $description = self::$dbLink->real_escape_string($description);
+        self::$dbLink->query("UPDATE `".MECCANO_TPREF."_core_userman_groups` "
                 . "SET `description`='$description' "
                 . "WHERE `id`=$groupId ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('setGroupDesc: can\'t set description | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('setGroupDesc: can\'t set description | '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_ALREADY_EXISTS);            self::setErrExp('setGroupDesc: defined group doesn\'t exist or description was repeated');
             return FALSE;
         }
@@ -252,11 +264,11 @@ class UserMan {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('delGroup: identifier must be integer');
             return FALSE;
         }
-        $qUsers = self::$dblink->query("SELECT COUNT(`id`) "
+        $qUsers = self::$dbLink->query("SELECT COUNT(`id`) "
                 . "FROM `".MECCANO_TPREF."_core_userman_users` "
                 . "WHERE `groupid`=$groupId ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('delGroup: can\'t check existence of users in the group | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('delGroup: can\'t check existence of users in the group | '.self::$dbLink->error);
             return FALSE;
         }
         $users = $qUsers->fetch_row();
@@ -264,8 +276,8 @@ class UserMan {
             self::setErrId(ERROR_SYSTEM_INTERVENTION);            self::setErrExp('delGroup: the group contains users');
             return FALSE;
         }
-        if (!Policy::delGroup($groupId)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp(Policy::errExp());
+        if (!self::$policyObject->delGroup($groupId)) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp(self::$policyObject->errExp());
             return FALSE;
         }
         $sql = array(
@@ -276,12 +288,12 @@ class UserMan {
             . "WHERE `id`=$groupId ;"
         );
         foreach ($sql as $key => $value) {
-            $qGroup = self::$dblink->query($value);
-            if (self::$dblink->errno) {
-                self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('delGroup: '.self::$dblink->error);
+            $qGroup = self::$dbLink->query($value);
+            if (self::$dbLink->errno) {
+                self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('delGroup: '.self::$dbLink->error);
                 return FALSE;
             }
-            if (!self::$dblink->affected_rows) {
+            if (!self::$dbLink->affected_rows) {
                 self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('delGroup: defined group doesn\'t exist');
                 return FALSE;
             }
@@ -289,8 +301,8 @@ class UserMan {
                 list($groupname) = $qGroup->fetch_row();
             }
         }
-        if ($log && !Logging::newRecord('core_delGroup', $groupname." | id: $groupId")) {
-            self::setErrId(ERROR_NOT_CRITICAL);            self::setErrExp(Logging::errExp());
+        if ($log && !self::$logObject->newRecord('core_delGroup', $groupname." | id: $groupId")) {
+            self::setErrId(ERROR_NOT_CRITICAL);            self::setErrExp(self::$logObject->errExp());
         }
         return TRUE;
     }
@@ -304,9 +316,9 @@ class UserMan {
         if ($gpp < 1) {
             $gpp = 1;
         }
-        $qResult = self::$dblink->query("SELECT COUNT(`id`) FROM `".MECCANO_TPREF."_core_userman_groups` ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('sumGroups: total users couldn\'t be counted | '.self::$dblink->error);
+        $qResult = self::$dbLink->query("SELECT COUNT(`id`) FROM `".MECCANO_TPREF."_core_userman_groups` ;");
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('sumGroups: total users couldn\'t be counted | '.self::$dbLink->error);
             return FALSE;
         }
         list($totalGroups) = $qResult->fetch_array(MYSQLI_NUM);
@@ -372,11 +384,11 @@ class UserMan {
             $direct = 'DESC';
         }
         $start = ($pageNumber - 1) * $gpp;
-        $qResult = self::$dblink->query("SELECT  `id`, `groupname` `name`, `creationtime` `time`, `active` "
+        $qResult = self::$dbLink->query("SELECT  `id`, `groupname` `name`, `creationtime` `time`, `active` "
                 . "FROM `".MECCANO_TPREF."_core_userman_groups` "
                 . "ORDER BY `$orderBy` $direct LIMIT $start, $gpp;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getGroups: group info page couldn\'t be gotten | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getGroups: group info page couldn\'t be gotten | '.self::$dbLink->error);
             return FALSE;
         }
         $xml = new \DOMDocument('1.0', 'utf-8');
@@ -423,11 +435,11 @@ class UserMan {
         elseif ($ascent == FALSE) {
             $direct = 'DESC';
         }
-        $qResult = self::$dblink->query("SELECT  `id`, `groupname` `name`, `creationtime` `time`, `active` "
+        $qResult = self::$dbLink->query("SELECT  `id`, `groupname` `name`, `creationtime` `time`, `active` "
                 . "FROM `".MECCANO_TPREF."_core_userman_groups` "
                 . "ORDER BY `$orderBy` $direct ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getGroups: group info page couldn\'t be gotten | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getGroups: group info page couldn\'t be gotten | '.self::$dbLink->error);
             return FALSE;
         }
         $xml = new \DOMDocument('1.0', 'utf-8');
@@ -455,39 +467,39 @@ class UserMan {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('createUser: incorrect incoming parameters');
             return FALSE;
         }
-        self::$dblink->query("SELECT `u`.`id`, `i`.`id` "
+        self::$dbLink->query("SELECT `u`.`id`, `i`.`id` "
                 . "FROM `".MECCANO_TPREF."_core_userman_users` `u`, `".MECCANO_TPREF."_core_userman_userinfo` `i` "
                 . "WHERE `u`.`username`='$username' "
                 . "OR `i`.`email`='$email' "
                 . "LIMIT 1;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('createUser: can\'t check username and email | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('createUser: can\'t check username and email | '.self::$dbLink->error);
             return FALSE;
         }
-        if (self::$dblink->affected_rows) {
+        if (self::$dbLink->affected_rows) {
             self::setErrId(ERROR_ALREADY_EXISTS);            self::setErrExp('createUser: username or email are already in use');
             return FALSE;
         }
-        $qLang = self::$dblink->query("SELECT `id` "
+        $qLang = self::$dbLink->query("SELECT `id` "
                 . "FROM `".MECCANO_TPREF."_core_langman_languages` "
                 . "WHERE `code`='$langCode' ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('createUser: can\'t check defined language | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('createUser: can\'t check defined language | '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('createUser: defined language doesn\'t exist');
             return FALSE;
         }
         list($langId) = $qLang->fetch_row();
-        self::$dblink->query("SELECT `id` "
+        self::$dbLink->query("SELECT `id` "
                 . "FROM `".MECCANO_TPREF."_core_userman_groups` "
                 . "WHERE `id`=$groupId ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('createUser: can\'t check group | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('createUser: can\'t check group | '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('createUser: defined group doesn\'t exist');
             return FALSE;
         }
@@ -507,17 +519,17 @@ class UserMan {
             . "VALUES (LAST_INSERT_ID(), '$usi') ;"
             );
         foreach ($sql as $key => $value) {
-            self::$dblink->query($value);
-            if (self::$dblink->errno) {
-                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('createUser: something went wrong | '.self::$dblink->error);
+            self::$dbLink->query($value);
+            if (self::$dbLink->errno) {
+                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('createUser: something went wrong | '.self::$dbLink->error);
                 return FALSE;
             }
             if ($key == 'userid') {
-                $userid = self::$dblink->insert_id;
+                $userid = self::$dbLink->insert_id;
             }
         }
-        if ($log && !Logging::newRecord('core_newUser', $username." | id: $userid")) {
-            self::setErrId(ERROR_NOT_CRITICAL);            self::setErrExp(Logging::errExp());
+        if ($log && !self::$logObject->newRecord('core_newUser', $username." | id: $userid")) {
+            self::setErrId(ERROR_NOT_CRITICAL);            self::setErrExp(self::$logObject->errExp());
         }
         return (int) $userid;
     }
@@ -528,14 +540,14 @@ class UserMan {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('userExists: incorrect username');
             return FALSE;
         }
-        $qId = self::$dblink->query("SELECT `id` "
+        $qId = self::$dbLink->query("SELECT `id` "
                 . "FROM `".MECCANO_TPREF."_core_userman_users` "
                 . "WHERE `username`='$username' ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('userExists: can\'t check user existence | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('userExists: can\'t check user existence | '.self::$dbLink->error);
             return FALSE;
         }
-        if (self::$dblink->affected_rows) {
+        if (self::$dbLink->affected_rows) {
             $id = $qId->fetch_row();
             return (int) $id[0];
         }
@@ -548,14 +560,14 @@ class UserMan {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('userExists: incorrect email');
             return FALSE;
         }
-        $qId = self::$dblink->query("SELECT `id` "
+        $qId = self::$dbLink->query("SELECT `id` "
                 . "FROM `".MECCANO_TPREF."_core_userman_userinfo` "
                 . "WHERE `email`='$email' ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('userExists: can\'t check email existence | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('userExists: can\'t check email existence | '.self::$dbLink->error);
             return FALSE;
         }
-        if (self::$dblink->affected_rows) {
+        if (self::$dbLink->affected_rows) {
             $id = $qId->fetch_row();
             return (int) $id[0];
         }
@@ -582,26 +594,26 @@ class UserMan {
             self::setErrId(ERROR_SYSTEM_INTERVENTION);            self::setErrExp('userStatus: system user can\'t be disabled');
             return FALSE;
         }
-        self::$dblink->query("UPDATE `".MECCANO_TPREF."_core_userman_users` "
+        self::$dbLink->query("UPDATE `".MECCANO_TPREF."_core_userman_users` "
                 . "SET `active`=$active "
                 . "WHERE `id`=$userId ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('userStatus: status wasn\'t changed | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('userStatus: status wasn\'t changed | '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('userStatus: incorrect user status or group doesn\'t exist');
             return FALSE;
         }
         if ($log) {
             if ($active) {
-                $l = Logging::newRecord('core_enUser', "$userId");
+                $l = self::$logObject->newRecord('core_enUser', "$userId");
             }
             else {
-                $l = Logging::newRecord('core_disUser', "$userId");
+                $l = self::$logObject->newRecord('core_disUser', "$userId");
             }
             if (!$l) {
-                self::setErrId(ERROR_NOT_CRITICAL);            self::setErrExp(Logging::errExp());
+                self::setErrId(ERROR_NOT_CRITICAL);            self::setErrExp(self::$logObject->errExp());
             }
         }
         return TRUE;
@@ -621,24 +633,24 @@ class UserMan {
             self::setErrId(ERROR_SYSTEM_INTERVENTION);            self::setErrExp('moveUserTo: can\'t move system user');
             return FALSE;
         }
-        self::$dblink->query("SELECT `id` FROM `".MECCANO_TPREF."_core_userman_groups` "
+        self::$dbLink->query("SELECT `id` FROM `".MECCANO_TPREF."_core_userman_groups` "
                 . "WHERE `id`=$destId ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('moveUserTo: can\'t check destination group existence |'.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('moveUserTo: can\'t check destination group existence |'.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('moveUserTo: destination group doesn\'t exist');
             return FALSE;
         }
-        self::$dblink->query("UPDATE `".MECCANO_TPREF."_core_userman_users` "
+        self::$dbLink->query("UPDATE `".MECCANO_TPREF."_core_userman_users` "
                 . "SET `groupid`=$destId "
                 . "WHERE `id`=$userId ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('moveUserTo: can\'t move user to another group |'.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('moveUserTo: can\'t move user to another group |'.self::$dbLink->error);
             return FALSE;
         }
-        return (int) self::$dblink->affected_rows;
+        return (int) self::$dbLink->affected_rows;
     }
     
     public static function delUser($userId, $log = TRUE) {
@@ -655,10 +667,10 @@ class UserMan {
             self::setErrId(ERROR_SYSTEM_INTERVENTION);            self::setErrExp('delUser: can\'t delete system user');
             return FALSE;
         }
-        $qName = self::$dblink->query("SELECT `username` "
+        $qName = self::$dbLink->query("SELECT `username` "
                 . "FROM `".MECCANO_TPREF."_core_userman_users` "
                 . "WHERE `id`=$userId ;");
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('delUser: defined user doesn\'t exist');
             return FALSE;
         }
@@ -676,15 +688,15 @@ class UserMan {
             . "WHERE `id`=$userId ;"
         );
         foreach ($sql as $value) {
-            self::$dblink->query($value);
-            if (self::$dblink->errno) {
-                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('delUser: something went wrong | '.self::$dblink->error);
+            self::$dbLink->query($value);
+            if (self::$dbLink->errno) {
+                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('delUser: something went wrong | '.self::$dbLink->error);
                 return FALSE;
             }
         }
         list($username) = $qName->fetch_row();
-        if ($log && !Logging::newRecord('core_delUser', $username." | id: $userId")) {
-            self::setErrId(ERROR_NOT_CRITICAL);            self::setErrExp(Logging::errExp());
+        if ($log && !self::$logObject->newRecord('core_delUser', $username." | id: $userId")) {
+            self::setErrId(ERROR_NOT_CRITICAL);            self::setErrExp(self::$logObject->errExp());
         }
         return TRUE;
     }
@@ -695,18 +707,18 @@ class UserMan {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('aboutUser: id must be integer');
             return FALSE;
         }
-        $qAbout = self::$dblink->query("SELECT `u`.`username`, `i`.`fullname`, `i`.`email`, `u`.`creationtime`, `u`.`active`, `g`.`id`, `g`.`groupname` "
+        $qAbout = self::$dbLink->query("SELECT `u`.`username`, `i`.`fullname`, `i`.`email`, `u`.`creationtime`, `u`.`active`, `g`.`id`, `g`.`groupname` "
                 . "FROM `".MECCANO_TPREF."_core_userman_userinfo` `i`, `".MECCANO_TPREF."_core_userman_users` `u` "
                 . "JOIN `".MECCANO_TPREF."_core_userman_groups` `g` "
                 . "ON `u`.`groupid`=`g`.`id` "
                 . "WHERE `i`.`id`=$userId "
                 . "AND `u`.`id`=$userId "
                 . "LIMIT 1 ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('aboutUser: something went wrong | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('aboutUser: something went wrong | '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('aboutUser: defined user doesn\'t exist');
             return FALSE;
         }
@@ -730,14 +742,14 @@ class UserMan {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('userPasswords: id must be integer');
             return FALSE;
         }
-        $qPassw = self::$dblink->query("SELECT `id`, `description`, `limited` "
+        $qPassw = self::$dbLink->query("SELECT `id`, `description`, `limited` "
                 . "FROM `".MECCANO_TPREF."_core_userman_userpass` "
                 . "WHERE `userid` = $userId ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('userPasswords: '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('userPasswords: '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('userPasswords: defined user doesn\'t exist');
             return FALSE;
         }
@@ -764,32 +776,32 @@ class UserMan {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('addPassword: incorrect incoming parameters');
             return FALSE;
         }
-        $qHash = self::$dblink->query("SELECT `salt` "
+        $qHash = self::$dbLink->query("SELECT `salt` "
                 . "FROM `".MECCANO_TPREF."_core_userman_users` "
                 . "WHERE `id`=$userId ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('addPassword: can\'t check defined user | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('addPassword: can\'t check defined user | '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('addPassword: defined user doesn\'t exist');
             return FALSE;
         }
         list($salt) = $qHash->fetch_row();
         $passwHash = passwHash($password, $salt);
-        $description = self::$dblink->real_escape_string($description);
-        self::$dblink->query("INSERT INTO `".MECCANO_TPREF."_core_userman_userpass` (`userid`, `password`, `description`, `limited`) "
+        $description = self::$dbLink->real_escape_string($description);
+        self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_userman_userpass` (`userid`, `password`, `description`, `limited`) "
                 . "VALUES($userId, '$passwHash', '$description', 1) ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('addPassword: can\'t add password | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('addPassword: can\'t add password | '.self::$dbLink->error);
             return FALSE;
         }
-        $insertId = (int) self::$dblink->insert_id;
+        $insertId = (int) self::$dbLink->insert_id;
         $usi = makeIdent("$insertId");
-        self::$dblink->query("INSERT INTO `".MECCANO_TPREF."_core_auth_usi` (`id`, `usi`) "
+        self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_auth_usi` (`id`, `usi`) "
                 . "VALUES($insertId, '$usi') ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('addPassword: can\'t create unique session identifier | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('addPassword: can\'t create unique session identifier | '.self::$dbLink->error);
             return FALSE;
         }
         return (int) $insertId;
@@ -805,15 +817,15 @@ class UserMan {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('delPassword: incorrect incoming parameters');
             return FALSE;
         }
-        $qLimited = self::$dblink->query("SELECT `limited` "
+        $qLimited = self::$dbLink->query("SELECT `limited` "
                 . "FROM `".MECCANO_TPREF."_core_userman_userpass` "
                 . "WHERE `id`=$passwId "
                 . "AND `userid`=$userId ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('delPassword: can\'t check limitation status of the password | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('delPassword: can\'t check limitation status of the password | '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('delPassword: check incoming parameters');
             return FALSE;
         }
@@ -827,9 +839,9 @@ class UserMan {
             "DELETE FROM `".MECCANO_TPREF."_core_userman_userpass` "
             . "WHERE `id`=$passwId ;");
         foreach ($sql as $value) {
-            self::$dblink->query($value);
-            if (self::$dblink->errno) {
-                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('delPassword: '.self::$dblink->error);
+            self::$dbLink->query($value);
+            if (self::$dbLink->errno) {
+                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('delPassword: '.self::$dbLink->error);
                 return FALSE;
             }
         }
@@ -846,28 +858,28 @@ class UserMan {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('setPassword: incorrect incoming parameters');
             return FALSE;
         }
-        $qSalt = self::$dblink->query("SELECT `salt` "
+        $qSalt = self::$dbLink->query("SELECT `salt` "
                 . "FROM `".MECCANO_TPREF."_core_userman_users` "
                 . "WHERE `id`=$userId ;");
-        if (self::$dblink->errno) {
+        if (self::$dbLink->errno) {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('setPassword: can\'t check defined user');
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('setPassword: defined user doesn\'t exist');
             return FALSE;
         }
         list($salt) = $qSalt->fetch_row();
         $passwHash = passwHash($password, $salt);
-        self::$dblink->query("UPDATE `".MECCANO_TPREF."_core_userman_userpass` "
+        self::$dbLink->query("UPDATE `".MECCANO_TPREF."_core_userman_userpass` "
                 . "SET `password`='$passwHash' "
                 . "WHERE `id`=$passwId "
                 . "AND `userid`=$userId ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('setPassword: can\'t update password | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('setPassword: can\'t update password | '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_ALREADY_EXISTS);            self::setErrExp('setPassword: defined password doesn\'t exist or password was repeated');
             return FALSE;
         }
@@ -884,14 +896,14 @@ class UserMan {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('setUserName: incorrect incoming parameters');
             return FALSE;
         }
-        self::$dblink->query("UPDATE `".MECCANO_TPREF."_core_userman_users` "
+        self::$dbLink->query("UPDATE `".MECCANO_TPREF."_core_userman_users` "
                 . "SET `username`='$username' "
                 . "WHERE `id`=$userId ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('setUserName: can\'t set username | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('setUserName: can\'t set username | '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_ALREADY_EXISTS);            self::setErrExp('setUserName: defined user doesn\'t exist or username was repeated');
             return FALSE;
         }
@@ -908,14 +920,14 @@ class UserMan {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('setUserMail: incorrect incoming parameters');
             return FALSE;
         }
-        self::$dblink->query("UPDATE `".MECCANO_TPREF."_core_userman_userinfo` "
+        self::$dbLink->query("UPDATE `".MECCANO_TPREF."_core_userman_userinfo` "
                 . "SET `email`='$email' "
                 . "WHERE `id`=$userId ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('setUserMail: can\'t set email | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('setUserMail: can\'t set email | '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_ALREADY_EXISTS);            self::setErrExp('setUserMail: defined user doesn\'t exist or email was repeated');
             return FALSE;
         }
@@ -928,15 +940,15 @@ class UserMan {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('setFullName: incorrect incoming parameters');
             return FALSE;
         }
-        $name = self::$dblink->real_escape_string($name);
-        self::$dblink->query("UPDATE `".MECCANO_TPREF."_core_userman_userinfo` "
+        $name = self::$dbLink->real_escape_string($name);
+        self::$dbLink->query("UPDATE `".MECCANO_TPREF."_core_userman_userinfo` "
                 . "SET `fullname`='$name' "
                 . "WHERE `id`=$userId ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('setFullName: can\'t set name | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('setFullName: can\'t set name | '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_ALREADY_EXISTS);            self::setErrExp('setFullName: defined user doesn\'t exist or name was repeated');
             return FALSE;
         }
@@ -949,14 +961,14 @@ class UserMan {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('changePassword: incorrect incoming parameters');
             return FALSE;
         }
-        $qSalt = self::$dblink->query("SELECT `salt` "
+        $qSalt = self::$dbLink->query("SELECT `salt` "
                 . "FROM `".MECCANO_TPREF."_core_userman_users` "
                 . "WHERE `id`=$userId ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('changePassword: can\'t check defined user | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('changePassword: can\'t check defined user | '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('changePassword: defined user doesn\'t exist');
             return FALSE;
         }
@@ -964,7 +976,7 @@ class UserMan {
         $oldPasswHash = passwHash($oldPassw, $salt);
         $newPasswHash = passwHash($newPassw, $salt);
         if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
-            self::$dblink->query("UPDATE `".MECCANO_TPREF."_core_userman_userpass` "
+            self::$dbLink->query("UPDATE `".MECCANO_TPREF."_core_userman_userpass` "
                     . "SET `password`='$newPasswHash' "
                     . "WHERE `id`=$passwId "
                     . "AND `userid`=$userId "
@@ -972,17 +984,17 @@ class UserMan {
                     . "AND `limited`=1 ;");
         }
         else {
-            self::$dblink->query("UPDATE `".MECCANO_TPREF."_core_userman_userpass` "
+            self::$dbLink->query("UPDATE `".MECCANO_TPREF."_core_userman_userpass` "
                     . "SET `password`='$newPasswHash' "
                     . "WHERE `id`=$passwId "
                     . "AND `userid`=$userId "
                     . "AND `password`='$oldPasswHash' ;");
         }
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('changePassword: can\'t update password | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('changePassword: can\'t update password | '.self::$dbLink->error);
             return FALSE;
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_ALREADY_EXISTS);            self::setErrExp('changePassword: defined password doesn\'t exist, new password repeats existing, was received invalid old password or usage of limited authentication');
             return FALSE;
         }
@@ -998,9 +1010,9 @@ class UserMan {
         if ($upp < 1) {
             $upp = 1;
         }
-        $qResult = self::$dblink->query("SELECT COUNT(`id`) FROM `".MECCANO_TPREF."_core_userman_users` ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('sumUsers: total users couldn\'t be counted | '.self::$dblink->error);
+        $qResult = self::$dbLink->query("SELECT COUNT(`id`) FROM `".MECCANO_TPREF."_core_userman_users` ;");
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('sumUsers: total users couldn\'t be counted | '.self::$dbLink->error);
             return FALSE;
         }
         list($totalUsers) = $qResult->fetch_array(MYSQLI_NUM);
@@ -1066,15 +1078,15 @@ class UserMan {
             $direct = 'DESC';
         }
         $start = ($pageNumber - 1) * $upp;
-        $qResult = self::$dblink->query("SELECT `u`.`id` `id`, `u`.`username` `username`, `i`.`fullname` `name`, `i`.`email` `email`, `g`.`groupname` `group`, `u`.`groupid` `gid`, `u`.`creationtime` `time`, `u`.`active` "
+        $qResult = self::$dbLink->query("SELECT `u`.`id` `id`, `u`.`username` `username`, `i`.`fullname` `name`, `i`.`email` `email`, `g`.`groupname` `group`, `u`.`groupid` `gid`, `u`.`creationtime` `time`, `u`.`active` "
                 . "FROM `".MECCANO_TPREF."_core_userman_users` `u` "
                 . "JOIN `".MECCANO_TPREF."_core_userman_userinfo` `i` "
                 . "ON `u`.`id` = `i`.`id` "
                 . "JOIN `".MECCANO_TPREF."_core_userman_groups` `g` "
                 . "ON `u`.`groupid` = `g`.`id` "
                 . "ORDER BY `$orderBy` $direct LIMIT $start, $upp;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getUsers: user info page couldn\'t be gotten | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getUsers: user info page couldn\'t be gotten | '.self::$dbLink->error);
             return FALSE;
         }
         $xml = new \DOMDocument('1.0', 'utf-8');
@@ -1125,15 +1137,15 @@ class UserMan {
         elseif ($ascent == FALSE) {
             $direct = 'DESC';
         }
-        $qResult = self::$dblink->query("SELECT `u`.`id` `id`, `u`.`username` `username`, `i`.`fullname` `name`, `i`.`email` `email`, `g`.`groupname` `group`, `u`.`groupid` `gid`, `u`.`creationtime` `time`, `u`.`active` "
+        $qResult = self::$dbLink->query("SELECT `u`.`id` `id`, `u`.`username` `username`, `i`.`fullname` `name`, `i`.`email` `email`, `g`.`groupname` `group`, `u`.`groupid` `gid`, `u`.`creationtime` `time`, `u`.`active` "
                 . "FROM `".MECCANO_TPREF."_core_userman_users` `u` "
                 . "JOIN `".MECCANO_TPREF."_core_userman_userinfo` `i` "
                 . "ON `u`.`id` = `i`.`id` "
                 . "JOIN `".MECCANO_TPREF."_core_userman_groups` `g` "
                 . "ON `u`.`groupid` = `g`.`id` "
                 . "ORDER BY `$orderBy` $direct ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getUsers: user info page couldn\'t be gotten | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getUsers: user info page couldn\'t be gotten | '.self::$dbLink->error);
             return FALSE;
         }
         $xml = new \DOMDocument('1.0', 'utf-8');

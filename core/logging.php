@@ -7,14 +7,14 @@ require_once 'swconst.php';
 class Logging {
     private static $errid = 0; // error's id
     private static $errexp = ''; // error's explanation
-    private static $dblink; // database link
+    private static $dbLink; // database link
     
-    public function __construct($dblink = FALSE) {
-        self::$dblink = $dblink;
+    public function __construct($dbLink) {
+        self::$dbLink = $dbLink;
     }
     
-    public static function setDbLink($dblink) {
-        self::$dblink = $dblink;
+    public static function setDbLink($dbLink) {
+        self::$dbLink = $dbLink;
     }
     
     private static function setErrId($id) {
@@ -39,20 +39,20 @@ class Logging {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('newRecord: one or more of received arguments aren\'t strings');
             return FALSE;
         }
-        $event = self::$dblink->real_escape_string($event);
-        $insertion = self::$dblink->real_escape_string($insertion);
+        $event = self::$dbLink->real_escape_string($event);
+        $insertion = self::$dbLink->real_escape_string($insertion);
         if (isset($_SESSION['core_auth_limited'])) {
-            self::$dblink->query("INSERT INTO `".MECCANO_TPREF."_core_log_records` (`did`, `insertion`, `user`) "
+            self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_log_records` (`did`, `insertion`, `user`) "
                     . "VALUES ((SELECT `id` FROM `".MECCANO_TPREF."_core_log_description`"
                     . " WHERE `event`='$event'), '$insertion', '".$_SESSION['core_auth_uname']."') ;");
         }
         else {
-            self::$dblink->query("INSERT INTO `".MECCANO_TPREF."_core_log_records` (`did`, `insertion`) "
+            self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_log_records` (`did`, `insertion`) "
                     . "VALUES ((SELECT `id` FROM `".MECCANO_TPREF."_core_log_description`"
                     . " WHERE `event`='$event'), '$insertion') ;");
         }
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('newRecord: your query for new record was not executed | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('newRecord: your query for new record was not executed | '.self::$dbLink->error);
             return FALSE;
         }
         return TRUE;
@@ -64,9 +64,9 @@ class Logging {
             self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('clearLog: function execution was terminated because of using of limited authentication');
             return FALSE;
         }
-        self::$dblink->query("TRUNCATE TABLE `".MECCANO_TPREF."_core_log_records` ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('clearLog: log was not cleared | '.self::$dblink->error);
+        self::$dbLink->query("TRUNCATE TABLE `".MECCANO_TPREF."_core_log_records` ;");
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('clearLog: log was not cleared | '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::newRecord('core_clearLog')) {
@@ -84,9 +84,9 @@ class Logging {
         if ($rpp < 1) {
             $rpp = 1;
         }
-        $qResult = self::$dblink->query("SELECT COUNT(`id`) FROM `".MECCANO_TPREF."_core_log_records` ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('sumLog: total records couldn\'t be counted | '.self::$dblink->error);
+        $qResult = self::$dbLink->query("SELECT COUNT(`id`) FROM `".MECCANO_TPREF."_core_log_records` ;");
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('sumLog: total records couldn\'t be counted | '.self::$dbLink->error);
             return FALSE;
         }
         list($totalRecs) = $qResult->fetch_array(MYSQLI_NUM);
@@ -152,12 +152,12 @@ class Logging {
             $direct = 'DESC';
         }
         $start = ($pageNumber - 1) * $rpp;
-        $qResult = self::$dblink->query("SELECT `L`.`id` `id`, `time`, REPLACE(`description`, '%d', `insertion`) `event`, `user` "
+        $qResult = self::$dbLink->query("SELECT `L`.`id` `id`, `time`, REPLACE(`description`, '%d', `insertion`) `event`, `user` "
                 . "FROM `".MECCANO_TPREF."_core_log_records` `L` "
                 . "INNER JOIN `".MECCANO_TPREF."_core_log_description` `LD` ON `L`.`did` = `LD`.`id` "
                 . "ORDER BY `$orderBy` $direct LIMIT $start, $rpp;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getPage: log page couldn\'t be gotten | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getPage: log page couldn\'t be gotten | '.self::$dbLink->error);
             return FALSE;
         }
         $xml = new \DOMDocument('1.0', 'utf-8');
@@ -184,12 +184,12 @@ class Logging {
             self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('newEvent: function execution was terminated because of using of limited authentication');
             return FALSE;
         }
-        $event = self::$dblink->real_escape_string($event);
-        $description = self::$dblink->real_escape_string($description);
-        self::$dblink->query("INSERT INTO `".MECCANO_TPREF."_core_log_description` (`event`, `description`) "
+        $event = self::$dbLink->real_escape_string($event);
+        $description = self::$dbLink->real_escape_string($description);
+        self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_log_description` (`event`, `description`) "
                 . "VALUES ('$event', '$description');");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('newEvent: new event wasn\'t added | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('newEvent: new event wasn\'t added | '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::newRecord('core_newEvent', $event)) {
@@ -225,20 +225,20 @@ class Logging {
             self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('delEvent: function execution was terminated because of using of limited authentication');
             return FALSE;
         }
-        $event = self::$dblink->real_escape_string($event);
+        $event = self::$dbLink->real_escape_string($event);
         $queries = array(
             "DELETE FROM `".MECCANO_TPREF."_core_log_records`"
                 . "WHERE `did`=(SELECT `id` FROM `".MECCANO_TPREF."_core_log_description` WHERE `event`='$event');",
             "DELETE FROM `".MECCANO_TPREF."_core_log_description` WHERE `event`='$event';"
         );
         foreach ($queries as $value) {
-            self::$dblink->query($value);
-            if (self::$dblink->errno) {
-                self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('delEvent: event couldn\'t be deleted | '.self::$dblink->error);
+            self::$dbLink->query($value);
+            if (self::$dbLink->errno) {
+                self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('delEvent: event couldn\'t be deleted | '.self::$dbLink->error);
                 return FALSE;
             }
         }
-        if (!self::$dblink->affected_rows) {
+        if (!self::$dbLink->affected_rows) {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('delEvent: defined event doesn\'t exist');
             return FALSE;
         }
@@ -278,12 +278,12 @@ class Logging {
         elseif ($ascent == FALSE) {
             $direct = 'DESC';
         }
-        $qResult = self::$dblink->query("SELECT `L`.`id` `id`, `time`, REPLACE(`description`, '%d', `insertion`) `event`, `user` "
+        $qResult = self::$dbLink->query("SELECT `L`.`id` `id`, `time`, REPLACE(`description`, '%d', `insertion`) `event`, `user` "
                 . "FROM `".MECCANO_TPREF."_core_log_records` `L` "
                 . "INNER JOIN `".MECCANO_TPREF."_core_log_description` `LD` ON `L`.`did` = `LD`.`id` "
                 . "ORDER BY `$orderBy` $direct ;");
-        if (self::$dblink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getAll: log records couldn\'t be gotten | '.self::$dblink->error);
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getAll: log records couldn\'t be gotten | '.self::$dbLink->error);
             return FALSE;
         }
         $xml = new \DOMDocument('1.0', 'utf-8');
