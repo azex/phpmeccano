@@ -46,7 +46,7 @@ class Auth {
     
     public static function userLogin($username, $password, $log = FALSE, $useCookie = TRUE, $cookieTime = 'month') {
         self::$errid = 0;        self::$errexp = '';
-        if (isset($_SESSION['core_auth_userid'])) {
+        if (isset($_SESSION[AUTH_USER_ID])) {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('userLogin: finish current session before starting new');
             return FALSE;
         }
@@ -112,27 +112,27 @@ class Auth {
                 self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('userLogin: can\'t set unique session identifier | '.self::$dbLink->error);
                 return FALSE;
             }
-            setcookie('core_auth_usi', $usi, $term, '/');
+            setcookie(COOKIE_USER_SESSION_ID, $usi, $term, '/');
         }
         if ($log) {
             self::$logObject->newRecord('core_authLogin', $username);
         }
-        $_SESSION['core_auth_uname'] = $username;
-        $_SESSION['core_auth_userid'] = (int) $userId;
-        $_SESSION['core_auth_limited'] = (int) $limited;
-        $_SESSION['core_auth_lang'] = $lang;
+        $_SESSION[AUTH_USERNAME] = $username;
+        $_SESSION[AUTH_USER_ID] = (int) $userId;
+        $_SESSION[AUTH_LIMITED] = (int) $limited;
+        $_SESSION[AUTH_LANGUAGE] = $lang;
         // control parameters
-        $_SESSION['core_auth_usi'] = $usi;
-        $_SESSION['core_auth_password'] = (int) $passId;
-        $_SESSION['core_auth_ip'] = $_SERVER['REMOTE_ADDR'];
-        $_SESSION['core_auth_uagent'] = $_SERVER['HTTP_USER_AGENT'];
+        $_SESSION[AUTH_PASSWORD_ID] = $usi;
+        $_SESSION[AUTH_USER_SESSION_ID] = (int) $passId;
+        $_SESSION[AUTH_IP] = $_SERVER['REMOTE_ADDR'];
+        $_SESSION[AUTH_USER_AGENT] = $_SERVER['HTTP_USER_AGENT'];
         return TRUE;
     }
     
     public static function isSession() {
         self::$errid = 0;        self::$errexp = '';
-        if (isset($_SESSION['core_auth_userid'])) {
-            if ($_SESSION['core_auth_ip'] != $_SERVER['REMOTE_ADDR'] || $_SESSION['core_auth_uagent'] != $_SERVER['HTTP_USER_AGENT']) {
+        if (isset($_SESSION[AUTH_USER_ID])) {
+            if ($_SESSION[AUTH_IP] != $_SERVER['REMOTE_ADDR'] || $_SESSION[AUTH_USER_AGENT] != $_SERVER['HTTP_USER_AGENT']) {
                 self::userLogout();
                 self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('isSession: session probably is stolen');
                 return FALSE;
@@ -145,11 +145,11 @@ class Auth {
                     . "ON `p`.`userid`=`u`.`id` "
                     . "JOIN `".MECCANO_TPREF."_core_auth_usi` `s` "
                     . "ON `s`.`id`=`p`.`id` "
-                    . "WHERE `u`.`id`=".$_SESSION['core_auth_userid']." "
+                    . "WHERE `u`.`id`=".$_SESSION[AUTH_USER_ID]." "
                     . "AND `u`.`active`=1 "
                     . "AND `g`.`active`=1 "
-                    . "AND `p`.`id`=".$_SESSION['core_auth_password']." "
-                    . "AND `s`.`usi`='".$_SESSION['core_auth_usi']."' ;");
+                    . "AND `p`.`id`=".$_SESSION[AUTH_USER_SESSION_ID]." "
+                    . "AND `s`.`usi`='".$_SESSION[AUTH_PASSWORD_ID]."' ;");
             if (self::$dbLink->errno) {
                 self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('isSession: can\'t check user availability | '.self::$dbLink->error);
                 return FALSE;
@@ -165,19 +165,19 @@ class Auth {
     
     public static function userLogout() {
         self::$errid = 0;        self::$errexp = '';
-        if (isset($_SESSION['core_auth_userid'])) {
+        if (isset($_SESSION[AUTH_USER_ID])) {
             $qResult = self::$dbLink->query("SELECT `id` "
                     . "FROM `".MECCANO_TPREF."_core_auth_usi` "
-                    . "WHERE `usi`='".$_SESSION['core_auth_usi']."' ;");
+                    . "WHERE `usi`='".$_SESSION[AUTH_PASSWORD_ID]."' ;");
             if (self::$dbLink->errno) {
                 self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('userLogout: can\'t check unique session identifier | '.self::$dbLink->error);
                 return FALSE;
             }
             if (self::$dbLink->affected_rows) {
-                $usi = makeIdent($_SESSION['core_auth_uname']);
+                $usi = makeIdent($_SESSION[AUTH_USERNAME]);
                 self::$dbLink->query("UPDATE `".MECCANO_TPREF."_core_auth_usi` "
                         . "SET `usi`='$usi' "
-                        . "WHERE `id`=".$_SESSION['core_auth_password']." ;");
+                        . "WHERE `id`=".$_SESSION[AUTH_USER_SESSION_ID]." ;");
                 if (self::$dbLink->errno) {
                     self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('userLogout: can\'t reset unique session identifier | '.self::$dbLink->error);
                     return FALSE;
@@ -196,7 +196,7 @@ class Auth {
     
     public static function getSession($log = FALSE) {
         self::$errid = 0;        self::$errexp = '';
-        if (!isset($_SESSION['core_auth_userid']) && isset($_COOKIE['core_auth_usi']) && pregIdent($_COOKIE['core_auth_usi'])) {
+        if (!isset($_SESSION[AUTH_USER_ID]) && isset($_COOKIE[AUTH_PASSWORD_ID]) && pregIdent($_COOKIE[AUTH_PASSWORD_ID])) {
             $qResult = self::$dbLink->query("SELECT `p`.`id`, `p`.`limited`, `u`.`id`, `u`.`username`, `l`.`code` "
                     . "FROM `".MECCANO_TPREF."_core_auth_usi` `s` "
                     . "JOIN `".MECCANO_TPREF."_core_userman_userpass` `p` "
@@ -207,7 +207,7 @@ class Auth {
                     . "ON `u`.`langid`=`l`.`id` "
                     . "JOIN `".MECCANO_TPREF."_core_userman_groups` `g` "
                     . "ON `g`.`id`=`u`.`groupid` "
-                    . "WHERE `s`.`usi`='".$_COOKIE['core_auth_usi']."' "
+                    . "WHERE `s`.`usi`='".$_COOKIE[AUTH_PASSWORD_ID]."' "
                     . "AND `s`.`endtime`>NOW() "
                     . "AND `u`.`active`=1 "
                     . "AND `g`.`active`=1 ;");
@@ -222,15 +222,15 @@ class Auth {
             if ($log) {
                 self::$logObject->newRecord('core_authLogin', $username);
             }
-            $_SESSION['core_auth_uname'] = $username;
-            $_SESSION['core_auth_userid'] = (int) $userId;
-            $_SESSION['core_auth_limited'] = (int) $limited;
-            $_SESSION['core_auth_lang'] = $lang;
+            $_SESSION[AUTH_USERNAME] = $username;
+            $_SESSION[AUTH_USER_ID] = (int) $userId;
+            $_SESSION[AUTH_LIMITED] = (int) $limited;
+            $_SESSION[AUTH_LANGUAGE] = $lang;
             // control parameters
-            $_SESSION['core_auth_usi'] = $_COOKIE['core_auth_usi'];
-            $_SESSION['core_auth_password'] = (int) $passId;
-            $_SESSION['core_auth_ip'] = $_SERVER['REMOTE_ADDR'];
-            $_SESSION['core_auth_uagent'] = $_SERVER['HTTP_USER_AGENT'];
+            $_SESSION[AUTH_PASSWORD_ID] = $_COOKIE[AUTH_PASSWORD_ID];
+            $_SESSION[AUTH_USER_SESSION_ID] = (int) $passId;
+            $_SESSION[AUTH_IP] = $_SERVER['REMOTE_ADDR'];
+            $_SESSION[AUTH_USER_AGENT] = $_SERVER['HTTP_USER_AGENT'];
             return TRUE;
         }
         return FALSE;

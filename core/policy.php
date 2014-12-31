@@ -262,7 +262,7 @@ class Policy {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('checkAccess: check incoming parameters');
             return FALSE;
         }
-        if (isset($_SESSION['core_auth_userid'])) {
+        if (isset($_SESSION[AUTH_USER_ID])) {
             $qAccess = self::$dbLink->query("SELECT `a`.`access` "
                     . "FROM `".MECCANO_TPREF."_core_policy_access` `a` "
                     . "JOIN `".MECCANO_TPREF."_core_policy_summary_list` `s` "
@@ -271,7 +271,7 @@ class Policy {
                     . "ON `a`.`groupid`=`g`.`id` "
                     . "JOIN `".MECCANO_TPREF."_core_userman_users` `u` "
                     . "ON `g`.`id`=`u`.`groupid` "
-                    . "WHERE `u`.`id`=".$_SESSION['core_auth_userid']." "
+                    . "WHERE `u`.`id`=".$_SESSION[AUTH_USER_ID]." "
                     . "AND `s`.`name`='$name' "
                     . "AND `s`.`func`='$func' "
                     . "LIMIT 1 ;");

@@ -51,7 +51,7 @@ class UserMan {
     //group methods
     public static function createGroup($groupname, $description, $log = TRUE) {
         self::$errid = 0;        self::$errexp = '';
-        if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
+        if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
             self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('createGroup: function execution was terminated because of using of limited authentication');
             return FALSE;
         }
@@ -79,7 +79,7 @@ class UserMan {
     
     public static function groupStatus($groupId, $active, $log = TRUE) {
         self::$errid = 0;        self::$errexp = '';
-        if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
+        if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
             self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('groupStatus: function execution was terminated because of using of limited authentication');
             return FALSE;
         }
@@ -144,7 +144,7 @@ class UserMan {
     
     public static function moveGroupTo($groupId, $destId) {
         self::$errid = 0;        self::$errexp = '';
-        if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
+        if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
             self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('moveGroupTo: function execution was terminated because of using of limited authentication');
             return FALSE;
         }
@@ -211,7 +211,7 @@ class UserMan {
     
     public static function setGroupName($groupId, $groupname) {
         self::$errid = 0;        self::$errexp = '';
-        if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
+        if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
             self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('setGroupName: function execution was terminated because of using of limited authentication');
             return FALSE;
         }
@@ -235,7 +235,7 @@ class UserMan {
     
     public static function setGroupDesc($groupId, $description) {
         self::$errid = 0;        self::$errexp = '';
-        if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
+        if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
             self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('setGroupDesc: function execution was terminated because of using of limited authentication');
             return FALSE;
         }
@@ -459,7 +459,7 @@ class UserMan {
     //user methods
     public static function createUser($username, $password, $email, $groupId, $active = TRUE, $langCode = MECCANO_DEF_LANG, $log = TRUE) {
         self::$errid = 0;        self::$errexp = '';
-        if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
+        if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
             self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('createUser: function execution was terminated because of using of limited authentication');
             return FALSE;
         }
@@ -576,7 +576,7 @@ class UserMan {
     
     public static function userStatus($userId, $active, $log = TRUE) {
         self::$errid = 0;        self::$errexp = '';
-        if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
+        if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
             self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('userStatus: function execution was terminated because of using of limited authentication');
             return FALSE;
         }
@@ -621,7 +621,7 @@ class UserMan {
     
     public static function moveUserTo($userId, $destId) {
         self::$errid = 0;        self::$errexp = '';
-        if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
+        if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
             self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('moveUserTo: function execution was terminated because of using of limited authentication');
             return FALSE;
         }
@@ -655,7 +655,7 @@ class UserMan {
     
     public static function delUser($userId, $log = TRUE) {
         self::$errid = 0;        self::$errexp = '';
-        if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
+        if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
             self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('delUser: function execution was terminated because of using of limited authentication');
             return FALSE;
         }
@@ -768,7 +768,7 @@ class UserMan {
     
     public static function addPassword($userId, $password, $description='') {
         self::$errid = 0;        self::$errexp = '';
-        if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
+        if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
             self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('addPassword: function execution was terminated because of using of limited authentication');
             return FALSE;
         }
@@ -809,7 +809,7 @@ class UserMan {
     
     public static function delPassword($passwId, $userId) {
         self::$errid = 0;        self::$errexp = '';
-        if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
+        if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
             self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('delPassword: function execution was terminated because of using of limited authentication');
             return FALSE;
         }
@@ -850,7 +850,7 @@ class UserMan {
     
     public static function setPassword($passwId, $userId, $password){
         self::$errid = 0;        self::$errexp = '';
-        if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
+        if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
             self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('setPassword: function execution was terminated because of using of limited authentication');
             return FALSE;
         }
@@ -888,7 +888,7 @@ class UserMan {
     
     public static function setUserName($userId, $username) {
         self::$errid = 0;        self::$errexp = '';
-        if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
+        if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
             self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('setUserName: function execution was terminated because of using of limited authentication');
             return FALSE;
         }
@@ -912,7 +912,7 @@ class UserMan {
     
     public static function setUserMail($userId, $email) {
         self::$errid = 0;        self::$errexp = '';
-        if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
+        if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
             self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('setUserMail: function execution was terminated because of using of limited authentication');
             return FALSE;
         }
@@ -975,7 +975,7 @@ class UserMan {
         list($salt) = $qSalt->fetch_row();
         $oldPasswHash = passwHash($oldPassw, $salt);
         $newPasswHash = passwHash($newPassw, $salt);
-        if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
+        if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
             self::$dbLink->query("UPDATE `".MECCANO_TPREF."_core_userman_userpass` "
                     . "SET `password`='$newPasswHash' "
                     . "WHERE `id`=$passwId "

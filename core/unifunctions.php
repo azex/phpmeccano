@@ -2,6 +2,8 @@
 
 namespace core;
 
+require_once 'swconst.php';
+
 // it generates and returns unique password salt
 function makeSalt($prefix = '') {
     return substr(base64_encode(sha1(uniqid().microtime(TRUE).rand(1, 10e9).uniqid($prefix, TRUE))), 0, 22);
@@ -113,32 +115,32 @@ function xmlTransform($xml, $xsl) {
 
 // general information about session
 function authUserId() {
-    if (isset($_SESSION['core_auth_userid'])) {
-        return $_SESSION['core_auth_userid'];
+    if (isset($_SESSION[AUTH_USER_ID])) {
+        return $_SESSION[AUTH_USER_ID];
     }
     return FALSE;
 }
 
 // returns username if there is active session
 function authUName() {
-    if (isset($_SESSION['core_auth_uname'])) {
-        return $_SESSION['core_auth_uname'];
+    if (isset($_SESSION[AUTH_USERNAME])) {
+        return $_SESSION[AUTH_USERNAME];
     }
     return FALSE;
 }
 
 // returns session type if there is active session
 function authLimited() {
-    if (isset($_SESSION['core_auth_limited'])) {
-        return $_SESSION['core_auth_limited'];
+    if (isset($_SESSION[AUTH_LIMITED])) {
+        return $_SESSION[AUTH_LIMITED];
     }
     return FALSE;
 }
 
 // returns language code if there is active session
 function authLang() {
-    if (isset($_SESSION['core_auth_lang'])) {
-        return $_SESSION['core_auth_lang'];
+    if (isset($_SESSION[AUTH_LANGUAGE])) {
+        return $_SESSION[AUTH_LANGUAGE];
     }
     return FALSE;
 }
