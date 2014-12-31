@@ -41,10 +41,10 @@ class Logging {
         }
         $event = self::$dbLink->real_escape_string($event);
         $insertion = self::$dbLink->real_escape_string($insertion);
-        if (isset($_SESSION['core_auth_limited'])) {
+        if (isset($_SESSION[AUTH_LIMITED])) {
             self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_log_records` (`did`, `insertion`, `user`) "
                     . "VALUES ((SELECT `id` FROM `".MECCANO_TPREF."_core_log_description`"
-                    . " WHERE `event`='$event'), '$insertion', '".$_SESSION['core_auth_uname']."') ;");
+                    . " WHERE `event`='$event'), '$insertion', '".$_SESSION[AUTH_USERNAME]."') ;");
         }
         else {
             self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_log_records` (`did`, `insertion`) "
@@ -60,7 +60,7 @@ class Logging {
     
     public static function clearLog() {
         self::$errid = 0;        self::$errexp = '';
-        if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
+        if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
             self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('clearLog: function execution was terminated because of using of limited authentication');
             return FALSE;
         }
@@ -180,7 +180,7 @@ class Logging {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('newEvent: one or more of received arguments aren\'t strings');
             return FALSE;
         }
-        if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
+        if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
             self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('newEvent: function execution was terminated because of using of limited authentication');
             return FALSE;
         }
@@ -221,7 +221,7 @@ class Logging {
             self::setErrId(ERROR_SYSTEM_INTERVENTION);            self::setErrExp('delEvent: it is impossible to delete system event');
             return FALSE;
         }
-        if (isset($_SESSION['core_auth_limited']) && $_SESSION['core_auth_limited']) {
+        if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
             self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('delEvent: function execution was terminated because of using of limited authentication');
             return FALSE;
         }
