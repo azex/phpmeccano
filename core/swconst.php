@@ -18,9 +18,9 @@ define('AUTH_USER_ID', 'core_auth_uid');
 define('AUTH_LIMITED', 'core_auth_limited');
 define('AUTH_LANGUAGE', 'core_auth_lang');
 define('AUTH_PASSWORD_ID', 'core_auth_pid');
-define('AUTH_USER_SESSION_ID', 'core_auth_usid');
+define('AUTH_UNIQUE_SESSION_ID', 'core_auth_usid');
 define('AUTH_IP', 'core_auth_ip');
 define('AUTH_USER_AGENT', 'core_auth_uagent');
 
 // cookie variables
-define('COOKIE_USER_SESSION_ID', 'core_auth_usid');
+define('COOKIE_UNIQUE_SESSION_ID', 'core_auth_usid');
