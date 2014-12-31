@@ -125,7 +125,7 @@ class LangMan {
         return TRUE;
     }
 
-        public static function langList() {
+    public static function langList() {
         self::$errid = 0;        self::$errexp = '';
         $qLang = self::$dbLink->query("SELECT `id`, `code`, `name` "
                 . "FROM `".MECCANO_TPREF."_core_langman_languages` ;");
