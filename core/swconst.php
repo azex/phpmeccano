@@ -21,6 +21,7 @@ define('AUTH_PASSWORD_ID', 'core_auth_pid');
 define('AUTH_UNIQUE_SESSION_ID', 'core_auth_usid');
 define('AUTH_IP', 'core_auth_ip');
 define('AUTH_USER_AGENT', 'core_auth_uagent');
+define('AUTH_TOKEN', 'core_auth_token');
 
 // cookie variables
 define('COOKIE_UNIQUE_SESSION_ID', 'core_auth_usid');
