@@ -2178,20 +2178,20 @@ class LangMan {
             return FALSE;
         }
         $xml = new \DOMDocument('1.0', 'utf-8');
-        $namesNode = $xml->createElement('names');
+        $pageNode = $xml->createElement('page');
         $attr_plugin = $xml->createAttribute('plugin');
         $attr_plugin->value = $plugin;
-        $namesNode->appendChild($attr_plugin);
+        $pageNode->appendChild($attr_plugin);
         $attr_section = $xml->createAttribute('section');
         $attr_section->value = $section;
-        $namesNode->appendChild($attr_section);
-        $xml->appendChild($namesNode);
+        $pageNode->appendChild($attr_section);
+        $xml->appendChild($pageNode);
         while ($row = $qNames->fetch_row()) {
-            $nameNode = $xml->createElement('name');
-            $namesNode->appendChild($nameNode);
-            $nameNode->appendChild($xml->createElement('id', $row[0]));
-            $nameNode->appendChild($xml->createElement('name', $row[1]));
-            $nameNode->appendChild($xml->createElement('codes', $row[2]));
+            $textNode = $xml->createElement('text');
+            $pageNode->appendChild($textNode);
+            $textNode->appendChild($xml->createElement('id', $row[0]));
+            $textNode->appendChild($xml->createElement('name', $row[1]));
+            $textNode->appendChild($xml->createElement('codes', $row[2]));
         }
         return $xml;
     }
