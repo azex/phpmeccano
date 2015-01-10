@@ -1308,7 +1308,7 @@ class LangMan {
         if (is_null($code)) {
             $code = self::$language;
         }
-        $rightEntry = array('id', 'title', 'name', 'created', `edited`);
+        $rightEntry = array('id', 'title', 'name', 'created', 'edited');
         if (is_string($orderBy)) {
             if (!in_array($orderBy, $rightEntry, TRUE)) {
             $orderBy = 'id';
@@ -1456,7 +1456,7 @@ class LangMan {
         if (is_null($code)) {
             $code = self::$language;
         }
-        $rightEntry = array('id', 'title', 'name', 'created', `edited`);
+        $rightEntry = array('id', 'title', 'name', 'created', 'edited');
         if (is_string($orderBy)) {
             if (!in_array($orderBy, $rightEntry, TRUE)) {
             $orderBy = 'id';
@@ -1802,16 +1802,16 @@ class LangMan {
         return $title;
     }
     
-    public static function groupPolicyList($plugin, $groupid, $code = NULL) {
+    public static function groupPolicyList($plugin, $groupId, $code = NULL) {
         self::$errid = 0;        self::$errexp = '';
-        if (!pregPlugin($plugin) || !(is_integer($groupid) || is_bool($groupid)) || !(is_null($code) || pregLang($code))) {
+        if (!pregPlugin($plugin) || !(is_integer($groupId) || is_bool($groupId)) || !(is_null($code) || pregLang($code))) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('policyList: incorect type of incoming parameters');
             return FALSE;
         }
         if (is_null($code)) {
             $code = self::$language;
         }
-        if (is_bool($groupid)) {
+        if (is_bool($groupId)) {
             $qList = self::$dbLink->query("SELECT `d`.`id`, `d`.`short`, `s`.`func`, `n`.`access` "
                     . "FROM `".MECCANO_TPREF."_core_policy_summary_list` `s` "
                     . "JOIN `".MECCANO_TPREF."_core_policy_nosession` `n` "
@@ -1833,7 +1833,7 @@ class LangMan {
                     . "JOIN `".MECCANO_TPREF."_core_langman_languages` `l` "
                     . "ON `d`.`codeid`=`l`.`id` "
                     . "WHERE `s`.`name`='$plugin' "
-                    . "AND `a`.`groupid`=$groupid "
+                    . "AND `a`.`groupid`=$groupId "
                     . "AND `l`.`code`='$code' ;");
         }
         if (self::$dbLink->errno) {
@@ -2021,7 +2021,7 @@ class LangMan {
     public static function getTitleSectionsXML($plugin, $pageNumber, $totalPages, $rpp = 20, $orderBy = 'id', $ascent = FALSE) {
         self::$errid = 0;        self::$errexp = '';
         if (!pregPlugin($plugin) || !is_integer($pageNumber) || !is_integer($totalPages) || !is_integer($rpp)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getTitlesXML: incorrect incoming parameters');
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getTitleSectionsXML: incorrect incoming parameters');
             return FALSE;
         }
         $rightEntry = array('id', 'name', 'static');
@@ -2043,7 +2043,7 @@ class LangMan {
             }
         }
         else {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getAllTitlesXML: value of $orderBy must be string or array');
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getTitleSectionsXML: value of $orderBy must be string or array');
             return FALSE;
         }
         if ($ascent == TRUE) {
@@ -2059,11 +2059,11 @@ class LangMan {
                 . "WHERE `p`.`name`='$plugin' "
                 . "ORDER BY `$orderBy` $direct ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getAllTitlesXML: can\'t get sections | '.self::$dbLink->error);
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getTitleSectionsXML: can\'t get sections | '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('getAllTitlesXML: can\'t find defined plugin');
+            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('getTitleSectionsXML: can\'t find defined plugin');
             return FALSE;
         }
         $xml = new \DOMDocument('1.0', 'utf-8');

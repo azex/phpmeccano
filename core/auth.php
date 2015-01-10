@@ -126,6 +126,7 @@ class Auth {
         $_SESSION[AUTH_PASSWORD_ID] = (int) $passId;
         $_SESSION[AUTH_IP] = $_SERVER['REMOTE_ADDR'];
         $_SESSION[AUTH_USER_AGENT] = $_SERVER['HTTP_USER_AGENT'];
+        $_SESSION[AUTH_TOKEN] = makeIdent($username);
         return TRUE;
     }
     
@@ -231,6 +232,7 @@ class Auth {
             $_SESSION[AUTH_PASSWORD_ID] = (int) $passId;
             $_SESSION[AUTH_IP] = $_SERVER['REMOTE_ADDR'];
             $_SESSION[AUTH_USER_AGENT] = $_SERVER['HTTP_USER_AGENT'];
+            $_SESSION[AUTH_TOKEN] = makeIdent($username);
             return TRUE;
         }
         return FALSE;

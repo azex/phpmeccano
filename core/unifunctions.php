@@ -144,3 +144,11 @@ function authLang() {
     }
     return FALSE;
 }
+
+// returns session token if there is active session
+function authToken() {
+    if (isset($_SESSION[AUTH_TOKEN])) {
+        return $_SESSION[AUTH_TOKEN];
+    }
+    return FALSE;
+}
