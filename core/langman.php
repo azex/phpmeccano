@@ -2276,7 +2276,7 @@ class LangMan {
             $direct = 'DESC';
         }
         $qNames = self::$dbLink->query("SELECT `n`.`id`, `n`.`name`, "
-                . "(SELECT GROUP_CONCAT(`l`.`code` ORDER BY `l`.`code` SEPARATOR ', ') "
+                . "(SELECT GROUP_CONCAT(`l`.`code` ORDER BY `l`.`code` SEPARATOR ';') "
                     . "FROM `".MECCANO_TPREF."_core_langman_languages` `l` "
                     . "JOIN `".MECCANO_TPREF."_core_langman_titles` `t` "
                     . "ON `t`.`codeid`=`l`.`id` WHERE `t`.`nameid`=`n`.`id` ) `languages` "
@@ -2296,20 +2296,25 @@ class LangMan {
             return FALSE;
         }
         $xml = new \DOMDocument('1.0', 'utf-8');
-        $namesNode = $xml->createElement('names');
+        $pageNode = $xml->createElement('page');
         $attr_plugin = $xml->createAttribute('plugin');
         $attr_plugin->value = $plugin;
-        $namesNode->appendChild($attr_plugin);
+        $pageNode->appendChild($attr_plugin);
         $attr_section = $xml->createAttribute('section');
         $attr_section->value = $section;
-        $namesNode->appendChild($attr_section);
-        $xml->appendChild($namesNode);
+        $pageNode->appendChild($attr_section);
+        $xml->appendChild($pageNode);
         while ($row = $qNames->fetch_row()) {
-            $nameNode = $xml->createElement('name');
-            $namesNode->appendChild($nameNode);
-            $nameNode->appendChild($xml->createElement('id', $row[0]));
-            $nameNode->appendChild($xml->createElement('name', $row[1]));
-            $nameNode->appendChild($xml->createElement('codes', $row[2]));
+            $titleNode = $xml->createElement('title');
+            $pageNode->appendChild($titleNode);
+            $titleNode->appendChild($xml->createElement('id', $row[0]));
+            $titleNode->appendChild($xml->createElement('name', $row[1]));
+            $languagesNode = $xml->createElement('languages');
+            $languagesArray = explode(";", $row[2]);
+            foreach ($languagesArray as $langCode) {
+                $languagesNode->appendChild($xml->createElement('code', $langCode));
+            }
+            $titleNode->appendChild($languagesNode);
         }
         return $xml;
     }
