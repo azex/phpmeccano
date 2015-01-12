@@ -2158,7 +2158,7 @@ class LangMan {
             $direct = 'DESC';
         }
         $qNames = self::$dbLink->query("SELECT `n`.`id`, `n`.`name`, "
-                . "(SELECT GROUP_CONCAT(`l`.`code` ORDER BY `l`.`code` SEPARATOR ', ') "
+                . "(SELECT GROUP_CONCAT(`l`.`code` ORDER BY `l`.`code` SEPARATOR ';') "
                     . "FROM `".MECCANO_TPREF."_core_langman_languages` `l` "
                     . "JOIN `".MECCANO_TPREF."_core_langman_texts` `t` "
                     . "ON `t`.`codeid`=`l`.`id` WHERE `t`.`nameid`=`n`.`id` ) `languages` "
@@ -2191,7 +2191,12 @@ class LangMan {
             $pageNode->appendChild($textNode);
             $textNode->appendChild($xml->createElement('id', $row[0]));
             $textNode->appendChild($xml->createElement('name', $row[1]));
-            $textNode->appendChild($xml->createElement('codes', $row[2]));
+            $languagesNode = $xml->createElement('languages');
+            $languagesArray = explode(";", $row[2]);
+            foreach ($languagesArray as $langCode) {
+                $languagesNode->appendChild($xml->createElement('code', $langCode));
+            }
+            $textNode->appendChild($languagesNode);
         }
         return $xml;
     }
