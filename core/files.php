@@ -35,7 +35,7 @@ class Files {
         return self::$errexp;
     }
 
-    public static function copy($sourcePath, $destPath, $mergeDirs = FALSE, $rewriteFiles = FALSE, $skipExistentFiles = FALSE, $skipNotReadable = FALSE, $skipWriteProtected = FALSE, $skipConflicts = FALSE) {
+    public static function copy($sourcePath, $destPath, $mergeDirs = FALSE, $rewriteFiles = FALSE, $skipExistentFiles = FALSE, $skipNotReadable = FALSE, $skipWriteProtected = FALSE, $skipConflicts = FALSE, $removeConflictFiles = FALSE) {
         self::$errid = 0;        self::$errexp = '';
         $sourcePath = rtrim(preg_replace('#[/]+#', '/', $sourcePath), '/');
         $destPath = rtrim(preg_replace('#[/]+#', '/', $destPath), '/');
@@ -182,6 +182,11 @@ class Files {
                     $destFullPath = "$destDirPath/$sourceItemName";
                     $sourceItemReadStatus = is_readable($sourceFullPath);
                     if (is_link($sourceFullPath)) {// link handling
+                        if ($removeConflictFiles && is_dir($destFullPath) && !is_link($destFullPath)) {
+                            if (!self::remove($destFullPath)) {
+                                return FALSE;
+                            }
+                        }
                         if (is_dir($destFullPath) && !is_link($destFullPath) && !$skipConflicts) {
                             self::setErrId(ERROR_ALREADY_EXISTS);                self::setErrExp("copy: unable to replace directory [$destFullPath] with link [$sourceFullPath]");
                             return FALSE;
@@ -219,6 +224,11 @@ class Files {
                         }
                     }
                     elseif (is_file($sourceFullPath)) { // file handling
+                        if ($removeConflictFiles && is_dir($destFullPath) && !is_link($destFullPath)) {
+                            if (!self::remove($destFullPath)) {
+                                return FALSE;
+                            }
+                        }
                         if (is_dir($destFullPath) && !is_link($destFullPath) && !$skipConflicts) {
                             self::setErrId(ERROR_ALREADY_EXISTS);                self::setErrExp("copy: unable to replace directory [$destFullPath] with file [$sourceFullPath]");
                             return FALSE;
@@ -274,6 +284,11 @@ class Files {
                         }
                     }
                     elseif (is_dir($sourceFullPath)) { // directory handling
+                        if ($removeConflictFiles && is_file($destFullPath)) {
+                            if (!self::remove($destFullPath)) {
+                                return FALSE;
+                            }
+                        }
                         $fileConflict = is_file($destFullPath);
                         if ($fileConflict && !$skipConflicts) {
                             self::setErrId(ERROR_ALREADY_EXISTS);                self::setErrExp("copy: unable to replace file [$destFullPath] with directory [$sourceFullPath]");
@@ -312,7 +327,7 @@ class Files {
         }
     }
     
-    public static function move($sourcePath, $destPath, $mergeDirs = FALSE, $replaceFiles = FALSE, $skipExistentFiles = FALSE, $skipNotReadable = FALSE, $skipWriteProtected = FALSE, $skipConflicts = FALSE) {
+    public static function move($sourcePath, $destPath, $mergeDirs = FALSE, $replaceFiles = FALSE, $skipExistentFiles = FALSE, $skipNotReadable = FALSE, $skipWriteProtected = FALSE, $skipConflicts = FALSE, $removeConflictFiles = FALSE) {
         self::$errid = 0;        self::$errexp = '';
         $sourcePath = rtrim(preg_replace('#[/]+#', '/', $sourcePath), '/');
         $destPath = rtrim(preg_replace('#[/]+#', '/', $destPath), '/');
@@ -422,7 +437,12 @@ class Files {
                         else {
                             $destIsFile = 0;
                         }
-                        if ((is_dir($destFullPath) && !is_link($destFullPath)) && !$skipConflicts) {
+                        if ($removeConflictFiles && is_dir($destFullPath) && !is_link($destFullPath)) {
+                            if (!self::remove($destFullPath)) {
+                                return FALSE;
+                            }
+                        }
+                        if (is_dir($destFullPath) && !is_link($destFullPath) && !$skipConflicts) {
                             self::setErrId(ERROR_ALREADY_EXISTS);                self::setErrExp("move: unable to replace directory [$destFullPath] with file [$sourceFullPath]");
                             return FALSE;
                         }
@@ -444,6 +464,11 @@ class Files {
                         }
                     }
                     elseif (!$sourceIsNotDir) { // directory handling
+                        if ($removeConflictFiles && is_file($destFullPath)) {
+                            if (!self::remove($destFullPath)) {
+                                return FALSE;
+                            }
+                        }
                         if (is_file($destFullPath) && !$skipConflicts) {
                             self::setErrId(ERROR_ALREADY_EXISTS);                self::setErrExp("move: unable to replace file [$destFullPath] with directory [$sourceFullPath]");
                             return FALSE;
