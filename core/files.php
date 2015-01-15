@@ -327,7 +327,7 @@ class Files {
         }
     }
     
-    public static function move($sourcePath, $destPath, $mergeDirs = FALSE, $replaceFiles = FALSE, $skipExistentFiles = FALSE, $skipNotReadable = FALSE, $skipWriteProtected = FALSE, $skipConflicts = FALSE) {
+    public static function move($sourcePath, $destPath, $mergeDirs = FALSE, $replaceFiles = FALSE, $skipExistentFiles = FALSE, $skipNotReadable = FALSE, $skipWriteProtected = FALSE, $skipConflicts = FALSE, $removeConflictFiles = FALSE) {
         self::$errid = 0;        self::$errexp = '';
         $sourcePath = rtrim(preg_replace('#[/]+#', '/', $sourcePath), '/');
         $destPath = rtrim(preg_replace('#[/]+#', '/', $destPath), '/');
@@ -437,7 +437,12 @@ class Files {
                         else {
                             $destIsFile = 0;
                         }
-                        if ((is_dir($destFullPath) && !is_link($destFullPath)) && !$skipConflicts) {
+                        if ($removeConflictFiles && is_dir($destFullPath) && !is_link($destFullPath)) {
+                            if (!self::remove($destFullPath)) {
+                                return FALSE;
+                            }
+                        }
+                        if (is_dir($destFullPath) && !is_link($destFullPath) && !$skipConflicts) {
                             self::setErrId(ERROR_ALREADY_EXISTS);                self::setErrExp("move: unable to replace directory [$destFullPath] with file [$sourceFullPath]");
                             return FALSE;
                         }
@@ -459,6 +464,11 @@ class Files {
                         }
                     }
                     elseif (!$sourceIsNotDir) { // directory handling
+                        if ($removeConflictFiles && is_file($destFullPath)) {
+                            if (!self::remove($destFullPath)) {
+                                return FALSE;
+                            }
+                        }
                         if (is_file($destFullPath) && !$skipConflicts) {
                             self::setErrId(ERROR_ALREADY_EXISTS);                self::setErrExp("move: unable to replace file [$destFullPath] with directory [$sourceFullPath]");
                             return FALSE;
