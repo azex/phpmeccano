@@ -12,6 +12,10 @@ define('MECCANO_TPREF', 'meccano');
 // system folders
 define('MECCANO_ROOT_DIR', dirname(__FILE__));
 define('MECCANO_CORE_DIR', MECCANO_ROOT_DIR.'/core');
+define('MECCANO_TMP_DIR', MECCANO_ROOT_DIR.'/tmp');
+define('MECCANO_PHP_DIR', MECCANO_ROOT_DIR.'/php');
+define('MECCANO_JS_DIR', MECCANO_ROOT_DIR.'/js');
+define('MECCANO_DOCUMENTS_DIR', MECCANO_ROOT_DIR.'/documents');
 
 //default language
 define('MECCANO_DEF_LANG', 'en-US');
