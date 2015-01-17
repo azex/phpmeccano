@@ -266,7 +266,7 @@ class LangMan {
         $plugName = $titles->getElementsByTagName('titles')->item(0)->getAttribute('plugin');
         // checking if plugin exists
         $qPlugin = self::$dbLink->query("SELECT `id` "
-                . "FROM `".MECCANO_TPREF."_core_plugins_install` "
+                . "FROM `".MECCANO_TPREF."_core_plugins_installed` "
                 . "WHERE `name`='$plugName' ;");
         if (self::$dbLink->errno) {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('installTitles: '.self::$dbLink->error);
@@ -289,7 +289,7 @@ class LangMan {
             // renaming of the section
             if ($sectionOldName = $sectionNode->getAttribute('oldname')) {
                 self::$dbLink->query("UPDATE `".MECCANO_TPREF."_core_langman_title_sections` `s` "
-                        . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
+                        . "JOIN `".MECCANO_TPREF."_core_plugins_installed` `p` "
                         . "ON `s`.`plugid`=`p`.`id` "
                         . "SET `s`.`section`='$sectionName' "
                         . "WHERE `p`.`name`='$plugName' "
@@ -314,7 +314,7 @@ class LangMan {
         // getting list of installed section if the the pugin is installed
         $qSections = self::$dbLink->query("SELECT `s`.`section`, `s`.`static`, `s`.`id` "
                 . "FROM `".MECCANO_TPREF."_core_langman_title_sections` `s` "
-                . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
+                . "JOIN `".MECCANO_TPREF."_core_plugins_installed` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `p`.`name`='$plugName' ;");
         $dbSectionTypes = array();
@@ -474,7 +474,7 @@ class LangMan {
         $plugName = $texts->getElementsByTagName('texts')->item(0)->getAttribute('plugin');
         // checking if plugin exists
         $qPlugin = self::$dbLink->query("SELECT `id` "
-                . "FROM `".MECCANO_TPREF."_core_plugins_install` "
+                . "FROM `".MECCANO_TPREF."_core_plugins_installed` "
                 . "WHERE `name`='$plugName' ;");
         if (self::$dbLink->errno) {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('installTexts: '.self::$dbLink->error);
@@ -497,7 +497,7 @@ class LangMan {
             // renaming of the section
             if ($sectionOldName = $sectionNode->getAttribute('oldname')) {
                 self::$dbLink->query("UPDATE `".MECCANO_TPREF."_core_langman_text_sections` `s` "
-                        . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
+                        . "JOIN `".MECCANO_TPREF."_core_plugins_installed` `p` "
                         . "ON `s`.`plugid`=`p`.`id` "
                         . "SET `s`.`section`='$sectionName' "
                         . "WHERE `p`.`name`='$plugName' "
@@ -524,7 +524,7 @@ class LangMan {
         // getting list of installed section if the the pugin is installed
         $qSections = self::$dbLink->query("SELECT `s`.`section`, `s`.`static`, `s`.`id` "
                 . "FROM `".MECCANO_TPREF."_core_langman_text_sections` `s` "
-                . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
+                . "JOIN `".MECCANO_TPREF."_core_plugins_installed` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `p`.`name`='$plugName' ;");
         $dbSectionTypes = array();
@@ -674,7 +674,7 @@ class LangMan {
         }
         // checking if plugin exists
         $qPlugin = self::$dbLink->query("SELECT `id` "
-                . "FROM `".MECCANO_TPREF."_core_plugins_install` "
+                . "FROM `".MECCANO_TPREF."_core_plugins_installed` "
                 . "WHERE `name`='$name' ;");
         if (self::$dbLink->errno) {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('delPlugin: '.self::$dbLink->error);
@@ -691,17 +691,17 @@ class LangMan {
             . "ON `n`.`id`=`t`.`nameid` "
             . "JOIN `".MECCANO_TPREF."_core_langman_title_sections` `s` "
             . "ON `s`.`id`=`n`.`sid` "
-            . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
+            . "JOIN `".MECCANO_TPREF."_core_plugins_installed` `p` "
             . "ON `p`.`id`=`s`.`plugid` "
             . "WHERE `p`.`name`='$name' ;", 
             "DELETE `n` FROM `".MECCANO_TPREF."_core_langman_title_names` `n` "
             . "JOIN `".MECCANO_TPREF."_core_langman_title_sections` `s` "
             . "ON `s`.`id`=`n`.`sid` "
-            . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
+            . "JOIN `".MECCANO_TPREF."_core_plugins_installed` `p` "
             . "ON `p`.`id`=`s`.`plugid` "
             . "WHERE `p`.`name`='$name' ;", 
             "DELETE `s` FROM `".MECCANO_TPREF."_core_langman_title_sections` `s` "
-            . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
+            . "JOIN `".MECCANO_TPREF."_core_plugins_installed` `p` "
             . "ON `p`.`id`=`s`.`plugid` "
             . "WHERE `p`.`name`='$name' ;", 
             "DELETE `t` FROM `".MECCANO_TPREF."_core_langman_texts` `t` "
@@ -709,17 +709,17 @@ class LangMan {
             . "ON `n`.`id`=`t`.`nameid` "
             . "JOIN `".MECCANO_TPREF."_core_langman_text_sections` `s` "
             . "ON `s`.`id`=`n`.`sid` "
-            . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
+            . "JOIN `".MECCANO_TPREF."_core_plugins_installed` `p` "
             . "ON `p`.`id`=`s`.`plugid` "
             . "WHERE `p`.`name`='$name' ;", 
             "DELETE `n` FROM `".MECCANO_TPREF."_core_langman_text_names` `n` "
             . "JOIN `".MECCANO_TPREF."_core_langman_text_sections` `s` "
             . "ON `s`.`id`=`n`.`sid` "
-            . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
+            . "JOIN `".MECCANO_TPREF."_core_plugins_installed` `p` "
             . "ON `p`.`id`=`s`.`plugid` "
             . "WHERE `p`.`name`='$name' ;", 
             "DELETE `s` FROM `".MECCANO_TPREF."_core_langman_text_sections` `s` "
-            . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
+            . "JOIN `".MECCANO_TPREF."_core_plugins_installed` `p` "
             . "ON `p`.`id`=`s`.`plugid` "
             . "WHERE `p`.`name`='$name' ;"
         );
@@ -741,7 +741,7 @@ class LangMan {
         }
         // checking if plugin exists
         $qPlugin = self::$dbLink->query("SELECT `id` "
-                . "FROM `".MECCANO_TPREF."_core_plugins_install` "
+                . "FROM `".MECCANO_TPREF."_core_plugins_installed` "
                 . "WHERE `name`='$plugin' ;");
         if (self::$dbLink->errno) {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('delPlugin: '.self::$dbLink->error);
@@ -807,7 +807,7 @@ class LangMan {
         }
         // checking if plugin exists
         $qPlugin = self::$dbLink->query("SELECT `id` "
-                . "FROM `".MECCANO_TPREF."_core_plugins_install` "
+                . "FROM `".MECCANO_TPREF."_core_plugins_installed` "
                 . "WHERE `name`='$plugin' ;");
         if (self::$dbLink->errno) {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('delPlugin: '.self::$dbLink->error);
@@ -872,7 +872,7 @@ class LangMan {
         }
         $qIdentifiers = self::$dbLink->query("SELECT `s`.`id` "
                 . "FROM `".MECCANO_TPREF."_core_langman_title_sections` `s` "
-                . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
+                . "JOIN `".MECCANO_TPREF."_core_plugins_installed` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `s`.`section`='$section' "
                 . "AND `s`.`static`=0 "
@@ -938,7 +938,7 @@ class LangMan {
         }
         $qIdentifiers = self::$dbLink->query("SELECT `s`.`id` "
                 . "FROM `".MECCANO_TPREF."_core_langman_text_sections` `s` "
-                . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
+                . "JOIN `".MECCANO_TPREF."_core_plugins_installed` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `s`.`section`='$section' "
                 . "AND `s`.`static`=0 "
@@ -1006,7 +1006,7 @@ class LangMan {
                 . "FROM `".MECCANO_TPREF."_core_langman_title_names` `n` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_title_sections` `s` "
                 . "ON `s`.`id`=`n`.`sid` "
-                . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
+                . "JOIN `".MECCANO_TPREF."_core_plugins_installed` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `n`.`name`='$name'"
                 . "AND `s`.`section`='$section' "
@@ -1077,7 +1077,7 @@ class LangMan {
                 . "FROM `".MECCANO_TPREF."_core_langman_text_names` `n` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_text_sections` `s` "
                 . "ON `s`.`id`=`n`.`sid` "
-                . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
+                . "JOIN `".MECCANO_TPREF."_core_plugins_installed` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `n`.`name`='$name'"
                 . "AND `s`.`section`='$section' "
@@ -1209,7 +1209,7 @@ class LangMan {
                 . "ON `n`.`id`=`t`.`nameid` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_title_sections` `s` "
                 . "ON `s`.`id`=`n`.`sid` "
-                . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
+                . "JOIN `".MECCANO_TPREF."_core_plugins_installed` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `l`.`code`='$code' "
                 . "AND `n`.`name`='$name' "
@@ -1244,7 +1244,7 @@ class LangMan {
                 . "ON `n`.`id`=`t`.`nameid` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_text_sections` `s` "
                 . "ON `s`.`id`=`n`.`sid` "
-                . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
+                . "JOIN `".MECCANO_TPREF."_core_plugins_installed` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `l`.`code`='$code' "
                 . "AND `n`.`name`='$name' "
@@ -1279,7 +1279,7 @@ class LangMan {
                 . "ON `l`.`id`=`t`.`codeid` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_title_sections` `s` "
                 . "ON `s`.`id`=`n`.`sid` "
-                . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
+                . "JOIN `".MECCANO_TPREF."_core_plugins_installed` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `p`.`name`='$plugin' "
                 . "AND `s`.`section`='$section' "
@@ -1344,7 +1344,7 @@ class LangMan {
                 . "ON `l`.`id`=`t`.`codeid` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_text_sections` `s` "
                 . "ON `s`.`id`=`n`.`sid` "
-                . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
+                . "JOIN `".MECCANO_TPREF."_core_plugins_installed` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `p`.`name`='$plugin' "
                 . "AND `s`.`section`='$section' "
@@ -1414,7 +1414,7 @@ class LangMan {
                 . "ON `n`.`id`=`t`.`nameid` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_text_sections` `s` "
                 . "ON `s`.`id` =`n`.`sid` "
-                . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
+                . "JOIN `".MECCANO_TPREF."_core_plugins_installed` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `l`.`code`='$code' "
                 . "AND `p`.`name`='$plugin' "
@@ -1505,7 +1505,7 @@ class LangMan {
                 . "ON `l`.`id`=`t`.`codeid` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_text_sections` `s` "
                 . "ON `s`.`id`=`n`.`sid` "
-                . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
+                . "JOIN `".MECCANO_TPREF."_core_plugins_installed` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `p`.`name`='$plugin' "
                 . "AND `s`.`section`='$section' "
@@ -1551,7 +1551,7 @@ class LangMan {
                 . "ON `l`.`id`=`t`.`codeid` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_text_sections` `s` "
                 . "ON `s`.`id`=`n`.`sid` "
-                . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
+                . "JOIN `".MECCANO_TPREF."_core_plugins_installed` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `p`.`name`='$plugin' "
                 . "AND `s`.`section`='$section' "
@@ -1591,7 +1591,7 @@ class LangMan {
                 . "ON `n`.`id`=`t`.`nameid` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_title_sections` `s` "
                 . "ON `s`.`id` =`n`.`sid` "
-                . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
+                . "JOIN `".MECCANO_TPREF."_core_plugins_installed` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `l`.`code`='$code' "
                 . "AND `p`.`name`='$plugin' "
@@ -1682,7 +1682,7 @@ class LangMan {
                 . "ON `l`.`id`=`t`.`codeid` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_title_sections` `s` "
                 . "ON `s`.`id`=`n`.`sid` "
-                . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
+                . "JOIN `".MECCANO_TPREF."_core_plugins_installed` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `p`.`name`='$plugin' "
                 . "AND `s`.`section`='$section' "
@@ -1754,7 +1754,7 @@ class LangMan {
                 . "ON `l`.`id`=`t`.`codeid` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_title_sections` `s` "
                 . "ON `s`.`id`=`n`.`sid` "
-                . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
+                . "JOIN `".MECCANO_TPREF."_core_plugins_installed` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `p`.`name`='$plugin' "
                 . "AND `s`.`section`='$section' "
@@ -1890,7 +1890,7 @@ class LangMan {
         }
         $qSections = self::$dbLink->query("SELECT count(`s`.`id`) "
                 . "FROM `".MECCANO_TPREF."_core_langman_text_sections` `s` "
-                . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
+                . "JOIN `".MECCANO_TPREF."_core_plugins_installed` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `p`.`name`='$plugin' ;");
         if (self::$dbLink->errno) {
@@ -1952,7 +1952,7 @@ class LangMan {
         }
         $qSections = self::$dbLink->query("SELECT `s`.`id` `id`, `s`.`section` `name`, `s`.`static` `static`, (SELECT COUNT(`id`) FROM `".MECCANO_TPREF."_core_langman_text_names` WHERE `sid`=`s`.`id`) `contains` "
                 . "FROM `".MECCANO_TPREF."_core_langman_text_sections` `s` "
-                . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
+                . "JOIN `".MECCANO_TPREF."_core_plugins_installed` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `p`.`name`='$plugin' "
                 . "ORDER BY `$orderBy` $direct ;");
@@ -1992,7 +1992,7 @@ class LangMan {
         }
         $qSections = self::$dbLink->query("SELECT count(`s`.`id`) "
                 . "FROM `".MECCANO_TPREF."_core_langman_title_sections` `s` "
-                . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
+                . "JOIN `".MECCANO_TPREF."_core_plugins_installed` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `p`.`name`='$plugin' ;");
         if (self::$dbLink->errno) {
@@ -2054,7 +2054,7 @@ class LangMan {
         }
         $qSections = self::$dbLink->query("SELECT `s`.`id` `id`, `s`.`section` `name`, `s`.`static` `static`, (SELECT COUNT(`id`) FROM `".MECCANO_TPREF."_core_langman_title_names` WHERE `sid`=`s`.`id`) `contains` "
                 . "FROM `".MECCANO_TPREF."_core_langman_title_sections` `s` "
-                . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
+                . "JOIN `".MECCANO_TPREF."_core_plugins_installed` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `p`.`name`='$plugin' "
                 . "ORDER BY `$orderBy` $direct ;");
@@ -2096,7 +2096,7 @@ class LangMan {
                 . "FROM `".MECCANO_TPREF."_core_langman_text_names` `n` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_text_sections` `s` "
                 . "ON `s`.`id`=`n`.`sid` "
-                . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
+                . "JOIN `".MECCANO_TPREF."_core_plugins_installed` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `p`.`name`='$plugin' "
                 . "AND `s`.`section`='$section' ;");
@@ -2165,7 +2165,7 @@ class LangMan {
                 . "FROM `".MECCANO_TPREF."_core_langman_text_names` `n` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_text_sections` `s` "
                 . "ON `s`.`id`=`n`.`sid` "
-                . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
+                . "JOIN `".MECCANO_TPREF."_core_plugins_installed` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `p`.`name`='$plugin' AND `s`.`section`='$section' "
                 . "ORDER BY `$orderBy` $direct ;");
@@ -2214,7 +2214,7 @@ class LangMan {
                 . "FROM `".MECCANO_TPREF."_core_langman_title_names` `n` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_title_sections` `s` "
                 . "ON `s`.`id`=`n`.`sid` "
-                . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
+                . "JOIN `".MECCANO_TPREF."_core_plugins_installed` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `p`.`name`='$plugin' "
                 . "AND `s`.`section`='$section' ;");
@@ -2283,7 +2283,7 @@ class LangMan {
                 . "FROM `".MECCANO_TPREF."_core_langman_title_names` `n` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_title_sections` `s` "
                 . "ON `s`.`id`=`n`.`sid` "
-                . "JOIN `".MECCANO_TPREF."_core_plugins_install` `p` "
+                . "JOIN `".MECCANO_TPREF."_core_plugins_installed` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `p`.`name`='$plugin' AND `s`.`section`='$section' "
                 . "ORDER BY `$orderBy` $direct ;");
