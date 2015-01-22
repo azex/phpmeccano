@@ -70,7 +70,7 @@ class LangMan {
             . "JOIN `".MECCANO_TPREF."_core_langman_languages` `l` "
             . "ON `l`.`id`=`t`.`codeid` "
             . "WHERE `l`.`code`='$code' ;",
-            "DELETE `p` FROM `".MECCANO_TPREF."_core_langman_policy_description` `p` "
+            "DELETE `p` FROM `".MECCANO_TPREF."_core_policy_descriptions` `p` "
             . "JOIN `".MECCANO_TPREF."_core_langman_languages` `l` "
             . "ON `l`.`id`=`p`.`codeid` "
             . "WHERE `l`.`code`='$code' ;",

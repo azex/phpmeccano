@@ -54,7 +54,7 @@ class Policy {
         $newFuncs = array_diff($functions, $dbFuncs);
         // deleting of outdated policies
         foreach ($oldFuncs as $funcId) {
-            self::$dbLink->query("DELETE FROM `".MECCANO_TPREF."_core_langman_policy_description` "
+            self::$dbLink->query("DELETE FROM `".MECCANO_TPREF."_core_policy_descriptions` "
                     . "WHERE `policyid`=$funcId ;");
             if (self::$dbLink->errno) {
                 self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('installPolicy: can\'t delete policy description | '.self::$dbLink->error);
@@ -127,7 +127,7 @@ class Policy {
         }
         $plugName = self::$dbLink->real_escape_string($name);
         $queries = array(
-            "DELETE `d` FROM `".MECCANO_TPREF."_core_langman_policy_description` `d` "
+            "DELETE `d` FROM `".MECCANO_TPREF."_core_policy_descriptions` `d` "
             . "JOIN `".MECCANO_TPREF."_core_policy_summary_list` `s` "
             . "ON `s`.`id`=`d`.`policyid` "
             . "WHERE `s`.`name`='$plugName' ;",
@@ -341,7 +341,7 @@ class Policy {
                         $shortDesc = self::$dbLink->real_escape_string($lang->getElementsByTagName('short')->item(0)->nodeValue); // short description
                         $detailedDesc = self::$dbLink->real_escape_string($lang->getElementsByTagName('detailed')->item(0)->nodeValue); //detailed description
                         $qDesc = self::$dbLink->query("SELECT `id` "
-                                . "FROM `".MECCANO_TPREF."_core_langman_policy_description` "
+                                . "FROM `".MECCANO_TPREF."_core_policy_descriptions` "
                                 . "WHERE `policyid`=$policyId "
                                 . "AND `codeid`=$codeId LIMIT 1 ;");
                         if (self::$dbLink->errno) {
@@ -349,7 +349,7 @@ class Policy {
                             return FALSE;
                         }
                         if (self::$dbLink->affected_rows) {
-                            self::$dbLink->query("UPDATE `".MECCANO_TPREF."_core_langman_policy_description` "
+                            self::$dbLink->query("UPDATE `".MECCANO_TPREF."_core_policy_descriptions` "
                                     . "SET `short`='$shortDesc', `detailed`='$detailedDesc' "
                                     . "WHERE `policyid`=$policyId "
                                     . "AND `codeid`=$codeId");
@@ -359,7 +359,7 @@ class Policy {
                             }
                         }
                         else {
-                            self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_policy_description` "
+                            self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_policy_descriptions` "
                                     . "(`codeid`, `policyid`, `short`, `detailed`) "
                                     . "VALUES ($codeId, $policyId, '$shortDesc', '$detailedDesc') ;");
                             if (self::$dbLink->errno) {
@@ -375,11 +375,11 @@ class Policy {
                 if (!$isDefault) { // if there is not description for default language
                     $codeId = $avaiLang[MECCANO_DEF_LANG];
                     $qDesc = self::$dbLink->query("SELECT `id` "
-                            . "FROM `".MECCANO_TPREF."_core_langman_policy_description` "
+                            . "FROM `".MECCANO_TPREF."_core_policy_descriptions` "
                             . "WHERE `policyid`=$policyId "
                             . "AND `codeid`=$codeId LIMIT 1 ;");
                     if (!self::$dbLink->affected_rows) {
-                        self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_policy_description` "
+                        self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_policy_descriptions` "
                                 . "(`codeid`, `policyid`, `short`, `detailed`) "
                                 . "VALUES ($codeId, $policyId, '$funcName', '$funcName') ;");
                         if (self::$dbLink->errno) {
@@ -407,7 +407,7 @@ class Policy {
                     . "FROM `".MECCANO_TPREF."_core_policy_summary_list` `s` "
                     . "JOIN `".MECCANO_TPREF."_core_policy_nosession` `n` "
                     . "ON `s`.`id`=`n`.`funcid` "
-                    . "JOIN `".MECCANO_TPREF."_core_langman_policy_description` `d` "
+                    . "JOIN `".MECCANO_TPREF."_core_policy_descriptions` `d` "
                     . "ON `d`.`policyid`=`s`.`id` "
                     . "JOIN `".MECCANO_TPREF."_core_langman_languages` `l` "
                     . "ON `d`.`codeid`=`l`.`id` "
@@ -419,7 +419,7 @@ class Policy {
                     . "FROM `".MECCANO_TPREF."_core_policy_summary_list` `s` "
                     . "JOIN `".MECCANO_TPREF."_core_policy_access` `a` "
                     . "ON `s`.`id`=`a`.`funcid` "
-                    . "JOIN `".MECCANO_TPREF."_core_langman_policy_description` `d` "
+                    . "JOIN `".MECCANO_TPREF."_core_policy_descriptions` `d` "
                     . "ON `d`.`policyid`=`s`.`id` "
                     . "JOIN `".MECCANO_TPREF."_core_langman_languages` `l` "
                     . "ON `d`.`codeid`=`l`.`id` "
@@ -456,7 +456,7 @@ class Policy {
             return FALSE;
         }
         $qDesc = self::$dbLink->query("SELECT `short`, `detailed` "
-                . "FROM `".MECCANO_TPREF."_core_langman_policy_description` "
+                . "FROM `".MECCANO_TPREF."_core_policy_descriptions` "
                 . "WHERE `id`=$id ;");
         if (self::$dbLink->errno) {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getPolicyDescById: can\'t get description | '.self::$dbLink->error);
