@@ -92,7 +92,12 @@ function pregName40($name) {
 function openRead($path) {
     if (is_file($path) && is_readable($path)) {
         $handle = fopen($path, 'r');
-        $data = fread($handle, filesize($path));
+        $fileSize = filesize($path);
+        if (!$fileSize) {
+            fclose($handle);
+            return FALSE;
+        }
+        $data = fread($handle, $fileSize);
         fclose($handle);
         return $data;
     }
