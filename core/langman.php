@@ -9,7 +9,6 @@ class LangMan {
     private static $errid = 0; // error's id
     private static $errexp = ''; // error's explanation
     private static $dbLink; // database link
-    private static $language = MECCANO_DEF_LANG; // current language
     
     public function __construct($dbLink) {
         self::$dbLink = $dbLink;
@@ -71,7 +70,7 @@ class LangMan {
             . "JOIN `".MECCANO_TPREF."_core_langman_languages` `l` "
             . "ON `l`.`id`=`t`.`codeid` "
             . "WHERE `l`.`code`='$code' ;",
-            "DELETE `p` FROM `".MECCANO_TPREF."_core_langman_policy_description` `p` "
+            "DELETE `p` FROM `".MECCANO_TPREF."_core_policy_descriptions` `p` "
             . "JOIN `".MECCANO_TPREF."_core_langman_languages` `l` "
             . "ON `l`.`id`=`p`.`codeid` "
             . "WHERE `l`.`code`='$code' ;",
@@ -103,27 +102,6 @@ class LangMan {
         }
         return TRUE;
     }
-    
-    public static function setLang($code) {
-        self::$errid = 0;        self::$errexp = '';
-        if (!pregLang($code)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('setLang: incorrect language code');
-            return FALSE;
-        }
-        $qCode = self::$dbLink->query("SELECT `id` "
-                . "FROM `".MECCANO_TPREF."_core_langman_languages` "
-                . "WHERE `code`='$code' ;");
-        if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('setLang: can\'t get language code | '.self::$dbLink->error);
-            return FALSE;
-        }
-        if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('setLang: can\'t find defined language');
-            return FALSE;
-        }
-        self::$language = $code;
-        return TRUE;
-    }
 
     public static function langList() {
         self::$errid = 0;        self::$errexp = '';
@@ -148,102 +126,6 @@ class LangMan {
             $lang->appendChild($xml->createElement('name', $row[2]));
         }
         return $xml;
-    }
-    
-    public static function installPolicyDesc($description) {
-        self::$errid = 0;        self::$errexp = '';
-        if (!$description->relaxNGValidate(MECCANO_CORE_DIR.'/langman/policy-description-schema-v01.rng')) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('installPolicyDesc: incorrect structure of policy description');
-            return FALSE;
-        }
-        //getting of the list of available languages
-        $qAvaiLang = self::$dbLink->query("SELECT `id`, `code` FROM `".MECCANO_TPREF."_core_langman_languages` ;");
-        if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('installPolicyDesc: can\'t get list of available languages: '.self::$dbLink->error);
-            return FALSE;
-        }
-        $avaiLang = array();
-        while ($row = $qAvaiLang->fetch_row()) {
-            $avaiLang[$row[1]] = $row[0];
-        }
-        //getting of list of installed policies
-        $plugName = $description->getElementsByTagName('description')->item(0)->getAttribute('plugin'); //getting of plugin name
-        $qPolicies = self::$dbLink->query("SELECT `id`, `func` "
-                . "FROM `".MECCANO_TPREF."_core_policy_summary_list` "
-                . "WHERE `name`='$plugName' ;");
-        if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('installPolicyDesc: can\'t get list of available languages | '.self::$dbLink->error);
-            return FALSE;
-        }
-        $plugPolicies = array(); // installed policies
-        while ($row = $qPolicies->fetch_row()) {
-            $plugPolicies[$row[1]] = $row[0];
-        }
-        // installing/updating of policy descriptions
-        $funcNodes = $description->getElementsByTagName('function');
-        foreach ($funcNodes as $funcNode) {
-            $funcName = $funcNode->getAttribute('name'); // name of function
-            if (isset($plugPolicies[$funcName])) {
-                $policyId = $plugPolicies[$funcName]; // policy identifier
-                $langList = $funcNode->getElementsByTagName('language');
-                $isDefault = 0; // flag of availability of default language
-                foreach ($langList as $lang) {
-                    $langCode = $lang->getAttribute('code');
-                    if (isset($avaiLang[$langCode])) {
-                        $codeId = $avaiLang[$langCode];
-                        $shortDesc = self::$dbLink->real_escape_string($lang->getElementsByTagName('short')->item(0)->nodeValue); // short description
-                        $detailedDesc = self::$dbLink->real_escape_string($lang->getElementsByTagName('detailed')->item(0)->nodeValue); //detailed description
-                        $qDesc = self::$dbLink->query("SELECT `id` "
-                                . "FROM `".MECCANO_TPREF."_core_langman_policy_description` "
-                                . "WHERE `policyid`=$policyId "
-                                . "AND `codeid`=$codeId LIMIT 1 ;");
-                        if (self::$dbLink->errno) {
-                            self::setErrId(ERROR_NOT_EXECUTED);                            self::setErrExp('installPolicyDesc: '.self::$dbLink->error);
-                            return FALSE;
-                        }
-                        if (self::$dbLink->affected_rows) {
-                            self::$dbLink->query("UPDATE `".MECCANO_TPREF."_core_langman_policy_description` "
-                                    . "SET `short`='$shortDesc', `detailed`='$detailedDesc' "
-                                    . "WHERE `policyid`=$policyId "
-                                    . "AND `codeid`=$codeId");
-                            if (self::$dbLink->errno) {
-                                self::setErrId(ERROR_NOT_EXECUTED);                                self::setErrExp('installPolicyDesc: can\'t update description | '.self::$dbLink->error);
-                                return FALSE;
-                            }
-                        }
-                        else {
-                            self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_policy_description` "
-                                    . "(`codeid`, `policyid`, `short`, `detailed`) "
-                                    . "VALUES ($codeId, $policyId, '$shortDesc', '$detailedDesc') ;");
-                            if (self::$dbLink->errno) {
-                                self::setErrId(ERROR_NOT_EXECUTED);                                self::setErrExp('installPolicyDesc: can\'t install description | '.self::$dbLink->error);
-                                return FALSE;
-                            }
-                        }
-                    }
-                    if (MECCANO_DEF_LANG == $langCode) {
-                        $isDefault = 1;
-                    }
-                }
-                if (!$isDefault) { // if there is not description for default language
-                    $codeId = $avaiLang[MECCANO_DEF_LANG];
-                    $qDesc = self::$dbLink->query("SELECT `id` "
-                            . "FROM `".MECCANO_TPREF."_core_langman_policy_description` "
-                            . "WHERE `policyid`=$policyId "
-                            . "AND `codeid`=$codeId LIMIT 1 ;");
-                    if (!self::$dbLink->affected_rows) {
-                        self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_policy_description` "
-                                . "(`codeid`, `policyid`, `short`, `detailed`) "
-                                . "VALUES ($codeId, $policyId, '$funcName', '$funcName') ;");
-                        if (self::$dbLink->errno) {
-                            self::setErrId(ERROR_NOT_EXECUTED);                                self::setErrExp('installPolicyDesc: can\'t install description | '.self::$dbLink->error);
-                            return FALSE;
-                        }
-                    }
-                }
-            }
-        }
-        return TRUE;
     }
     
     public static function installTiles($titles) {
@@ -827,6 +709,7 @@ class LangMan {
         }
         return (int) self::$dbLink->insert_id;
     }
+    
     public static function delTextSection($sid) {
         self::$errid = 0;        self::$errexp = '';
         if (!is_integer($sid)) {
@@ -1022,13 +905,17 @@ class LangMan {
         }
         list($nameId) = $qTitle->fetch_row();
         if (is_null($code)) {
-            $code = self::$language;
+            $code = MECCANO_DEF_LANG;
         }
         $qLang = self::$dbLink->query("SELECT `id` "
                 . "FROM `".MECCANO_TPREF."_core_langman_languages` "
                 . "WHERE `code`='$code' ;");
         if (self::$dbLink->errno) {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('addTitle: can\'t get language code identifier | '.self::$dbLink->error);
+            return FALSE;
+        }
+        if (!self::$dbLink->affected_rows) {
+            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('addTitle: defined language was not found');
             return FALSE;
         }
         list($codeId) = $qLang->fetch_row();
@@ -1093,13 +980,17 @@ class LangMan {
         }
         list($nameId) = $qText->fetch_row();
         if (is_null($code)) {
-            $code = self::$language;
+            $code = MECCANO_DEF_LANG;
         }
         $qLang = self::$dbLink->query("SELECT `id` "
                 . "FROM `".MECCANO_TPREF."_core_langman_languages` "
                 . "WHERE `code`='$code' ;");
         if (self::$dbLink->errno) {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('addText: can\'t get language code identifier | '.self::$dbLink->error);
+            return FALSE;
+        }
+        if (!self::$dbLink->affected_rows) {
+            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('addText: defined language was not found');
             return FALSE;
         }
         list($codeId) = $qLang->fetch_row();
@@ -1199,7 +1090,7 @@ class LangMan {
             return FALSE;
         }
         if (is_null($code)) {
-            $code = self::$language;
+            $code = MECCANO_DEF_LANG;
         }
         $qTitle = self::$dbLink->query("SELECT `t`.`title` "
                 . "FROM `".MECCANO_TPREF."_core_langman_titles` `t` "
@@ -1234,7 +1125,7 @@ class LangMan {
             return FALSE;
         }
         if (is_null($code)) {
-            $code = self::$language;
+            $code = MECCANO_DEF_LANG;
         }
         $qText = self::$dbLink->query("SELECT `t`.`title`, `t`.`document`, `t`.`created`, `t`.`edited` "
                 . "FROM `".MECCANO_TPREF."_core_langman_texts` `t` "
@@ -1269,7 +1160,7 @@ class LangMan {
             return FALSE;
         }
         if (is_null($code)) {
-            $code = self::$language;
+            $code = MECCANO_DEF_LANG;
         }
         $qTitles = self::$dbLink->query("SELECT `n`.`name`, `t`.`title` "
                 . "FROM `".MECCANO_TPREF."_core_langman_titles` `t` "
@@ -1299,14 +1190,14 @@ class LangMan {
         return $titles;
     }
     
-    public static function getAllTextsXML($section, $plugin, $orderBy = 'id', $ascent = FALSE, $code = NULL) {
+    public static function getAllTextsXML($section, $plugin, $code = NULL, $orderBy = 'id', $ascent = FALSE) {
         self::$errid = 0;        self::$errexp = '';
         if (!pregName40($section) || !pregName40($plugin) || !(is_null($code) || pregLang($code))) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getAllTextsXML: incorrect incoming parameters');
             return FALSE;
         }
         if (is_null($code)) {
-            $code = self::$language;
+            $code = MECCANO_DEF_LANG;
         }
         $rightEntry = array('id', 'title', 'name', 'created', 'edited');
         if (is_string($orderBy)) {
@@ -1394,14 +1285,14 @@ class LangMan {
         return array('title' => $title, 'document' => $document, 'created' => $created, 'edited' => $edited);
     }
     
-    public static function sumTexts($section, $plugin, $rpp = 20, $code = NULL) {
+    public static function sumTexts($section, $plugin, $code = NULL, $rpp = 20) {
         self::$errid = 0;        self::$errexp = '';
         if (!pregName40($section) || !pregName40($plugin) || !is_integer($rpp) || !(is_null($code) || pregLang($code))) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getTexts: incorrect incoming parameters');
             return FALSE;
         }
         if (is_null($code)) {
-            $code = self::$language;
+            $code = MECCANO_DEF_LANG;
         }
         if ($rpp < 1) {
             $rpp = 1;
@@ -1442,7 +1333,7 @@ class LangMan {
         return array('records' => (int) $totalTexts, 'pages' => (int) $totalPages);
     }
     
-    public static function getTextsXML($section, $plugin, $pageNumber, $totalPages, $rpp = 20, $orderBy = 'id', $ascent = FALSE, $code = NULL) {
+    public static function getTextsXML($section, $plugin, $pageNumber, $totalPages, $rpp = 20, $code = NULL, $orderBy = 'id', $ascent = FALSE) {
         self::$errid = 0;        self::$errexp = '';
         if (!pregName40($section) || 
                 !pregName40($plugin) || 
@@ -1454,7 +1345,7 @@ class LangMan {
             return FALSE;
         }
         if (is_null($code)) {
-            $code = self::$language;
+            $code = MECCANO_DEF_LANG;
         }
         $rightEntry = array('id', 'title', 'name', 'created', 'edited');
         if (is_string($orderBy)) {
@@ -1541,7 +1432,7 @@ class LangMan {
             return FALSE;
         }
         if (is_null($code)) {
-            $code = self::$language;
+            $code = MECCANO_DEF_LANG;
         }
         $qTexts = self::$dbLink->query("SELECT `n`.`name`, `t`.`title` "
                 . "FROM `".MECCANO_TPREF."_core_langman_texts` `t` "
@@ -1571,14 +1462,14 @@ class LangMan {
         return $texts;
     }
     
-    public static function sumTitles($section, $plugin, $rpp = 20, $code = NULL) {
+    public static function sumTitles($section, $plugin, $code = NULL, $rpp = 20) {
         self::$errid = 0;        self::$errexp = '';
         if (!pregName40($section) || !pregName40($plugin) || !is_integer($rpp) || !(is_null($code) || pregLang($code))) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getTitles: incorrect incoming parameters');
             return FALSE;
         }
         if (is_null($code)) {
-            $code = self::$language;
+            $code = MECCANO_DEF_LANG;
         }
         if ($rpp < 1) {
             $rpp = 1;
@@ -1619,7 +1510,7 @@ class LangMan {
         return array('records' => (int) $totalTitles, 'pages' => (int) $totalPages);
     }
     
-    public static function getTitlesXML($section, $plugin, $pageNumber, $totalPages, $rpp = 20, $orderBy = 'id', $ascent = FALSE, $code = NULL) {
+    public static function getTitlesXML($section, $plugin, $pageNumber, $totalPages, $rpp = 20, $code = NULL, $orderBy = 'id', $ascent = FALSE) {
         self::$errid = 0;        self::$errexp = '';
         if (!pregName40($section) || 
                 !pregName40($plugin) || 
@@ -1631,7 +1522,7 @@ class LangMan {
             return FALSE;
         }
         if (is_null($code)) {
-            $code = self::$language;
+            $code = MECCANO_DEF_LANG;
         }
         $rightEntry = array('id', 'title', 'name');
         if (is_string($orderBy)) {
@@ -1709,14 +1600,14 @@ class LangMan {
         return $xml;
     }
     
-    public static function getAllTitlesXML($section, $plugin, $orderBy = 'id', $ascent = FALSE, $code = NULL) {
+    public static function getAllTitlesXML($section, $plugin, $code = NULL, $orderBy = 'id', $ascent = FALSE) {
         self::$errid = 0;        self::$errexp = '';
         if (!pregName40($section) || !pregName40($plugin) || !(is_null($code) || pregLang($code))) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getAllTitlesXML: incorrect incoming parameters');
             return FALSE;
         }
         if (is_null($code)) {
-            $code = self::$language;
+            $code = MECCANO_DEF_LANG;
         }
         $rightEntry = array('id', 'title', 'name');
         if (is_string($orderBy)) {
@@ -1800,83 +1691,6 @@ class LangMan {
         }
         list($title) = $qTitle->fetch_row();
         return $title;
-    }
-    
-    public static function groupPolicyList($plugin, $groupId, $code = NULL) {
-        self::$errid = 0;        self::$errexp = '';
-        if (!pregPlugin($plugin) || !(is_integer($groupId) || is_bool($groupId)) || !(is_null($code) || pregLang($code))) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('policyList: incorect type of incoming parameters');
-            return FALSE;
-        }
-        if (is_null($code)) {
-            $code = self::$language;
-        }
-        if (is_bool($groupId)) {
-            $qList = self::$dbLink->query("SELECT `d`.`id`, `d`.`short`, `s`.`func`, `n`.`access` "
-                    . "FROM `".MECCANO_TPREF."_core_policy_summary_list` `s` "
-                    . "JOIN `".MECCANO_TPREF."_core_policy_nosession` `n` "
-                    . "ON `s`.`id`=`n`.`funcid` "
-                    . "JOIN `".MECCANO_TPREF."_core_langman_policy_description` `d` "
-                    . "ON `d`.`policyid`=`s`.`id` "
-                    . "JOIN `".MECCANO_TPREF."_core_langman_languages` `l` "
-                    . "ON `d`.`codeid`=`l`.`id` "
-                    . "WHERE `s`.`name`='$plugin' "
-                    . "AND `l`.`code`='$code' ;");
-        }
-        else {
-            $qList = self::$dbLink->query("SELECT `d`.`id`, `d`.`short`, `s`.`func`, `a`.`access` "
-                    . "FROM `".MECCANO_TPREF."_core_policy_summary_list` `s` "
-                    . "JOIN `".MECCANO_TPREF."_core_policy_access` `a` "
-                    . "ON `s`.`id`=`a`.`funcid` "
-                    . "JOIN `".MECCANO_TPREF."_core_langman_policy_description` `d` "
-                    . "ON `d`.`policyid`=`s`.`id` "
-                    . "JOIN `".MECCANO_TPREF."_core_langman_languages` `l` "
-                    . "ON `d`.`codeid`=`l`.`id` "
-                    . "WHERE `s`.`name`='$plugin' "
-                    . "AND `a`.`groupid`=$groupId "
-                    . "AND `l`.`code`='$code' ;");
-        }
-        if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('policyList: something went wrong | '.self::$dbLink->error);
-            return FALSE;
-        }
-        if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('policyList: name or group don\'t exist');
-            return FALSE;
-        }
-        $xml = new \DOMDocument('1.0', 'utf-8');
-        $policyNode = $xml->createElement('policy');
-        $xml->appendChild($policyNode);
-        while ($row = $qList->fetch_row()) {
-            $funcNode = $xml->createElement('function');
-            $policyNode->appendChild($funcNode);
-            $funcNode->appendChild($xml->createElement('id', $row[0]));
-            $funcNode->appendChild($xml->createElement('short', $row[1]));
-            $funcNode->appendChild($xml->createElement('name', $row[2]));
-            $funcNode->appendChild($xml->createElement('access', $row[3]));
-        }
-        return $xml;
-    }
-    
-    public static function getPolicyDescById($id) {
-        self::$errid = 0;        self::$errexp = '';
-        if (!is_integer($id)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getPolicyDescById: identifier must be integer');
-            return FALSE;
-        }
-        $qDesc = self::$dbLink->query("SELECT `short`, `detailed` "
-                . "FROM `".MECCANO_TPREF."_core_langman_policy_description` "
-                . "WHERE `id`=$id ;");
-        if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getPolicyDescById: can\'t get description | '.self::$dbLink->error);
-            return FALSE;
-        }
-        if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('getPolicyDescById: description was not found');
-            return FALSE;
-        }
-        list($short, $detailed) = $qDesc->fetch_row();
-        return array('short' => $short, 'detailed' => $detailed);
     }
     
     public static function sumTextSections($plugin, $rpp = 20) {
