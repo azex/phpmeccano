@@ -9,7 +9,6 @@ class LangMan {
     private static $errid = 0; // error's id
     private static $errexp = ''; // error's explanation
     private static $dbLink; // database link
-    private static $language = MECCANO_DEF_LANG; // current language
     
     public function __construct($dbLink) {
         self::$dbLink = $dbLink;
@@ -101,27 +100,6 @@ class LangMan {
             self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('delLang: defined language code was not found');
             return FALSE;
         }
-        return TRUE;
-    }
-    
-    public static function setLang($code) {
-        self::$errid = 0;        self::$errexp = '';
-        if (!pregLang($code)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('setLang: incorrect language code');
-            return FALSE;
-        }
-        $qCode = self::$dbLink->query("SELECT `id` "
-                . "FROM `".MECCANO_TPREF."_core_langman_languages` "
-                . "WHERE `code`='$code' ;");
-        if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('setLang: can\'t get language code | '.self::$dbLink->error);
-            return FALSE;
-        }
-        if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('setLang: can\'t find defined language');
-            return FALSE;
-        }
-        self::$language = $code;
         return TRUE;
     }
 
@@ -827,6 +805,7 @@ class LangMan {
         }
         return (int) self::$dbLink->insert_id;
     }
+    
     public static function delTextSection($sid) {
         self::$errid = 0;        self::$errexp = '';
         if (!is_integer($sid)) {
@@ -1022,13 +1001,17 @@ class LangMan {
         }
         list($nameId) = $qTitle->fetch_row();
         if (is_null($code)) {
-            $code = self::$language;
+            $code = MECCANO_DEF_LANG;
         }
         $qLang = self::$dbLink->query("SELECT `id` "
                 . "FROM `".MECCANO_TPREF."_core_langman_languages` "
                 . "WHERE `code`='$code' ;");
         if (self::$dbLink->errno) {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('addTitle: can\'t get language code identifier | '.self::$dbLink->error);
+            return FALSE;
+        }
+        if (!self::$dbLink->affected_rows) {
+            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('addTitle: defined language was not found');
             return FALSE;
         }
         list($codeId) = $qLang->fetch_row();
@@ -1093,13 +1076,17 @@ class LangMan {
         }
         list($nameId) = $qText->fetch_row();
         if (is_null($code)) {
-            $code = self::$language;
+            $code = MECCANO_DEF_LANG;
         }
         $qLang = self::$dbLink->query("SELECT `id` "
                 . "FROM `".MECCANO_TPREF."_core_langman_languages` "
                 . "WHERE `code`='$code' ;");
         if (self::$dbLink->errno) {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('addText: can\'t get language code identifier | '.self::$dbLink->error);
+            return FALSE;
+        }
+        if (!self::$dbLink->affected_rows) {
+            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('addText: defined language was not found');
             return FALSE;
         }
         list($codeId) = $qLang->fetch_row();
@@ -1199,7 +1186,7 @@ class LangMan {
             return FALSE;
         }
         if (is_null($code)) {
-            $code = self::$language;
+            $code = MECCANO_DEF_LANG;
         }
         $qTitle = self::$dbLink->query("SELECT `t`.`title` "
                 . "FROM `".MECCANO_TPREF."_core_langman_titles` `t` "
@@ -1234,7 +1221,7 @@ class LangMan {
             return FALSE;
         }
         if (is_null($code)) {
-            $code = self::$language;
+            $code = MECCANO_DEF_LANG;
         }
         $qText = self::$dbLink->query("SELECT `t`.`title`, `t`.`document`, `t`.`created`, `t`.`edited` "
                 . "FROM `".MECCANO_TPREF."_core_langman_texts` `t` "
@@ -1269,7 +1256,7 @@ class LangMan {
             return FALSE;
         }
         if (is_null($code)) {
-            $code = self::$language;
+            $code = MECCANO_DEF_LANG;
         }
         $qTitles = self::$dbLink->query("SELECT `n`.`name`, `t`.`title` "
                 . "FROM `".MECCANO_TPREF."_core_langman_titles` `t` "
@@ -1299,14 +1286,14 @@ class LangMan {
         return $titles;
     }
     
-    public static function getAllTextsXML($section, $plugin, $orderBy = 'id', $ascent = FALSE, $code = NULL) {
+    public static function getAllTextsXML($section, $plugin, $code = NULL, $orderBy = 'id', $ascent = FALSE) {
         self::$errid = 0;        self::$errexp = '';
         if (!pregName40($section) || !pregName40($plugin) || !(is_null($code) || pregLang($code))) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getAllTextsXML: incorrect incoming parameters');
             return FALSE;
         }
         if (is_null($code)) {
-            $code = self::$language;
+            $code = MECCANO_DEF_LANG;
         }
         $rightEntry = array('id', 'title', 'name', 'created', 'edited');
         if (is_string($orderBy)) {
@@ -1394,14 +1381,14 @@ class LangMan {
         return array('title' => $title, 'document' => $document, 'created' => $created, 'edited' => $edited);
     }
     
-    public static function sumTexts($section, $plugin, $rpp = 20, $code = NULL) {
+    public static function sumTexts($section, $plugin, $code = NULL, $rpp = 20) {
         self::$errid = 0;        self::$errexp = '';
         if (!pregName40($section) || !pregName40($plugin) || !is_integer($rpp) || !(is_null($code) || pregLang($code))) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getTexts: incorrect incoming parameters');
             return FALSE;
         }
         if (is_null($code)) {
-            $code = self::$language;
+            $code = MECCANO_DEF_LANG;
         }
         if ($rpp < 1) {
             $rpp = 1;
@@ -1442,7 +1429,7 @@ class LangMan {
         return array('records' => (int) $totalTexts, 'pages' => (int) $totalPages);
     }
     
-    public static function getTextsXML($section, $plugin, $pageNumber, $totalPages, $rpp = 20, $orderBy = 'id', $ascent = FALSE, $code = NULL) {
+    public static function getTextsXML($section, $plugin, $pageNumber, $totalPages, $rpp = 20, $code = NULL, $orderBy = 'id', $ascent = FALSE) {
         self::$errid = 0;        self::$errexp = '';
         if (!pregName40($section) || 
                 !pregName40($plugin) || 
@@ -1454,7 +1441,7 @@ class LangMan {
             return FALSE;
         }
         if (is_null($code)) {
-            $code = self::$language;
+            $code = MECCANO_DEF_LANG;
         }
         $rightEntry = array('id', 'title', 'name', 'created', 'edited');
         if (is_string($orderBy)) {
@@ -1541,7 +1528,7 @@ class LangMan {
             return FALSE;
         }
         if (is_null($code)) {
-            $code = self::$language;
+            $code = MECCANO_DEF_LANG;
         }
         $qTexts = self::$dbLink->query("SELECT `n`.`name`, `t`.`title` "
                 . "FROM `".MECCANO_TPREF."_core_langman_texts` `t` "
@@ -1571,14 +1558,14 @@ class LangMan {
         return $texts;
     }
     
-    public static function sumTitles($section, $plugin, $rpp = 20, $code = NULL) {
+    public static function sumTitles($section, $plugin, $code = NULL, $rpp = 20) {
         self::$errid = 0;        self::$errexp = '';
         if (!pregName40($section) || !pregName40($plugin) || !is_integer($rpp) || !(is_null($code) || pregLang($code))) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getTitles: incorrect incoming parameters');
             return FALSE;
         }
         if (is_null($code)) {
-            $code = self::$language;
+            $code = MECCANO_DEF_LANG;
         }
         if ($rpp < 1) {
             $rpp = 1;
@@ -1619,7 +1606,7 @@ class LangMan {
         return array('records' => (int) $totalTitles, 'pages' => (int) $totalPages);
     }
     
-    public static function getTitlesXML($section, $plugin, $pageNumber, $totalPages, $rpp = 20, $orderBy = 'id', $ascent = FALSE, $code = NULL) {
+    public static function getTitlesXML($section, $plugin, $pageNumber, $totalPages, $rpp = 20, $code = NULL, $orderBy = 'id', $ascent = FALSE) {
         self::$errid = 0;        self::$errexp = '';
         if (!pregName40($section) || 
                 !pregName40($plugin) || 
@@ -1631,7 +1618,7 @@ class LangMan {
             return FALSE;
         }
         if (is_null($code)) {
-            $code = self::$language;
+            $code = MECCANO_DEF_LANG;
         }
         $rightEntry = array('id', 'title', 'name');
         if (is_string($orderBy)) {
@@ -1709,14 +1696,14 @@ class LangMan {
         return $xml;
     }
     
-    public static function getAllTitlesXML($section, $plugin, $orderBy = 'id', $ascent = FALSE, $code = NULL) {
+    public static function getAllTitlesXML($section, $plugin, $code = NULL, $orderBy = 'id', $ascent = FALSE) {
         self::$errid = 0;        self::$errexp = '';
         if (!pregName40($section) || !pregName40($plugin) || !(is_null($code) || pregLang($code))) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getAllTitlesXML: incorrect incoming parameters');
             return FALSE;
         }
         if (is_null($code)) {
-            $code = self::$language;
+            $code = MECCANO_DEF_LANG;
         }
         $rightEntry = array('id', 'title', 'name');
         if (is_string($orderBy)) {
@@ -1809,7 +1796,7 @@ class LangMan {
             return FALSE;
         }
         if (is_null($code)) {
-            $code = self::$language;
+            $code = MECCANO_DEF_LANG;
         }
         if (is_bool($groupId)) {
             $qList = self::$dbLink->query("SELECT `d`.`id`, `d`.`short`, `s`.`func`, `n`.`access` "
