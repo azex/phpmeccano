@@ -296,4 +296,178 @@ class Policy {
         list($access) = $qAccess->fetch_row();
         return (int) $access;
     }
+    
+    public static function installPolicyDesc($description) {
+        self::$errid = 0;        self::$errexp = '';
+        if (!$description->relaxNGValidate(MECCANO_CORE_DIR.'/langman/policy-description-schema-v01.rng')) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('installPolicyDesc: incorrect structure of policy description');
+            return FALSE;
+        }
+        //getting of the list of available languages
+        $qAvaiLang = self::$dbLink->query("SELECT `id`, `code` FROM `".MECCANO_TPREF."_core_langman_languages` ;");
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('installPolicyDesc: can\'t get list of available languages: '.self::$dbLink->error);
+            return FALSE;
+        }
+        $avaiLang = array();
+        while ($row = $qAvaiLang->fetch_row()) {
+            $avaiLang[$row[1]] = $row[0];
+        }
+        //getting of list of installed policies
+        $plugName = $description->getElementsByTagName('description')->item(0)->getAttribute('plugin'); //getting of plugin name
+        $qPolicies = self::$dbLink->query("SELECT `id`, `func` "
+                . "FROM `".MECCANO_TPREF."_core_policy_summary_list` "
+                . "WHERE `name`='$plugName' ;");
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('installPolicyDesc: can\'t get list of available languages | '.self::$dbLink->error);
+            return FALSE;
+        }
+        $plugPolicies = array(); // installed policies
+        while ($row = $qPolicies->fetch_row()) {
+            $plugPolicies[$row[1]] = $row[0];
+        }
+        // installing/updating of policy descriptions
+        $funcNodes = $description->getElementsByTagName('function');
+        foreach ($funcNodes as $funcNode) {
+            $funcName = $funcNode->getAttribute('name'); // name of function
+            if (isset($plugPolicies[$funcName])) {
+                $policyId = $plugPolicies[$funcName]; // policy identifier
+                $langList = $funcNode->getElementsByTagName('language');
+                $isDefault = 0; // flag of availability of default language
+                foreach ($langList as $lang) {
+                    $langCode = $lang->getAttribute('code');
+                    if (isset($avaiLang[$langCode])) {
+                        $codeId = $avaiLang[$langCode];
+                        $shortDesc = self::$dbLink->real_escape_string($lang->getElementsByTagName('short')->item(0)->nodeValue); // short description
+                        $detailedDesc = self::$dbLink->real_escape_string($lang->getElementsByTagName('detailed')->item(0)->nodeValue); //detailed description
+                        $qDesc = self::$dbLink->query("SELECT `id` "
+                                . "FROM `".MECCANO_TPREF."_core_langman_policy_description` "
+                                . "WHERE `policyid`=$policyId "
+                                . "AND `codeid`=$codeId LIMIT 1 ;");
+                        if (self::$dbLink->errno) {
+                            self::setErrId(ERROR_NOT_EXECUTED);                            self::setErrExp('installPolicyDesc: '.self::$dbLink->error);
+                            return FALSE;
+                        }
+                        if (self::$dbLink->affected_rows) {
+                            self::$dbLink->query("UPDATE `".MECCANO_TPREF."_core_langman_policy_description` "
+                                    . "SET `short`='$shortDesc', `detailed`='$detailedDesc' "
+                                    . "WHERE `policyid`=$policyId "
+                                    . "AND `codeid`=$codeId");
+                            if (self::$dbLink->errno) {
+                                self::setErrId(ERROR_NOT_EXECUTED);                                self::setErrExp('installPolicyDesc: can\'t update description | '.self::$dbLink->error);
+                                return FALSE;
+                            }
+                        }
+                        else {
+                            self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_policy_description` "
+                                    . "(`codeid`, `policyid`, `short`, `detailed`) "
+                                    . "VALUES ($codeId, $policyId, '$shortDesc', '$detailedDesc') ;");
+                            if (self::$dbLink->errno) {
+                                self::setErrId(ERROR_NOT_EXECUTED);                                self::setErrExp('installPolicyDesc: can\'t install description | '.self::$dbLink->error);
+                                return FALSE;
+                            }
+                        }
+                    }
+                    if (MECCANO_DEF_LANG == $langCode) {
+                        $isDefault = 1;
+                    }
+                }
+                if (!$isDefault) { // if there is not description for default language
+                    $codeId = $avaiLang[MECCANO_DEF_LANG];
+                    $qDesc = self::$dbLink->query("SELECT `id` "
+                            . "FROM `".MECCANO_TPREF."_core_langman_policy_description` "
+                            . "WHERE `policyid`=$policyId "
+                            . "AND `codeid`=$codeId LIMIT 1 ;");
+                    if (!self::$dbLink->affected_rows) {
+                        self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_policy_description` "
+                                . "(`codeid`, `policyid`, `short`, `detailed`) "
+                                . "VALUES ($codeId, $policyId, '$funcName', '$funcName') ;");
+                        if (self::$dbLink->errno) {
+                            self::setErrId(ERROR_NOT_EXECUTED);                                self::setErrExp('installPolicyDesc: can\'t install description | '.self::$dbLink->error);
+                            return FALSE;
+                        }
+                    }
+                }
+            }
+        }
+        return TRUE;
+    }
+    
+    public static function groupPolicyList($plugin, $groupId, $code = NULL) {
+        self::$errid = 0;        self::$errexp = '';
+        if (!pregPlugin($plugin) || !(is_integer($groupId) || is_bool($groupId)) || !(is_null($code) || pregLang($code))) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('policyList: incorect type of incoming parameters');
+            return FALSE;
+        }
+        if (is_null($code)) {
+            $code = MECCANO_DEF_LANG;
+        }
+        if (is_bool($groupId)) {
+            $qList = self::$dbLink->query("SELECT `d`.`id`, `d`.`short`, `s`.`func`, `n`.`access` "
+                    . "FROM `".MECCANO_TPREF."_core_policy_summary_list` `s` "
+                    . "JOIN `".MECCANO_TPREF."_core_policy_nosession` `n` "
+                    . "ON `s`.`id`=`n`.`funcid` "
+                    . "JOIN `".MECCANO_TPREF."_core_langman_policy_description` `d` "
+                    . "ON `d`.`policyid`=`s`.`id` "
+                    . "JOIN `".MECCANO_TPREF."_core_langman_languages` `l` "
+                    . "ON `d`.`codeid`=`l`.`id` "
+                    . "WHERE `s`.`name`='$plugin' "
+                    . "AND `l`.`code`='$code' ;");
+        }
+        else {
+            $qList = self::$dbLink->query("SELECT `d`.`id`, `d`.`short`, `s`.`func`, `a`.`access` "
+                    . "FROM `".MECCANO_TPREF."_core_policy_summary_list` `s` "
+                    . "JOIN `".MECCANO_TPREF."_core_policy_access` `a` "
+                    . "ON `s`.`id`=`a`.`funcid` "
+                    . "JOIN `".MECCANO_TPREF."_core_langman_policy_description` `d` "
+                    . "ON `d`.`policyid`=`s`.`id` "
+                    . "JOIN `".MECCANO_TPREF."_core_langman_languages` `l` "
+                    . "ON `d`.`codeid`=`l`.`id` "
+                    . "WHERE `s`.`name`='$plugin' "
+                    . "AND `a`.`groupid`=$groupId "
+                    . "AND `l`.`code`='$code' ;");
+        }
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('policyList: something went wrong | '.self::$dbLink->error);
+            return FALSE;
+        }
+        if (!self::$dbLink->affected_rows) {
+            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('policyList: name or group don\'t exist');
+            return FALSE;
+        }
+        $xml = new \DOMDocument('1.0', 'utf-8');
+        $policyNode = $xml->createElement('policy');
+        $xml->appendChild($policyNode);
+        while ($row = $qList->fetch_row()) {
+            $funcNode = $xml->createElement('function');
+            $policyNode->appendChild($funcNode);
+            $funcNode->appendChild($xml->createElement('id', $row[0]));
+            $funcNode->appendChild($xml->createElement('short', $row[1]));
+            $funcNode->appendChild($xml->createElement('name', $row[2]));
+            $funcNode->appendChild($xml->createElement('access', $row[3]));
+        }
+        return $xml;
+    }
+    
+    public static function getPolicyDescById($id) {
+        self::$errid = 0;        self::$errexp = '';
+        if (!is_integer($id)) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getPolicyDescById: identifier must be integer');
+            return FALSE;
+        }
+        $qDesc = self::$dbLink->query("SELECT `short`, `detailed` "
+                . "FROM `".MECCANO_TPREF."_core_langman_policy_description` "
+                . "WHERE `id`=$id ;");
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getPolicyDescById: can\'t get description | '.self::$dbLink->error);
+            return FALSE;
+        }
+        if (!self::$dbLink->affected_rows) {
+            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('getPolicyDescById: description was not found');
+            return FALSE;
+        }
+        list($short, $detailed) = $qDesc->fetch_row();
+        return array('short' => $short, 'detailed' => $detailed);
+    }
+    
 }
