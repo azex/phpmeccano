@@ -299,7 +299,7 @@ class Policy {
     
     public static function installPolicyDesc($description) {
         self::$errid = 0;        self::$errexp = '';
-        if (!$description->relaxNGValidate(MECCANO_CORE_DIR.'/langman/policy-description-schema-v01.rng')) {
+        if (!$description->relaxNGValidate(MECCANO_CORE_DIR.'/policy/descriptions-schema-v01.rng')) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('installPolicyDesc: incorrect structure of policy description');
             return FALSE;
         }
