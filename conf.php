@@ -16,6 +16,7 @@ define('MECCANO_TMP_DIR', MECCANO_ROOT_DIR.'/tmp');
 define('MECCANO_PHP_DIR', MECCANO_ROOT_DIR.'/php');
 define('MECCANO_JS_DIR', MECCANO_ROOT_DIR.'/js');
 define('MECCANO_DOCUMENTS_DIR', MECCANO_ROOT_DIR.'/documents');
+define('MECCANO_UNPACKED_PLUGINS', MECCANO_ROOT_DIR.'/unpacked');
 
 //default language
 define('MECCANO_DEF_LANG', 'en-US');

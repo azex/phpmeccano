@@ -58,4 +58,98 @@ class Plugins {
     public static function errExp() {
         return self::$errexp;
     }
+    
+    public static function unpack($package) {
+        self::$errid = 0;        self::$errexp = '';
+        $zip = new \ZipArchive();
+        $zipOpen = $zip->open($package);
+        if ($zipOpen === TRUE) {
+            $tmpName = makeIdent();
+            $unpackPath = MECCANO_UNPACKED_PLUGINS."/".$tmpName;
+            $tmpPath = MECCANO_TMP_DIR."/".$tmpName;
+            if (!@$zip->extractTo($tmpPath)) {
+                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp("unpack: unable to extract package to $tmpPath");
+                return FALSE;
+            }
+            $zip->close();
+            $metaInfo = openRead($tmpPath."/metainfo.xml");
+            if (!$metaInfo) {
+                Files::remove($tmpPath);
+                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp("unpack: unable to read meta-info");
+                return FALSE;
+            }
+            if (mime_content_type($tmpPath."/metainfo.xml") != "application/xml") {
+                Files::remove($tmpPath);
+                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp("unpack: meta-info is not XML-structured");
+                return FALSE;
+            }
+            $metaDOM = new \DOMDocument();
+            $metaDOM->loadXML($metaInfo);
+            if (!@$metaDOM->relaxNGValidate(MECCANO_CORE_DIR.'/plugins/metainfo-schema-v01.rng')) {
+                Files::remove($tmpPath);
+                self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('unpack: invalid meta-info structure');
+                return FALSE;
+            }
+            $shortName = $metaDOM->getElementsByTagName('shortname')->item(0)->nodeValue;
+            $qIsUnpacked = self::$dbLink->query("SELECT `id` "
+                    . "FROM `".MECCANO_TPREF."_core_plugins_unpacked` "
+                    . "WHERE `short`='$shortName' ;");
+            if (self::$dbLink->errno) {
+                Files::remove($tmpPath);
+                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('unpack: cannot check whether the plugin is unpacked | '.self::$dbLink->error);
+                return FALSE;
+            }
+            if (self::$dbLink->affected_rows) {
+                Files::remove($tmpPath);
+                self::setErrId(ERROR_ALREADY_EXISTS);                self::setErrExp("unpack: plugin [$shortName] is already unpacked");
+                return FALSE;
+            }
+            $shortName = $metaDOM->getElementsByTagName('shortname')->item(0)->nodeValue;
+            $fullName = $metaDOM->getElementsByTagName('fullname')->item(0)->nodeValue;
+            $uV = (int) $metaDOM->getElementsByTagName('version')->item(0)->getAttribute('upper');
+            $mV = (int) $metaDOM->getElementsByTagName('version')->item(0)->getAttribute('middle');
+            $lV = (int) $metaDOM->getElementsByTagName('version')->item(0)->getAttribute('lower');
+            $pretSumVersion = 10000*$uV + 100*$mV + $lV;
+            $qIsPlugin = self::$dbLink->query("SELECT `uv`, `mv`, `lv` "
+                    . "FROM `".MECCANO_TPREF."_core_plugins_installed` "
+                    . "WHERE `name`='$shortName' ;");
+            if (self::$dbLink->errno) {
+                Files::remove($tmpPath);
+                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('unpack: cannot check whether the plugin is installed | '.self::$dbLink->error);
+                return FALSE;
+            }
+            if (self::$dbLink->affected_rows) {
+                list($uv, $mv, $lv) = $qIsPlugin->fetch_row();
+                $existSumVersion = 10000*$uv + 100*$mv + $lv;
+                if ($pretSumVersion == $existSumVersion) {
+                    $action = "reinstall";
+                }
+                elseif ($pretSumVersion > $existSumVersion) {
+                    $action = "upgrade";
+                }
+                else {
+                    $action = "downgrade";
+                }
+            }
+            else {
+                $action = "install";
+            }
+            self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_plugins_unpacked` (`short`, `full`, `uv`, `mv`, `lv`, `action`, `dirname`)"
+                    . "VALUES ('$shortName', '$fullName', $uV, $mV, $lV, '$action', '$tmpName') ;");
+            if (self::$dbLink->errno) {
+                Files::remove($tmpPath);
+                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('unpack: '.self::$dbLink->error);
+                return FALSE;
+            }
+            if (!Files::move($tmpPath, $unpackPath)) {
+                self::setErrId(Files::errId());                self::setErrExp('unpack: -> '.Files::errExp());
+                return FALSE;
+            }
+        }
+        else {
+            self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp("unpack: unable to open package. ZipArchive error: $zipOpen");
+            return FALSE;
+        }
+        return self::$dbLink->insert_id;
+    }
 }
