@@ -104,11 +104,37 @@ class Plugins {
                 self::setErrId(ERROR_ALREADY_EXISTS);                self::setErrExp("unpack: plugin [$shortName] is already unpacked");
                 return FALSE;
             }
-            $shortName = $metaDOM->getElementsByTagName('shortname')->item(0)->nodeValue;
-            $fullName = $metaDOM->getElementsByTagName('fullname')->item(0)->nodeValue;
+            $fullName = self::$dbLink->real_escape_string(htmlspecialchars($metaDOM->getElementsByTagName('fullname')->item(0)->nodeValue));
             $uV = (int) $metaDOM->getElementsByTagName('version')->item(0)->getAttribute('upper');
             $mV = (int) $metaDOM->getElementsByTagName('version')->item(0)->getAttribute('middle');
             $lV = (int) $metaDOM->getElementsByTagName('version')->item(0)->getAttribute('lower');
+            $insertColumns = "`short`, `full`, `uv`, `mv`, `lv`, `dirname`";
+            $insertValues = "'$shortName', '$fullName', $uV, $mV, $lV, '$tmpName'";
+            if ($optional = $metaDOM->getElementsByTagName('about')->item(0)->nodeValue) {
+                $optional = self::$dbLink->real_escape_string($optional);
+                $insertColumns = $insertColumns.", `about`";
+                $insertValues = $insertValues.", '$optional'";
+            }
+            if ($optional = $metaDOM->getElementsByTagName('credits')->item(0)->nodeValue) {
+                $optional = self::$dbLink->real_escape_string($optional);
+                $insertColumns = $insertColumns.", `credits`";
+                $insertValues = $insertValues.", '$optional'";
+            }
+            if ($optional = $metaDOM->getElementsByTagName('url')->item(0)->nodeValue) {
+                $optional = self::$dbLink->real_escape_string($optional);
+                $insertColumns = $insertColumns.", `url`";
+                $insertValues = $insertValues.", '$optional'";
+            }
+            if ($optional = $metaDOM->getElementsByTagName('email')->item(0)->nodeValue) {
+                $optional = self::$dbLink->real_escape_string($optional);
+                $insertColumns = $insertColumns.", `email`";
+                $insertValues = $insertValues.", '$optional'";
+            }
+            if ($optional = $metaDOM->getElementsByTagName('license')->item(0)->nodeValue) {
+                $optional = self::$dbLink->real_escape_string($optional);
+                $insertColumns = $insertColumns.", `license`";
+                $insertValues = $insertValues.", '$optional'";
+            }
             $pretSumVersion = 10000*$uV + 100*$mV + $lV;
             $qIsPlugin = self::$dbLink->query("SELECT `uv`, `mv`, `lv` "
                     . "FROM `".MECCANO_TPREF."_core_plugins_installed` "
@@ -134,8 +160,10 @@ class Plugins {
             else {
                 $action = "install";
             }
-            self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_plugins_unpacked` (`short`, `full`, `uv`, `mv`, `lv`, `action`, `dirname`)"
-                    . "VALUES ('$shortName', '$fullName', $uV, $mV, $lV, '$action', '$tmpName') ;");
+            $insertColumns = $insertColumns.", `action`";
+            $insertValues = $insertValues.", '$action'";
+            self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_plugins_unpacked` ($insertColumns)"
+                    . "VALUES ($insertValues) ;");
             if (self::$dbLink->errno) {
                 Files::remove($tmpPath);
                 self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('unpack: '.self::$dbLink->error);
