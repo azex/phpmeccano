@@ -183,4 +183,30 @@ class Plugins {
         }
         return TRUE;
     }
+    
+    public static function listUnpacked() {
+        self::$errid = 0;        self::$errexp = '';
+        $qUncpacked = self::$dbLink->query("SELECT `id`, `short`, `full`, CONCAT(`uv`, '.', `mv`, '.', `lv`) `version`, `action` "
+                . "FROM `".MECCANO_TPREF."_core_plugins_unpacked` ;");
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp("listUnpacked: ".self::$dbLink->error);
+            return FALSE;
+        }
+        $xml = new \DOMDocument();
+        $unpackedNode = $xml->createElement('unpacked');
+        $xml->appendChild($unpackedNode);
+        if (!self::$dbLink->affected_rows) {
+            return $xml;
+        }
+        while ($row = $qUncpacked->fetch_row()) {
+            $pluginNode = $xml->createElement('plugin');
+            $unpackedNode->appendChild($pluginNode);
+            $pluginNode->appendChild($xml->createElement('id', $row[0]));
+            $pluginNode->appendChild($xml->createElement('short', $row[1]));
+            $pluginNode->appendChild($xml->createElement('full', $row[2]));
+            $pluginNode->appendChild($xml->createElement('version', $row[3]));
+            $pluginNode->appendChild($xml->createElement('action', $row[4]));
+        }
+        return $xml;
+    }
 }
