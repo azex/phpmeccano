@@ -65,8 +65,8 @@ class Plugins {
         $zipOpen = $zip->open($package);
         if ($zipOpen === TRUE) {
             $tmpName = makeIdent();
-            $unpackPath = MECCANO_UNPACKED_PLUGINS."/".$tmpName;
-            $tmpPath = MECCANO_TMP_DIR."/".$tmpName;
+            $unpackPath = MECCANO_UNPACKED_PLUGINS."/$tmpName";
+            $tmpPath = MECCANO_TMP_DIR."/$tmpName";
             if (!@$zip->extractTo($tmpPath)) {
                 self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp("unpack: unable to extract package to $tmpPath");
                 return FALSE;
@@ -151,5 +151,36 @@ class Plugins {
             return FALSE;
         }
         return self::$dbLink->insert_id;
+    }
+    
+    public static function delUnpacked($id) {
+        self::$errid = 0;        self::$errexp = '';
+        if (!is_integer($id)) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('delUnpacked: id must be integer');
+            return FALSE;
+        }
+        $qUnpacked = self::$dbLink->query("SELECT `dirname` "
+                . "FROM `".MECCANO_TPREF."_core_plugins_unpacked` "
+                . "WHERE `id`=$id ;");
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('delUnpacked: '.self::$dbLink->error);
+            return FALSE;
+        }
+        if (!self::$dbLink->affected_rows) {
+            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp("delUnpacked: cannot find defined plugin");
+            return FALSE;
+        }
+        list($dirName) = $qUnpacked->fetch_row();
+        if (!Files::remove(MECCANO_UNPACKED_PLUGINS."/$dirName")) {
+            self::setErrId(Files::errId());                self::setErrExp('delUnpacked: -> '.Files::errExp());
+            return FALSE;
+        }
+        self::$dbLink->query("DELETE FROM `".MECCANO_TPREF."_core_plugins_unpacked` "
+                . "WHERE `id`=$id");
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('delUnpacked: unable to delete unpacked plugin'.self::$dbLink->error);
+            return FALSE;
+        }
+        return TRUE;
     }
 }
