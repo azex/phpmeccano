@@ -237,4 +237,38 @@ class Plugins {
         }
         return $xml;
     }
+    
+    public static function aboutUnpacked($id) {
+        self::$errid = 0;        self::$errexp = '';
+        if (!is_integer($id)) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('aboutUnpacked: id must be integer');
+            return FALSE;
+        }
+        $qUncpacked = self::$dbLink->query("SELECT `short`, `full`, CONCAT(`uv`, '.', `mv`, '.', `lv`) `version`, `about`, `credits`, `url`, `email`, `license`, `action` "
+                . "FROM `".MECCANO_TPREF."_core_plugins_unpacked` "
+                . "WHERE `id`=$id;");
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp("aboutUnpacked: ".self::$dbLink->error);
+            return FALSE;
+        }
+        if (!self::$dbLink->affected_rows) {
+            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp("aboutUnpacked: cannot find defined plugin");
+            return FALSE;
+        }
+        list($shortName, $fullName, $version, $about, $credits, $url, $email, $license, $action) = $qUncpacked->fetch_row();
+        $xml = new \DOMDocument();
+        $unpackedNode = $xml->createElement('unpacked');
+        $xml->appendChild($unpackedNode);
+        $unpackedNode->appendChild($xml->createElement('id', $id));
+        $unpackedNode->appendChild($xml->createElement('short', $shortName));
+        $unpackedNode->appendChild($xml->createElement('full', $fullName));
+        $unpackedNode->appendChild($xml->createElement('version', $version));
+        $unpackedNode->appendChild($xml->createElement('about', $about));
+        $unpackedNode->appendChild($xml->createElement('credits', $credits));
+        $unpackedNode->appendChild($xml->createElement('url', $url));
+        $unpackedNode->appendChild($xml->createElement('email', $email));
+        $unpackedNode->appendChild($xml->createElement('license', $license));
+        $unpackedNode->appendChild($xml->createElement('action', $action));
+        return $xml;
+    }
 }
