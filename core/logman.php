@@ -10,6 +10,7 @@ interface intLogMan {
     public static function errId();
     public static function errExp();
     public static function installEvents(\DOMDocument $events);
+    public static function delEvents($plugin);
 }
 
 class LogMan implements intLogMan {
@@ -92,7 +93,7 @@ class LogMan implements intLogMan {
         }
         // get installed events of the plugin
         $qEvents = self::$dbLink->query("SELECT `keyword`, `id` "
-                . "FROM `".MECCANO_TPREF."_core_log_events` "
+                . "FROM `".MECCANO_TPREF."_core_logman_events` "
                 . "WHERE `plugid`=$pluginId");
         if (self::$dbLink->errno) {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('installEvents: unable to get installed events | '.self::$dbLink->error);
@@ -107,15 +108,15 @@ class LogMan implements intLogMan {
         foreach ($outdatedEvents as $keyword) {
             $eventId = $installedEvents[$keyword];
             $sql = array(
-                "DELETE `r` FROM `".MECCANO_TPREF."_core_log_records` `r` "
-                . "JOIN `".MECCANO_TPREF."_core_log_events` `e` "
+                "DELETE `r` FROM `".MECCANO_TPREF."_core_logman_records` `r` "
+                . "JOIN `".MECCANO_TPREF."_core_logman_events` `e` "
                 . "ON `e`.`id`=`r`.`eventid` "
                 . "WHERE `e`.`id`=$eventId ;",
-                "DELETE `d` FROM `".MECCANO_TPREF."_core_log_descriptions` `d` "
-                . "JOIN `".MECCANO_TPREF."_core_log_events` `e` "
+                "DELETE `d` FROM `".MECCANO_TPREF."_core_logman_descriptions` `d` "
+                . "JOIN `".MECCANO_TPREF."_core_logman_events` `e` "
                 . "ON `e`.`id`=`d`.`eventid`"
                 . "WHERE `e`.`id`=$eventId ;",
-                "DELETE  FROM `".MECCANO_TPREF."_core_log_events` "
+                "DELETE  FROM `".MECCANO_TPREF."_core_logman_events` "
                 . "WHERE `id`=$eventId ;",
             );
             foreach ($sql as $dQuery) {
@@ -141,7 +142,7 @@ class LogMan implements intLogMan {
                     $codeId = $avLangIds[$inCode];
                     $updateDesc = self::$dbLink->real_escape_string($desc);
                     $eventId = $installedEvents[$keyword];
-                    self::$dbLink->query("UPDATE `".MECCANO_TPREF."_core_log_descriptions` "
+                    self::$dbLink->query("UPDATE `".MECCANO_TPREF."_core_logman_descriptions` "
                             . "SET `description`='$updateDesc' "
                             . "WHERE `eventid`=$eventId "
                             . "AND `codeid`=$codeId ;");
@@ -153,7 +154,7 @@ class LogMan implements intLogMan {
             }
             // install event
             else {
-                self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_log_events` "
+                self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_logman_events` "
                         . "(`keyword`, `plugid`) "
                         . "VALUES ('$keyword', $pluginId) ;");
                 if (self::$dbLink->errno) {
@@ -164,7 +165,7 @@ class LogMan implements intLogMan {
                 foreach ($descriptions as $inCode => $desc) {
                     $codeId = $avLangIds[$inCode];
                     $newDesc = self::$dbLink->real_escape_string($desc);
-                    self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_log_descriptions` "
+                    self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_logman_descriptions` "
                             . "(`description`, `eventid`, `codeid`) "
                             . "VALUES ('$newDesc', $eventId, $codeId) ;");
                     if (self::$dbLink->errno) {
@@ -172,6 +173,47 @@ class LogMan implements intLogMan {
                         return FALSE;
                     }
                 }
+            }
+        }
+        return TRUE;
+    }
+    
+    public static function delEvents($plugin) {
+        self::$errid = 0;        self::$errexp = '';
+        if (!pregPlugin($plugin)) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp("delEvents: incorrect plugin name");
+            return FALSE;
+        }
+        if ($plugin == "core") {
+            self::setErrId(ERROR_SYSTEM_INTERVENTION);            self::setErrExp("delEvents: unable to delete core events");
+            return FALSE;
+        }
+        $sql = array(
+            "DELETE `r` "
+            . "FROM `".MECCANO_TPREF."_core_logman_records` `r` "
+            . "JOIN `".MECCANO_TPREF."_core_logman_events` `e` "
+            . "ON `e`.`id`=`r`.`eventid` "
+            . "JOIN `".MECCANO_TPREF."_core_plugins_installed` `p` "
+            . "ON `p`.`id`=`e`.`plugid` "
+            . "WHERE `p`.`name`='$plugin' ;",
+            "DELETE `d` "
+            . "FROM `".MECCANO_TPREF."_core_logman_descriptions` `d` "
+            . "JOIN `".MECCANO_TPREF."_core_logman_events` `e` "
+            . "ON `e`.`id`=`d`.`eventid` "
+            . "JOIN `".MECCANO_TPREF."_core_plugins_installed` `p` "
+            . "ON `p`.`id`=`e`.`plugid` "
+            . "WHERE `p`.`name`='$plugin' ;",
+            "DELETE `e` "
+            . "FROM `".MECCANO_TPREF."_core_logman_events` `e` "
+            . "JOIN `".MECCANO_TPREF."_core_plugins_installed` `p` "
+            . "ON `p`.`id`=`e`.`plugid` "
+            . "WHERE `p`.`name`='$plugin' ;"
+        );
+        foreach ($sql as $value) {
+            self::$dbLink->query($value);
+            if (self::$dbLink->errno) {
+                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp("delEvents: unable remove events | ".self::$dbLink->error);
+                return FALSE;
             }
         }
         return TRUE;
@@ -186,13 +228,13 @@ class LogMan implements intLogMan {
 //        $event = self::$dbLink->real_escape_string($event);
 //        $insertion = self::$dbLink->real_escape_string($insertion);
 //        if (isset($_SESSION[AUTH_LIMITED])) {
-//            self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_log_records` (`did`, `insertion`, `user`) "
-//                    . "VALUES ((SELECT `id` FROM `".MECCANO_TPREF."_core_log_description`"
+//            self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_logman_records` (`did`, `insertion`, `user`) "
+//                    . "VALUES ((SELECT `id` FROM `".MECCANO_TPREF."_core_logman_description`"
 //                    . " WHERE `event`='$event'), '$insertion', '".$_SESSION[AUTH_USERNAME]."') ;");
 //        }
 //        else {
-//            self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_log_records` (`did`, `insertion`) "
-//                    . "VALUES ((SELECT `id` FROM `".MECCANO_TPREF."_core_log_description`"
+//            self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_logman_records` (`did`, `insertion`) "
+//                    . "VALUES ((SELECT `id` FROM `".MECCANO_TPREF."_core_logman_description`"
 //                    . " WHERE `event`='$event'), '$insertion') ;");
 //        }
 //        if (self::$dbLink->errno) {
@@ -208,7 +250,7 @@ class LogMan implements intLogMan {
 //            self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('clearLog: function execution was terminated because of using of limited authentication');
 //            return FALSE;
 //        }
-//        self::$dbLink->query("TRUNCATE TABLE `".MECCANO_TPREF."_core_log_records` ;");
+//        self::$dbLink->query("TRUNCATE TABLE `".MECCANO_TPREF."_core_logman_records` ;");
 //        if (self::$dbLink->errno) {
 //            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('clearLog: log was not cleared | '.self::$dbLink->error);
 //            return FALSE;
@@ -228,7 +270,7 @@ class LogMan implements intLogMan {
 //        if ($rpp < 1) {
 //            $rpp = 1;
 //        }
-//        $qResult = self::$dbLink->query("SELECT COUNT(`id`) FROM `".MECCANO_TPREF."_core_log_records` ;");
+//        $qResult = self::$dbLink->query("SELECT COUNT(`id`) FROM `".MECCANO_TPREF."_core_logman_records` ;");
 //        if (self::$dbLink->errno) {
 //            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('sumLog: total records couldn\'t be counted | '.self::$dbLink->error);
 //            return FALSE;
@@ -297,8 +339,8 @@ class LogMan implements intLogMan {
 //        }
 //        $start = ($pageNumber - 1) * $rpp;
 //        $qResult = self::$dbLink->query("SELECT `L`.`id` `id`, `time`, REPLACE(`description`, '%d', `insertion`) `event`, `user` "
-//                . "FROM `".MECCANO_TPREF."_core_log_records` `L` "
-//                . "INNER JOIN `".MECCANO_TPREF."_core_log_description` `LD` ON `L`.`did` = `LD`.`id` "
+//                . "FROM `".MECCANO_TPREF."_core_logman_records` `L` "
+//                . "INNER JOIN `".MECCANO_TPREF."_core_logman_description` `LD` ON `L`.`did` = `LD`.`id` "
 //                . "ORDER BY `$orderBy` $direct LIMIT $start, $rpp;");
 //        if (self::$dbLink->errno) {
 //            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getPage: log page couldn\'t be gotten | '.self::$dbLink->error);
@@ -330,7 +372,7 @@ class LogMan implements intLogMan {
 //        }
 //        $event = self::$dbLink->real_escape_string($event);
 //        $description = self::$dbLink->real_escape_string($description);
-//        self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_log_description` (`event`, `description`) "
+//        self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_logman_description` (`event`, `description`) "
 //                . "VALUES ('$event', '$description');");
 //        if (self::$dbLink->errno) {
 //            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('newEvent: new event wasn\'t added | '.self::$dbLink->error);
@@ -371,9 +413,9 @@ class LogMan implements intLogMan {
 //        }
 //        $event = self::$dbLink->real_escape_string($event);
 //        $queries = array(
-//            "DELETE FROM `".MECCANO_TPREF."_core_log_records`"
-//                . "WHERE `did`=(SELECT `id` FROM `".MECCANO_TPREF."_core_log_description` WHERE `event`='$event');",
-//            "DELETE FROM `".MECCANO_TPREF."_core_log_description` WHERE `event`='$event';"
+//            "DELETE FROM `".MECCANO_TPREF."_core_logman_records`"
+//                . "WHERE `did`=(SELECT `id` FROM `".MECCANO_TPREF."_core_logman_description` WHERE `event`='$event');",
+//            "DELETE FROM `".MECCANO_TPREF."_core_logman_description` WHERE `event`='$event';"
 //        );
 //        foreach ($queries as $value) {
 //            self::$dbLink->query($value);
@@ -423,8 +465,8 @@ class LogMan implements intLogMan {
 //            $direct = 'DESC';
 //        }
 //        $qResult = self::$dbLink->query("SELECT `L`.`id` `id`, `time`, REPLACE(`description`, '%d', `insertion`) `event`, `user` "
-//                . "FROM `".MECCANO_TPREF."_core_log_records` `L` "
-//                . "INNER JOIN `".MECCANO_TPREF."_core_log_description` `LD` ON `L`.`did` = `LD`.`id` "
+//                . "FROM `".MECCANO_TPREF."_core_logman_records` `L` "
+//                . "INNER JOIN `".MECCANO_TPREF."_core_logman_description` `LD` ON `L`.`did` = `LD`.`id` "
 //                . "ORDER BY `$orderBy` $direct ;");
 //        if (self::$dbLink->errno) {
 //            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getAll: log records couldn\'t be gotten | '.self::$dbLink->error);
