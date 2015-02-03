@@ -13,6 +13,7 @@ interface intLogMan {
     public static function delEvents($plugin);
     public static function newRecord($plugin, $event, $insertion = '');
     public static function clearLog();
+    public static function sumLogAllPlugins($rpp = 20);
 }
 
 class LogMan implements intLogMan {
@@ -277,35 +278,35 @@ class LogMan implements intLogMan {
         }
         return TRUE;
     }
-//    
-//    public static function sumLog($rpp = 20) { // rpp - records per page
-//        self::$errid = 0;        self::$errexp = '';
-//        if (!is_integer($rpp)) {
-//            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('sumLog: value of records per page must be integer');
-//            return FALSE;
-//        }
-//        if ($rpp < 1) {
-//            $rpp = 1;
-//        }
-//        $qResult = self::$dbLink->query("SELECT COUNT(`id`) FROM `".MECCANO_TPREF."_core_logman_records` ;");
-//        if (self::$dbLink->errno) {
-//            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('sumLog: total records couldn\'t be counted | '.self::$dbLink->error);
-//            return FALSE;
-//        }
-//        list($totalRecs) = $qResult->fetch_array(MYSQLI_NUM);
-//        $totalPages = $totalRecs/$rpp;
-//        $remainer = fmod($totalRecs, $rpp);
-//        if ($totalPages<1 && $totalPages>0) {
-//            $totalPages = 1;
-//        }
-//        elseif ($totalPages>1 && $remainer != 0) {
-//            $totalPages += 1;
-//        }
-//        elseif ($totalPages == 0) {
-//            $totalPages = 1;
-//        }
-//        return array((int) $totalRecs, (int) $totalPages);
-//    }
+    
+    public static function sumLogAllPlugins($rpp = 20) { // rpp - records per page
+        self::$errid = 0;        self::$errexp = '';
+        if (!is_integer($rpp)) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('sumLog: rpp must be integer');
+            return FALSE;
+        }
+        if ($rpp < 1) {
+            $rpp = 1;
+        }
+        $qResult = self::$dbLink->query("SELECT COUNT(`id`) FROM `".MECCANO_TPREF."_core_logman_records` ;");
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('sumLog: unable to counted total records | '.self::$dbLink->error);
+            return FALSE;
+        }
+        list($totalRecs) = $qResult->fetch_row();
+        $totalPages = $totalRecs/$rpp;
+        $remainer = fmod($totalRecs, $rpp);
+        if ($totalPages<1 && $totalPages>0) {
+            $totalPages = 1;
+        }
+        elseif ($totalPages>1 && $remainer != 0) {
+            $totalPages += 1;
+        }
+        elseif ($totalPages == 0) {
+            $totalPages = 1;
+        }
+        return array('records' => (int) $totalRecs, 'pages' => (int) $totalPages);
+    }
 //    
 //    public static function getPage($pageNumber, $totalPages, $rpp = 20, $orderBy = 'id', $ascent = FALSE) {
 //        self::$errid = 0;        self::$errexp = '';
