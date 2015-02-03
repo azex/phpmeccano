@@ -12,6 +12,7 @@ interface intLogMan {
     public static function installEvents(\DOMDocument $events);
     public static function delEvents($plugin);
     public static function newRecord($plugin, $event, $insertion = '');
+    public static function clearLog();
 }
 
 class LogMan implements intLogMan {
@@ -260,22 +261,22 @@ class LogMan implements intLogMan {
         return TRUE;
     }
 //    
-//    public static function clearLog() {
-//        self::$errid = 0;        self::$errexp = '';
-//        if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
-//            self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('clearLog: function execution was terminated because of using of limited authentication');
-//            return FALSE;
-//        }
-//        self::$dbLink->query("TRUNCATE TABLE `".MECCANO_TPREF."_core_logman_records` ;");
-//        if (self::$dbLink->errno) {
-//            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('clearLog: log was not cleared | '.self::$dbLink->error);
-//            return FALSE;
-//        }
-//        if (!self::newRecord('core_clearLog')) {
-//            return FALSE;
-//        }
-//        return TRUE;
-//    }
+    public static function clearLog() {
+        self::$errid = 0;        self::$errexp = '';
+        if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
+            self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('clearLog: function execution was terminated because of using of limited authentication');
+            return FALSE;
+        }
+        self::$dbLink->query("TRUNCATE TABLE `".MECCANO_TPREF."_core_logman_records` ;");
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('clearLog: unable to clear log | '.self::$dbLink->error);
+            return FALSE;
+        }
+        if (!self::newRecord('core', 'clearLog')) {
+            return FALSE;
+        }
+        return TRUE;
+    }
 //    
 //    public static function sumLog($rpp = 20) { // rpp - records per page
 //        self::$errid = 0;        self::$errexp = '';
