@@ -11,6 +11,7 @@ interface intLogMan {
     public static function errExp();
     public static function installEvents(\DOMDocument $events);
     public static function delEvents($plugin);
+    public static function newRecord($plugin, $event, $insertion = '');
 }
 
 class LogMan implements intLogMan {
@@ -219,30 +220,45 @@ class LogMan implements intLogMan {
         return TRUE;
     }
 
-//        public static function newRecord($event, $insertion = '') {
-//        self::$errid = 0;        self::$errexp = '';
-//        if (!is_string($event) || !is_string($insertion)) {
-//            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('newRecord: one or more of received arguments aren\'t strings');
-//            return FALSE;
-//        }
-//        $event = self::$dbLink->real_escape_string($event);
-//        $insertion = self::$dbLink->real_escape_string($insertion);
-//        if (isset($_SESSION[AUTH_LIMITED])) {
-//            self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_logman_records` (`did`, `insertion`, `user`) "
-//                    . "VALUES ((SELECT `id` FROM `".MECCANO_TPREF."_core_logman_description`"
-//                    . " WHERE `event`='$event'), '$insertion', '".$_SESSION[AUTH_USERNAME]."') ;");
-//        }
-//        else {
-//            self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_logman_records` (`did`, `insertion`) "
-//                    . "VALUES ((SELECT `id` FROM `".MECCANO_TPREF."_core_logman_description`"
-//                    . " WHERE `event`='$event'), '$insertion') ;");
-//        }
-//        if (self::$dbLink->errno) {
-//            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('newRecord: your query for new record was not executed | '.self::$dbLink->error);
-//            return FALSE;
-//        }
-//        return TRUE;
-//    }
+        public static function newRecord($plugin, $keyword, $insertion = '') {
+        self::$errid = 0;        self::$errexp = '';
+        if (!pregPlugin($plugin) || !pregPlugin($keyword) || !is_string($insertion)) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('newRecord: check arguments');
+            return FALSE;
+        }
+        $keyword = self::$dbLink->real_escape_string($keyword);
+        $insertion = self::$dbLink->real_escape_string($insertion);
+        // get event identifier
+        $qEvent = self::$dbLink->query("SELECT `e`.`id` "
+                . "FROM `".MECCANO_TPREF."_core_logman_events` `e` "
+                . "JOIN `".MECCANO_TPREF."_core_plugins_installed` `p` "
+                . "ON `p`.`id`=`e`.`plugid` "
+                . "WHERE `e`.`keyword`='$keyword' "
+                . "AND `p`.`name`='$plugin' ;");
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('newRecord: unable to get event identifier | '.self::$dbLink->error);
+            return FALSE;
+        }
+        if (!self::$dbLink->affected_rows) {
+            self::setErrId(ERROR_NOT_FOUND);            self::setErrId('newRecord: event not found');
+            return;
+        }
+        list($eventId) = $qEvent->fetch_row();
+        // make new record
+        if (isset($_SESSION[AUTH_LIMITED])) {
+            self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_logman_records` (`eventid`, `insertion`, `user`) "
+                    . "VALUES ($eventId, '$insertion', '".$_SESSION[AUTH_USERNAME]."') ;");
+        }
+        else {
+            self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_logman_records` (`eventid`, `insertion`) "
+                    . "VALUES ($eventId, '$insertion') ;");
+        }
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('newRecord: unable to make new record | '.self::$dbLink->error);
+            return FALSE;
+        }
+        return TRUE;
+    }
 //    
 //    public static function clearLog() {
 //        self::$errid = 0;        self::$errexp = '';
