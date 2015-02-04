@@ -15,6 +15,7 @@ interface intLogMan {
     public static function clearLog();
     public static function sumLogAllPlugins($rpp = 20);
     public static function getPageAllPlugins($pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE);
+    public static function sumLogByPlugin($plugin, $rpp = 20);
 }
 
 class LogMan implements intLogMan {
@@ -375,6 +376,41 @@ class LogMan implements intLogMan {
             $recordNode->appendChild($xml->createElement('user', $row[3]));
         }
         return $xml;
+    }
+    
+    public static function sumLogByPlugin($plugin, $rpp = 20) {
+        self::$errid = 0;        self::$errexp = '';
+        if (!pregPlugin($plugin) || !is_integer($rpp)) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('sumLog: check arguments');
+            return FALSE;
+        }
+        if ($rpp < 1) {
+            $rpp = 1;
+        }
+        $qResult = self::$dbLink->query("SELECT COUNT(`r`.`id`) "
+                . "FROM `".MECCANO_TPREF."_core_logman_records` `r`"
+                . "JOIN `".MECCANO_TPREF."_core_logman_events` `e` "
+                . "ON `e`.`id`=`r`.`eventid` "
+                . "JOIN `".MECCANO_TPREF."_core_plugins_installed` `p` "
+                . "ON `p`.`id`=`e`.`plugid` "
+                . "WHERE `p`.`name`='$plugin' ;");
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('sumLog: unable to counted total records | '.self::$dbLink->error);
+            return FALSE;
+        }
+        list($totalRecs) = $qResult->fetch_row();
+        $totalPages = $totalRecs/$rpp;
+        $remainer = fmod($totalRecs, $rpp);
+        if ($totalPages<1 && $totalPages>0) {
+            $totalPages = 1;
+        }
+        elseif ($totalPages>1 && $remainer != 0) {
+            $totalPages += 1;
+        }
+        elseif ($totalPages == 0) {
+            $totalPages = 1;
+        }
+        return array('records' => (int) $totalRecs, 'pages' => (int) $totalPages);
     }
 //    
 //    public static function newEvent($event, $description) {
