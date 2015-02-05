@@ -16,6 +16,7 @@ interface intLogMan {
     public static function sumLogAllPlugins($rpp = 20);
     public static function getPageAllPlugins($pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE);
     public static function sumLogByPlugin($plugin, $rpp = 20);
+    public static function getPageByPlugin($plugin, $pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE);
 }
 
 class LogMan implements intLogMan {
@@ -411,6 +412,82 @@ class LogMan implements intLogMan {
             $totalPages = 1;
         }
         return array('records' => (int) $totalRecs, 'pages' => (int) $totalPages);
+    }
+    
+    public static function getPageByPlugin($plugin, $pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array(), $ascent = FALSE) {
+        self::$errid = 0;        self::$errexp = '';
+        if (!pregPlugin($plugin) || !pregLang($code) || !is_integer($pageNumber) || !is_integer($totalPages) || !is_integer($rpp)) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getPage: check arguments');
+            return FALSE;
+        }
+        $rightEntry = array('id', 'user', 'event', 'time');
+        if (is_array($orderBy)) {
+            if (count(array_intersect($orderBy, $rightEntry))) {
+                $orderList = '';
+                foreach ($orderBy as $value) {
+                    $orderList = $orderList.$value.'`, `';
+                }
+                $orderBy = substr($orderList, 0, -4);
+            }
+            else {
+                $orderBy = 'id';
+            }
+        }
+        else {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getPage: check order parameters');
+            return FALSE;
+        }
+        if ($pageNumber < 1) {
+            $pageNumber = 1;
+        }
+        elseif ($pageNumber>$totalPages && $totalPages) {
+            $pageNumber = $totalPages;
+        }
+        if ($totalPages < 1) {
+            $totalPages = 1;
+        }
+        if ($rpp < 1) {
+            $rpp = 1;
+        }
+        if ($ascent == TRUE) {
+            $direct = '';
+        }
+        elseif ($ascent == FALSE) {
+            $direct = 'DESC';
+        }
+        $start = ($pageNumber - 1) * $rpp;
+        $qResult = self::$dbLink->query("SELECT `r`.`id` `id`, `r`.`time` `time`, REPLACE(`d`.`description`, '%d', `r`.`insertion`) `event`, `r`.`user` `user` "
+                . "FROM `".MECCANO_TPREF."_core_logman_records` `r` "
+                . "JOIN `".MECCANO_TPREF."_core_logman_descriptions` `d` "
+                . "ON `r`.`eventid` = `d`.`eventid` "
+                . "JOIN `".MECCANO_TPREF."_core_logman_events` `e` "
+                . "ON `r`.`eventid`=`e`.`id` "
+                . "JOIN `".MECCANO_TPREF."_core_plugins_installed` `p` "
+                . "ON `p`.`id`=`e`.`plugid` "
+                . "JOIN `".MECCANO_TPREF."_core_langman_languages` `l` "
+                . "ON `d`.`codeid` = `l`.`id` "
+                . "WHERE `l`.`code` = '$code' "
+                . "AND `p`.`name`='$plugin' "
+                . "ORDER BY `$orderBy` $direct LIMIT $start, $rpp;");
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getPage: log page couldn\'t be gotten | '.self::$dbLink->error);
+            return FALSE;
+        }
+        $xml = new \DOMDocument('1.0', 'utf-8');
+        $logNode = $xml->createElement('log');
+        $attr_plugin = $xml->createAttribute('plugin');
+        $attr_plugin->value = $plugin;
+        $logNode->appendChild($attr_plugin);
+        $xml->appendChild($logNode);
+        while ($row = $qResult->fetch_array(MYSQL_NUM)) {
+            $recordNode = $xml->createElement('record');
+            $logNode->appendChild($recordNode);
+            $recordNode->appendChild($xml->createElement('id', $row[0]));
+            $recordNode->appendChild($xml->createElement('time', $row[1]));
+            $recordNode->appendChild($xml->createElement('event', $row[2]));
+            $recordNode->appendChild($xml->createElement('user', $row[3]));
+        }
+        return $xml;
     }
 //    
 //    public static function newEvent($event, $description) {
