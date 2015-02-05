@@ -246,8 +246,8 @@ class LogMan implements intLogMan {
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrId('newRecord: event not found');
-            return;
+            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('newRecord: plugin or event not found');
+            return FALSE;
         }
         list($eventId) = $qEvent->fetch_row();
         // make new record
