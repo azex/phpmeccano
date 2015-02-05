@@ -545,130 +545,68 @@ class LogMan implements intLogMan {
         }
         return $xml;
     }
-//    
-//    public static function newEvent($event, $description) {
-//        self::$errid = 0;        self::$errexp = '';
-//        if (!is_string($event) || !is_string($description)) {
-//            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('newEvent: one or more of received arguments aren\'t strings');
-//            return FALSE;
-//        }
-//        if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
-//            self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('newEvent: function execution was terminated because of using of limited authentication');
-//            return FALSE;
-//        }
-//        $event = self::$dbLink->real_escape_string($event);
-//        $description = self::$dbLink->real_escape_string($description);
-//        self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_logman_description` (`event`, `description`) "
-//                . "VALUES ('$event', '$description');");
-//        if (self::$dbLink->errno) {
-//            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('newEvent: new event wasn\'t added | '.self::$dbLink->error);
-//            return FALSE;
-//        }
-//        if (!self::newRecord('core_newEvent', $event)) {
-//            return FALSE;
-//        }
-//        return TRUE;
-//    }
-//    
-//    public static function delEvent($event) {
-//        self::$errid = 0;        self::$errexp = '';
-//        if (!is_string($event)) {
-//            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('delEvent: received argument isn\'t string');
-//            return FALSE;
-//        }
-//        $sysEvents = array("core_misc",
-//            "core_newGroup",
-//            "core_delGroup",
-//            "core_enGroup",
-//            "core_disGroup",
-//            "core_newUser",
-//            "core_delUser",
-//            "core_enUser",
-//            "core_disUser",
-//            "core_authLogin",
-//            "core_clearLog",
-//            "core_newEvent",
-//            "core_delEvent");
-//        if (in_array($event, $sysEvents)) {
-//            self::setErrId(ERROR_SYSTEM_INTERVENTION);            self::setErrExp('delEvent: it is impossible to delete system event');
-//            return FALSE;
-//        }
-//        if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
-//            self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('delEvent: function execution was terminated because of using of limited authentication');
-//            return FALSE;
-//        }
-//        $event = self::$dbLink->real_escape_string($event);
-//        $queries = array(
-//            "DELETE FROM `".MECCANO_TPREF."_core_logman_records`"
-//                . "WHERE `did`=(SELECT `id` FROM `".MECCANO_TPREF."_core_logman_description` WHERE `event`='$event');",
-//            "DELETE FROM `".MECCANO_TPREF."_core_logman_description` WHERE `event`='$event';"
-//        );
-//        foreach ($queries as $value) {
-//            self::$dbLink->query($value);
-//            if (self::$dbLink->errno) {
-//                self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('delEvent: event couldn\'t be deleted | '.self::$dbLink->error);
-//                return FALSE;
-//            }
-//        }
-//        if (!self::$dbLink->affected_rows) {
-//            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('delEvent: defined event doesn\'t exist');
-//            return FALSE;
-//        }
-//        if (!self::newRecord('core_delEvent', $event)) {
-//            return FALSE;
-//        }
-//        return TRUE;
-//    }
-//    
-//    public static function getAll($orderBy = 'id', $ascent = FALSE) {
-//        self::$errid = 0;        self::$errexp = '';
-//        $rightEntry = array('id', 'user', 'event', 'time');
-//        if (is_string($orderBy)) {
-//            if (!in_array($orderBy, $rightEntry, TRUE)) {
-//            $orderBy = 'id';
-//            }
-//        }
-//        elseif (is_array($orderBy)) {
-//            if (count(array_intersect($orderBy, $rightEntry))) {
-//                $orderList = '';
-//                foreach ($orderBy as $value) {
-//                    $orderList = $orderList.$value.'`, `';
-//                }
-//                $orderBy = substr($orderList, 0, -4);
-//            }
-//            else {
-//                $orderBy = 'id';
-//            }
-//        }
-//        else {
-//            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getAll: value of $orderBy must be string or array');
-//            return FALSE;
-//        }
-//        if ($ascent == TRUE) {
-//            $direct = '';
-//        }
-//        elseif ($ascent == FALSE) {
-//            $direct = 'DESC';
-//        }
-//        $qResult = self::$dbLink->query("SELECT `L`.`id` `id`, `time`, REPLACE(`description`, '%d', `insertion`) `event`, `user` "
-//                . "FROM `".MECCANO_TPREF."_core_logman_records` `L` "
-//                . "INNER JOIN `".MECCANO_TPREF."_core_logman_description` `LD` ON `L`.`did` = `LD`.`id` "
-//                . "ORDER BY `$orderBy` $direct ;");
-//        if (self::$dbLink->errno) {
-//            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getAll: log records couldn\'t be gotten | '.self::$dbLink->error);
-//            return FALSE;
-//        }
-//        $xml = new \DOMDocument('1.0', 'utf-8');
-//        $logNode = $xml->createElement('log');
-//        $xml->appendChild($logNode);
-//        while ($row = $qResult->fetch_array(MYSQL_NUM)) {
-//            $recordNode = $xml->createElement('record');
-//            $logNode->appendChild($recordNode);
-//            $recordNode->appendChild($xml->createElement('id', $row[0]));
-//            $recordNode->appendChild($xml->createElement('time', $row[1]));
-//            $recordNode->appendChild($xml->createElement('event', $row[2]));
-//            $recordNode->appendChild($xml->createElement('user', $row[3]));
-//        }
-//        return $xml;
-//    }
+    
+    public static function getLogByPlugin($plugin, $code = MECCANO_DEF_LANG, $orderBy = array(), $ascent = FALSE) {
+        self::$errid = 0;        self::$errexp = '';
+        if (!pregPlugin($plugin) || !pregLang($code)) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getPage: check arguments');
+            return FALSE;
+        }
+        $rightEntry = array('id', 'user', 'event', 'time');
+        if (is_array($orderBy)) {
+            if (count(array_intersect($orderBy, $rightEntry))) {
+                $orderList = '';
+                foreach ($orderBy as $value) {
+                    $orderList = $orderList.$value.'`, `';
+                }
+                $orderBy = substr($orderList, 0, -4);
+            }
+            else {
+                $orderBy = 'id';
+            }
+        }
+        else {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getPage: check order parameters');
+            return FALSE;
+        }
+        if ($ascent == TRUE) {
+            $direct = '';
+        }
+        elseif ($ascent == FALSE) {
+            $direct = 'DESC';
+        }
+        $qResult = self::$dbLink->query("SELECT `r`.`id` `id`, `r`.`time` `time`, REPLACE(`d`.`description`, '%d', `r`.`insertion`) `event`, `r`.`user` `user` "
+                . "FROM `".MECCANO_TPREF."_core_logman_records` `r` "
+                . "JOIN `".MECCANO_TPREF."_core_logman_descriptions` `d` "
+                . "ON `r`.`eventid` = `d`.`eventid` "
+                . "JOIN `".MECCANO_TPREF."_core_logman_events` `e` "
+                . "ON `r`.`eventid`=`e`.`id` "
+                . "JOIN `".MECCANO_TPREF."_core_plugins_installed` `p` "
+                . "ON `p`.`id`=`e`.`plugid` "
+                . "JOIN `".MECCANO_TPREF."_core_langman_languages` `l` "
+                . "ON `d`.`codeid` = `l`.`id` "
+                . "WHERE `l`.`code` = '$code' "
+                . "AND `p`.`name`='$plugin' "
+                . "ORDER BY `$orderBy` $direct ;");
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getPage: unable to get log | '.self::$dbLink->error);
+            return FALSE;
+        }
+        $xml = new \DOMDocument('1.0', 'utf-8');
+        $logNode = $xml->createElement('log');
+        $attr_plugin = $xml->createAttribute('plugin');
+        $attr_plugin->value = $plugin;
+        $logNode->appendChild($attr_plugin);
+        $xml->appendChild($logNode);
+        while ($row = $qResult->fetch_array(MYSQL_NUM)) {
+            $recordNode = $xml->createElement('record');
+            $logNode->appendChild($recordNode);
+            $recordNode->appendChild($xml->createElement('id', $row[0]));
+            $recordNode->appendChild($xml->createElement('time', $row[1]));
+            $recordNode->appendChild($xml->createElement('event', $row[2]));
+            $recordNode->appendChild($xml->createElement('user', $row[3]));
+        }
+        return $xml;
+    }
+    
 }
