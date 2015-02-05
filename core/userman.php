@@ -4,7 +4,7 @@ namespace core;
 
 require_once 'swconst.php';
 require_once 'unifunctions.php';
-require_once 'logging.php';
+require_once 'logman.php';
 require_once 'policy.php';
 
 class UserMan {
@@ -71,7 +71,7 @@ class UserMan {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp(self::$policyObject->errExp());
             return FALSE;
         }
-        if ($log && !self::$logObject->newRecord('core_newGroup', $groupname." | id: $groupId")) {
+        if ($log && !self::$logObject->newRecord('core', 'createGroup', "$groupname; ID: $groupId")) {
             self::setErrId(ERROR_NOT_CRITICAL);            self::setErrExp(self::$logObject->errExp());
         }
         return (int) $groupId;
@@ -94,26 +94,26 @@ class UserMan {
             $active = 0;
         }
         else {
-            self::setErrId(ERROR_SYSTEM_INTERVENTION);            self::setErrExp('groupStatus: system group can\'t be disabled');
+            self::setErrId(ERROR_SYSTEM_INTERVENTION);            self::setErrExp('groupStatus: system group cannot be disabled');
             return FALSE;
         }
         self::$dbLink->query("UPDATE `".MECCANO_TPREF."_core_userman_groups` "
                 . "SET `active`=$active "
                 . "WHERE `id`=$groupId ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('groupStatus: status wasn\'t changed | '.self::$dbLink->error);
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('groupStatus: status was not changed | '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('groupStatus: incorrect group status or group doesn\'t exist');
+            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('groupStatus: incorrect group status or group does not exist');
             return FALSE;
         }
         if ($log) {
             if ($active) {
-                $l = self::$logObject->newRecord('core_enGroup', "$groupId");
+                $l = self::$logObject->newRecord('core', 'enGroup', "ID: $groupId");
             }
             else {
-                $l = self::$logObject->newRecord('core_disGroup', "$groupId");
+                $l = self::$logObject->newRecord('core', 'disGroup', "ID: $groupId");
             }
             if (!$l) {
                 self::setErrId(ERROR_NOT_CRITICAL);            self::setErrExp(self::$logObject->errExp());
@@ -301,7 +301,7 @@ class UserMan {
                 list($groupname) = $qGroup->fetch_row();
             }
         }
-        if ($log && !self::$logObject->newRecord('core_delGroup', $groupname." | id: $groupId")) {
+        if ($log && !self::$logObject->newRecord('core', 'delGroup', "$groupname; ID: $groupId")) {
             self::setErrId(ERROR_NOT_CRITICAL);            self::setErrExp(self::$logObject->errExp());
         }
         return TRUE;
@@ -528,7 +528,7 @@ class UserMan {
                 $userid = self::$dbLink->insert_id;
             }
         }
-        if ($log && !self::$logObject->newRecord('core_newUser', $username." | id: $userid")) {
+        if ($log && !self::$logObject->newRecord('core', 'createUser', "$username; ID: $userid")) {
             self::setErrId(ERROR_NOT_CRITICAL);            self::setErrExp(self::$logObject->errExp());
         }
         return (int) $userid;
@@ -607,10 +607,10 @@ class UserMan {
         }
         if ($log) {
             if ($active) {
-                $l = self::$logObject->newRecord('core_enUser', "$userId");
+                $l = self::$logObject->newRecord('core', 'enUser', "ID: $userId");
             }
             else {
-                $l = self::$logObject->newRecord('core_disUser', "$userId");
+                $l = self::$logObject->newRecord('core', 'disUser', "ID: $userId");
             }
             if (!$l) {
                 self::setErrId(ERROR_NOT_CRITICAL);            self::setErrExp(self::$logObject->errExp());
@@ -695,7 +695,7 @@ class UserMan {
             }
         }
         list($username) = $qName->fetch_row();
-        if ($log && !self::$logObject->newRecord('core_delUser', $username." | id: $userId")) {
+        if ($log && !self::$logObject->newRecord('core', 'delUser', "$username; ID: $userId")) {
             self::setErrId(ERROR_NOT_CRITICAL);            self::setErrExp(self::$logObject->errExp());
         }
         return TRUE;
@@ -886,7 +886,7 @@ class UserMan {
         return TRUE;
     }
     
-    public static function setUserName($userId, $username) {
+    public static function setUserName($userId, $username, $log = TRUE) {
         self::$errid = 0;        self::$errexp = '';
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
             self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('setUserName: function execution was terminated because of using of limited authentication');
@@ -896,16 +896,30 @@ class UserMan {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('setUserName: incorrect incoming parameters');
             return FALSE;
         }
+        $qNewName = self::$dbLink->query("SELECT `id` "
+                . "FROM `".MECCANO_TPREF."_core_userman_users` "
+                . "WHERE `username`='$username' ;");
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('setUserName: unable to check new name | '.self::$dbLink->error);
+            return FALSE;
+        }
+        if (self::$dbLink->affected_rows) {
+            self::setErrId(ERROR_ALREADY_EXISTS);            self::setErrExp('setUserName: new name already in use');
+            return FALSE;
+        }
         self::$dbLink->query("UPDATE `".MECCANO_TPREF."_core_userman_users` "
                 . "SET `username`='$username' "
                 . "WHERE `id`=$userId ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('setUserName: can\'t set username | '.self::$dbLink->error);
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('setUserName: unable to set username | '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_ALREADY_EXISTS);            self::setErrExp('setUserName: defined user doesn\'t exist or username was repeated');
+            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('setUserName: unable to find defined user');
             return FALSE;
+        }
+        if ($log && !self::$logObject->newRecord('core', 'setUserName', "$username; ID: $userId")) {
+            self::setErrId(ERROR_NOT_CRITICAL);            self::setErrExp(self::$logObject->errExp());
         }
         return TRUE;
     }
@@ -924,11 +938,11 @@ class UserMan {
                 . "SET `email`='$email' "
                 . "WHERE `id`=$userId ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('setUserMail: can\'t set email | '.self::$dbLink->error);
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('setUserMail: unable to set email | '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_ALREADY_EXISTS);            self::setErrExp('setUserMail: defined user doesn\'t exist or email was repeated');
+            self::setErrId(ERROR_ALREADY_EXISTS);            self::setErrExp('setUserMail: defined user does not exist or email was repeated');
             return FALSE;
         }
         return TRUE;

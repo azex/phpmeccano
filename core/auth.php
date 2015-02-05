@@ -4,7 +4,7 @@ namespace core;
 
 require_once 'swconst.php';
 require_once 'unifunctions.php';
-require_once 'logging.php';
+require_once 'logman.php';
 
 class Auth {
     private static $errid = 0; // error's id
@@ -115,7 +115,7 @@ class Auth {
             setcookie(COOKIE_UNIQUE_SESSION_ID, $usi, $term, '/');
         }
         if ($log) {
-            self::$logObject->newRecord('core_authLogin', $username);
+            self::$logObject->newRecord('core', 'authLogin', $username);
         }
         $_SESSION[AUTH_USERNAME] = $username;
         $_SESSION[AUTH_USER_ID] = (int) $userId;
@@ -221,7 +221,7 @@ class Auth {
             }
             list($passId, $limited, $userId, $username, $lang) = $qResult->fetch_array(MYSQLI_NUM);
             if ($log) {
-                self::$logObject->newRecord('core_authLogin', $username);
+                self::$logObject->newRecord('core', 'authLogin', $username);
             }
             $_SESSION[AUTH_USERNAME] = $username;
             $_SESSION[AUTH_USER_ID] = (int) $userId;
