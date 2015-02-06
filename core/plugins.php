@@ -10,7 +10,7 @@ namespace core;
 
 require_once 'swconst.php';
 require_once 'unifunctions.php';
-require_once 'logging.php';
+require_once 'logman.php';
 require_once 'files.php';
 
 /**
@@ -18,28 +18,42 @@ require_once 'files.php';
  *
  * @author azex
  */
-class Plugins {
+
+interface intPlugins {
+    public function __construct(\mysqli $dbLink, LogMan $logObject, Policy $policyObject);
+    public static function setDbLink(\mysqli $dbLink);
+    public static function setLogObject(LogMan $logObject);
+    public static function setPolicyObject(Policy $policyObject);
+    public static function errId();
+    public static function errExp();
+    public static function unpack($package);
+    public static function delUnpacked($id);
+    public static function listUnpacked();
+    public static function aboutUnpacked($id);
+}
+
+class Plugins implements intPlugins {
     private static $errid = 0; // error's id
     private static $errexp = ''; // error's explanation
     private static $dbLink; // database link
     private static $logObject; // log object
     private static $policyObject; // policy object
     
-    public function __construct($dbLink, $logObject, $policyObject) {
+    public function __construct(\mysqli $dbLink, LogMan $logObject, Policy $policyObject) {
         self::$dbLink = $dbLink;
         self::$logObject = $logObject;
         self::$policyObject = $policyObject;
     }
     
-    public static function setDbLink($dbLink) {
+    public static function setDbLink(\mysqli $dbLink) {
         self::$dbLink = $dbLink;
     }
     
-    public static function setLogObject($logObject) {
+    public static function setLogObject(LogMan $logObject) {
         self::$logObject = $logObject;
     }
     
-    public static function setPolicyObject($policyObject) {
+    public static function setPolicyObject(Policy $policyObject) {
         self::$policyObject = $policyObject;
     }
     
