@@ -30,6 +30,7 @@ interface intPlugins {
     public static function delUnpacked($id);
     public static function listUnpacked();
     public static function aboutUnpacked($id);
+    public static function sumVersion($plugin);
 }
 
 class Plugins implements intPlugins {
@@ -150,17 +151,13 @@ class Plugins implements intPlugins {
                 $insertValues = $insertValues.", '$optional'";
             }
             $pretSumVersion = 10000*$uV + 100*$mV + $lV;
-            $qIsPlugin = self::$dbLink->query("SELECT `uv`, `mv`, `lv` "
-                    . "FROM `".MECCANO_TPREF."_core_plugins_installed` "
-                    . "WHERE `name`='$shortName' ;");
-            if (self::$dbLink->errno) {
+            $existSumVersion = self::sumVersion($shortName);
+            if (self::$errid == ERROR_NOT_EXECUTED) {
                 Files::remove($tmpPath);
-                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('unpack: cannot check whether the plugin is installed | '.self::$dbLink->error);
+                self::setErrExp('unpack: -> '.self::$errexp);
                 return FALSE;
             }
-            if (self::$dbLink->affected_rows) {
-                list($uv, $mv, $lv) = $qIsPlugin->fetch_row();
-                $existSumVersion = 10000*$uv + 100*$mv + $lv;
+            elseif ($existSumVersion) {
                 if ($pretSumVersion == $existSumVersion) {
                     $action = "reinstall";
                 }
@@ -284,5 +281,27 @@ class Plugins implements intPlugins {
         $unpackedNode->appendChild($xml->createElement('license', $license));
         $unpackedNode->appendChild($xml->createElement('action', $action));
         return $xml;
+    }
+    
+    public static function sumVersion($name) {
+        self::$errid = 0;        self::$errexp = '';
+        if (!pregPlugin($name)) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp("pluginVersion: incorrect name");
+            return FALSE;
+        }
+        $qPlugin = self::$dbLink->query("SELECT `uv`, `mv`, `lv` "
+                . "FROM `".MECCANO_TPREF."_core_plugins_installed` "
+                . "WHERE `name`='$name'");
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp("pluginVersion: unable to get plugin version | ".self::$dbLink->error);
+            return FALSE;
+        }
+        if (!self::$dbLink->affected_rows) {
+            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp("pluginVersion: plugin not found");
+            return FALSE;
+        }
+        list($uv, $mv, $lv) = $qPlugin->fetch_row();
+        $sumVersion = 10000*$uv + 100*$mv + $lv;
+        return (int) $sumVersion;
     }
 }
