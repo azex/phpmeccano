@@ -37,7 +37,7 @@ class Policy {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('createPlicy: incorrect policy structure');
             return FALSE;
         }
-        $pluginName = $policy->getElementsByTagName('plugin')->item(0)->getAttribute('name');
+        $pluginName = $policy->getElementsByTagName('policy')->item(0)->getAttribute('plugin');
         $funcNames = $policy->getElementsByTagName('function');
         $functions = array();
         foreach ($funcNames as $func) {
