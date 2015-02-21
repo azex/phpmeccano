@@ -379,14 +379,11 @@ class Policy {
         return TRUE;
     }
     
-    public static function groupPolicyList($plugin, $groupId, $code = NULL) {
+    public static function groupPolicyList($plugin, $groupId, $code = MECCANO_DEF_LANG) {
         self::$errid = 0;        self::$errexp = '';
         if (!pregPlugin($plugin) || !(is_integer($groupId) || is_bool($groupId)) || !(is_null($code) || pregLang($code))) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('policyList: incorect type of incoming parameters');
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('groupPolicyList: incorect type of incoming parameters');
             return FALSE;
-        }
-        if (is_null($code)) {
-            $code = MECCANO_DEF_LANG;
         }
         if (is_bool($groupId)) {
             $qList = self::$dbLink->query("SELECT `d`.`id`, `d`.`short`, `s`.`func`, `n`.`access` "
@@ -414,11 +411,11 @@ class Policy {
                     . "AND `l`.`code`='$code' ;");
         }
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('policyList: something went wrong | '.self::$dbLink->error);
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('groupPolicyList: something went wrong | '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('policyList: name or group don\'t exist');
+            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('groupPolicyList: not found');
             return FALSE;
         }
         $xml = new \DOMDocument('1.0', 'utf-8');
