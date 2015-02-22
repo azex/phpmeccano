@@ -2,7 +2,7 @@
 
 <grammar datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes" xmlns="http://relaxng.org/ns/structure/1.0" >
     <start>
-        <element name="description">
+        <element name="policy">
             <attribute name="plugin">
                 <ref name="plugFuncName" />
             </attribute>
@@ -12,7 +12,7 @@
                         <ref name="plugFuncName" />
                     </attribute>
                     <oneOrMore>
-                        <element name="language">
+                        <element name="description">
                             <attribute name="code">
                                 <data type="string">
                                     <param name="pattern">[a-z]{2}-[A-Z]{2}</param>
