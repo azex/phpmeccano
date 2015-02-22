@@ -276,7 +276,7 @@ class UserMan {
             self::setErrId(ERROR_SYSTEM_INTERVENTION);            self::setErrExp('delGroup: the group contains users');
             return FALSE;
         }
-        if (!self::$policyObject->delGroup($groupId)) {
+        if (!self::$policyObject->delGroup($groupId) && !in_array(self::$policyObject->errId(), array(ERROR_NOT_FOUND, ''))) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp(self::$policyObject->errExp());
             return FALSE;
         }
