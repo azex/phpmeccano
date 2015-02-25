@@ -60,29 +60,43 @@ class LangMan {
             self::setErrId(ERROR_SYSTEM_INTERVENTION);            self::setErrExp('delLang: it is impossible to delete default language');
             return FALSE;
         }
+        $qLang = self::$dbLink->query("SELECT `id` "
+                . "FROM `".MECCANO_TPREF."_core_langman_languages` "
+                . "WHERE `code`='$code' ;");
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('delLang: unable to get language identifier |'.self::$dbLink->error);
+            return FALSE;
+        }
+        if (!self::$dbLink->affected_rows) {
+            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp("delLang: language [$code] is not found");
+            return FALSE;
+        }
+        list($codeId) = $qLang->fetch_row();
         $defLang = MECCANO_DEF_LANG;
+        $qDefLang = self::$dbLink->query("SELECT `id` "
+                . "FROM `".MECCANO_TPREF."_core_langman_languages` "
+                . "WHERE `code`='$defLang' ;");
+        if (self::$dbLink->errno) {
+            self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('delLang: unable to get default language identifier |'.self::$dbLink->error);
+            return FALSE;
+        }
+        if (!self::$dbLink->affected_rows) {
+            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp("delLang:  default language [$defLang] is not found");
+            return FALSE;
+        }
+        list($defLangId) = $qDefLang->fetch_row();
         $sql = array(
-            "DELETE `t` FROM `".MECCANO_TPREF."_core_langman_titles` `t` "
-            . "JOIN `".MECCANO_TPREF."_core_langman_languages` `l` "
-            . "ON `l`.`id`=`t`.`codeid` "
-            . "WHERE `l`.`code`='$code' ;",
-            "DELETE `t` FROM `".MECCANO_TPREF."_core_langman_texts` `t` "
-            . "JOIN `".MECCANO_TPREF."_core_langman_languages` `l` "
-            . "ON `l`.`id`=`t`.`codeid` "
-            . "WHERE `l`.`code`='$code' ;",
-            "DELETE `p` FROM `".MECCANO_TPREF."_core_policy_descriptions` `p` "
-            . "JOIN `".MECCANO_TPREF."_core_langman_languages` `l` "
-            . "ON `l`.`id`=`p`.`codeid` "
-            . "WHERE `l`.`code`='$code' ;",
+            "DELETE FROM `".MECCANO_TPREF."_core_langman_titles` "
+            . "WHERE `codeid`=$codeId ;",
+            "DELETE FROM `".MECCANO_TPREF."_core_langman_texts` "
+            . "WHERE `codeid`=$codeId ;",
+            "DELETE FROM `".MECCANO_TPREF."_core_policy_descriptions` "
+            . "WHERE `codeid`=$codeId ;",
+            "DELETE FROM `".MECCANO_TPREF."_core_logman_descriptions` "
+            . "WHERE `codeid`=$codeId ;",
             "UPDATE `".MECCANO_TPREF."_core_userman_users` "
-            . "SET `langid`=("
-                . "SELECT `id` "
-                . "FROM `".MECCANO_TPREF."_core_langman_languages` "
-                . "WHERE `code`='$defLang') "
-            . "WHERE `langid`=("
-                . "SELECT `id` "
-                . "FROM `".MECCANO_TPREF."_core_langman_languages` "
-                . "WHERE `code`='$code') ;");
+            . "SET `langid`=$defLangId "
+            . "WHERE `langid`=$codeId ;");
         foreach ($sql as $value) {
             self::$dbLink->query($value);
             if (self::$dbLink->errno) {
@@ -94,10 +108,6 @@ class LangMan {
                 . "WHERE `code`='$code' ;");
         if (self::$dbLink->errno) {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('delLang: '.self::$dbLink->error);
-            return FALSE;
-        }
-        if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('delLang: defined language code was not found');
             return FALSE;
         }
         return TRUE;
