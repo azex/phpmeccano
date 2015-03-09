@@ -18,6 +18,7 @@ interface intLogMan {
     public static function sumLogByPlugin($plugin, $rpp = 20);
     public static function getPageByPlugin($plugin, $pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE);
     public static function getLogAllPlugins($code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE);
+    public static function getLogByPlugin($plugin, $code = MECCANO_DEF_LANG, $orderBy = array(), $ascent = FALSE);
 }
 
 class LogMan implements intLogMan {
