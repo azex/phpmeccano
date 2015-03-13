@@ -115,13 +115,13 @@ class Policy {
         return TRUE;
     }
     
-    public static function funcAccess($plugin, $func, $groupid, $access = TRUE) {
+    public static function funcAccess($plugin, $func, $groupId, $access = TRUE) {
         self::$errid = 0;        self::$errexp = '';
-        if (!(is_integer($groupid) || is_bool($groupid)) || !pregPlugin($plugin) || !pregPlugin($func)) {
+        if (!is_integer($groupId) || !pregPlugin($plugin) || !pregPlugin($func)) {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('funcAccess: incorect type of incoming parameters');
             return FALSE;
         }
-        if (is_bool($groupid)) {
+        if (!$groupId) {
             if ($access) {
                 $access = 1;
             }
@@ -142,16 +142,16 @@ class Policy {
                     . "SET `a`.`access`=1 "
                     . "WHERE `s`.`func`='$func' "
                     . "AND  `s`.`name`='$plugin' "
-                    . "AND `a`.`groupid`=$groupid ;");
+                    . "AND `a`.`groupid`=$groupId ;");
         }
-        elseif (!$access && $groupid!=1) {
+        elseif (!$access && $groupId!=1) {
             self::$dbLink->query("UPDATE `".MECCANO_TPREF."_core_policy_access` `a` "
                     . "JOIN `".MECCANO_TPREF."_core_policy_summary_list` `s` "
                     . "ON `a`.`funcid`=`s`.`id` "
                     . "SET `a`.`access`=0 "
                     . "WHERE `s`.`func`='$func' "
                     . "AND  `s`.`name`='$plugin' "
-                    . "AND `a`.`groupid`=$groupid ;");
+                    . "AND `a`.`groupid`=$groupId ;");
         }
         else {
             self::setErrId(ERROR_SYSTEM_INTERVENTION);            self::setErrExp('funcAccess: impossible to disable access for system group');
@@ -385,7 +385,7 @@ class Policy {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('groupPolicyList: incorect type of incoming parameters');
             return FALSE;
         }
-        if (is_bool($groupId)) {
+        if (!$groupId) {
             $qList = self::$dbLink->query("SELECT `d`.`id`, `d`.`short`, `s`.`func`, `n`.`access` "
                     . "FROM `".MECCANO_TPREF."_core_policy_summary_list` `s` "
                     . "JOIN `".MECCANO_TPREF."_core_policy_nosession` `n` "
