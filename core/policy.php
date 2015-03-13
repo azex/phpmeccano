@@ -385,7 +385,7 @@ class Policy {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('groupPolicyList: incorect type of incoming parameters');
             return FALSE;
         }
-        if (is_bool($groupId)) {
+        if (!$groupId) {
             $qList = self::$dbLink->query("SELECT `d`.`id`, `d`.`short`, `s`.`func`, `n`.`access` "
                     . "FROM `".MECCANO_TPREF."_core_policy_summary_list` `s` "
                     . "JOIN `".MECCANO_TPREF."_core_policy_nosession` `n` "
