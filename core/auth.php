@@ -6,13 +6,25 @@ require_once 'swconst.php';
 require_once 'unifunctions.php';
 require_once 'logman.php';
 
-class Auth {
+interface intAuth {
+    public function __construct(\mysqli $dbLink, LogMan $logObject);
+    public static function setDbLink(\mysqli $dbLink);
+    public static function setLogObject(LogMan $logObject);
+    public static function errId();
+    public static function errExp();
+    public static function userLogin($username, $password, $log = FALSE, $useCookie = TRUE, $cookieTime = 'month');
+    public static function isSession();
+    public static function userLogout();
+    public static function getSession($log = FALSE);
+}
+
+class Auth implements intAuth {
     private static $errid = 0; // error's id
     private static $errexp = ''; // error's explanation
     private static $dbLink; // database link
     private static $logObject; // log object
     
-    public function __construct($dbLink, $logObject) {
+    public function __construct(\mysqli $dbLink, LogMan $logObject) {
         if (!session_id()) {
             session_start();
         }
@@ -20,11 +32,11 @@ class Auth {
         self::$logObject = $logObject;
     }
     
-    public static function setDbLink($dbLink) {
+    public static function setDbLink(\mysqli $dbLink) {
         self::$dbLink = $dbLink;
     }
     
-    public static function setLogObject($logObject) {
+    public static function setLogObject(LogMan $logObject) {
         self::$logObject = $logObject;
     }
     
