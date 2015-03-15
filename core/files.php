@@ -15,7 +15,16 @@ require_once 'swconst.php';
  *
  * @author azex
  */
-class Files {
+
+interface intFiles {
+    public static function errId();
+    public static function errExp();
+    public static function copy($sourcePath, $destPath, $mergeDirs = FALSE, $rewriteFiles = FALSE, $skipExistentFiles = FALSE, $skipNotReadable = FALSE, $skipWriteProtected = FALSE, $skipConflicts = FALSE, $removeConflictFiles = FALSE);
+    public static function move($sourcePath, $destPath, $mergeDirs = FALSE, $replaceFiles = FALSE, $skipExistentFiles = FALSE, $skipNotReadable = FALSE, $skipWriteProtected = FALSE, $skipConflicts = FALSE, $removeConflictFiles = FALSE);
+    public static function remove($sourcePath, $skipNotReadable = FALSE, $skipWriteProtected = FALSE, $skipConflicts = FALSE);
+}
+
+class Files implements intFiles {
     private static $errid = 0; // error's id
     private static $errexp = ''; // error's explanation
 
