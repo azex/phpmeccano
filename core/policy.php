@@ -2,16 +2,34 @@
 
 namespace core;
 
-class Policy {
+require_once 'swconst.php';
+require_once 'unifunctions.php';
+
+interface intPolicy {
+    function __construct(\mysqli $dbLink);
+    public static function setDbLink(\mysqli $dbLink);
+    public static function errId();
+    public static function errExp();
+    public static function delPolicy($plugin);
+    public static function addGroup($id);
+    public static function delGroup($id);
+    public static function funcAccess($plugin, $func, $groupId, $access = TRUE);
+    public static function checkAccess($plugin, $func);
+    public static function install(\DOMDocument $policy);
+    public static function groupPolicyList($plugin, $groupId, $code = MECCANO_DEF_LANG);
+    public static function getPolicyDescById($id);
+}
+
+class Policy implements intPolicy {
     private static $errid = 0; // error's id
     private static $errexp = ''; // error's explanation
     private static $dbLink; // database link
     
-    public function __construct($dbLink) {
+    public function __construct(\mysqli $dbLink) {
         self::$dbLink = $dbLink;
     }
     
-    public static function setDbLink($dbLink) {
+    public static function setDbLink(\mysqli $dbLink) {
         self::$dbLink = $dbLink;
     }
     
@@ -31,28 +49,27 @@ class Policy {
         return self::$errexp;
     }
     
-    public static function delPolicy($name) {
+    public static function delPolicy($plugin) {
         self::$errid = 0;        self::$errexp = '';
-        if (!pregPlugin($name)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('delPolicy: name must be string');
+        if (!pregPlugin($plugin)) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('delPolicy: incorrect plugin name');
             return FALSE;
         }
-        $plugName = self::$dbLink->real_escape_string($name);
         $queries = array(
             "DELETE `d` FROM `".MECCANO_TPREF."_core_policy_descriptions` `d` "
             . "JOIN `".MECCANO_TPREF."_core_policy_summary_list` `s` "
             . "ON `s`.`id`=`d`.`policyid` "
-            . "WHERE `s`.`name`='$plugName' ;",
+            . "WHERE `s`.`name`='$plugin' ;",
             "DELETE `a` FROM `".MECCANO_TPREF."_core_policy_access` `a` "
             . "JOIN `".MECCANO_TPREF."_core_policy_summary_list` `s` "
             . "ON `s`.`id`=`a`.`funcid` "
-            . "WHERE `s`.`name`='$plugName' ;",
+            . "WHERE `s`.`name`='$plugin' ;",
             "DELETE `n` FROM `".MECCANO_TPREF."_core_policy_nosession` `n` "
             . "JOIN `".MECCANO_TPREF."_core_policy_summary_list` `s` "
             . "ON `s`.`id`=`n`.`funcid` "
-            . "WHERE `s`.`name`='$plugName' ;",
+            . "WHERE `s`.`name`='$plugin' ;",
             "DELETE FROM `".MECCANO_TPREF."_core_policy_summary_list` "
-            . "WHERE `name`='$plugName' ;");
+            . "WHERE `name`='$plugin' ;");
         foreach ($queries as $value) {
             self::$dbLink->query($value);
             if (self::$dbLink->errno) {
@@ -61,7 +78,7 @@ class Policy {
             }
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('delPolicy: defined name doesn\'t exist');
+            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('delPolicy: policy of the plugin not found');
             return FALSE;
         }
         return TRUE;
@@ -381,8 +398,8 @@ class Policy {
     
     public static function groupPolicyList($plugin, $groupId, $code = MECCANO_DEF_LANG) {
         self::$errid = 0;        self::$errexp = '';
-        if (!pregPlugin($plugin) || !(is_integer($groupId) || is_bool($groupId)) || !(is_null($code) || pregLang($code))) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('groupPolicyList: incorect type of incoming parameters');
+        if (!pregPlugin($plugin) || !(is_integer($groupId) || is_bool($groupId)) || !pregLang($code)) {
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('groupPolicyList: incorect incoming parameters');
             return FALSE;
         }
         if (!$groupId) {
