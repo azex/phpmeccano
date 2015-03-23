@@ -7,28 +7,66 @@ require_once 'unifunctions.php';
 require_once 'logman.php';
 require_once 'policy.php';
 
-class UserMan {
+interface intUserMan {
+    public function __construct(\mysqli $dbLink, LogMan $logObject, Policy $policyObject);
+    public static function setDbLink(\mysqli $dbLink);
+    public static function setLogObject(LogMan $logObject);
+    public static function setPolicyObject(Policy $policyObject);
+    public static function errId();
+    public static function errExp();
+    public static function createGroup($groupName, $description, $log = TRUE);
+    public static function groupStatus($groupId, $active, $log = TRUE);
+    public static function groupExists($groupName);
+    public static function moveGroupTo($groupId, $destId);
+    public static function aboutGroup($groupId);
+    public static function setGroupName($groupId, $groupName);
+    public static function setGroupDesc($groupId, $description);
+    public static function delGroup($groupId, $log = TRUE);
+    public static function sumGroups($rpp = 20);
+    public static function getGroups($pageNumber, $totalGroups, $rpp = 20, $orderBy = array('id'), $ascent = FALSE);
+    public static function getAllGroups($orderBy = array('id'), $ascent = FALSE);
+    public static function createUser($username, $password, $email, $groupId, $active = TRUE, $langCode = MECCANO_DEF_LANG, $log = TRUE);
+    public static function userExists($username);
+    public static function mailExists($email);
+    public static function userStatus($userId, $active, $log = TRUE);
+    public static function moveUserTo($userId, $destId);
+    public static function delUser($userId, $log = TRUE);
+    public static function aboutUser($userId);
+    public static function userPasswords($userId);
+    public static function addPassword($userId, $password, $description='');
+    public static function delPassword($passwId, $userId);
+    public static function setPassword($passwId, $userId, $password);
+    public static function setUserName($userId, $username, $log = TRUE);
+    public static function setUserMail($userId, $email);
+    public static function setFullName($userId, $name);
+    public static function changePassword($passwId, $userId, $oldPassw, $newPassw);
+    public static function sumUsers($rpp = 20);
+    public static function getUsers($pageNumber, $totalUsers, $rpp = 20, $orderBy = array('id'), $ascent = FALSE);
+    public static function getAllUsers($orderBy = array('id'), $ascent = FALSE);
+}
+
+class UserMan implements intUserMan{
     private static $errid = 0; // error's id
     private static $errexp = ''; // error's explanation
     private static $dbLink; // database link
     private static $logObject; // log object
     private static $policyObject; // policy object
     
-    public function __construct($dbLink, $logObject, $policyObject) {
+    public function __construct(\mysqli $dbLink, LogMan $logObject, Policy $policyObject) {
         self::$dbLink = $dbLink;
         self::$logObject = $logObject;
         self::$policyObject = $policyObject;
     }
     
-    public static function setDbLink($dbLink) {
+    public static function setDbLink(\mysqli $dbLink) {
         self::$dbLink = $dbLink;
     }
     
-    public static function setLogObject($logObject) {
+    public static function setLogObject(LogMan $logObject) {
         self::$logObject = $logObject;
     }
     
-    public static function setPolicyObject($policyObject) {
+    public static function setPolicyObject(Policy $policyObject) {
         self::$policyObject = $policyObject;
     }
     
@@ -49,19 +87,19 @@ class UserMan {
     }
     
     //group methods
-    public static function createGroup($groupname, $description, $log = TRUE) {
+    public static function createGroup($groupName, $description, $log = TRUE) {
         self::$errid = 0;        self::$errexp = '';
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
             self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('createGroup: function execution was terminated because of using of limited authentication');
             return FALSE;
         }
-        if (!pregGName($groupname) || !is_string($description)) {
+        if (!pregGName($groupName) || !is_string($description)) {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('createGroup: incorect type of incoming parameters');
             return FALSE;
         }
         $description = self::$dbLink->real_escape_string($description);
         self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_userman_groups` (`groupname`, `description`) "
-                . "VALUES ('$groupname', '$description') ;");
+                . "VALUES ('$groupName', '$description') ;");
         if (self::$dbLink->errno) {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('createGroup: group wasn\'t created | '.self::$dbLink->error);
             return FALSE;
@@ -71,7 +109,7 @@ class UserMan {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp(self::$policyObject->errExp());
             return FALSE;
         }
-        if ($log && !self::$logObject->newRecord('core', 'createGroup', "$groupname; ID: $groupId")) {
+        if ($log && !self::$logObject->newRecord('core', 'createGroup', "$groupName; ID: $groupId")) {
             self::setErrId(ERROR_NOT_CRITICAL);            self::setErrExp(self::$logObject->errExp());
         }
         return (int) $groupId;
@@ -122,15 +160,15 @@ class UserMan {
         return TRUE;
     }
     
-    public static function groupExists($groupname) {
+    public static function groupExists($groupName) {
         self::$errid = 0;        self::$errexp = '';
-        if (!pregGName($groupname)) {
+        if (!pregGName($groupName)) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('groupExists: incorrect group name');
             return FALSE;
         }
         $qId = self::$dbLink->query("SELECT `id` "
                 . "FROM `".MECCANO_TPREF."_core_userman_groups` "
-                . "WHERE `groupname`='$groupname' ;");
+                . "WHERE `groupname`='$groupName' ;");
         if (self::$dbLink->errno) {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('groupExists: can\'t check group existence | '.self::$dbLink->error);
             return FALSE;
@@ -153,24 +191,24 @@ class UserMan {
             return FALSE;
         }
         if ($groupId == 1) {
-            self::setErrId(ERROR_SYSTEM_INTERVENTION);            self::setErrExp('moveGroupTo: can\'t move system group');
+            self::setErrId(ERROR_SYSTEM_INTERVENTION);            self::setErrExp('moveGroupTo: unable to move system group');
             return FALSE;
         }
         self::$dbLink->query("SELECT `id` FROM `".MECCANO_TPREF."_core_userman_groups` "
                 . "WHERE `id`=$destId ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('moveGroupTo: can\'t check destination group existence |'.self::$dbLink->error);
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('moveGroupTo: unable to check destination group existence |'.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('moveGroupTo: destination group doesn\'t exist');
+            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('moveGroupTo: no one user of the group was not moved');
             return FALSE;
         }
         self::$dbLink->query("UPDATE `".MECCANO_TPREF."_core_userman_users` "
                 . "SET `groupid`=$destId "
                 . "WHERE `groupid`=$groupId ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('moveGroupTo: can\'t move users to another group |'.self::$dbLink->error);
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('moveGroupTo: unable to move users into another group |'.self::$dbLink->error);
             return FALSE;
         }
         return (int) self::$dbLink->affected_rows;
@@ -209,18 +247,18 @@ class UserMan {
         return $xml;
     }
     
-    public static function setGroupName($groupId, $groupname) {
+    public static function setGroupName($groupId, $groupName) {
         self::$errid = 0;        self::$errexp = '';
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
             self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('setGroupName: function execution was terminated because of using of limited authentication');
             return FALSE;
         }
-        if (!is_integer($groupId) || !pregGName($groupname)) {
+        if (!is_integer($groupId) || !pregGName($groupName)) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('setGroupName: incorrect incoming parameters');
             return FALSE;
         }
         self::$dbLink->query("UPDATE `".MECCANO_TPREF."_core_userman_groups` "
-                . "SET `groupname`='$groupname' "
+                . "SET `groupname`='$groupName' "
                 . "WHERE `id`=$groupId ;");
         if (self::$dbLink->errno) {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('setGroupName: can\'t set groupname | '.self::$dbLink->error);
@@ -307,14 +345,14 @@ class UserMan {
         return TRUE;
     }
     
-    public static function sumGroups($gpp = 20) { // gpp - groups per page
+    public static function sumGroups($rpp = 20) { // gpp - groups per page
         self::$errid = 0;        self::$errexp = '';
-        if (!is_integer($gpp)) {
+        if (!is_integer($rpp)) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('sumGroups: value of groups per page must be integer');
             return FALSE;
         }
-        if ($gpp < 1) {
-            $gpp = 1;
+        if ($rpp < 1) {
+            $rpp = 1;
         }
         $qResult = self::$dbLink->query("SELECT COUNT(`id`) FROM `".MECCANO_TPREF."_core_userman_groups` ;");
         if (self::$dbLink->errno) {
@@ -322,8 +360,8 @@ class UserMan {
             return FALSE;
         }
         list($totalGroups) = $qResult->fetch_array(MYSQLI_NUM);
-        $totalPages = $totalGroups/$gpp;
-        $remainer = fmod($totalGroups, $gpp);
+        $totalPages = $totalGroups/$rpp;
+        $remainer = fmod($totalGroups, $rpp);
         if ($totalPages<1 && $totalPages>0) {
             $totalPages = 1;
         }
@@ -333,24 +371,19 @@ class UserMan {
         elseif ($totalPages == 0) {
             $totalPages = 1;
         }
-        return array((int) $totalGroups, (int) $totalPages);
+        return array('records' => (int) $totalRecs, 'pages' => (int) $totalPages);
     }
     
-    public static function getGroups($pageNumber, $totalGroups, $gpp = 20, $orderBy = 'id', $ascent = FALSE) {
+    public static function getGroups($pageNumber, $totalGroups, $rpp = 20, $orderBy = array('id'), $ascent = FALSE) {
         self::$errid = 0;        self::$errexp = '';
-        if (!is_integer($pageNumber) || !is_integer($totalGroups) || !is_integer($gpp)) {
+        if (!is_integer($pageNumber) || !is_integer($totalGroups) || !is_integer($rpp)) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getGroups: values of $pageNumber, $totalGroups, $gpp must be integers');
             return FALSE;
         }
         $rightEntry = array('id', 'name', 'time', 'active');
-        if (is_string($orderBy)) {
-            if (!in_array($orderBy, $rightEntry, TRUE)) {
-            $orderBy = 'id';
-            }
-        }
-        elseif (is_array($orderBy)) {
+        if (is_array($orderBy)) {
             $arrayLen = count($orderBy);
-            if (count(array_intersect($orderBy, $rightEntry))) {
+            if (count(array_intersect($orderBy, $rightEntry)) == $arrayLen) {
                 $orderList = '';
                 foreach ($orderBy as $value) {
                     $orderList = $orderList.$value.'`, `';
@@ -362,7 +395,7 @@ class UserMan {
             }
         }
         else {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getGroups: value of $orderBy must be string or array');
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getGroups: orderBy must be array');
             return FALSE;
         }
         if ($pageNumber < 1) {
@@ -374,8 +407,8 @@ class UserMan {
         if ($totalGroups < 1) {
             $totalGroups = 1;
         }
-        if ($gpp < 1) {
-            $gpp = 1;
+        if ($rpp < 1) {
+            $rpp = 1;
         }
         if ($ascent == TRUE) {
             $direct = '';
@@ -383,10 +416,10 @@ class UserMan {
         elseif ($ascent == FALSE) {
             $direct = 'DESC';
         }
-        $start = ($pageNumber - 1) * $gpp;
+        $start = ($pageNumber - 1) * $rpp;
         $qResult = self::$dbLink->query("SELECT  `id`, `groupname` `name`, `creationtime` `time`, `active` "
                 . "FROM `".MECCANO_TPREF."_core_userman_groups` "
-                . "ORDER BY `$orderBy` $direct LIMIT $start, $gpp;");
+                . "ORDER BY `$orderBy` $direct LIMIT $start, $rpp;");
         if (self::$dbLink->errno) {
             self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getGroups: group info page couldn\'t be gotten | '.self::$dbLink->error);
             return FALSE;
@@ -405,16 +438,12 @@ class UserMan {
         return $xml;
     }
     
-    public static function getAllGroups($orderBy = 'id', $ascent = FALSE) {
+    public static function getAllGroups($orderBy = array('id'), $ascent = FALSE) {
         self::$errid = 0;        self::$errexp = '';
-        $rightEntry = array('id', 'group', 'time');
-        if (is_string($orderBy)) {
-            if (!in_array($orderBy, $rightEntry, TRUE)) {
-            $orderBy = 'id';
-            }
-        }
-        elseif (is_array($orderBy)) {
-            if (count(array_intersect($orderBy, $rightEntry))) {
+        $rightEntry = array('id', 'name', 'time', 'active');
+        if (is_array($orderBy)) {
+            $arrayLen = count($orderBy);
+            if (count(array_intersect($orderBy, $rightEntry)) == $arrayLen) {
                 $orderList = '';
                 foreach ($orderBy as $value) {
                     $orderList = $orderList.$value.'`, `';
@@ -630,27 +659,31 @@ class UserMan {
             return FALSE;
         }
         if ($userId == 1) {
-            self::setErrId(ERROR_SYSTEM_INTERVENTION);            self::setErrExp('moveUserTo: can\'t move system user');
+            self::setErrId(ERROR_SYSTEM_INTERVENTION);            self::setErrExp('moveUserTo: unable to move system user');
             return FALSE;
         }
         self::$dbLink->query("SELECT `id` FROM `".MECCANO_TPREF."_core_userman_groups` "
                 . "WHERE `id`=$destId ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('moveUserTo: can\'t check destination group existence |'.self::$dbLink->error);
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('moveUserTo: unable to check destination group existence |'.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('moveUserTo: destination group doesn\'t exist');
+            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('moveUserTo: destination group not found');
             return FALSE;
         }
         self::$dbLink->query("UPDATE `".MECCANO_TPREF."_core_userman_users` "
                 . "SET `groupid`=$destId "
                 . "WHERE `id`=$userId ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('moveUserTo: can\'t move user to another group |'.self::$dbLink->error);
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('moveUserTo: unable to move user into another group |'.self::$dbLink->error);
             return FALSE;
         }
-        return (int) self::$dbLink->affected_rows;
+        if (!self::$dbLink->affected_rows) {
+            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('moveUserTo: user not found');
+            return FALSE;
+        }
+        return TRUE;
     }
     
     public static function delUser($userId, $log = TRUE) {
@@ -848,7 +881,7 @@ class UserMan {
         return TRUE;
     }
     
-    public static function setPassword($passwId, $userId, $password){
+    public static function setPassword($passwId, $userId, $password) {
         self::$errid = 0;        self::$errexp = '';
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
             self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('setPassword: function execution was terminated because of using of limited authentication');
@@ -969,7 +1002,7 @@ class UserMan {
         return TRUE;
     }
     
-    public static function changePassword($passwId, $userId, $oldPassw, $newPassw){
+    public static function changePassword($passwId, $userId, $oldPassw, $newPassw) {
         self::$errid = 0;        self::$errexp = '';
         if (!is_integer($passwId) || !is_integer($userId) || !pregPassw($oldPassw) || !pregPassw($newPassw)) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('changePassword: incorrect incoming parameters');
@@ -1015,14 +1048,14 @@ class UserMan {
         return TRUE;
     }
     
-    public static function sumUsers($upp = 20) { // upp - users per page
+    public static function sumUsers($rpp = 20) { // rpp - records per page
         self::$errid = 0;        self::$errexp = '';
-        if (!is_integer($upp)) {
+        if (!is_integer($rpp)) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('sumUsers: value of users per page must be integer');
             return FALSE;
         }
-        if ($upp < 1) {
-            $upp = 1;
+        if ($rpp < 1) {
+            $rpp = 1;
         }
         $qResult = self::$dbLink->query("SELECT COUNT(`id`) FROM `".MECCANO_TPREF."_core_userman_users` ;");
         if (self::$dbLink->errno) {
@@ -1030,8 +1063,8 @@ class UserMan {
             return FALSE;
         }
         list($totalUsers) = $qResult->fetch_array(MYSQLI_NUM);
-        $totalPages = $totalUsers/$upp;
-        $remainer = fmod($totalUsers, $upp);
+        $totalPages = $totalUsers/$rpp;
+        $remainer = fmod($totalUsers, $rpp);
         if ($totalPages<1 && $totalPages>0) {
             $totalPages = 1;
         }
@@ -1041,24 +1074,19 @@ class UserMan {
         elseif ($totalPages == 0) {
             $totalPages = 1;
         }
-        return array((int) $totalUsers, (int) $totalPages);
+        return array('records' => (int) $totalUsers, 'pages' => (int) $totalPages);
     }
     
-    public static function getUsers($pageNumber, $totalUsers, $upp = 20, $orderBy = 'id', $ascent = FALSE) {
+    public static function getUsers($pageNumber, $totalUsers, $rpp = 20, $orderBy = array('id'), $ascent = FALSE) {
         self::$errid = 0;        self::$errexp = '';
-        if (!is_integer($pageNumber) || !is_integer($totalUsers) || !is_integer($upp)) {
+        if (!is_integer($pageNumber) || !is_integer($totalUsers) || !is_integer($rpp)) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getUsers: values of $pageNumber, $totalUsers, $upp must be integers');
             return FALSE;
         }
-        $rightEntry = array('id', 'username', 'time', 'name', 'email', 'group', 'gid', 'active');
-        if (is_string($orderBy)) {
-            if (!in_array($orderBy, $rightEntry, TRUE)) {
-            $orderBy = 'id';
-            }
-        }
-        elseif (is_array($orderBy)) {
+        $rightEntry = array('id', 'username', 'time', 'fullname', 'email', 'group', 'gid', 'active');
+        if (is_array($orderBy)) {
             $arrayLen = count($orderBy);
-            if (count(array_intersect($orderBy, $rightEntry))) {
+            if (count(array_intersect($orderBy, $rightEntry)) == $arrayLen) {
                 $orderList = '';
                 foreach ($orderBy as $value) {
                     $orderList = $orderList.$value.'`, `';
@@ -1070,7 +1098,7 @@ class UserMan {
             }
         }
         else {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getUsers: value of $orderBy must be string or array');
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getUsers: orderBy must be array');
             return FALSE;
         }
         if ($pageNumber < 1) {
@@ -1082,8 +1110,8 @@ class UserMan {
         if ($totalUsers < 1) {
             $totalUsers = 1;
         }
-        if ($upp < 1) {
-            $upp = 1;
+        if ($rpp < 1) {
+            $rpp = 1;
         }
         if ($ascent == TRUE) {
             $direct = '';
@@ -1091,16 +1119,16 @@ class UserMan {
         elseif ($ascent == FALSE) {
             $direct = 'DESC';
         }
-        $start = ($pageNumber - 1) * $upp;
-        $qResult = self::$dbLink->query("SELECT `u`.`id` `id`, `u`.`username` `username`, `i`.`fullname` `name`, `i`.`email` `email`, `g`.`groupname` `group`, `u`.`groupid` `gid`, `u`.`creationtime` `time`, `u`.`active` "
+        $start = ($pageNumber - 1) * $rpp;
+        $qResult = self::$dbLink->query("SELECT `u`.`id` `id`, `u`.`username` `username`, `i`.`fullname` `fullname`, `i`.`email` `email`, `g`.`groupname` `group`, `u`.`groupid` `gid`, `u`.`creationtime` `time`, `u`.`active` "
                 . "FROM `".MECCANO_TPREF."_core_userman_users` `u` "
                 . "JOIN `".MECCANO_TPREF."_core_userman_userinfo` `i` "
                 . "ON `u`.`id` = `i`.`id` "
                 . "JOIN `".MECCANO_TPREF."_core_userman_groups` `g` "
                 . "ON `u`.`groupid` = `g`.`id` "
-                . "ORDER BY `$orderBy` $direct LIMIT $start, $upp;");
+                . "ORDER BY `$orderBy` $direct LIMIT $start, $rpp;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getUsers: user info page couldn\'t be gotten | '.self::$dbLink->error);
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getUsers: unable to get user info page | '.self::$dbLink->error);
             return FALSE;
         }
         $xml = new \DOMDocument('1.0', 'utf-8');
@@ -1121,16 +1149,12 @@ class UserMan {
         return $xml;
     }
     
-    public static function getAllUsers($orderBy = 'id', $ascent = FALSE) {
+    public static function getAllUsers($orderBy = array('id'), $ascent = FALSE) {
         self::$errid = 0;        self::$errexp = '';
-        $rightEntry = array('id', 'username', 'time', 'name', 'email', 'group', 'gid', 'active');
-        if (is_string($orderBy)) {
-            if (!in_array($orderBy, $rightEntry, TRUE)) {
-            $orderBy = 'id';
-            }
-        }
-        elseif (is_array($orderBy)) {
-            if (count(array_intersect($orderBy, $rightEntry))) {
+        $rightEntry = array('id', 'username', 'time', 'fullname', 'email', 'group', 'gid', 'active');
+        if (is_array($orderBy)) {
+            $arrayLen = count($orderBy);
+            if (count(array_intersect($orderBy, $rightEntry)) == $arrayLen) {
                 $orderList = '';
                 foreach ($orderBy as $value) {
                     $orderList = $orderList.$value.'`, `';
@@ -1142,7 +1166,7 @@ class UserMan {
             }
         }
         else {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getAllUsers: value of $orderBy must be string or array');
+            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getAllUsers: orderBy must be array');
             return FALSE;
         }
         if ($ascent == TRUE) {
@@ -1151,7 +1175,7 @@ class UserMan {
         elseif ($ascent == FALSE) {
             $direct = 'DESC';
         }
-        $qResult = self::$dbLink->query("SELECT `u`.`id` `id`, `u`.`username` `username`, `i`.`fullname` `name`, `i`.`email` `email`, `g`.`groupname` `group`, `u`.`groupid` `gid`, `u`.`creationtime` `time`, `u`.`active` "
+        $qResult = self::$dbLink->query("SELECT `u`.`id` `id`, `u`.`username` `username`, `i`.`fullname` `fullname`, `i`.`email` `email`, `g`.`groupname` `group`, `u`.`groupid` `gid`, `u`.`creationtime` `time`, `u`.`active` "
                 . "FROM `".MECCANO_TPREF."_core_userman_users` `u` "
                 . "JOIN `".MECCANO_TPREF."_core_userman_userinfo` `i` "
                 . "ON `u`.`id` = `i`.`id` "
@@ -1159,7 +1183,7 @@ class UserMan {
                 . "ON `u`.`groupid` = `g`.`id` "
                 . "ORDER BY `$orderBy` $direct ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getUsers: user info page couldn\'t be gotten | '.self::$dbLink->error);
+            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getAllUsers: unable to get user info page | '.self::$dbLink->error);
             return FALSE;
         }
         $xml = new \DOMDocument('1.0', 'utf-8');
