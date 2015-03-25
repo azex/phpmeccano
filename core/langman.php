@@ -64,13 +64,14 @@ class LangMan implements intLangMan{
     public static function setDbLink(\mysqli $dbLink) {
         self::$dbLink = $dbLink;
     }
-
-    private static function setErrId($id) {
+    
+    private static function setError($id, $exp) {
         self::$errid = $id;
+        self::$errexp = $exp;
     }
     
-    private static function setErrExp($exp) {
-        self::$errexp = $exp;
+    private static function zeroizeError() {
+        self::$errid = 0;        self::$errexp = '';
     }
 
     public static function errId() {
@@ -82,40 +83,40 @@ class LangMan implements intLangMan{
     }
     
     public static function addLang($code, $name) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (!pregLang($code) || !is_string($name)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('addLang: incorrect incoming parameters');
+            self::setError(ERROR_INCORRECT_DATA, 'addLang: incorrect incoming parameters');
             return FALSE;
         }
         $name = self::$dbLink->real_escape_string(htmlspecialchars($name));
         self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_languages` (`code`, `name`) "
                 . "VALUES('$code', '$name') ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('addLang: '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'addLang: '.self::$dbLink->error);
             return FALSE;
         }
         return TRUE;
     }
     
     public static function delLang($code) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (!pregLang($code)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('delLang: incorrect incoming parameter');
+            self::setError(ERROR_INCORRECT_DATA, 'delLang: incorrect incoming parameter');
             return FALSE;
         }
         if ($code == MECCANO_DEF_LANG) {
-            self::setErrId(ERROR_SYSTEM_INTERVENTION);            self::setErrExp('delLang: it is impossible to delete default language');
+            self::setError(ERROR_SYSTEM_INTERVENTION, 'delLang: it is impossible to delete default language');
             return FALSE;
         }
         $qLang = self::$dbLink->query("SELECT `id` "
                 . "FROM `".MECCANO_TPREF."_core_langman_languages` "
                 . "WHERE `code`='$code' ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('delLang: unable to get language identifier |'.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'delLang: unable to get language identifier |'.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp("delLang: language [$code] is not found");
+            self::setError(ERROR_NOT_FOUND, "delLang: language [$code] is not found");
             return FALSE;
         }
         list($codeId) = $qLang->fetch_row();
@@ -124,11 +125,11 @@ class LangMan implements intLangMan{
                 . "FROM `".MECCANO_TPREF."_core_langman_languages` "
                 . "WHERE `code`='$defLang' ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('delLang: unable to get default language identifier |'.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'delLang: unable to get default language identifier |'.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp("delLang:  default language [$defLang] is not found");
+            self::setError(ERROR_NOT_FOUND, "delLang:  default language [$defLang] is not found");
             return FALSE;
         }
         list($defLangId) = $qDefLang->fetch_row();
@@ -147,29 +148,29 @@ class LangMan implements intLangMan{
         foreach ($sql as $value) {
             self::$dbLink->query($value);
             if (self::$dbLink->errno) {
-                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('delLang: '.self::$dbLink->error);
+                self::setError(ERROR_NOT_EXECUTED, 'delLang: '.self::$dbLink->error);
                 return FALSE;
             }
         }
         self::$dbLink->query("DELETE FROM `".MECCANO_TPREF."_core_langman_languages` "
                 . "WHERE `code`='$code' ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('delLang: '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'delLang: '.self::$dbLink->error);
             return FALSE;
         }
         return TRUE;
     }
 
     public static function langList() {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         $qLang = self::$dbLink->query("SELECT `id`, `code`, `name` "
                 . "FROM `".MECCANO_TPREF."_core_langman_languages` ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('langList: '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'langList: '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('langList: there wasn\'t found any language');
+            self::setError(ERROR_NOT_FOUND, 'langList: there wasn\'t found any language');
             return FALSE;
         }
         $xml = new \DOMDocument('1.0', 'utf-8');
@@ -186,15 +187,15 @@ class LangMan implements intLangMan{
     }
     
     public static function installTiles(\DOMDocument $titles) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (!$titles->relaxNGValidate(MECCANO_CORE_DIR.'/langman/title-schema-v1.rng')) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('installTitles: incorrect structure of policy description');
+            self::setError(ERROR_INCORRECT_DATA, 'installTitles: incorrect structure of policy description');
             return FALSE;
         }
         //getting list of available languages
         $qAvaiLang = self::$dbLink->query("SELECT `id`, `code` FROM `".MECCANO_TPREF."_core_langman_languages` ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('installPolicyDesc: can\'t get list of available languages: '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'installPolicyDesc: can\'t get list of available languages: '.self::$dbLink->error);
             return FALSE;
         }
         $avaiLang = array();
@@ -208,11 +209,11 @@ class LangMan implements intLangMan{
                 . "FROM `".MECCANO_TPREF."_core_plugins_installed` "
                 . "WHERE `name`='$plugName' ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('installTitles: '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'installTitles: '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('installTitles: can\'t find plugin');
+            self::setError(ERROR_NOT_FOUND, 'installTitles: can\'t find plugin');
             return FALSE;
         }
         list($plugId) = $qPlugin->fetch_row();
@@ -234,7 +235,7 @@ class LangMan implements intLangMan{
                         . "WHERE `p`.`name`='$plugName' "
                         . "AND `s`.`section`='$sectionOldName' ;");
                 if (self::$dbLink->errno) {
-                    self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp('installTitles: can\'t rename section | '.self::$dbLink->error);
+                    self::setError(ERROR_NOT_EXECUTED, 'installTitles: can\'t rename section | '.self::$dbLink->error);
                     return FALSE;
                 }
             }
@@ -312,7 +313,7 @@ class LangMan implements intLangMan{
                     foreach ($sql as $value) {
                         self::$dbLink->query($value);
                         if (self::$dbLink->errno) {
-                            self::setErrId(ERROR_NOT_EXECUTED);                            self::setErrExp('installTitles: can\'t clear data before updating titles | '.self::$dbLink->error);
+                            self::setError(ERROR_NOT_EXECUTED, 'installTitles: can\'t clear data before updating titles | '.self::$dbLink->error);
                             return FALSE;
                         }
                     }
@@ -321,7 +322,7 @@ class LangMan implements intLangMan{
                         self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_title_names` (`sid`, `name`) "
                                 . "VALUES ($sectionId, '$titleName') ;");
                         if (self::$dbLink->errno) {
-                            self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp('installTitles: can\'t update name | '.self::$dbLink->error);
+                            self::setError(ERROR_NOT_EXECUTED, 'installTitles: can\'t update name | '.self::$dbLink->error);
                             return FALSE;
                         }
                         $nameId = self::$dbLink->insert_id;
@@ -331,7 +332,7 @@ class LangMan implements intLangMan{
                             self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_titles` (`codeid`, `nameid`, `title`) "
                                     . "VALUES ($codeId, $nameId, '$title') ;");
                             if (self::$dbLink->errno) {
-                                self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp('installTitles: can\'t update title | '.self::$dbLink->error);
+                                self::setError(ERROR_NOT_EXECUTED, 'installTitles: can\'t update title | '.self::$dbLink->error);
                                 return FALSE;
                             }
                         }
@@ -343,7 +344,7 @@ class LangMan implements intLangMan{
                             . "SET `static`=0 "
                             . "WHERE `section`='$sectionName' ;");
                     if (self::$dbLink->errno) {
-                        self::setErrId(ERROR_NOT_EXECUTED);                        self::setErrExp('installTitles: '.self::$dbLink->error);
+                        self::setError(ERROR_NOT_EXECUTED, 'installTitles: '.self::$dbLink->error);
                         return FALSE;
                     }
                 }
@@ -355,7 +356,7 @@ class LangMan implements intLangMan{
                     self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_title_sections` (`section`, `plugid`, `static`) "
                             . "VALUES ('$sectionName', $plugId, 1) ;");
                     if (self::$dbLink->errno) {
-                        self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp('installTitles: can\'t create section | '.self::$dbLink->error);
+                        self::setError(ERROR_NOT_EXECUTED, 'installTitles: can\'t create section | '.self::$dbLink->error);
                         return FALSE;
                     }
                     $sectionId = self::$dbLink->insert_id;
@@ -363,7 +364,7 @@ class LangMan implements intLangMan{
                         self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_title_names` (`sid`, `name`) "
                                 . "VALUES ($sectionId, '$titleName') ;");
                         if (self::$dbLink->errno) {
-                            self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp('installTitles: can\'t create title name | '.self::$dbLink->error);
+                            self::setError(ERROR_NOT_EXECUTED, 'installTitles: can\'t create title name | '.self::$dbLink->error);
                             return FALSE;
                         }
                         $nameId = self::$dbLink->insert_id;
@@ -373,7 +374,7 @@ class LangMan implements intLangMan{
                             self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_titles` (`codeid`, `nameid`, `title`) "
                                     . "VALUES ($codeId, $nameId, '$title') ;");
                             if (self::$dbLink->errno) {
-                                self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp('installTitles: can\'t create title | '.self::$dbLink->error);
+                                self::setError(ERROR_NOT_EXECUTED, 'installTitles: can\'t create title | '.self::$dbLink->error);
                                 return FALSE;
                             }
                         }
@@ -384,7 +385,7 @@ class LangMan implements intLangMan{
                     self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_title_sections` (`section`, `plugid`, `static`) "
                             . "VALUES ('$sectionName', $plugId, 0) ;");
                     if (self::$dbLink->errno) {
-                        self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp('installTitles: '.self::$dbLink->error);
+                        self::setError(ERROR_NOT_EXECUTED, 'installTitles: '.self::$dbLink->error);
                         return FALSE;
                     }
                 }
@@ -394,15 +395,15 @@ class LangMan implements intLangMan{
     }
     
     public static function installTexts(\DOMDocument $texts) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (!$texts->relaxNGValidate(MECCANO_CORE_DIR.'/langman/text-schema-v1.rng')) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('installTexts: incorrect structure of policy description');
+            self::setError(ERROR_INCORRECT_DATA, 'installTexts: incorrect structure of policy description');
             return FALSE;
         }
         //getting list of available languages
         $qAvaiLang = self::$dbLink->query("SELECT `id`, `code` FROM `".MECCANO_TPREF."_core_langman_languages` ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('installPolicyDesc: can\'t get list of available languages: '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'installPolicyDesc: can\'t get list of available languages: '.self::$dbLink->error);
             return FALSE;
         }
         $avaiLang = array();
@@ -416,11 +417,11 @@ class LangMan implements intLangMan{
                 . "FROM `".MECCANO_TPREF."_core_plugins_installed` "
                 . "WHERE `name`='$plugName' ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('installTexts: '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'installTexts: '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('installTexts: can\'t find plugin');
+            self::setError(ERROR_NOT_FOUND, 'installTexts: can\'t find plugin');
             return FALSE;
         }
         list($plugId) = $qPlugin->fetch_row();
@@ -442,7 +443,7 @@ class LangMan implements intLangMan{
                         . "WHERE `p`.`name`='$plugName' "
                         . "AND `s`.`section`='$sectionOldName' ;");
                 if (self::$dbLink->errno) {
-                    self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp('installTexts: can\'t rename section | '.self::$dbLink->error);
+                    self::setError(ERROR_NOT_EXECUTED, 'installTexts: can\'t rename section | '.self::$dbLink->error);
                     return FALSE;
                 }
             }
@@ -522,7 +523,7 @@ class LangMan implements intLangMan{
                     foreach ($sql as $value) {
                         self::$dbLink->query($value);
                         if (self::$dbLink->errno) {
-                            self::setErrId(ERROR_NOT_EXECUTED);                            self::setErrExp('installTexts: can\'t clear data before updating texts | '.self::$dbLink->error);
+                            self::setError(ERROR_NOT_EXECUTED, 'installTexts: can\'t clear data before updating texts | '.self::$dbLink->error);
                             return FALSE;
                         }
                     }
@@ -531,7 +532,7 @@ class LangMan implements intLangMan{
                         self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_text_names` (`sid`, `name`) "
                                 . "VALUES ($sectionId, '$textName') ;");
                         if (self::$dbLink->errno) {
-                            self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp('installTexts: can\'t update name | '.self::$dbLink->error);
+                            self::setError(ERROR_NOT_EXECUTED, 'installTexts: can\'t update name | '.self::$dbLink->error);
                             return FALSE;
                         }
                         $nameId = self::$dbLink->insert_id;
@@ -542,7 +543,7 @@ class LangMan implements intLangMan{
                             self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_texts` (`codeid`, `nameid`, `title`, `document`) "
                                     . "VALUES ($codeId, $nameId, '$title', '$document') ;");
                             if (self::$dbLink->errno) {
-                                self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp('installTexts: can\'t update text | '.self::$dbLink->error);
+                                self::setError(ERROR_NOT_EXECUTED, 'installTexts: can\'t update text | '.self::$dbLink->error);
                                 return FALSE;
                             }
                         }
@@ -554,7 +555,7 @@ class LangMan implements intLangMan{
                             . "SET `static`=0 "
                             . "WHERE `section`='$sectionName' ;");
                     if (self::$dbLink->errno) {
-                        self::setErrId(ERROR_NOT_EXECUTED);                        self::setErrExp('installTexts: '.self::$dbLink->error);
+                        self::setError(ERROR_NOT_EXECUTED, 'installTexts: '.self::$dbLink->error);
                         return FALSE;
                     }
                 }
@@ -566,7 +567,7 @@ class LangMan implements intLangMan{
                     self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_text_sections` (`section`, `plugid`, `static`) "
                             . "VALUES ('$sectionName', $plugId, 1) ;");
                     if (self::$dbLink->errno) {
-                        self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp('installTexts: can\'t create section | '.self::$dbLink->error);
+                        self::setError(ERROR_NOT_EXECUTED, 'installTexts: can\'t create section | '.self::$dbLink->error);
                         return FALSE;
                     }
                     $sectionId = self::$dbLink->insert_id;
@@ -574,7 +575,7 @@ class LangMan implements intLangMan{
                         self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_text_names` (`sid`, `name`) "
                                 . "VALUES ($sectionId, '$textName') ;");
                         if (self::$dbLink->errno) {
-                            self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp('installTexts: can\'t create text name | '.self::$dbLink->error);
+                            self::setError(ERROR_NOT_EXECUTED, 'installTexts: can\'t create text name | '.self::$dbLink->error);
                             return FALSE;
                         }
                         $nameId = self::$dbLink->insert_id;
@@ -585,7 +586,7 @@ class LangMan implements intLangMan{
                             self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_texts` (`codeid`, `nameid`, `title`, `document`) "
                                     . "VALUES ($codeId, $nameId, '$title', '$document') ;");
                             if (self::$dbLink->errno) {
-                                self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp('installTexts: can\'t create text | '.self::$dbLink->error);
+                                self::setError(ERROR_NOT_EXECUTED, 'installTexts: can\'t create text | '.self::$dbLink->error);
                                 return FALSE;
                             }
                         }
@@ -596,7 +597,7 @@ class LangMan implements intLangMan{
                     self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_text_sections` (`section`, `plugid`, `static`) "
                             . "VALUES ('$sectionName', $plugId, 0) ;");
                     if (self::$dbLink->errno) {
-                        self::setErrId(ERROR_NOT_EXECUTED);                    self::setErrExp('installTexts: '.self::$dbLink->error);
+                        self::setError(ERROR_NOT_EXECUTED, 'installTexts: '.self::$dbLink->error);
                         return FALSE;
                     }
                 }
@@ -606,9 +607,9 @@ class LangMan implements intLangMan{
     }
     
     public static function delPlugin($plugin) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (!pregPlugin($plugin)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('delPlugin: incorrect plugin name');
+            self::setError(ERROR_INCORRECT_DATA, 'delPlugin: incorrect plugin name');
             return FALSE;
         }
         // checking if plugin exists
@@ -616,11 +617,11 @@ class LangMan implements intLangMan{
                 . "FROM `".MECCANO_TPREF."_core_plugins_installed` "
                 . "WHERE `name`='$plugin' ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('delPlugin: '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'delPlugin: '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('delPlugin: can\'t find plugin');
+            self::setError(ERROR_NOT_FOUND, 'delPlugin: can\'t find plugin');
             return FALSE;
         }
         // deleting all the data related to plugin
@@ -665,7 +666,7 @@ class LangMan implements intLangMan{
         foreach ($sql as $key => $value) {
             self::$dbLink->query($value);
             if (self::$dbLink->errno) {
-                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp("delPlugin: query #$key ".self::$dbLink->error);
+                self::setError(ERROR_NOT_EXECUTED, "delPlugin: query #$key ".self::$dbLink->error);
                 return FALSE;
             }
         }
@@ -673,9 +674,9 @@ class LangMan implements intLangMan{
     }
     
     public static function addTitleSection($section, $plugin) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (!pregName40($section) || !pregPlugin($plugin)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('addTitleSection: incorrect incoming parameters');
+            self::setError(ERROR_INCORRECT_DATA, 'addTitleSection: incorrect incoming parameters');
             return FALSE;
         }
         // checking if plugin exists
@@ -683,11 +684,11 @@ class LangMan implements intLangMan{
                 . "FROM `".MECCANO_TPREF."_core_plugins_installed` "
                 . "WHERE `name`='$plugin' ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('delPlugin: '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'delPlugin: '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('addTitleSection: can\'t find plugin');
+            self::setError(ERROR_NOT_FOUND, 'addTitleSection: can\'t find plugin');
             return FALSE;
         }
         list($plugid) = $qPlugin->fetch_row();
@@ -695,16 +696,16 @@ class LangMan implements intLangMan{
         self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_title_sections` (`plugid`, `section` , `static`) "
                 . "VALUES ($plugid, '$section', 0) ;");
         if (self::$dbLink->errno) {
-            self::setErrExp(ERROR_NOT_EXECUTED);            self::setErrExp('addTitleSection: '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'addTitleSection: '.self::$dbLink->error);
             return FALSE;
         }
         return (int) self::$dbLink->insert_id;
     }
     
     public static function delTitleSection($sid) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (!is_integer($sid)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('delTitleSection: incorrect identifier');
+            self::setError(ERROR_INCORRECT_DATA, 'delTitleSection: incorrect identifier');
             return FALSE;
         }
         $sql=array(
@@ -727,21 +728,21 @@ class LangMan implements intLangMan{
         foreach ($sql as $key => $value) {
             self::$dbLink->query($value);
             if (self::$dbLink->errno) {
-                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp("delTitleSection: query #$key ".self::$dbLink->error);
+                self::setError(ERROR_NOT_EXECUTED, "delTitleSection: query #$key ".self::$dbLink->error);
                 return FALSE;
             }
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('delTitleSection: defined section doesn\'t exist or your are trying to delete static section');
+            self::setError(ERROR_NOT_FOUND, 'delTitleSection: defined section doesn\'t exist or your are trying to delete static section');
             return FALSE;
         }
         return TRUE;
     }
     
     public static function addTextSection($section, $plugin) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (!pregName40($section) || !pregPlugin($plugin)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('addTextSection: incorrect incoming parameters');
+            self::setError(ERROR_INCORRECT_DATA, 'addTextSection: incorrect incoming parameters');
             return FALSE;
         }
         // checking if plugin exists
@@ -749,11 +750,11 @@ class LangMan implements intLangMan{
                 . "FROM `".MECCANO_TPREF."_core_plugins_installed` "
                 . "WHERE `name`='$plugin' ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('delPlugin: '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'delPlugin: '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('addTextSection: can\'t find plugin');
+            self::setError(ERROR_NOT_FOUND, 'addTextSection: can\'t find plugin');
             return FALSE;
         }
         list($plugid) = $qPlugin->fetch_row();
@@ -761,16 +762,16 @@ class LangMan implements intLangMan{
         self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_text_sections` (`plugid`, `section` , `static`) "
                 . "VALUES ($plugid, '$section', 0) ;");
         if (self::$dbLink->errno) {
-            self::setErrExp(ERROR_NOT_EXECUTED);            self::setErrExp('addTextSection: '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'addTextSection: '.self::$dbLink->error);
             return FALSE;
         }
         return (int) self::$dbLink->insert_id;
     }
     
     public static function delTextSection($sid) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (!is_integer($sid)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('delTextSection: incorrect identifier');
+            self::setError(ERROR_INCORRECT_DATA, 'delTextSection: incorrect identifier');
             return FALSE;
         }
         $sql=array(
@@ -793,21 +794,21 @@ class LangMan implements intLangMan{
         foreach ($sql as $key => $value) {
             self::$dbLink->query($value);
             if (self::$dbLink->errno) {
-                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp("delTextSection: query #$key ".self::$dbLink->error);
+                self::setError(ERROR_NOT_EXECUTED, "delTextSection: query #$key ".self::$dbLink->error);
                 return FALSE;
             }
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('delTextSection: defined section doesn\'t exist or your are trying to delete static section');
+            self::setError(ERROR_NOT_FOUND, 'delTextSection: defined section doesn\'t exist or your are trying to delete static section');
             return FALSE;
         }
         return TRUE;
     }
     
     public static function addTitleName($name, $section, $plugin) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (!pregName40($name) || !pregName40($section) || !pregPlugin($plugin)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('addTitleName: incorrect incoming parameters');
+            self::setError(ERROR_INCORRECT_DATA, 'addTitleName: incorrect incoming parameters');
             return FALSE;
         }
         $qIdentifiers = self::$dbLink->query("SELECT `s`.`id` "
@@ -818,11 +819,11 @@ class LangMan implements intLangMan{
                 . "AND `s`.`static`=0 "
                 . "AND `p`.`name`='$plugin' ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('addTitleName: can\'t check section and plugin | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'addTitleName: can\'t check section and plugin | '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('addTitleName: can\'t find matchable section and plugin or you are trying to create name in static section');
+            self::setError(ERROR_NOT_FOUND, 'addTitleName: can\'t find matchable section and plugin or you are trying to create name in static section');
             return FALSE;
         }
         list($sid) = $qIdentifiers->fetch_row();
@@ -830,16 +831,16 @@ class LangMan implements intLangMan{
                 . "(`sid`, `name`) "
                 . "VALUES ($sid, '$name') ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('addTitleName: can\'t create name | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'addTitleName: can\'t create name | '.self::$dbLink->error);
             return FALSE;
         }
         return (int) self::$dbLink->insert_id;
     }
     
     public static function delTitleName($nameid) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (!is_integer($nameid)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('delTitleName: incorrect identifier');
+            self::setError(ERROR_INCORRECT_DATA, 'delTitleName: incorrect identifier');
             return FALSE;
         }
         $sql=array(
@@ -859,21 +860,21 @@ class LangMan implements intLangMan{
         foreach ($sql as $key => $value) {
             self::$dbLink->query($value);
             if (self::$dbLink->errno) {
-                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp("delTitleName: query #$key ".self::$dbLink->error);
+                self::setError(ERROR_NOT_EXECUTED, "delTitleName: query #$key ".self::$dbLink->error);
                 return FALSE;
             }
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('delTitleName: defined tile name doesn\'t exist or your are trying to delete name from static section');
+            self::setError(ERROR_NOT_FOUND, 'delTitleName: defined tile name doesn\'t exist or your are trying to delete name from static section');
             return FALSE;
         }
         return TRUE;
     }
     
     public static function addTextName($name, $section, $plugin) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (!pregName40($name) || !pregName40($section) || !pregPlugin($plugin)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('addTextName: incorrect incoming parameters');
+            self::setError(ERROR_INCORRECT_DATA, 'addTextName: incorrect incoming parameters');
             return FALSE;
         }
         $qIdentifiers = self::$dbLink->query("SELECT `s`.`id` "
@@ -884,11 +885,11 @@ class LangMan implements intLangMan{
                 . "AND `s`.`static`=0 "
                 . "AND `p`.`name`='$plugin' ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('addTextName: can\'t check section and plugin | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'addTextName: can\'t check section and plugin | '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('addTextName: can\'t find matchable section and plugin or you are trying to create name in static section');
+            self::setError(ERROR_NOT_FOUND, 'addTextName: can\'t find matchable section and plugin or you are trying to create name in static section');
             return FALSE;
         }
         list($sid) = $qIdentifiers->fetch_row();
@@ -896,16 +897,16 @@ class LangMan implements intLangMan{
                 . "(`sid`, `name`) "
                 . "VALUES ($sid, '$name') ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('addTextName: can\'t create name | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'addTextName: can\'t create name | '.self::$dbLink->error);
             return FALSE;
         }
         return (int) self::$dbLink->insert_id;
     }
     
     public static function delTextName($nameid) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (!is_integer($nameid)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('delTextName: incorrect identifier');
+            self::setError(ERROR_INCORRECT_DATA, 'delTextName: incorrect identifier');
             return FALSE;
         }
         $sql=array(
@@ -925,21 +926,21 @@ class LangMan implements intLangMan{
         foreach ($sql as $key => $value) {
             self::$dbLink->query($value);
             if (self::$dbLink->errno) {
-                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp("delTextName: query #$key ".self::$dbLink->error);
+                self::setError(ERROR_NOT_EXECUTED, "delTextName: query #$key ".self::$dbLink->error);
                 return FALSE;
             }
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('delTextName: defined tile name doesn\'t exist or your are trying to delete name from static section');
+            self::setError(ERROR_NOT_FOUND, 'delTextName: defined tile name doesn\'t exist or your are trying to delete name from static section');
             return FALSE;
         }
         return TRUE;
     }
     
     public static function addTitle($title, $name, $section, $plugin, $code = MECCANO_DEF_LANG) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (!is_string($title) || !pregName40($name) || !pregName40($section) || !pregPlugin($plugin) || !pregLang($code)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('addTitle: incorrect incoming parameters');
+            self::setError(ERROR_INCORRECT_DATA, 'addTitle: incorrect incoming parameters');
             return FALSE;
         }
         $qTitle = self::$dbLink->query("SELECT `n`.`id` "
@@ -953,11 +954,11 @@ class LangMan implements intLangMan{
                 . "AND `s`.`static`=0 "
                 . "AND `p`.`name`='$plugin' ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('addTitle: can\'t get name identifier | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'addTitle: can\'t get name identifier | '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('addTitle: can\'t find name, section or plugin');
+            self::setError(ERROR_NOT_FOUND, 'addTitle: can\'t find name, section or plugin');
             return FALSE;
         }
         list($nameId) = $qTitle->fetch_row();
@@ -965,11 +966,11 @@ class LangMan implements intLangMan{
                 . "FROM `".MECCANO_TPREF."_core_langman_languages` "
                 . "WHERE `code`='$code' ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('addTitle: can\'t get language code identifier | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'addTitle: can\'t get language code identifier | '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('addTitle: defined language was not found');
+            self::setError(ERROR_NOT_FOUND, 'addTitle: defined language was not found');
             return FALSE;
         }
         list($codeId) = $qLang->fetch_row();
@@ -978,16 +979,16 @@ class LangMan implements intLangMan{
                 . "(`title`, `nameid`, `codeid`) "
                 . "VALUES ('$title', $nameId, $codeId) ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('addTitle: can\'t insert title | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'addTitle: can\'t insert title | '.self::$dbLink->error);
             return FALSE;
         }
         return (int) self::$dbLink->insert_id;
     }
     
     public static function delTitle($tid) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (!is_integer($tid)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('delTitle: incorrect title identifier');
+            self::setError(ERROR_INCORRECT_DATA, 'delTitle: incorrect title identifier');
             return FALSE;
         }
         self::$dbLink->query("DELETE `t` FROM `".MECCANO_TPREF."_core_langman_titles` `t` "
@@ -998,20 +999,20 @@ class LangMan implements intLangMan{
                 . "WHERE `t`.`id`=$tid "
                 . "AND `s`.`static`=0 ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('delTitle: can\'t delete defined title');
+            self::setError(ERROR_NOT_EXECUTED, 'delTitle: can\'t delete defined title');
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('delTitle: can\'t find defined title');
+            self::setError(ERROR_NOT_FOUND, 'delTitle: can\'t find defined title');
             return FALSE;
         }
         return TRUE;
     }
     
     public static function addText($title, $document, $name, $section, $plugin, $code = MECCANO_DEF_LANG) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (!is_string($title) || !is_string($document) || !pregName40($name) || !pregName40($section) || !pregPlugin($plugin) || !pregLang($code)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('addText: incorrect incoming parameters');
+            self::setError(ERROR_INCORRECT_DATA, 'addText: incorrect incoming parameters');
             return FALSE;
         }
         $qText = self::$dbLink->query("SELECT `n`.`id` "
@@ -1025,11 +1026,11 @@ class LangMan implements intLangMan{
                 . "AND `s`.`static`=0 "
                 . "AND `p`.`name`='$plugin' ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('addText: can\'t get name identifier | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'addText: can\'t get name identifier | '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('addText: can\'t find name, section or plugin');
+            self::setError(ERROR_NOT_FOUND, 'addText: can\'t find name, section or plugin');
             return FALSE;
         }
         list($nameId) = $qText->fetch_row();
@@ -1037,11 +1038,11 @@ class LangMan implements intLangMan{
                 . "FROM `".MECCANO_TPREF."_core_langman_languages` "
                 . "WHERE `code`='$code' ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('addText: can\'t get language code identifier | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'addText: can\'t get language code identifier | '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('addText: defined language was not found');
+            self::setError(ERROR_NOT_FOUND, 'addText: defined language was not found');
             return FALSE;
         }
         list($codeId) = $qLang->fetch_row();
@@ -1051,16 +1052,16 @@ class LangMan implements intLangMan{
                 . "(`title`, `document`, `nameid`, `codeid`) "
                 . "VALUES ('$title', '$document', $nameId, $codeId) ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('addText: can\'t insert text | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'addText: can\'t insert text | '.self::$dbLink->error);
             return FALSE;
         }
         return (int) self::$dbLink->insert_id;
     }
     
     public static function delText($tid) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (!is_integer($tid)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('delText: incorrect text identifier');
+            self::setError(ERROR_INCORRECT_DATA, 'delText: incorrect text identifier');
             return FALSE;
         }
         self::$dbLink->query("DELETE `t` FROM `".MECCANO_TPREF."_core_langman_texts` `t` "
@@ -1071,20 +1072,20 @@ class LangMan implements intLangMan{
                 . "WHERE `t`.`id`=$tid "
                 . "AND `s`.`static`=0 ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('delText: can\'t delete defined text');
+            self::setError(ERROR_NOT_EXECUTED, 'delText: can\'t delete defined text');
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('delText: can\'t find defined text');
+            self::setError(ERROR_NOT_FOUND, 'delText: can\'t find defined text');
             return FALSE;
         }
         return TRUE;
     }
     
     public static function updateTitle($id, $title) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (!is_integer($id) || !is_string($title)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('updateTitle: incorrect incoming parameters');
+            self::setError(ERROR_INCORRECT_DATA, 'updateTitle: incorrect incoming parameters');
             return FALSE;
         }
         $title = self::$dbLink->real_escape_string($title);
@@ -1097,20 +1098,20 @@ class LangMan implements intLangMan{
                 . "WHERE `t`.`id`=$id "
                 . "AND `s`.`static`=0 ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('updateTitle: can\'t update title | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'updateTitle: can\'t update title | '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('updateTitle: can\'t find defined title');
+            self::setError(ERROR_NOT_FOUND, 'updateTitle: can\'t find defined title');
             return FALSE;
         }
         return TRUE;
     }
     
     public static function updateText($id, $title, $document) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (!is_integer($id) || !is_string($title) || !is_string($document)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('updateText: incorrect incoming parameters');
+            self::setError(ERROR_INCORRECT_DATA, 'updateText: incorrect incoming parameters');
             return FALSE;
         }
         $title = self::$dbLink->real_escape_string($title);
@@ -1124,20 +1125,20 @@ class LangMan implements intLangMan{
                 . "WHERE `t`.`id`=$id "
                 . "AND `s`.`static`=0 ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('updateText: can\'t update text | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'updateText: can\'t update text | '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('updateText: can\'t find defined text');
+            self::setError(ERROR_NOT_FOUND, 'updateText: can\'t find defined text');
             return FALSE;
         }
         return TRUE;
     }
     
     public static function getTitle($name, $section, $plugin, $code = MECCANO_DEF_LANG) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (!pregName40($name) || !pregName40($section) || !pregPlugin($plugin) || !pregLang($code)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getTitle: incorrect incoming parameters');
+            self::setError(ERROR_INCORRECT_DATA, 'getTitle: incorrect incoming parameters');
             return FALSE;
         }
         $qTitle = self::$dbLink->query("SELECT `t`.`title` "
@@ -1155,11 +1156,11 @@ class LangMan implements intLangMan{
                 . "AND `s`.`section`='$section' "
                 . "AND `p`.`name`='$plugin' ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getTitle: can\'t get title | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'getTitle: can\'t get title | '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('getTitle: can\'t find defined title');
+            self::setError(ERROR_NOT_FOUND, 'getTitle: can\'t find defined title');
             return FALSE;
         }
         list($title) = $qTitle->fetch_row();
@@ -1167,9 +1168,9 @@ class LangMan implements intLangMan{
     }
     
     public static function getText($name, $section, $plugin, $code = MECCANO_DEF_LANG) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (!pregName40($name) || !pregName40($section) || !pregPlugin($plugin) || !pregLang($code)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getText: incorrect incoming parameters');
+            self::setError(ERROR_INCORRECT_DATA, 'getText: incorrect incoming parameters');
             return FALSE;
         }
         $qText = self::$dbLink->query("SELECT `t`.`title`, `t`.`document`, `t`.`created`, `t`.`edited` "
@@ -1187,11 +1188,11 @@ class LangMan implements intLangMan{
                 . "AND `s`.`section`='$section' "
                 . "AND `p`.`name`='$plugin' ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getText: can\'t get text | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'getText: can\'t get text | '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('getText: can\'t find defined text');
+            self::setError(ERROR_NOT_FOUND, 'getText: can\'t find defined text');
             return FALSE;
         }
         list($title, $document, $created, $edited) = $qText->fetch_row();
@@ -1199,9 +1200,9 @@ class LangMan implements intLangMan{
     }
     
     public static function getTitles($section, $plugin, $code = MECCANO_DEF_LANG) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (!pregName40($section) || !pregName40($plugin) || !pregLang($code)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getTitles: incorrect incoming parameters');
+            self::setError(ERROR_INCORRECT_DATA, 'getTitles: incorrect incoming parameters');
             return FALSE;
         }
         $qTitles = self::$dbLink->query("SELECT `n`.`name`, `t`.`title` "
@@ -1218,11 +1219,11 @@ class LangMan implements intLangMan{
                 . "AND `s`.`section`='$section' "
                 . "AND `l`.`code`='$code' ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getTitles: can\'t get section | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'getTitles: can\'t get section | '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('getTitles: can\'t find defined section');
+            self::setError(ERROR_NOT_FOUND, 'getTitles: can\'t find defined section');
             return FALSE;
         }
         $titles = array();
@@ -1233,9 +1234,9 @@ class LangMan implements intLangMan{
     }
     
     public static function getAllTextsXML($section, $plugin, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (!pregName40($section) || !pregName40($plugin) || !pregLang($code)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getAllTextsXML: incorrect incoming parameters');
+            self::setError(ERROR_INCORRECT_DATA, 'getAllTextsXML: incorrect incoming parameters');
             return FALSE;
         }
         $rightEntry = array('id', 'title', 'name', 'created', 'edited');
@@ -1253,7 +1254,7 @@ class LangMan implements intLangMan{
             }
         }
         else {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getAllTextsXML: orderBy must be array');
+            self::setError(ERROR_INCORRECT_DATA, 'getAllTextsXML: orderBy must be array');
             return FALSE;
         }
         if ($ascent == TRUE) {
@@ -1277,11 +1278,11 @@ class LangMan implements intLangMan{
                 . "AND `l`.`code`='$code' "
                 . "ORDER BY `$orderBy` $direct ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getAllTextsXML: can\'t get section | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'getAllTextsXML: can\'t get section | '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('getAllTextsXML: can\'t find defined section');
+            self::setError(ERROR_NOT_FOUND, 'getAllTextsXML: can\'t find defined section');
             return FALSE;
         }
         $xml = new \DOMDocument('1.0', 'utf-8');
@@ -1300,20 +1301,20 @@ class LangMan implements intLangMan{
     }
     
     public static function getTextById($id) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (!is_integer($id)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getTextById: identifier must be integer');
+            self::setError(ERROR_INCORRECT_DATA, 'getTextById: identifier must be integer');
             return FALSE;
         }
         $qText = self::$dbLink->query("SELECT `title`, `document`, `created`, `edited` "
                 . "FROM `".MECCANO_TPREF."_core_langman_texts` "
                 . "WHERE `id`=$id ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getTextById: can\'t get text | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'getTextById: can\'t get text | '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('getTextById: can\'t find defined text');
+            self::setError(ERROR_NOT_FOUND, 'getTextById: can\'t find defined text');
             return FALSE;
         }
         list($title, $document, $created, $edited) = $qText->fetch_row();
@@ -1321,9 +1322,9 @@ class LangMan implements intLangMan{
     }
     
     public static function sumTexts($section, $plugin, $code = MECCANO_DEF_LANG, $rpp = 20) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (!pregName40($section) || !pregName40($plugin) || !is_integer($rpp) || !pregLang($code)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getTexts: incorrect incoming parameters');
+            self::setError(ERROR_INCORRECT_DATA, 'getTexts: incorrect incoming parameters');
             return FALSE;
         }
         if ($rpp < 1) {
@@ -1343,11 +1344,11 @@ class LangMan implements intLangMan{
                 . "AND `p`.`name`='$plugin' "
                 . "AND `s`.`section`='$section' ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('sumTexts: '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'sumTexts: '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('sumTexts: no one text was found');
+            self::setError(ERROR_NOT_FOUND, 'sumTexts: no one text was found');
             return FALSE;
         }
         list($totalTexts) = $qTexts->fetch_row();
@@ -1366,14 +1367,14 @@ class LangMan implements intLangMan{
     }
     
     public static function getTextsXML($section, $plugin, $pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (!pregName40($section) || 
                 !pregName40($plugin) || 
                 !is_integer($pageNumber) || 
                 !is_integer($totalPages) || 
                 !is_integer($rpp) || 
                 !pregLang($code)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getTextsXML: incorrect incoming parameters');
+            self::setError(ERROR_INCORRECT_DATA, 'getTextsXML: incorrect incoming parameters');
             return FALSE;
         }
         $rightEntry = array('id', 'title', 'name', 'created', 'edited');
@@ -1391,7 +1392,7 @@ class LangMan implements intLangMan{
             }
         }
         else {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getTextsXML: orderBy must be array');
+            self::setError(ERROR_INCORRECT_DATA, 'getTextsXML: orderBy must be array');
             return FALSE;
         }
         if ($pageNumber < 1) {
@@ -1428,11 +1429,11 @@ class LangMan implements intLangMan{
                 . "AND `l`.`code`='$code' "
                 . "ORDER BY `$orderBy` $direct LIMIT $start, $rpp ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getTextsXML: can\'t get section | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'getTextsXML: can\'t get section | '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('getTextsXML: can\'t find defined section');
+            self::setError(ERROR_NOT_FOUND, 'getTextsXML: can\'t find defined section');
             return FALSE;
         }
         $xml = new \DOMDocument('1.0', 'utf-8');
@@ -1451,9 +1452,9 @@ class LangMan implements intLangMan{
     }
     
     public static function getTexts($section, $plugin, $code = MECCANO_DEF_LANG) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (!pregName40($section) || !pregName40($plugin) || !pregLang($code)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getTexts: incorrect incoming parameters');
+            self::setError(ERROR_INCORRECT_DATA, 'getTexts: incorrect incoming parameters');
             return FALSE;
         }
         $qTexts = self::$dbLink->query("SELECT `n`.`name`, `t`.`title` "
@@ -1470,11 +1471,11 @@ class LangMan implements intLangMan{
                 . "AND `s`.`section`='$section' "
                 . "AND `l`.`code`='$code' ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getTexts: can\'t get section | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'getTexts: can\'t get section | '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('getTexts: can\'t find defined section');
+            self::setError(ERROR_NOT_FOUND, 'getTexts: can\'t find defined section');
             return FALSE;
         }
         $texts = array();
@@ -1485,9 +1486,9 @@ class LangMan implements intLangMan{
     }
     
     public static function sumTitles($section, $plugin, $code = MECCANO_DEF_LANG, $rpp = 20) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (!pregName40($section) || !pregName40($plugin) || !is_integer($rpp) || !pregLang($code)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getTitles: incorrect incoming parameters');
+            self::setError(ERROR_INCORRECT_DATA, 'getTitles: incorrect incoming parameters');
             return FALSE;
         }
         if ($rpp < 1) {
@@ -1507,11 +1508,11 @@ class LangMan implements intLangMan{
                 . "AND `p`.`name`='$plugin' "
                 . "AND `s`.`section`='$section' ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('sumTitles: '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'sumTitles: '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('sumTitles: no one title was found');
+            self::setError(ERROR_NOT_FOUND, 'sumTitles: no one title was found');
             return FALSE;
         }
         list($totalTitles) = $qTitles->fetch_row();
@@ -1530,14 +1531,14 @@ class LangMan implements intLangMan{
     }
     
     public static function getTitlesXML($section, $plugin, $pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (!pregName40($section) || 
                 !pregName40($plugin) || 
                 !is_integer($pageNumber) || 
                 !is_integer($totalPages) || 
                 !is_integer($rpp) || 
                 !pregLang($code)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getTitlesXML: incorrect incoming parameters');
+            self::setError(ERROR_INCORRECT_DATA, 'getTitlesXML: incorrect incoming parameters');
             return FALSE;
         }
         $rightEntry = array('id', 'title', 'name');
@@ -1555,7 +1556,7 @@ class LangMan implements intLangMan{
             }
         }
         else {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getTitlesXML: orderBy must be array');
+            self::setError(ERROR_INCORRECT_DATA, 'getTitlesXML: orderBy must be array');
             return FALSE;
         }
         if ($pageNumber < 1) {
@@ -1592,11 +1593,11 @@ class LangMan implements intLangMan{
                 . "AND `l`.`code`='$code' "
                 . "ORDER BY `$orderBy` $direct LIMIT $start, $rpp ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getTitlesXML: can\'t get section | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'getTitlesXML: can\'t get section | '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('getTitlesXML: can\'t find defined section');
+            self::setError(ERROR_NOT_FOUND, 'getTitlesXML: can\'t find defined section');
             return FALSE;
         }
         $xml = new \DOMDocument('1.0', 'utf-8');
@@ -1613,9 +1614,9 @@ class LangMan implements intLangMan{
     }
     
     public static function getAllTitlesXML($section, $plugin, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (!pregName40($section) || !pregName40($plugin) || !pregLang($code)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getAllTitlesXML: incorrect incoming parameters');
+            self::setError(ERROR_INCORRECT_DATA, 'getAllTitlesXML: incorrect incoming parameters');
             return FALSE;
         }
         $rightEntry = array('id', 'title', 'name');
@@ -1633,7 +1634,7 @@ class LangMan implements intLangMan{
             }
         }
         else {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getAllTitlesXML: value of $orderBy must be string or array');
+            self::setError(ERROR_INCORRECT_DATA, 'getAllTitlesXML: value of $orderBy must be string or array');
             return FALSE;
         }
         if ($ascent == TRUE) {
@@ -1657,11 +1658,11 @@ class LangMan implements intLangMan{
                 . "AND `l`.`code`='$code' "
                 . "ORDER BY `$orderBy` $direct ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getAllTitlesXML: can\'t get section | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'getAllTitlesXML: can\'t get section | '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('getAllTitlesXML: can\'t find defined section');
+            self::setError(ERROR_NOT_FOUND, 'getAllTitlesXML: can\'t find defined section');
             return FALSE;
         }
         $xml = new \DOMDocument('1.0', 'utf-8');
@@ -1678,20 +1679,20 @@ class LangMan implements intLangMan{
     }
     
     public static function getTitleById($id) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (!is_integer($id)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getTitleById: identifier must be integer');
+            self::setError(ERROR_INCORRECT_DATA, 'getTitleById: identifier must be integer');
             return FALSE;
         }
         $qTitle = self::$dbLink->query("SELECT `title` "
                 . "FROM `".MECCANO_TPREF."_core_langman_titles` "
                 . "WHERE `id`=$id ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getTitleById: can\'t get title | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'getTitleById: can\'t get title | '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('getTitleById: can\'t find defined title');
+            self::setError(ERROR_NOT_FOUND, 'getTitleById: can\'t find defined title');
             return FALSE;
         }
         list($title) = $qTitle->fetch_row();
@@ -1699,9 +1700,9 @@ class LangMan implements intLangMan{
     }
     
     public static function sumTextSections($plugin, $rpp = 20) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (!pregPlugin($plugin) || !is_integer($rpp)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('sumTextSections: incorrect incoming parameters');
+            self::setError(ERROR_INCORRECT_DATA, 'sumTextSections: incorrect incoming parameters');
             return FALSE;
         }
         if ($rpp < 1) {
@@ -1713,11 +1714,11 @@ class LangMan implements intLangMan{
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `p`.`name`='$plugin' ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('sumTextSections: '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'sumTextSections: '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('sumTextSections: no one section was found');
+            self::setError(ERROR_NOT_FOUND, 'sumTextSections: no one section was found');
             return FALSE;
         }
         list($totalSections) = $qSections->fetch_row();
@@ -1736,9 +1737,9 @@ class LangMan implements intLangMan{
     }
     
     public static function getTextSectionsXML($plugin, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('id'), $ascent = FALSE) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (!pregPlugin($plugin) || !is_integer($pageNumber) || !is_integer($totalPages) || !is_integer($rpp)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getTextSectionsXML: incorrect incoming parameters');
+            self::setError(ERROR_INCORRECT_DATA, 'getTextSectionsXML: incorrect incoming parameters');
             return FALSE;
         }
         $rightEntry = array('id', 'name', 'static');
@@ -1756,7 +1757,7 @@ class LangMan implements intLangMan{
             }
         }
         else {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getTextSectionsXML: value of $orderBy must be string or array');
+            self::setError(ERROR_INCORRECT_DATA, 'getTextSectionsXML: value of $orderBy must be string or array');
             return FALSE;
         }
         if ($ascent == TRUE) {
@@ -1772,11 +1773,11 @@ class LangMan implements intLangMan{
                 . "WHERE `p`.`name`='$plugin' "
                 . "ORDER BY `$orderBy` $direct ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getTextSectionsXML: can\'t get sections | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'getTextSectionsXML: can\'t get sections | '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('getTextSectionsXML: can\'t find defined plugin');
+            self::setError(ERROR_NOT_FOUND, 'getTextSectionsXML: can\'t find defined plugin');
             return FALSE;
         }
         $xml = new \DOMDocument('1.0', 'utf-8');
@@ -1797,9 +1798,9 @@ class LangMan implements intLangMan{
     }
     
     public static function sumTitleSections($plugin, $rpp = 20) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (!pregPlugin($plugin) || !is_integer($rpp)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('sumTitleSections: incorrect incoming parameters');
+            self::setError(ERROR_INCORRECT_DATA, 'sumTitleSections: incorrect incoming parameters');
             return FALSE;
         }
         if ($rpp < 1) {
@@ -1811,11 +1812,11 @@ class LangMan implements intLangMan{
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `p`.`name`='$plugin' ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('sumTitleSections: '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'sumTitleSections: '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('sumTitleSections: no one section was found');
+            self::setError(ERROR_NOT_FOUND, 'sumTitleSections: no one section was found');
             return FALSE;
         }
         list($totalSections) = $qSections->fetch_row();
@@ -1834,9 +1835,9 @@ class LangMan implements intLangMan{
     }
     
     public static function getTitleSectionsXML($plugin, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('id'), $ascent = FALSE) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (!pregPlugin($plugin) || !is_integer($pageNumber) || !is_integer($totalPages) || !is_integer($rpp)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getTitleSectionsXML: incorrect incoming parameters');
+            self::setError(ERROR_INCORRECT_DATA, 'getTitleSectionsXML: incorrect incoming parameters');
             return FALSE;
         }
         $rightEntry = array('id', 'name', 'static');
@@ -1854,7 +1855,7 @@ class LangMan implements intLangMan{
             }
         }
         else {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getTitleSectionsXML: value of $orderBy must be string or array');
+            self::setError(ERROR_INCORRECT_DATA, 'getTitleSectionsXML: value of $orderBy must be string or array');
             return FALSE;
         }
         if ($ascent == TRUE) {
@@ -1870,11 +1871,11 @@ class LangMan implements intLangMan{
                 . "WHERE `p`.`name`='$plugin' "
                 . "ORDER BY `$orderBy` $direct ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getTitleSectionsXML: can\'t get sections | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'getTitleSectionsXML: can\'t get sections | '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('getTitleSectionsXML: can\'t find defined plugin');
+            self::setError(ERROR_NOT_FOUND, 'getTitleSectionsXML: can\'t find defined plugin');
             return FALSE;
         }
         $xml = new \DOMDocument('1.0', 'utf-8');
@@ -1895,9 +1896,9 @@ class LangMan implements intLangMan{
     }
     
     public static function sumTextNames($plugin, $section, $rpp = 20) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (!pregPlugin($plugin) || !pregName40($section) || !is_integer($rpp)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('sumTextNames: incorrect incoming parameters');
+            self::setError(ERROR_INCORRECT_DATA, 'sumTextNames: incorrect incoming parameters');
             return FALSE;
         }
         if ($rpp < 1) {
@@ -1912,11 +1913,11 @@ class LangMan implements intLangMan{
                 . "WHERE `p`.`name`='$plugin' "
                 . "AND `s`.`section`='$section' ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('sumTextNames: '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'sumTextNames: '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('sumTextNames: no one name was found');
+            self::setError(ERROR_NOT_FOUND, 'sumTextNames: no one name was found');
             return FALSE;
         }
         list($totalNames) = $qNames->fetch_row();
@@ -1935,9 +1936,9 @@ class LangMan implements intLangMan{
     }
     
     public static function getTextNamesXML($plugin, $section, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('id'), $ascent = FALSE) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (!pregPlugin($plugin) || !pregName40($section) || !is_integer($pageNumber) || !is_integer($totalPages) || !is_integer($rpp)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getTextNamesXML: incorrect incoming parameters');
+            self::setError(ERROR_INCORRECT_DATA, 'getTextNamesXML: incorrect incoming parameters');
             return FALSE;
         }
         $rightEntry = array('id', 'name');
@@ -1955,7 +1956,7 @@ class LangMan implements intLangMan{
             }
         }
         else {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getTextNamesXML: value of $orderBy must be string or array');
+            self::setError(ERROR_INCORRECT_DATA, 'getTextNamesXML: value of $orderBy must be string or array');
             return FALSE;
         }
         if ($ascent == TRUE) {
@@ -1977,11 +1978,11 @@ class LangMan implements intLangMan{
                 . "WHERE `p`.`name`='$plugin' AND `s`.`section`='$section' "
                 . "ORDER BY `$orderBy` $direct ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getTextNamesXML: can\'t get names | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'getTextNamesXML: can\'t get names | '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('getTextNamesXML: can\'t find defined section');
+            self::setError(ERROR_NOT_FOUND, 'getTextNamesXML: can\'t find defined section');
             return FALSE;
         }
         $xml = new \DOMDocument('1.0', 'utf-8');
@@ -2009,9 +2010,9 @@ class LangMan implements intLangMan{
     }
     
     public static function sumTitleNames($plugin, $section, $rpp = 20) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (!pregPlugin($plugin) || !pregName40($section) || !is_integer($rpp)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('sumTitleNames: incorrect incoming parameters');
+            self::setError(ERROR_INCORRECT_DATA, 'sumTitleNames: incorrect incoming parameters');
             return FALSE;
         }
         if ($rpp < 1) {
@@ -2026,11 +2027,11 @@ class LangMan implements intLangMan{
                 . "WHERE `p`.`name`='$plugin' "
                 . "AND `s`.`section`='$section' ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('sumTitleNames: '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'sumTitleNames: '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('sumTitleNames: no one name was found');
+            self::setError(ERROR_NOT_FOUND, 'sumTitleNames: no one name was found');
             return FALSE;
         }
         list($totalNames) = $qNames->fetch_row();
@@ -2049,9 +2050,9 @@ class LangMan implements intLangMan{
     }
     
     public static function getTitleNamesXML($plugin, $section, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('id'), $ascent = FALSE) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (!pregPlugin($plugin) || !pregName40($section) || !is_integer($pageNumber) || !is_integer($totalPages) || !is_integer($rpp)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getTitleNamesXML: incorrect incoming parameters');
+            self::setError(ERROR_INCORRECT_DATA, 'getTitleNamesXML: incorrect incoming parameters');
             return FALSE;
         }
         $rightEntry = array('id', 'name');
@@ -2069,7 +2070,7 @@ class LangMan implements intLangMan{
             }
         }
         else {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getTitleNamesXML: value of $orderBy must be string or array');
+            self::setError(ERROR_INCORRECT_DATA, 'getTitleNamesXML: value of $orderBy must be string or array');
             return FALSE;
         }
         if ($ascent == TRUE) {
@@ -2091,11 +2092,11 @@ class LangMan implements intLangMan{
                 . "WHERE `p`.`name`='$plugin' AND `s`.`section`='$section' "
                 . "ORDER BY `$orderBy` $direct ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getTitleNamesXML: can\'t get names | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'getTitleNamesXML: can\'t get names | '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('getTitleNamesXML: can\'t find defined section');
+            self::setError(ERROR_NOT_FOUND, 'getTitleNamesXML: can\'t find defined section');
             return FALSE;
         }
         $xml = new \DOMDocument('1.0', 'utf-8');
