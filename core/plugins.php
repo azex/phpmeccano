@@ -58,11 +58,8 @@ class Plugins implements intPlugins {
         self::$policyObject = $policyObject;
     }
     
-    private static function setErrId($id) {
+    private static function setError($id, $exp) {
         self::$errid = $id;
-    }
-    
-    private static function setErrExp($exp) {
         self::$errexp = $exp;
     }
     
@@ -83,26 +80,26 @@ class Plugins implements intPlugins {
             $unpackPath = MECCANO_UNPACKED_PLUGINS."/$tmpName";
             $tmpPath = MECCANO_TMP_DIR."/$tmpName";
             if (!@$zip->extractTo($tmpPath)) {
-                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp("unpack: unable to extract package to $tmpPath");
+                self::setError(ERROR_NOT_EXECUTED, "unpack: unable to extract package to $tmpPath");
                 return FALSE;
             }
             $zip->close();
             $metaInfo = openRead($tmpPath."/metainfo.xml");
             if (!$metaInfo) {
                 Files::remove($tmpPath);
-                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp("unpack: unable to read meta-info");
+                self::setError(ERROR_NOT_EXECUTED, "unpack: unable to read meta-info");
                 return FALSE;
             }
             if (mime_content_type($tmpPath."/metainfo.xml") != "application/xml") {
                 Files::remove($tmpPath);
-                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp("unpack: meta-info is not XML-structured");
+                self::setError(ERROR_NOT_EXECUTED, "unpack: meta-info is not XML-structured");
                 return FALSE;
             }
             $metaDOM = new \DOMDocument();
             $metaDOM->loadXML($metaInfo);
             if (!@$metaDOM->relaxNGValidate(MECCANO_CORE_DIR.'/plugins/metainfo-schema-v01.rng')) {
                 Files::remove($tmpPath);
-                self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('unpack: invalid meta-info structure');
+                self::setError(ERROR_INCORRECT_DATA, 'unpack: invalid meta-info structure');
                 return FALSE;
             }
             $shortName = $metaDOM->getElementsByTagName('shortname')->item(0)->nodeValue;
@@ -111,12 +108,12 @@ class Plugins implements intPlugins {
                     . "WHERE `short`='$shortName' ;");
             if (self::$dbLink->errno) {
                 Files::remove($tmpPath);
-                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('unpack: cannot check whether the plugin is unpacked | '.self::$dbLink->error);
+                self::setError(ERROR_NOT_EXECUTED, 'unpack: cannot check whether the plugin is unpacked | '.self::$dbLink->error);
                 return FALSE;
             }
             if (self::$dbLink->affected_rows) {
                 Files::remove($tmpPath);
-                self::setErrId(ERROR_ALREADY_EXISTS);                self::setErrExp("unpack: plugin [$shortName] is already unpacked");
+                self::setError(ERROR_ALREADY_EXISTS, "unpack: plugin [$shortName] is already unpacked");
                 return FALSE;
             }
             $fullName = self::$dbLink->real_escape_string(htmlspecialchars($metaDOM->getElementsByTagName('fullname')->item(0)->nodeValue));
@@ -154,7 +151,7 @@ class Plugins implements intPlugins {
             $existSumVersion = self::sumVersion($shortName);
             if (self::$errid == ERROR_NOT_EXECUTED) {
                 Files::remove($tmpPath);
-                self::setErrExp('unpack: -> '.self::$errexp);
+                self::$errexp = 'unpack: -> '.self::$errexp;
                 return FALSE;
             }
             elseif ($existSumVersion) {
@@ -177,47 +174,47 @@ class Plugins implements intPlugins {
                     . "VALUES ($insertValues) ;");
             if (self::$dbLink->errno) {
                 Files::remove($tmpPath);
-                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('unpack: '.self::$dbLink->error);
+                self::setError(ERROR_NOT_EXECUTED, 'unpack: '.self::$dbLink->error);
                 return FALSE;
             }
             if (!Files::move($tmpPath, $unpackPath)) {
-                self::setErrId(Files::errId());                self::setErrExp('unpack: -> '.Files::errExp());
+                self::setError(Files::errId(), 'unpack: -> '.Files::errExp());
                 return FALSE;
             }
         }
         else {
-            self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp("unpack: unable to open package. ZipArchive error: $zipOpen");
+            self::setError(ERROR_NOT_EXECUTED, "unpack: unable to open package. ZipArchive error: $zipOpen");
             return FALSE;
         }
-        return self::$dbLink->insert_id;
+        return (int) self::$dbLink->insert_id;
     }
     
     public static function delUnpacked($id) {
         self::$errid = 0;        self::$errexp = '';
         if (!is_integer($id)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('delUnpacked: id must be integer');
+            self::setError(ERROR_INCORRECT_DATA, 'delUnpacked: id must be integer');
             return FALSE;
         }
         $qUnpacked = self::$dbLink->query("SELECT `dirname` "
                 . "FROM `".MECCANO_TPREF."_core_plugins_unpacked` "
                 . "WHERE `id`=$id ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('delUnpacked: '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'delUnpacked: '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp("delUnpacked: cannot find defined plugin");
+            self::setError(ERROR_NOT_FOUND, "delUnpacked: cannot find defined plugin");
             return FALSE;
         }
         list($dirName) = $qUnpacked->fetch_row();
         if (!Files::remove(MECCANO_UNPACKED_PLUGINS."/$dirName")) {
-            self::setErrId(Files::errId());                self::setErrExp('delUnpacked: -> '.Files::errExp());
+            self::setError(Files::errId(), 'delUnpacked: -> '.Files::errExp());
             return FALSE;
         }
         self::$dbLink->query("DELETE FROM `".MECCANO_TPREF."_core_plugins_unpacked` "
                 . "WHERE `id`=$id");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('delUnpacked: unable to delete unpacked plugin'.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'delUnpacked: unable to delete unpacked plugin'.self::$dbLink->error);
             return FALSE;
         }
         return TRUE;
@@ -228,15 +225,12 @@ class Plugins implements intPlugins {
         $qUncpacked = self::$dbLink->query("SELECT `id`, `short`, `full`, CONCAT(`uv`, '.', `mv`, '.', `lv`) `version`, `action` "
                 . "FROM `".MECCANO_TPREF."_core_plugins_unpacked` ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp("listUnpacked: ".self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, "listUnpacked: ".self::$dbLink->error);
             return FALSE;
         }
         $xml = new \DOMDocument();
         $unpackedNode = $xml->createElement('unpacked');
         $xml->appendChild($unpackedNode);
-        if (!self::$dbLink->affected_rows) {
-            return $xml;
-        }
         while ($row = $qUncpacked->fetch_row()) {
             $pluginNode = $xml->createElement('plugin');
             $unpackedNode->appendChild($pluginNode);
@@ -252,18 +246,18 @@ class Plugins implements intPlugins {
     public static function aboutUnpacked($id) {
         self::$errid = 0;        self::$errexp = '';
         if (!is_integer($id)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('aboutUnpacked: id must be integer');
+            self::setError(ERROR_INCORRECT_DATA, 'aboutUnpacked: id must be integer');
             return FALSE;
         }
         $qUncpacked = self::$dbLink->query("SELECT `short`, `full`, CONCAT(`uv`, '.', `mv`, '.', `lv`) `version`, `about`, `credits`, `url`, `email`, `license`, `action` "
                 . "FROM `".MECCANO_TPREF."_core_plugins_unpacked` "
                 . "WHERE `id`=$id;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp("aboutUnpacked: ".self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, "aboutUnpacked: ".self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp("aboutUnpacked: cannot find defined plugin");
+            self::setError(ERROR_NOT_FOUND, "aboutUnpacked: cannot find defined plugin");
             return FALSE;
         }
         list($shortName, $fullName, $version, $about, $credits, $url, $email, $license, $action) = $qUncpacked->fetch_row();
@@ -286,18 +280,18 @@ class Plugins implements intPlugins {
     public static function sumVersion($name) {
         self::$errid = 0;        self::$errexp = '';
         if (!pregPlugin($name)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp("pluginVersion: incorrect name");
+            self::setError(ERROR_INCORRECT_DATA, "pluginVersion: incorrect name");
             return FALSE;
         }
         $qPlugin = self::$dbLink->query("SELECT `uv`, `mv`, `lv` "
                 . "FROM `".MECCANO_TPREF."_core_plugins_installed` "
                 . "WHERE `name`='$name'");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp("pluginVersion: unable to get plugin version | ".self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, "pluginVersion: unable to get plugin version | ".self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp("pluginVersion: plugin not found");
+            self::setError(ERROR_NOT_FOUND, "pluginVersion: plugin not found");
             return FALSE;
         }
         list($uv, $mv, $lv) = $qPlugin->fetch_row();
