@@ -70,12 +70,13 @@ class UserMan implements intUserMan{
         self::$policyObject = $policyObject;
     }
     
-    private static function setErrId($id) {
+    private static function setError($id, $exp) {
         self::$errid = $id;
+        self::$errexp = $exp;
     }
     
-    private static function setErrExp($exp) {
-        self::$errexp = $exp;
+    private static function zeroizeError() {
+        self::$errid = 0;        self::$errexp = '';
     }
     
     public static function errId() {
@@ -88,41 +89,41 @@ class UserMan implements intUserMan{
     
     //group methods
     public static function createGroup($groupName, $description, $log = TRUE) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
-            self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('createGroup: function execution was terminated because of using of limited authentication');
+            self::setError(ERROR_RESTRICTED_ACCESS, 'createGroup: function execution was terminated because of using of limited authentication');
             return FALSE;
         }
         if (!pregGName($groupName) || !is_string($description)) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('createGroup: incorect type of incoming parameters');
+            self::setError(ERROR_NOT_EXECUTED, 'createGroup: incorect type of incoming parameters');
             return FALSE;
         }
         $description = self::$dbLink->real_escape_string($description);
         self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_userman_groups` (`groupname`, `description`) "
                 . "VALUES ('$groupName', '$description') ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('createGroup: group wasn\'t created | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'createGroup: group wasn\'t created | '.self::$dbLink->error);
             return FALSE;
         }
         $groupId = self::$dbLink->insert_id;
         if (!self::$policyObject->addGroup($groupId)) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp(self::$policyObject->errExp());
+            self::setError(ERROR_NOT_EXECUTED, self::$policyObject->errExp());
             return FALSE;
         }
         if ($log && !self::$logObject->newRecord('core', 'createGroup', "$groupName; ID: $groupId")) {
-            self::setErrId(ERROR_NOT_CRITICAL);            self::setErrExp(self::$logObject->errExp());
+            self::setError(ERROR_NOT_CRITICAL, self::$logObject->errExp());
         }
         return (int) $groupId;
     }
     
     public static function groupStatus($groupId, $active, $log = TRUE) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
-            self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('groupStatus: function execution was terminated because of using of limited authentication');
+            self::setError(ERROR_RESTRICTED_ACCESS, 'groupStatus: function execution was terminated because of using of limited authentication');
             return FALSE;
         }
         if (!is_integer($groupId) || $groupId<1) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('groupStatus: group id must be integer and greater than zero');
+            self::setError(ERROR_INCORRECT_DATA, 'groupStatus: group id must be integer and greater than zero');
             return FALSE;
         }
         if ($active) {
@@ -132,18 +133,18 @@ class UserMan implements intUserMan{
             $active = 0;
         }
         else {
-            self::setErrId(ERROR_SYSTEM_INTERVENTION);            self::setErrExp('groupStatus: system group cannot be disabled');
+            self::setError(ERROR_SYSTEM_INTERVENTION, 'groupStatus: system group cannot be disabled');
             return FALSE;
         }
         self::$dbLink->query("UPDATE `".MECCANO_TPREF."_core_userman_groups` "
                 . "SET `active`=$active "
                 . "WHERE `id`=$groupId ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('groupStatus: status was not changed | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'groupStatus: status was not changed | '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('groupStatus: incorrect group status or group does not exist');
+            self::setError(ERROR_NOT_FOUND, 'groupStatus: incorrect group status or group does not exist');
             return FALSE;
         }
         if ($log) {
@@ -154,23 +155,23 @@ class UserMan implements intUserMan{
                 $l = self::$logObject->newRecord('core', 'disGroup', "ID: $groupId");
             }
             if (!$l) {
-                self::setErrId(ERROR_NOT_CRITICAL);            self::setErrExp(self::$logObject->errExp());
+                self::setError(ERROR_NOT_CRITICAL, self::$logObject->errExp());
             }
         }
         return TRUE;
     }
     
     public static function groupExists($groupName) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (!pregGName($groupName)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('groupExists: incorrect group name');
+            self::setError(ERROR_INCORRECT_DATA, 'groupExists: incorrect group name');
             return FALSE;
         }
         $qId = self::$dbLink->query("SELECT `id` "
                 . "FROM `".MECCANO_TPREF."_core_userman_groups` "
                 . "WHERE `groupname`='$groupName' ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('groupExists: can\'t check group existence | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'groupExists: can\'t check group existence | '.self::$dbLink->error);
             return FALSE;
         }
         if (self::$dbLink->affected_rows) {
@@ -181,54 +182,54 @@ class UserMan implements intUserMan{
     }
     
     public static function moveGroupTo($groupId, $destId) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
-            self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('moveGroupTo: function execution was terminated because of using of limited authentication');
+            self::setError(ERROR_RESTRICTED_ACCESS, 'moveGroupTo: function execution was terminated because of using of limited authentication');
             return FALSE;
         }
         if (!is_integer($groupId) || !is_integer($destId) || $destId<1 || $destId == $groupId) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('moveGroupTo: incorrect incoming parameters');
+            self::setError(ERROR_INCORRECT_DATA, 'moveGroupTo: incorrect incoming parameters');
             return FALSE;
         }
         if ($groupId == 1) {
-            self::setErrId(ERROR_SYSTEM_INTERVENTION);            self::setErrExp('moveGroupTo: unable to move system group');
+            self::setError(ERROR_SYSTEM_INTERVENTION, 'moveGroupTo: unable to move system group');
             return FALSE;
         }
         self::$dbLink->query("SELECT `id` FROM `".MECCANO_TPREF."_core_userman_groups` "
                 . "WHERE `id`=$destId ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('moveGroupTo: unable to check destination group existence |'.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'moveGroupTo: unable to check destination group existence |'.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('moveGroupTo: no one user of the group was not moved');
+            self::setError(ERROR_NOT_FOUND, 'moveGroupTo: no one user of the group was not moved');
             return FALSE;
         }
         self::$dbLink->query("UPDATE `".MECCANO_TPREF."_core_userman_users` "
                 . "SET `groupid`=$destId "
                 . "WHERE `groupid`=$groupId ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('moveGroupTo: unable to move users into another group |'.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'moveGroupTo: unable to move users into another group |'.self::$dbLink->error);
             return FALSE;
         }
         return (int) self::$dbLink->affected_rows;
     }
     
     public static function aboutGroup($groupId) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (!is_integer($groupId)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('aboutGroup: identifier must be integer');
+            self::setError(ERROR_INCORRECT_DATA, 'aboutGroup: identifier must be integer');
             return FALSE;
         }
         $qAbout = self::$dbLink->query("SELECT `groupname`, `description`, `creationtime`, `active` "
                 . "FROM `".MECCANO_TPREF."_core_userman_groups` "
                 . "WHERE `id`=$groupId");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('aboutGroup: something went wrong | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'aboutGroup: something went wrong | '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('aboutGroup: defined group doesn\'t exist');
+            self::setError(ERROR_NOT_FOUND, 'aboutGroup: defined group doesn\'t exist');
             return FALSE;
         }
         $qSum = self::$dbLink->query("SELECT COUNT(`id`) "
@@ -248,37 +249,37 @@ class UserMan implements intUserMan{
     }
     
     public static function setGroupName($groupId, $groupName) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
-            self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('setGroupName: function execution was terminated because of using of limited authentication');
+            self::setError(ERROR_RESTRICTED_ACCESS, 'setGroupName: function execution was terminated because of using of limited authentication');
             return FALSE;
         }
         if (!is_integer($groupId) || !pregGName($groupName)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('setGroupName: incorrect incoming parameters');
+            self::setError(ERROR_INCORRECT_DATA, 'setGroupName: incorrect incoming parameters');
             return FALSE;
         }
         self::$dbLink->query("UPDATE `".MECCANO_TPREF."_core_userman_groups` "
                 . "SET `groupname`='$groupName' "
                 . "WHERE `id`=$groupId ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('setGroupName: can\'t set groupname | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'setGroupName: can\'t set groupname | '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_ALREADY_EXISTS);            self::setErrExp('setGroupName: defined group doesn\'t exist or groupname was repeated');
+            self::setError(ERROR_ALREADY_EXISTS, 'setGroupName: defined group doesn\'t exist or groupname was repeated');
             return FALSE;
         }
         return TRUE;
     }
     
     public static function setGroupDesc($groupId, $description) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
-            self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('setGroupDesc: function execution was terminated because of using of limited authentication');
+            self::setError(ERROR_RESTRICTED_ACCESS, 'setGroupDesc: function execution was terminated because of using of limited authentication');
             return FALSE;
         }
         if (!is_integer($groupId) || !is_string($description)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('setGroupDesc: incorrect incoming parameters');
+            self::setError(ERROR_INCORRECT_DATA, 'setGroupDesc: incorrect incoming parameters');
             return FALSE;
         }
         $description = self::$dbLink->real_escape_string($description);
@@ -286,36 +287,36 @@ class UserMan implements intUserMan{
                 . "SET `description`='$description' "
                 . "WHERE `id`=$groupId ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('setGroupDesc: can\'t set description | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'setGroupDesc: can\'t set description | '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_ALREADY_EXISTS);            self::setErrExp('setGroupDesc: defined group doesn\'t exist or description was repeated');
+            self::setError(ERROR_ALREADY_EXISTS, 'setGroupDesc: defined group doesn\'t exist or description was repeated');
             return FALSE;
         }
         return TRUE;
     }
     
     public static function delGroup($groupId, $log = TRUE) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (!is_integer($groupId)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('delGroup: identifier must be integer');
+            self::setError(ERROR_INCORRECT_DATA, 'delGroup: identifier must be integer');
             return FALSE;
         }
         $qUsers = self::$dbLink->query("SELECT COUNT(`id`) "
                 . "FROM `".MECCANO_TPREF."_core_userman_users` "
                 . "WHERE `groupid`=$groupId ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('delGroup: can\'t check existence of users in the group | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'delGroup: can\'t check existence of users in the group | '.self::$dbLink->error);
             return FALSE;
         }
         $users = $qUsers->fetch_row();
         if ($users[0]) {
-            self::setErrId(ERROR_SYSTEM_INTERVENTION);            self::setErrExp('delGroup: the group contains users');
+            self::setError(ERROR_SYSTEM_INTERVENTION, 'delGroup: the group contains users');
             return FALSE;
         }
         if (!self::$policyObject->delGroup($groupId) && !in_array(self::$policyObject->errId(), array(ERROR_NOT_FOUND, ''))) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp(self::$policyObject->errExp());
+            self::setError(ERROR_INCORRECT_DATA, self::$policyObject->errExp());
             return FALSE;
         }
         $sql = array(
@@ -328,11 +329,11 @@ class UserMan implements intUserMan{
         foreach ($sql as $key => $value) {
             $qGroup = self::$dbLink->query($value);
             if (self::$dbLink->errno) {
-                self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('delGroup: '.self::$dbLink->error);
+                self::setError(ERROR_NOT_EXECUTED, 'delGroup: '.self::$dbLink->error);
                 return FALSE;
             }
             if (!self::$dbLink->affected_rows) {
-                self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('delGroup: defined group doesn\'t exist');
+                self::setError(ERROR_NOT_FOUND, 'delGroup: defined group doesn\'t exist');
                 return FALSE;
             }
             if ($key == 0) {
@@ -340,15 +341,15 @@ class UserMan implements intUserMan{
             }
         }
         if ($log && !self::$logObject->newRecord('core', 'delGroup', "$groupname; ID: $groupId")) {
-            self::setErrId(ERROR_NOT_CRITICAL);            self::setErrExp(self::$logObject->errExp());
+            self::setError(ERROR_NOT_CRITICAL, self::$logObject->errExp());
         }
         return TRUE;
     }
     
     public static function sumGroups($rpp = 20) { // gpp - groups per page
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (!is_integer($rpp)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('sumGroups: value of groups per page must be integer');
+            self::setError(ERROR_INCORRECT_DATA, 'sumGroups: value of groups per page must be integer');
             return FALSE;
         }
         if ($rpp < 1) {
@@ -356,7 +357,7 @@ class UserMan implements intUserMan{
         }
         $qResult = self::$dbLink->query("SELECT COUNT(`id`) FROM `".MECCANO_TPREF."_core_userman_groups` ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('sumGroups: total users couldn\'t be counted | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'sumGroups: total users couldn\'t be counted | '.self::$dbLink->error);
             return FALSE;
         }
         list($totalGroups) = $qResult->fetch_array(MYSQLI_NUM);
@@ -375,9 +376,9 @@ class UserMan implements intUserMan{
     }
     
     public static function getGroups($pageNumber, $totalGroups, $rpp = 20, $orderBy = array('id'), $ascent = FALSE) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (!is_integer($pageNumber) || !is_integer($totalGroups) || !is_integer($rpp)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getGroups: values of $pageNumber, $totalGroups, $gpp must be integers');
+            self::setError(ERROR_INCORRECT_DATA, 'getGroups: values of $pageNumber, $totalGroups, $gpp must be integers');
             return FALSE;
         }
         $rightEntry = array('id', 'name', 'time', 'active');
@@ -395,7 +396,7 @@ class UserMan implements intUserMan{
             }
         }
         else {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getGroups: orderBy must be array');
+            self::setError(ERROR_INCORRECT_DATA, 'getGroups: orderBy must be array');
             return FALSE;
         }
         if ($pageNumber < 1) {
@@ -421,7 +422,7 @@ class UserMan implements intUserMan{
                 . "FROM `".MECCANO_TPREF."_core_userman_groups` "
                 . "ORDER BY `$orderBy` $direct LIMIT $start, $rpp;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getGroups: group info page couldn\'t be gotten | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'getGroups: group info page couldn\'t be gotten | '.self::$dbLink->error);
             return FALSE;
         }
         $xml = new \DOMDocument('1.0', 'utf-8');
@@ -439,7 +440,7 @@ class UserMan implements intUserMan{
     }
     
     public static function getAllGroups($orderBy = array('id'), $ascent = FALSE) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         $rightEntry = array('id', 'name', 'time', 'active');
         if (is_array($orderBy)) {
             $arrayLen = count($orderBy);
@@ -455,7 +456,7 @@ class UserMan implements intUserMan{
             }
         }
         else {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getGroups: value of $orderBy must be string or array');
+            self::setError(ERROR_INCORRECT_DATA, 'getGroups: value of $orderBy must be string or array');
             return FALSE;
         }
         if ($ascent == TRUE) {
@@ -468,7 +469,7 @@ class UserMan implements intUserMan{
                 . "FROM `".MECCANO_TPREF."_core_userman_groups` "
                 . "ORDER BY `$orderBy` $direct ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getGroups: group info page couldn\'t be gotten | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'getGroups: group info page couldn\'t be gotten | '.self::$dbLink->error);
             return FALSE;
         }
         $xml = new \DOMDocument('1.0', 'utf-8');
@@ -487,13 +488,13 @@ class UserMan implements intUserMan{
 
     //user methods
     public static function createUser($username, $password, $email, $groupId, $active = TRUE, $langCode = MECCANO_DEF_LANG, $log = TRUE) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
-            self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('createUser: function execution was terminated because of using of limited authentication');
+            self::setError(ERROR_RESTRICTED_ACCESS, 'createUser: function execution was terminated because of using of limited authentication');
             return FALSE;
         }
         if (!pregUName($username) || !pregPassw($password) || !filter_var($email, FILTER_VALIDATE_EMAIL) || !is_integer($groupId) || !pregLang($langCode)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('createUser: incorrect incoming parameters');
+            self::setError(ERROR_INCORRECT_DATA, 'createUser: incorrect incoming parameters');
             return FALSE;
         }
         self::$dbLink->query("SELECT `u`.`id`, `i`.`id` "
@@ -502,22 +503,22 @@ class UserMan implements intUserMan{
                 . "OR `i`.`email`='$email' "
                 . "LIMIT 1;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('createUser: can\'t check username and email | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'createUser: can\'t check username and email | '.self::$dbLink->error);
             return FALSE;
         }
         if (self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_ALREADY_EXISTS);            self::setErrExp('createUser: username or email are already in use');
+            self::setError(ERROR_ALREADY_EXISTS, 'createUser: username or email are already in use');
             return FALSE;
         }
         $qLang = self::$dbLink->query("SELECT `id` "
                 . "FROM `".MECCANO_TPREF."_core_langman_languages` "
                 . "WHERE `code`='$langCode' ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('createUser: can\'t check defined language | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'createUser: can\'t check defined language | '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('createUser: defined language doesn\'t exist');
+            self::setError(ERROR_NOT_FOUND, 'createUser: defined language doesn\'t exist');
             return FALSE;
         }
         list($langId) = $qLang->fetch_row();
@@ -525,11 +526,11 @@ class UserMan implements intUserMan{
                 . "FROM `".MECCANO_TPREF."_core_userman_groups` "
                 . "WHERE `id`=$groupId ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('createUser: can\'t check group | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'createUser: can\'t check group | '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('createUser: defined group doesn\'t exist');
+            self::setError(ERROR_NOT_FOUND, 'createUser: defined group doesn\'t exist');
             return FALSE;
         }
         $salt = makeSalt($username);
@@ -550,7 +551,7 @@ class UserMan implements intUserMan{
         foreach ($sql as $key => $value) {
             self::$dbLink->query($value);
             if (self::$dbLink->errno) {
-                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('createUser: something went wrong | '.self::$dbLink->error);
+                self::setError(ERROR_NOT_EXECUTED, 'createUser: something went wrong | '.self::$dbLink->error);
                 return FALSE;
             }
             if ($key == 'userid') {
@@ -558,22 +559,22 @@ class UserMan implements intUserMan{
             }
         }
         if ($log && !self::$logObject->newRecord('core', 'createUser', "$username; ID: $userid")) {
-            self::setErrId(ERROR_NOT_CRITICAL);            self::setErrExp(self::$logObject->errExp());
+            self::setError(ERROR_NOT_CRITICAL, self::$logObject->errExp());
         }
         return (int) $userid;
     }
     
     public static function userExists($username) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (!pregUName($username)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('userExists: incorrect username');
+            self::setError(ERROR_INCORRECT_DATA, 'userExists: incorrect username');
             return FALSE;
         }
         $qId = self::$dbLink->query("SELECT `id` "
                 . "FROM `".MECCANO_TPREF."_core_userman_users` "
                 . "WHERE `username`='$username' ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('userExists: can\'t check user existence | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'userExists: can\'t check user existence | '.self::$dbLink->error);
             return FALSE;
         }
         if (self::$dbLink->affected_rows) {
@@ -584,16 +585,16 @@ class UserMan implements intUserMan{
     }
     
     public static function mailExists($email) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('userExists: incorrect email');
+            self::setError(ERROR_INCORRECT_DATA, 'userExists: incorrect email');
             return FALSE;
         }
         $qId = self::$dbLink->query("SELECT `id` "
                 . "FROM `".MECCANO_TPREF."_core_userman_userinfo` "
                 . "WHERE `email`='$email' ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('userExists: can\'t check email existence | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'userExists: can\'t check email existence | '.self::$dbLink->error);
             return FALSE;
         }
         if (self::$dbLink->affected_rows) {
@@ -604,13 +605,13 @@ class UserMan implements intUserMan{
     }
     
     public static function userStatus($userId, $active, $log = TRUE) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
-            self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('userStatus: function execution was terminated because of using of limited authentication');
+            self::setError(ERROR_RESTRICTED_ACCESS, 'userStatus: function execution was terminated because of using of limited authentication');
             return FALSE;
         }
         if (!is_integer($userId) || $userId<1) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('userStatus: user id must be integer and greater than zero');
+            self::setError(ERROR_INCORRECT_DATA, 'userStatus: user id must be integer and greater than zero');
             return FALSE;
         }
         if ($active) {
@@ -620,18 +621,18 @@ class UserMan implements intUserMan{
             $active = 0;
         }
         else {
-            self::setErrId(ERROR_SYSTEM_INTERVENTION);            self::setErrExp('userStatus: system user can\'t be disabled');
+            self::setError(ERROR_SYSTEM_INTERVENTION, 'userStatus: system user can\'t be disabled');
             return FALSE;
         }
         self::$dbLink->query("UPDATE `".MECCANO_TPREF."_core_userman_users` "
                 . "SET `active`=$active "
                 . "WHERE `id`=$userId ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('userStatus: status wasn\'t changed | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'userStatus: status wasn\'t changed | '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('userStatus: incorrect user status or group doesn\'t exist');
+            self::setError(ERROR_NOT_FOUND, 'userStatus: incorrect user status or group doesn\'t exist');
             return FALSE;
         }
         if ($log) {
@@ -642,69 +643,69 @@ class UserMan implements intUserMan{
                 $l = self::$logObject->newRecord('core', 'disUser', "ID: $userId");
             }
             if (!$l) {
-                self::setErrId(ERROR_NOT_CRITICAL);            self::setErrExp(self::$logObject->errExp());
+                self::setError(ERROR_NOT_CRITICAL, self::$logObject->errExp());
             }
         }
         return TRUE;
     }
     
     public static function moveUserTo($userId, $destId) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
-            self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('moveUserTo: function execution was terminated because of using of limited authentication');
+            self::setError(ERROR_RESTRICTED_ACCESS, 'moveUserTo: function execution was terminated because of using of limited authentication');
             return FALSE;
         }
         if (!is_integer($userId) || !is_integer($destId) || $destId<1 || $destId == $userId) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('moveUserTo: incorrect incoming parameters');
+            self::setError(ERROR_INCORRECT_DATA, 'moveUserTo: incorrect incoming parameters');
             return FALSE;
         }
         if ($userId == 1) {
-            self::setErrId(ERROR_SYSTEM_INTERVENTION);            self::setErrExp('moveUserTo: unable to move system user');
+            self::setError(ERROR_SYSTEM_INTERVENTION, 'moveUserTo: unable to move system user');
             return FALSE;
         }
         self::$dbLink->query("SELECT `id` FROM `".MECCANO_TPREF."_core_userman_groups` "
                 . "WHERE `id`=$destId ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('moveUserTo: unable to check destination group existence |'.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'moveUserTo: unable to check destination group existence |'.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('moveUserTo: destination group not found');
+            self::setError(ERROR_NOT_FOUND, 'moveUserTo: destination group not found');
             return FALSE;
         }
         self::$dbLink->query("UPDATE `".MECCANO_TPREF."_core_userman_users` "
                 . "SET `groupid`=$destId "
                 . "WHERE `id`=$userId ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('moveUserTo: unable to move user into another group |'.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'moveUserTo: unable to move user into another group |'.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('moveUserTo: user not found');
+            self::setError(ERROR_NOT_FOUND, 'moveUserTo: user not found');
             return FALSE;
         }
         return TRUE;
     }
     
     public static function delUser($userId, $log = TRUE) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
-            self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('delUser: function execution was terminated because of using of limited authentication');
+            self::setError(ERROR_RESTRICTED_ACCESS, 'delUser: function execution was terminated because of using of limited authentication');
             return FALSE;
         }
         if (!is_integer($userId)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('delUser: identifier must be integer');
+            self::setError(ERROR_INCORRECT_DATA, 'delUser: identifier must be integer');
             return FALSE;
         }
         if ($userId == 1) {
-            self::setErrId(ERROR_SYSTEM_INTERVENTION);            self::setErrExp('delUser: can\'t delete system user');
+            self::setError(ERROR_SYSTEM_INTERVENTION, 'delUser: can\'t delete system user');
             return FALSE;
         }
         $qName = self::$dbLink->query("SELECT `username` "
                 . "FROM `".MECCANO_TPREF."_core_userman_users` "
                 . "WHERE `id`=$userId ;");
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('delUser: defined user doesn\'t exist');
+            self::setError(ERROR_NOT_FOUND, 'delUser: defined user doesn\'t exist');
             return FALSE;
         }
         $sql = array(
@@ -723,21 +724,21 @@ class UserMan implements intUserMan{
         foreach ($sql as $value) {
             self::$dbLink->query($value);
             if (self::$dbLink->errno) {
-                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('delUser: something went wrong | '.self::$dbLink->error);
+                self::setError(ERROR_NOT_EXECUTED, 'delUser: something went wrong | '.self::$dbLink->error);
                 return FALSE;
             }
         }
         list($username) = $qName->fetch_row();
         if ($log && !self::$logObject->newRecord('core', 'delUser', "$username; ID: $userId")) {
-            self::setErrId(ERROR_NOT_CRITICAL);            self::setErrExp(self::$logObject->errExp());
+            self::setError(ERROR_NOT_CRITICAL, self::$logObject->errExp());
         }
         return TRUE;
     }
     
     public static function aboutUser($userId) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (!is_integer($userId)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('aboutUser: id must be integer');
+            self::setError(ERROR_INCORRECT_DATA, 'aboutUser: id must be integer');
             return FALSE;
         }
         $qAbout = self::$dbLink->query("SELECT `u`.`username`, `i`.`fullname`, `i`.`email`, `u`.`creationtime`, `u`.`active`, `g`.`id`, `g`.`groupname` "
@@ -748,11 +749,11 @@ class UserMan implements intUserMan{
                 . "AND `u`.`id`=$userId "
                 . "LIMIT 1 ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('aboutUser: something went wrong | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'aboutUser: something went wrong | '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('aboutUser: defined user doesn\'t exist');
+            self::setError(ERROR_NOT_FOUND, 'aboutUser: defined user doesn\'t exist');
             return FALSE;
         }
         $about = $qAbout->fetch_row();
@@ -770,20 +771,20 @@ class UserMan implements intUserMan{
     }
     
     public static function userPasswords($userId) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (!is_integer($userId)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('userPasswords: id must be integer');
+            self::setError(ERROR_INCORRECT_DATA, 'userPasswords: id must be integer');
             return FALSE;
         }
         $qPassw = self::$dbLink->query("SELECT `id`, `description`, `limited` "
                 . "FROM `".MECCANO_TPREF."_core_userman_userpass` "
                 . "WHERE `userid` = $userId ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('userPasswords: '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'userPasswords: '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('userPasswords: defined user doesn\'t exist');
+            self::setError(ERROR_NOT_FOUND, 'userPasswords: defined user doesn\'t exist');
             return FALSE;
         }
         $xml = new \DOMDocument('1.0', 'utf-8');
@@ -800,24 +801,24 @@ class UserMan implements intUserMan{
     }
     
     public static function addPassword($userId, $password, $description='') {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
-            self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('addPassword: function execution was terminated because of using of limited authentication');
+            self::setError(ERROR_RESTRICTED_ACCESS, 'addPassword: function execution was terminated because of using of limited authentication');
             return FALSE;
         }
         if (!is_integer($userId) || !pregPassw($password) || !is_string($description)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('addPassword: incorrect incoming parameters');
+            self::setError(ERROR_INCORRECT_DATA, 'addPassword: incorrect incoming parameters');
             return FALSE;
         }
         $qHash = self::$dbLink->query("SELECT `salt` "
                 . "FROM `".MECCANO_TPREF."_core_userman_users` "
                 . "WHERE `id`=$userId ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('addPassword: can\'t check defined user | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'addPassword: can\'t check defined user | '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('addPassword: defined user doesn\'t exist');
+            self::setError(ERROR_NOT_FOUND, 'addPassword: defined user doesn\'t exist');
             return FALSE;
         }
         list($salt) = $qHash->fetch_row();
@@ -826,7 +827,7 @@ class UserMan implements intUserMan{
         self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_userman_userpass` (`userid`, `password`, `description`, `limited`) "
                 . "VALUES($userId, '$passwHash', '$description', 1) ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('addPassword: can\'t add password | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'addPassword: can\'t add password | '.self::$dbLink->error);
             return FALSE;
         }
         $insertId = (int) self::$dbLink->insert_id;
@@ -834,20 +835,20 @@ class UserMan implements intUserMan{
         self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_auth_usi` (`id`, `usi`) "
                 . "VALUES($insertId, '$usi') ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('addPassword: can\'t create unique session identifier | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'addPassword: can\'t create unique session identifier | '.self::$dbLink->error);
             return FALSE;
         }
         return (int) $insertId;
     }
     
     public static function delPassword($passwId, $userId) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
-            self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('delPassword: function execution was terminated because of using of limited authentication');
+            self::setError(ERROR_RESTRICTED_ACCESS, 'delPassword: function execution was terminated because of using of limited authentication');
             return FALSE;
         }
         if (!is_integer($passwId) || !is_integer($userId)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('delPassword: incorrect incoming parameters');
+            self::setError(ERROR_INCORRECT_DATA, 'delPassword: incorrect incoming parameters');
             return FALSE;
         }
         $qLimited = self::$dbLink->query("SELECT `limited` "
@@ -855,16 +856,16 @@ class UserMan implements intUserMan{
                 . "WHERE `id`=$passwId "
                 . "AND `userid`=$userId ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('delPassword: can\'t check limitation status of the password | '.self::$dbLink->error);
+            self::setError(ERROR_INCORRECT_DATA, 'delPassword: can\'t check limitation status of the password | '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('delPassword: check incoming parameters');
+            self::setError(ERROR_NOT_FOUND, 'delPassword: check incoming parameters');
             return FALSE;
         }
         list($limited) = $qLimited->fetch_row();
         if (!$limited) {
-            self::setErrId(ERROR_SYSTEM_INTERVENTION);            self::setErrExp('delPassword: impossible to delete primary password');
+            self::setError(ERROR_SYSTEM_INTERVENTION, 'delPassword: impossible to delete primary password');
             return FALSE;
         }
         $sql = array("DELETE FROM `".MECCANO_TPREF."_core_auth_usi` "
@@ -874,7 +875,7 @@ class UserMan implements intUserMan{
         foreach ($sql as $value) {
             self::$dbLink->query($value);
             if (self::$dbLink->errno) {
-                self::setErrId(ERROR_NOT_EXECUTED);                self::setErrExp('delPassword: '.self::$dbLink->error);
+                self::setError(ERROR_NOT_EXECUTED, 'delPassword: '.self::$dbLink->error);
                 return FALSE;
             }
         }
@@ -882,24 +883,24 @@ class UserMan implements intUserMan{
     }
     
     public static function setPassword($passwId, $userId, $password) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
-            self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('setPassword: function execution was terminated because of using of limited authentication');
+            self::setError(ERROR_RESTRICTED_ACCESS, 'setPassword: function execution was terminated because of using of limited authentication');
             return FALSE;
         }
         if (!is_integer($passwId) || !is_integer($userId) || !pregPassw($password)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('setPassword: incorrect incoming parameters');
+            self::setError(ERROR_INCORRECT_DATA, 'setPassword: incorrect incoming parameters');
             return FALSE;
         }
         $qSalt = self::$dbLink->query("SELECT `salt` "
                 . "FROM `".MECCANO_TPREF."_core_userman_users` "
                 . "WHERE `id`=$userId ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('setPassword: can\'t check defined user');
+            self::setError(ERROR_NOT_EXECUTED, 'setPassword: can\'t check defined user');
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('setPassword: defined user doesn\'t exist');
+            self::setError(ERROR_NOT_FOUND, 'setPassword: defined user doesn\'t exist');
             return FALSE;
         }
         list($salt) = $qSalt->fetch_row();
@@ -909,82 +910,82 @@ class UserMan implements intUserMan{
                 . "WHERE `id`=$passwId "
                 . "AND `userid`=$userId ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('setPassword: can\'t update password | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'setPassword: can\'t update password | '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_ALREADY_EXISTS);            self::setErrExp('setPassword: defined password doesn\'t exist or password was repeated');
+            self::setError(ERROR_ALREADY_EXISTS, 'setPassword: defined password doesn\'t exist or password was repeated');
             return FALSE;
         }
         return TRUE;
     }
     
     public static function setUserName($userId, $username, $log = TRUE) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
-            self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('setUserName: function execution was terminated because of using of limited authentication');
+            self::setError(ERROR_RESTRICTED_ACCESS, 'setUserName: function execution was terminated because of using of limited authentication');
             return FALSE;
         }
         if (!is_integer($userId) || !pregUName($username)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('setUserName: incorrect incoming parameters');
+            self::setError(ERROR_INCORRECT_DATA, 'setUserName: incorrect incoming parameters');
             return FALSE;
         }
         $qNewName = self::$dbLink->query("SELECT `id` "
                 . "FROM `".MECCANO_TPREF."_core_userman_users` "
                 . "WHERE `username`='$username' ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('setUserName: unable to check new name | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'setUserName: unable to check new name | '.self::$dbLink->error);
             return FALSE;
         }
         if (self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_ALREADY_EXISTS);            self::setErrExp('setUserName: new name already in use');
+            self::setError(ERROR_ALREADY_EXISTS, 'setUserName: new name already in use');
             return FALSE;
         }
         self::$dbLink->query("UPDATE `".MECCANO_TPREF."_core_userman_users` "
                 . "SET `username`='$username' "
                 . "WHERE `id`=$userId ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('setUserName: unable to set username | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'setUserName: unable to set username | '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('setUserName: unable to find defined user');
+            self::setError(ERROR_NOT_FOUND, 'setUserName: unable to find defined user');
             return FALSE;
         }
         if ($log && !self::$logObject->newRecord('core', 'setUserName', "$username; ID: $userId")) {
-            self::setErrId(ERROR_NOT_CRITICAL);            self::setErrExp(self::$logObject->errExp());
+            self::setError(ERROR_NOT_CRITICAL, self::$logObject->errExp());
         }
         return TRUE;
     }
     
     public static function setUserMail($userId, $email) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
-            self::setErrId(ERROR_RESTRICTED_ACCESS);            self::setErrExp('setUserMail: function execution was terminated because of using of limited authentication');
+            self::setError(ERROR_RESTRICTED_ACCESS, 'setUserMail: function execution was terminated because of using of limited authentication');
             return FALSE;
         }
         if (!is_integer($userId) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('setUserMail: incorrect incoming parameters');
+            self::setError(ERROR_INCORRECT_DATA, 'setUserMail: incorrect incoming parameters');
             return FALSE;
         }
         self::$dbLink->query("UPDATE `".MECCANO_TPREF."_core_userman_userinfo` "
                 . "SET `email`='$email' "
                 . "WHERE `id`=$userId ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('setUserMail: unable to set email | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'setUserMail: unable to set email | '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_ALREADY_EXISTS);            self::setErrExp('setUserMail: defined user does not exist or email was repeated');
+            self::setError(ERROR_ALREADY_EXISTS, 'setUserMail: defined user does not exist or email was repeated');
             return FALSE;
         }
         return TRUE;
     }
     
     public static function setFullName($userId, $name) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (!is_integer($userId) || !is_string($name)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('setFullName: incorrect incoming parameters');
+            self::setError(ERROR_INCORRECT_DATA, 'setFullName: incorrect incoming parameters');
             return FALSE;
         }
         $name = self::$dbLink->real_escape_string($name);
@@ -992,31 +993,31 @@ class UserMan implements intUserMan{
                 . "SET `fullname`='$name' "
                 . "WHERE `id`=$userId ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('setFullName: can\'t set name | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'setFullName: can\'t set name | '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_ALREADY_EXISTS);            self::setErrExp('setFullName: defined user doesn\'t exist or name was repeated');
+            self::setError(ERROR_ALREADY_EXISTS, 'setFullName: defined user doesn\'t exist or name was repeated');
             return FALSE;
         }
         return TRUE;
     }
     
     public static function changePassword($passwId, $userId, $oldPassw, $newPassw) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (!is_integer($passwId) || !is_integer($userId) || !pregPassw($oldPassw) || !pregPassw($newPassw)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('changePassword: incorrect incoming parameters');
+            self::setError(ERROR_INCORRECT_DATA, 'changePassword: incorrect incoming parameters');
             return FALSE;
         }
         $qSalt = self::$dbLink->query("SELECT `salt` "
                 . "FROM `".MECCANO_TPREF."_core_userman_users` "
                 . "WHERE `id`=$userId ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('changePassword: can\'t check defined user | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'changePassword: can\'t check defined user | '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_NOT_FOUND);            self::setErrExp('changePassword: defined user doesn\'t exist');
+            self::setError(ERROR_NOT_FOUND, 'changePassword: defined user doesn\'t exist');
             return FALSE;
         }
         list($salt) = $qSalt->fetch_row();
@@ -1038,20 +1039,20 @@ class UserMan implements intUserMan{
                     . "AND `password`='$oldPasswHash' ;");
         }
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('changePassword: can\'t update password | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'changePassword: can\'t update password | '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setErrId(ERROR_ALREADY_EXISTS);            self::setErrExp('changePassword: defined password doesn\'t exist, new password repeats existing, was received invalid old password or usage of limited authentication');
+            self::setError(ERROR_ALREADY_EXISTS, 'changePassword: defined password doesn\'t exist, new password repeats existing, was received invalid old password or usage of limited authentication');
             return FALSE;
         }
         return TRUE;
     }
     
     public static function sumUsers($rpp = 20) { // rpp - records per page
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (!is_integer($rpp)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('sumUsers: value of users per page must be integer');
+            self::setError(ERROR_INCORRECT_DATA, 'sumUsers: value of users per page must be integer');
             return FALSE;
         }
         if ($rpp < 1) {
@@ -1059,7 +1060,7 @@ class UserMan implements intUserMan{
         }
         $qResult = self::$dbLink->query("SELECT COUNT(`id`) FROM `".MECCANO_TPREF."_core_userman_users` ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('sumUsers: total users couldn\'t be counted | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'sumUsers: total users couldn\'t be counted | '.self::$dbLink->error);
             return FALSE;
         }
         list($totalUsers) = $qResult->fetch_array(MYSQLI_NUM);
@@ -1078,9 +1079,9 @@ class UserMan implements intUserMan{
     }
     
     public static function getUsers($pageNumber, $totalUsers, $rpp = 20, $orderBy = array('id'), $ascent = FALSE) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (!is_integer($pageNumber) || !is_integer($totalUsers) || !is_integer($rpp)) {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getUsers: values of $pageNumber, $totalUsers, $upp must be integers');
+            self::setError(ERROR_INCORRECT_DATA, 'getUsers: values of $pageNumber, $totalUsers, $upp must be integers');
             return FALSE;
         }
         $rightEntry = array('id', 'username', 'time', 'fullname', 'email', 'group', 'gid', 'active');
@@ -1098,7 +1099,7 @@ class UserMan implements intUserMan{
             }
         }
         else {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getUsers: orderBy must be array');
+            self::setError(ERROR_INCORRECT_DATA, 'getUsers: orderBy must be array');
             return FALSE;
         }
         if ($pageNumber < 1) {
@@ -1128,7 +1129,7 @@ class UserMan implements intUserMan{
                 . "ON `u`.`groupid` = `g`.`id` "
                 . "ORDER BY `$orderBy` $direct LIMIT $start, $rpp;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getUsers: unable to get user info page | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'getUsers: unable to get user info page | '.self::$dbLink->error);
             return FALSE;
         }
         $xml = new \DOMDocument('1.0', 'utf-8');
@@ -1150,7 +1151,7 @@ class UserMan implements intUserMan{
     }
     
     public static function getAllUsers($orderBy = array('id'), $ascent = FALSE) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         $rightEntry = array('id', 'username', 'time', 'fullname', 'email', 'group', 'gid', 'active');
         if (is_array($orderBy)) {
             $arrayLen = count($orderBy);
@@ -1166,7 +1167,7 @@ class UserMan implements intUserMan{
             }
         }
         else {
-            self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getAllUsers: orderBy must be array');
+            self::setError(ERROR_INCORRECT_DATA, 'getAllUsers: orderBy must be array');
             return FALSE;
         }
         if ($ascent == TRUE) {
@@ -1183,7 +1184,7 @@ class UserMan implements intUserMan{
                 . "ON `u`.`groupid` = `g`.`id` "
                 . "ORDER BY `$orderBy` $direct ;");
         if (self::$dbLink->errno) {
-            self::setErrId(ERROR_NOT_EXECUTED);            self::setErrExp('getAllUsers: unable to get user info page | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'getAllUsers: unable to get user info page | '.self::$dbLink->error);
             return FALSE;
         }
         $xml = new \DOMDocument('1.0', 'utf-8');
