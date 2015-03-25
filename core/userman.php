@@ -383,7 +383,7 @@ class UserMan implements intUserMan{
         $rightEntry = array('id', 'name', 'time', 'active');
         if (is_array($orderBy)) {
             $arrayLen = count($orderBy);
-            if (count(array_intersect($orderBy, $rightEntry)) == $arrayLen) {
+            if ($arrayLen && count(array_intersect($orderBy, $rightEntry)) == $arrayLen) {
                 $orderList = '';
                 foreach ($orderBy as $value) {
                     $orderList = $orderList.$value.'`, `';
@@ -443,7 +443,7 @@ class UserMan implements intUserMan{
         $rightEntry = array('id', 'name', 'time', 'active');
         if (is_array($orderBy)) {
             $arrayLen = count($orderBy);
-            if (count(array_intersect($orderBy, $rightEntry)) == $arrayLen) {
+            if ($arrayLen && count(array_intersect($orderBy, $rightEntry)) == $arrayLen) {
                 $orderList = '';
                 foreach ($orderBy as $value) {
                     $orderList = $orderList.$value.'`, `';
@@ -1086,7 +1086,7 @@ class UserMan implements intUserMan{
         $rightEntry = array('id', 'username', 'time', 'fullname', 'email', 'group', 'gid', 'active');
         if (is_array($orderBy)) {
             $arrayLen = count($orderBy);
-            if (count(array_intersect($orderBy, $rightEntry)) == $arrayLen) {
+            if ($arrayLen && count(array_intersect($orderBy, $rightEntry)) == $arrayLen) {
                 $orderList = '';
                 foreach ($orderBy as $value) {
                     $orderList = $orderList.$value.'`, `';
@@ -1154,7 +1154,7 @@ class UserMan implements intUserMan{
         $rightEntry = array('id', 'username', 'time', 'fullname', 'email', 'group', 'gid', 'active');
         if (is_array($orderBy)) {
             $arrayLen = count($orderBy);
-            if (count(array_intersect($orderBy, $rightEntry)) == $arrayLen) {
+            if ($arrayLen && count(array_intersect($orderBy, $rightEntry)) == $arrayLen) {
                 $orderList = '';
                 foreach ($orderBy as $value) {
                     $orderList = $orderList.$value.'`, `';
