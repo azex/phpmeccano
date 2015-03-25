@@ -18,7 +18,7 @@ interface intLogMan {
     public static function sumLogByPlugin($plugin, $rpp = 20);
     public static function getPageByPlugin($plugin, $pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE);
     public static function getLogAllPlugins($code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE);
-    public static function getLogByPlugin($plugin, $code = MECCANO_DEF_LANG, $orderBy = array(), $ascent = FALSE);
+    public static function getLogByPlugin($plugin, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE);
 }
 
 class LogMan implements intLogMan {
@@ -321,7 +321,8 @@ class LogMan implements intLogMan {
         }
         $rightEntry = array('id', 'user', 'event', 'time');
         if (is_array($orderBy)) {
-            if (count(array_intersect($orderBy, $rightEntry))) {
+            $arrayLen = count($orderBy);
+            if ($arrayLen && count(array_intersect($orderBy, $rightEntry)) == $arrayLen) {
                 $orderList = '';
                 foreach ($orderBy as $value) {
                     $orderList = $orderList.$value.'`, `';
@@ -416,7 +417,7 @@ class LogMan implements intLogMan {
         return array('records' => (int) $totalRecs, 'pages' => (int) $totalPages);
     }
     
-    public static function getPageByPlugin($plugin, $pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array(), $ascent = FALSE) {
+    public static function getPageByPlugin($plugin, $pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE) {
         self::$errid = 0;        self::$errexp = '';
         if (!pregPlugin($plugin) || !pregLang($code) || !is_integer($pageNumber) || !is_integer($totalPages) || !is_integer($rpp)) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getPage: check arguments');
@@ -424,7 +425,8 @@ class LogMan implements intLogMan {
         }
         $rightEntry = array('id', 'user', 'event', 'time');
         if (is_array($orderBy)) {
-            if (count(array_intersect($orderBy, $rightEntry))) {
+            $arrayLen = count($orderBy);
+            if ($arrayLen && count(array_intersect($orderBy, $rightEntry)) == $arrayLen) {
                 $orderList = '';
                 foreach ($orderBy as $value) {
                     $orderList = $orderList.$value.'`, `';
@@ -492,7 +494,7 @@ class LogMan implements intLogMan {
         return $xml;
     }
     
-    public static function getLogAllPlugins($code = MECCANO_DEF_LANG, $orderBy = array(), $ascent = FALSE) {
+    public static function getLogAllPlugins($code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE) {
         self::$errid = 0;        self::$errexp = '';
         if (!pregLang($code)) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getPage: check arguments');
@@ -500,7 +502,8 @@ class LogMan implements intLogMan {
         }
         $rightEntry = array('id', 'user', 'event', 'time');
         if (is_array($orderBy)) {
-            if (count(array_intersect($orderBy, $rightEntry))) {
+            $arrayLen = count($orderBy);
+            if ($arrayLen && count(array_intersect($orderBy, $rightEntry)) == $arrayLen) {
                 $orderList = '';
                 foreach ($orderBy as $value) {
                     $orderList = $orderList.$value.'`, `';
@@ -547,7 +550,7 @@ class LogMan implements intLogMan {
         return $xml;
     }
     
-    public static function getLogByPlugin($plugin, $code = MECCANO_DEF_LANG, $orderBy = array(), $ascent = FALSE) {
+    public static function getLogByPlugin($plugin, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE) {
         self::$errid = 0;        self::$errexp = '';
         if (!pregPlugin($plugin) || !pregLang($code)) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getPage: check arguments');
@@ -555,7 +558,8 @@ class LogMan implements intLogMan {
         }
         $rightEntry = array('id', 'user', 'event', 'time');
         if (is_array($orderBy)) {
-            if (count(array_intersect($orderBy, $rightEntry))) {
+            $arrayLen = count($orderBy);
+            if ($arrayLen && count(array_intersect($orderBy, $rightEntry)) == $arrayLen) {
                 $orderList = '';
                 foreach ($orderBy as $value) {
                     $orderList = $orderList.$value.'`, `';
