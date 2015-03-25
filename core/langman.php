@@ -1240,7 +1240,8 @@ class LangMan implements intLangMan{
         }
         $rightEntry = array('id', 'title', 'name', 'created', 'edited');
         if (is_array($orderBy)) {
-            if (count(array_intersect($orderBy, $rightEntry))) {
+            $arrayLen = count($orderBy);
+            if ($arrayLen && count(array_intersect($orderBy, $rightEntry)) == $arrayLen) {
                 $orderList = '';
                 foreach ($orderBy as $value) {
                     $orderList = $orderList.$value.'`, `';
@@ -1377,7 +1378,8 @@ class LangMan implements intLangMan{
         }
         $rightEntry = array('id', 'title', 'name', 'created', 'edited');
         if (is_array($orderBy)) {
-            if (count(array_intersect($orderBy, $rightEntry))) {
+            $arrayLen = count($orderBy);
+            if ($arrayLen && count(array_intersect($orderBy, $rightEntry)) == $arrayLen) {
                 $orderList = '';
                 foreach ($orderBy as $value) {
                     $orderList = $orderList.$value.'`, `';
@@ -1534,16 +1536,14 @@ class LangMan implements intLangMan{
                 !is_integer($pageNumber) || 
                 !is_integer($totalPages) || 
                 !is_integer($rpp) || 
-                !(is_null($code) || pregLang($code))) {
+                !pregLang($code)) {
             self::setErrId(ERROR_INCORRECT_DATA);            self::setErrExp('getTitlesXML: incorrect incoming parameters');
             return FALSE;
         }
-        if (is_null($code)) {
-            $code = MECCANO_DEF_LANG;
-        }
         $rightEntry = array('id', 'title', 'name');
         if (is_array($orderBy)) {
-            if (count(array_intersect($orderBy, $rightEntry))) {
+            $arrayLen = count($orderBy);
+            if ($arrayLen && count(array_intersect($orderBy, $rightEntry)) == $arrayLen) {
                 $orderList = '';
                 foreach ($orderBy as $value) {
                     $orderList = $orderList.$value.'`, `';
@@ -1620,7 +1620,8 @@ class LangMan implements intLangMan{
         }
         $rightEntry = array('id', 'title', 'name');
         if (is_array($orderBy)) {
-            if (count(array_intersect($orderBy, $rightEntry))) {
+            $arrayLen = count($orderBy);
+            if ($arrayLen && count(array_intersect($orderBy, $rightEntry)) == $arrayLen) {
                 $orderList = '';
                 foreach ($orderBy as $value) {
                     $orderList = $orderList.$value.'`, `';
@@ -1742,7 +1743,8 @@ class LangMan implements intLangMan{
         }
         $rightEntry = array('id', 'name', 'static');
         if (is_array($orderBy)) {
-            if (count(array_intersect($orderBy, $rightEntry))) {
+            $arrayLen = count($orderBy);
+            if ($arrayLen && count(array_intersect($orderBy, $rightEntry)) == $arrayLen) {
                 $orderList = '';
                 foreach ($orderBy as $value) {
                     $orderList = $orderList.$value.'`, `';
@@ -1839,7 +1841,8 @@ class LangMan implements intLangMan{
         }
         $rightEntry = array('id', 'name', 'static');
         if (is_array($orderBy)) {
-            if (count(array_intersect($orderBy, $rightEntry))) {
+            $arrayLen = count($orderBy);
+            if ($arrayLen && count(array_intersect($orderBy, $rightEntry)) == $arrayLen) {
                 $orderList = '';
                 foreach ($orderBy as $value) {
                     $orderList = $orderList.$value.'`, `';
@@ -1939,7 +1942,8 @@ class LangMan implements intLangMan{
         }
         $rightEntry = array('id', 'name');
         if (is_array($orderBy)) {
-            if (count(array_intersect($orderBy, $rightEntry))) {
+            $arrayLen = count($orderBy);
+            if ($arrayLen && count(array_intersect($orderBy, $rightEntry)) == $arrayLen) {
                 $orderList = '';
                 foreach ($orderBy as $value) {
                     $orderList = $orderList.$value.'`, `';
@@ -2052,7 +2056,8 @@ class LangMan implements intLangMan{
         }
         $rightEntry = array('id', 'name');
         if (is_array($orderBy)) {
-            if (count(array_intersect($orderBy, $rightEntry))) {
+            $arrayLen = count($orderBy);
+            if ($arrayLen && count(array_intersect($orderBy, $rightEntry)) == $arrayLen) {
                 $orderList = '';
                 foreach ($orderBy as $value) {
                     $orderList = $orderList.$value.'`, `';
