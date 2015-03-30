@@ -30,7 +30,7 @@ interface intPlugins {
     public static function delUnpacked($id);
     public static function listUnpacked();
     public static function aboutUnpacked($id);
-    public static function sumVersion($plugin);
+    public static function getSumVersion($plugin);
 }
 
 class Plugins implements intPlugins {
@@ -148,7 +148,7 @@ class Plugins implements intPlugins {
                 $insertValues = $insertValues.", '$optional'";
             }
             $pretSumVersion = 10000*$uV + 100*$mV + $lV;
-            $existSumVersion = self::sumVersion($shortName);
+            $existSumVersion = self::getSumVersion($shortName);
             if (self::$errid == ERROR_NOT_EXECUTED) {
                 Files::remove($tmpPath);
                 self::$errexp = 'unpack: -> '.self::$errexp;
@@ -277,21 +277,21 @@ class Plugins implements intPlugins {
         return $xml;
     }
     
-    public static function sumVersion($name) {
+    public static function getSumVersion($plugin) {
         self::$errid = 0;        self::$errexp = '';
-        if (!pregPlugin($name)) {
-            self::setError(ERROR_INCORRECT_DATA, "pluginVersion: incorrect name");
+        if (!pregPlugin($plugin)) {
+            self::setError(ERROR_INCORRECT_DATA, "getSumVersion: incorrect name");
             return FALSE;
         }
         $qPlugin = self::$dbLink->query("SELECT `uv`, `mv`, `lv` "
                 . "FROM `".MECCANO_TPREF."_core_plugins_installed` "
-                . "WHERE `name`='$name'");
+                . "WHERE `name`='$plugin'");
         if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, "pluginVersion: unable to get plugin version | ".self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, "getSumVersion: unable to get plugin version | ".self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setError(ERROR_NOT_FOUND, "pluginVersion: plugin not found");
+            self::setError(ERROR_NOT_FOUND, "getSumVersion: plugin not found");
             return FALSE;
         }
         list($uv, $mv, $lv) = $qPlugin->fetch_row();
