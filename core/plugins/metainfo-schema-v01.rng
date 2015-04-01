@@ -3,11 +3,10 @@
 <grammar datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes" xmlns="http://relaxng.org/ns/structure/1.0" >
     <start>
         <element name="metainfo">
-            <attribute name="upper">
-                <ref name="versions" />
-            </attribute>
-            <attribute name="lower">
-                <ref name="versions" />
+            <attribute name="version">
+                <data type="string">
+                    <param name="pattern">[0-9]{1,2}\.[0-9]{1,2}</param>
+                </data>
             </attribute>
             <element name="shortname">
                 <data type="string">
@@ -21,48 +20,45 @@
                 </data>
             </element>
             <element name="version">
-                <attribute name="upper">
-                    <ref name="versions" />
-                </attribute>
-                <attribute name="middle">
-                    <ref name="versions" />
-                </attribute>
-                <attribute name="lower">
-                    <ref name="versions" />
-                </attribute>
+                <data type="string">
+                    <param name="pattern">[0-9]{1,2}\.[0-9]{1,2}\.[0-9]{1,2}</param>
+                </data>
             </element>
             <optional>
                 <element name="about">
                     <data type="string">
-                        <param name="maxLength">512</param>
+                        <param name="maxLength">65535</param>
                     </data>
                 </element>
             </optional>
             <optional>
                 <element name="credits">
-                    <data type="string" />
+                    <data type="string">
+                        <param name="maxLength">65535</param>
+                    </data>
                 </element>
             </optional>
             <optional>
                 <element name="url">
-                    <data type="string" />
+                    <data type="string">
+                        <param name="maxLength">100</param>
+                    </data>
                 </element>
             </optional>
             <optional>
                 <element name="email">
-                    <data type="string" />
+                    <data type="string">
+                        <param name="pattern">[^@]+@[^\.]+\..+</param>
+                    </data>
                 </element>
             </optional>
             <optional>
                 <element name="license">
-                    <data type="string" />
+                    <data type="string">
+                        <param name="maxLength">65535</param>
+                    </data>
                 </element>
             </optional>
         </element>
     </start>
-    <define name="versions">
-        <data type="nonNegativeInteger">
-            <param name="maxInclusive">99</param>
-        </data>
-    </define>
 </grammar>
