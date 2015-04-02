@@ -63,6 +63,10 @@ class Plugins implements intPlugins {
         self::$errexp = $exp;
     }
     
+    private static function zeroizeError() {
+        self::$errid = 0;        self::$errexp = '';
+    }
+    
     public static function errId() {
         return self::$errid;
     }
@@ -72,7 +76,7 @@ class Plugins implements intPlugins {
     }
     
     public static function unpack($package) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         $zip = new \ZipArchive();
         $zipOpen = $zip->open($package);
         if ($zipOpen === TRUE) {
@@ -188,7 +192,7 @@ class Plugins implements intPlugins {
     }
     
     public static function delUnpacked($id) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (!is_integer($id)) {
             self::setError(ERROR_INCORRECT_DATA, 'delUnpacked: id must be integer');
             return FALSE;
@@ -219,7 +223,7 @@ class Plugins implements intPlugins {
     }
     
     public static function listUnpacked() {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         $qUncpacked = self::$dbLink->query("SELECT `id`, `short`, `full`, `version`, `action` "
                 . "FROM `".MECCANO_TPREF."_core_plugins_unpacked` ;");
         if (self::$dbLink->errno) {
@@ -242,7 +246,7 @@ class Plugins implements intPlugins {
     }
     
     public static function aboutUnpacked($id) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (!is_integer($id)) {
             self::setError(ERROR_INCORRECT_DATA, 'aboutUnpacked: id must be integer');
             return FALSE;
@@ -276,7 +280,7 @@ class Plugins implements intPlugins {
     }
     
     public static function getSumVersion($plugin) {
-        self::$errid = 0;        self::$errexp = '';
+        self::zeroizeError();
         if (!pregPlugin($plugin)) {
             self::setError(ERROR_INCORRECT_DATA, "getSumVersion: incorrect name");
             return FALSE;
@@ -299,6 +303,7 @@ class Plugins implements intPlugins {
     }
     
     public static function calcSumVersion($version) {
+        self::zeroizeError();
         if (!is_string($version) || !preg_match('/^[0-9]{1,2}\.[0-9]{1,2}\.[0-9]{1,2}$/', $version)) {
             self::setError(ERROR_INCORRECT_DATA, "calcSumVersion: incorrect vesion format");
             return FALSE;
