@@ -101,7 +101,7 @@ class Plugins implements intPlugins {
             }
             $metaDOM = new \DOMDocument();
             $metaDOM->loadXML($metaInfo);
-            if (!@$metaDOM->relaxNGValidate(MECCANO_CORE_DIR.'/plugins/metainfo-schema-v01.rng')) {
+            if (!@$metaDOM->relaxNGValidate(MECCANO_CORE_DIR.'/validation-schemas/plugins-package-metainfo-v01.rng')) {
                 Files::remove($tmpPath);
                 self::setError(ERROR_INCORRECT_DATA, 'unpack: invalid meta-info structure');
                 return FALSE;

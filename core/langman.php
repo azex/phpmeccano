@@ -188,7 +188,7 @@ class LangMan implements intLangMan{
     
     public static function installTiles(\DOMDocument $titles) {
         self::zeroizeError();
-        if (!$titles->relaxNGValidate(MECCANO_CORE_DIR.'/langman/title-schema-v1.rng')) {
+        if (!$titles->relaxNGValidate(MECCANO_CORE_DIR.'/validation-schemas/langman-title-v01.rng')) {
             self::setError(ERROR_INCORRECT_DATA, 'installTitles: incorrect structure of policy description');
             return FALSE;
         }
@@ -396,7 +396,7 @@ class LangMan implements intLangMan{
     
     public static function installTexts(\DOMDocument $texts) {
         self::zeroizeError();
-        if (!$texts->relaxNGValidate(MECCANO_CORE_DIR.'/langman/text-schema-v1.rng')) {
+        if (!$texts->relaxNGValidate(MECCANO_CORE_DIR.'/validation-schemas/langman-text-v01.rng')) {
             self::setError(ERROR_INCORRECT_DATA, 'installTexts: incorrect structure of policy description');
             return FALSE;
         }

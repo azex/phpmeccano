@@ -229,7 +229,7 @@ class Policy implements intPolicy {
     
     public static function install(\DOMDocument $policy) {
         self::zeroizeError();
-        if (!@$policy->relaxNGValidate(MECCANO_CORE_DIR.'/policy/policy-schema-v01.rng')) {
+        if (!@$policy->relaxNGValidate(MECCANO_CORE_DIR.'/validation-schemas/policy-v01.rng')) {
             self::setError(ERROR_INCORRECT_DATA, 'install: incorrect structure of incoming data');
             return FALSE;
         }

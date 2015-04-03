@@ -53,7 +53,7 @@ class LogMan implements intLogMan {
     
     public static function installEvents(\DOMDocument $events) {
         self::zeroizeError();
-        if (!@$events->relaxNGValidate(MECCANO_CORE_DIR.'/logman/install-events-schema-v01.rng')) {
+        if (!@$events->relaxNGValidate(MECCANO_CORE_DIR.'/validation-schemas/logman-events-v01.rng')) {
             self::setError(ERROR_INCORRECT_DATA, 'installEvents: incorrect structure of the events');
             return FALSE;
         }
