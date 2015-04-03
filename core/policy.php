@@ -15,7 +15,7 @@ interface intPolicy {
     public static function delGroup($id);
     public static function funcAccess($plugin, $func, $groupId, $access = TRUE);
     public static function checkAccess($plugin, $func);
-    public static function install(\DOMDocument $policy);
+    public static function install(\DOMDocument $policy, $validate = TRUE);
     public static function groupPolicyList($plugin, $groupId, $code = MECCANO_DEF_LANG);
     public static function getPolicyDescById($id);
 }
@@ -227,9 +227,9 @@ class Policy implements intPolicy {
         return (int) $access;
     }
     
-    public static function install(\DOMDocument $policy) {
+    public static function install(\DOMDocument $policy, $validate = TRUE) {
         self::zeroizeError();
-        if (!@$policy->relaxNGValidate(MECCANO_CORE_DIR.'/validation-schemas/policy-v01.rng')) {
+        if ($validate && !@$policy->relaxNGValidate(MECCANO_CORE_DIR.'/validation-schemas/policy-v01.rng')) {
             self::setError(ERROR_INCORRECT_DATA, 'install: incorrect structure of incoming data');
             return FALSE;
         }

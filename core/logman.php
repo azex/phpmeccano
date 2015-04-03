@@ -9,7 +9,7 @@ interface intLogMan {
     public static function setDbLink(\mysqli $dbLink);
     public static function errId();
     public static function errExp();
-    public static function installEvents(\DOMDocument $events);
+    public static function installEvents(\DOMDocument $events, $validate = TRUE);
     public static function delEvents($plugin);
     public static function newRecord($plugin, $event, $insertion = '');
     public static function clearLog();
@@ -51,9 +51,9 @@ class LogMan implements intLogMan {
         return self::$errexp;
     }
     
-    public static function installEvents(\DOMDocument $events) {
+    public static function installEvents(\DOMDocument $events, $validate = TRUE) {
         self::zeroizeError();
-        if (!@$events->relaxNGValidate(MECCANO_CORE_DIR.'/validation-schemas/logman-events-v01.rng')) {
+        if ($validate && !@$events->relaxNGValidate(MECCANO_CORE_DIR.'/validation-schemas/logman-events-v01.rng')) {
             self::setError(ERROR_INCORRECT_DATA, 'installEvents: incorrect structure of the events');
             return FALSE;
         }
