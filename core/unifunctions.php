@@ -157,3 +157,33 @@ function authToken() {
     }
     return FALSE;
 }
+
+// compares two versions
+function compareVersions($version1, $version2, $operator = ">=") {
+    if (!is_string($version1) || !preg_match('/^[0-9]{1,2}\.[0-9]{1,2}\.[0-9]{1,2}$/', $version1) || !is_string($version2) || !preg_match('/^[0-9]{1,2}\.[0-9]{1,2}\.[0-9]{1,2}$/', $version2) || !in_array($operator, array(">=", "<=", "==", ">", "<"))) {
+        return FALSE;
+    }
+    // calculate first summary version
+    list($uv1, $mv1, $lv1) = explode(".", $version1);
+    $sumVersion1 = 10000*$uv1 + 100*$mv1 + $lv1;
+    // calculate second summary version
+    list($uv2, $mv2, $lv2) = explode(".", $version2);
+    $sumVersion2 = 10000*$uv2 + 100*$mv2 + $lv2;
+    // compare versions
+    if ($operator == ">=" && $version1 >= $version2) {
+        return TRUE;
+    }
+    elseif ($operator == "<=" && $version1 <= $version2) {
+        return TRUE;
+    }
+    elseif ($operator == "==" && $version1 == $version2) {
+        return TRUE;
+    }
+    elseif ($operator == ">" && $version1 > $version2) {
+        return TRUE;
+    }
+    elseif ($operator == "<" && $version1 < $version2) {
+        return TRUE;
+    }
+    return FALSE;
+}
