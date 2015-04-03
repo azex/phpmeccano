@@ -6,7 +6,7 @@
             <attribute name="plugin">
                 <ref name="plugFuncName" />
             </attribute>
-            <oneOrMore>
+            <zeroOrMore>
                 <element name="function">
                     <attribute name="name">
                         <ref name="plugFuncName" />
@@ -33,7 +33,7 @@
                         </element>
                     </oneOrMore>
                 </element>
-            </oneOrMore>
+            </zeroOrMore>
         </element>
     </start>
     <define name="plugFuncName">

@@ -24,41 +24,31 @@
                     <param name="pattern">[0-9]{1,2}\.[0-9]{1,2}\.[0-9]{1,2}</param>
                 </data>
             </element>
-            <optional>
-                <element name="about">
-                    <data type="string">
-                        <param name="maxLength">65535</param>
-                    </data>
-                </element>
-            </optional>
-            <optional>
-                <element name="credits">
-                    <data type="string">
-                        <param name="maxLength">65535</param>
-                    </data>
-                </element>
-            </optional>
-            <optional>
-                <element name="url">
-                    <data type="string">
-                        <param name="maxLength">100</param>
-                    </data>
-                </element>
-            </optional>
-            <optional>
-                <element name="email">
-                    <data type="string">
-                        <param name="pattern">[^@]+@[^\.]+\..+</param>
-                    </data>
-                </element>
-            </optional>
-            <optional>
-                <element name="license">
-                    <data type="string">
-                        <param name="maxLength">65535</param>
-                    </data>
-                </element>
-            </optional>
+            <element name="about">
+                <data type="string">
+                    <param name="maxLength">65535</param>
+                </data>
+            </element>
+            <element name="credits">
+                <data type="string">
+                    <param name="maxLength">65535</param>
+                </data>
+            </element>
+            <element name="url">
+                <data type="string">
+                    <param name="maxLength">100</param>
+                </data>
+            </element>
+            <element name="email">
+                <data type="string">
+                    <param name="pattern">[^@]+@[^\.]+\..+</param>
+                </data>
+            </element>
+            <element name="license">
+                <data type="string">
+                    <param name="maxLength">65535</param>
+                </data>
+            </element>
         </element>
     </start>
 </grammar>
