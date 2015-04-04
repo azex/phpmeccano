@@ -30,7 +30,7 @@ interface intPlugins {
     public static function delUnpacked($id);
     public static function listUnpacked();
     public static function aboutUnpacked($id);
-    public static function getSumVersion($plugin);
+    public static function getVersion($plugin);
 }
 
 class Plugins implements intPlugins {
@@ -149,29 +149,6 @@ class Plugins implements intPlugins {
                 $insertColumns = $insertColumns.", `license`";
                 $insertValues = $insertValues.", '$optional'";
             }
-            $pretSumVersion = self::calcSumVersion($version);
-            $existSumVersion = self::getSumVersion($shortName);
-            if (self::$errid == ERROR_NOT_EXECUTED) {
-                Files::remove($tmpPath);
-                self::$errexp = 'unpack: -> '.self::$errexp;
-                return FALSE;
-            }
-            elseif ($existSumVersion) {
-                if ($pretSumVersion == $existSumVersion) {
-                    $action = "reinstall";
-                }
-                elseif ($pretSumVersion > $existSumVersion) {
-                    $action = "upgrade";
-                }
-                else {
-                    $action = "downgrade";
-                }
-            }
-            else {
-                $action = "install";
-            }
-            $insertColumns = $insertColumns.", `action`";
-            $insertValues = $insertValues.", '$action'";
             self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_plugins_unpacked` ($insertColumns)"
                     . "VALUES ($insertValues) ;");
             if (self::$dbLink->errno) {
@@ -224,7 +201,7 @@ class Plugins implements intPlugins {
     
     public static function listUnpacked() {
         self::zeroizeError();
-        $qUncpacked = self::$dbLink->query("SELECT `id`, `short`, `full`, `version`, `action` "
+        $qUncpacked = self::$dbLink->query("SELECT `id`, `short`, `full`, `version` "
                 . "FROM `".MECCANO_TPREF."_core_plugins_unpacked` ;");
         if (self::$dbLink->errno) {
             self::setError(ERROR_NOT_EXECUTED, "listUnpacked: ".self::$dbLink->error);
@@ -234,13 +211,29 @@ class Plugins implements intPlugins {
         $unpackedNode = $xml->createElement('unpacked');
         $xml->appendChild($unpackedNode);
         while ($row = $qUncpacked->fetch_row()) {
+            if ($curVersion = self::getVersion($row[1])) {
+                $curSumVersion = calcSumVersion($curVersion);
+                $newSumVersion = calcSumVersion($row[3]);
+                if ($curSumVersion < $newSumVersion) {
+                    $action = "upgrade";
+                }
+                elseif ($curSumVersion == $newSumVersion) {
+                    $action = "reinstall";
+                }
+                elseif ($curSumVersion > $newSumVersion) {
+                    $action = "downgrade";
+                }
+            }
+            else {
+                $action = "install";
+            }
             $pluginNode = $xml->createElement('plugin');
             $unpackedNode->appendChild($pluginNode);
             $pluginNode->appendChild($xml->createElement('id', $row[0]));
             $pluginNode->appendChild($xml->createElement('short', $row[1]));
             $pluginNode->appendChild($xml->createElement('full', $row[2]));
             $pluginNode->appendChild($xml->createElement('version', $row[3]));
-            $pluginNode->appendChild($xml->createElement('action', $row[4]));
+            $pluginNode->appendChild($xml->createElement('action', $action));
         }
         return $xml;
     }
@@ -251,7 +244,7 @@ class Plugins implements intPlugins {
             self::setError(ERROR_INCORRECT_DATA, 'aboutUnpacked: id must be integer');
             return FALSE;
         }
-        $qUncpacked = self::$dbLink->query("SELECT `short`, `full`, `version`, `about`, `credits`, `url`, `email`, `license`, `action` "
+        $qUncpacked = self::$dbLink->query("SELECT `short`, `full`, `version`, `about`, `credits`, `url`, `email`, `license` "
                 . "FROM `".MECCANO_TPREF."_core_plugins_unpacked` "
                 . "WHERE `id`=$id;");
         if (self::$dbLink->errno) {
@@ -262,7 +255,23 @@ class Plugins implements intPlugins {
             self::setError(ERROR_NOT_FOUND, "aboutUnpacked: cannot find defined plugin");
             return FALSE;
         }
-        list($shortName, $fullName, $version, $about, $credits, $url, $email, $license, $action) = $qUncpacked->fetch_row();
+        list($shortName, $fullName, $version, $about, $credits, $url, $email, $license) = $qUncpacked->fetch_row();
+        if ($curVersion = self::getVersion($shortName)) {
+            $curSumVersion = calcSumVersion($curVersion);
+            $newSumVersion = calcSumVersion($version);
+            if ($curSumVersion < $newSumVersion) {
+                $action = "upgrade";
+            }
+            elseif ($curSumVersion == $newSumVersion) {
+                $action = "reinstall";
+            }
+            elseif ($curSumVersion > $newSumVersion) {
+                $action = "downgrade";
+            }
+        }
+        else {
+            $action = "install";
+        }
         $xml = new \DOMDocument();
         $unpackedNode = $xml->createElement('unpacked');
         $xml->appendChild($unpackedNode);
@@ -279,37 +288,24 @@ class Plugins implements intPlugins {
         return $xml;
     }
     
-    public static function getSumVersion($plugin) {
+    public static function getVersion($plugin) {
         self::zeroizeError();
         if (!pregPlugin($plugin)) {
-            self::setError(ERROR_INCORRECT_DATA, "getSumVersion: incorrect name");
+            self::setError(ERROR_INCORRECT_DATA, "getVersion: incorrect name");
             return FALSE;
         }
         $qPlugin = self::$dbLink->query("SELECT `version` "
                 . "FROM `".MECCANO_TPREF."_core_plugins_installed` "
                 . "WHERE `name`='$plugin'");
         if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, "getSumVersion: unable to get plugin version | ".self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, "getVersion: unable to get plugin version | ".self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setError(ERROR_NOT_FOUND, "getSumVersion: plugin not found");
+            self::setError(ERROR_NOT_FOUND, "getVersion: plugin not found");
             return FALSE;
         }
         list($version) = $qPlugin->fetch_row();
-        list($uv, $mv, $lv) = explode(".", $version);
-        $sumVersion = 10000*$uv + 100*$mv + $lv;
-        return (int) $sumVersion;
-    }
-    
-    public static function calcSumVersion($version) {
-        self::zeroizeError();
-        if (!is_string($version) || !preg_match('/^[0-9]{1,2}\.[0-9]{1,2}\.[0-9]{1,2}$/', $version)) {
-            self::setError(ERROR_INCORRECT_DATA, "calcSumVersion: incorrect vesion format");
-            return FALSE;
-        }
-        list($uv, $mv, $lv) = explode(".", $version);
-        $sumVersion = 10000*$uv + 100*$mv + $lv;
-        return (int) $sumVersion;
+        return $version;
     }
 }

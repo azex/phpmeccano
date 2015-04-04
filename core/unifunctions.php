@@ -187,3 +187,13 @@ function compareVersions($version1, $version2, $operator = ">=") {
     }
     return FALSE;
 }
+
+// calculates summary version
+function calcSumVersion($version) {
+    if (!is_string($version) || !preg_match('/^[0-9]{1,2}\.[0-9]{1,2}\.[0-9]{1,2}$/', $version)) {
+        return FALSE;
+    }
+    list($uv, $mv, $lv) = explode(".", $version);
+    $sumVersion = 10000*$uv + 100*$mv + $lv;
+    return (int) $sumVersion;
+}
