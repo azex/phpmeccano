@@ -160,7 +160,7 @@ function authToken() {
 
 // compares two versions
 function compareVersions($version1, $version2, $operator = ">=") {
-    if (!is_string($version1) || !preg_match('/^[0-9]{1,2}\.[0-9]{1,2}\.[0-9]{1,2}$/', $version1) || !is_string($version2) || !preg_match('/^[0-9]{1,2}\.[0-9]{1,2}\.[0-9]{1,2}$/', $version2) || !in_array($operator, array(">=", "<=", "==", ">", "<"))) {
+    if (!is_string($version1) || !preg_match('/^[0-9]{1,2}\.[0-9]{1,2}\.[0-9]{1,2}$/', $version1) || !is_string($version2) || !preg_match('/^[0-9]{1,2}\.[0-9]{1,2}\.[0-9]{1,2}$/', $version2) || !in_array($operator, array(">=", "<=", "==", ">", "<", "!="))) {
         return FALSE;
     }
     // calculate first summary version
@@ -183,6 +183,9 @@ function compareVersions($version1, $version2, $operator = ">=") {
         return TRUE;
     }
     elseif ($operator == "<" && $version1 < $version2) {
+        return TRUE;
+    }
+    elseif ($operator == "!=" && $version1 != $version2) {
         return TRUE;
     }
     return FALSE;

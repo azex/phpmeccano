@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+
+<grammar datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes" xmlns="http://relaxng.org/ns/structure/1.0" >
+    <start>
+        <element name="depends">
+            <zeroOrMore>
+                <element name="plugin">
+                    <attribute name="name">
+                        <data type="string">
+                            <param name="pattern">[a-zA-Z0-9_]{3,30}</param>
+                        </data>
+                    </attribute>
+                    <attribute name="version">
+                        <data type="string">
+                            <param name="pattern">[0-9]{1,2}\.[0-9]{1,2}\.[0-9]{1,2}</param>
+                        </data>
+                    </attribute>
+                    <attribute name="operator">
+                        <choice>
+                            <value>&gt;=</value>
+                            <value>&lt;=</value>
+                            <value>&gt;</value>
+                            <value>&lt;</value>
+                            <value>==</value>
+                            <value>!=</value>
+                        </choice>
+                    </attribute>
+                </element>
+            </zeroOrMore>
+        </element>
+    </start>
+</grammar>
