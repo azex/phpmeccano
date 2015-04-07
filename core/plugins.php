@@ -250,7 +250,7 @@ class Plugins implements intPlugins {
             self::setError(ERROR_INCORRECT_DATA, 'aboutUnpacked: id must be integer');
             return FALSE;
         }
-        $qUncpacked = self::$dbLink->query("SELECT `short`, `full`, `version`, `about`, `credits`, `url`, `email`, `license` "
+        $qUncpacked = self::$dbLink->query("SELECT `short`, `full`, `version`, `about`, `credits`, `url`, `email`, `license`, `depends` "
                 . "FROM `".MECCANO_TPREF."_core_plugins_unpacked` "
                 . "WHERE `id`=$id;");
         if (self::$dbLink->errno) {
@@ -261,7 +261,7 @@ class Plugins implements intPlugins {
             self::setError(ERROR_NOT_FOUND, "aboutUnpacked: cannot find defined plugin");
             return FALSE;
         }
-        list($shortName, $fullName, $version, $about, $credits, $url, $email, $license) = $qUncpacked->fetch_row();
+        list($shortName, $fullName, $version, $about, $credits, $url, $email, $license, $depends) = $qUncpacked->fetch_row();
         if ($curVersion = self::getVersion($shortName)) {
             $curSumVersion = calcSumVersion($curVersion);
             $newSumVersion = calcSumVersion($version);
@@ -290,6 +290,7 @@ class Plugins implements intPlugins {
         $unpackedNode->appendChild($xml->createElement('url', $url));
         $unpackedNode->appendChild($xml->createElement('email', $email));
         $unpackedNode->appendChild($xml->createElement('license', $license));
+        $unpackedNode->appendChild($xml->createElement('depends', $depends));
         $unpackedNode->appendChild($xml->createElement('action', $action));
         return $xml;
     }
