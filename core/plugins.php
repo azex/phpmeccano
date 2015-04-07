@@ -88,25 +88,37 @@ class Plugins implements intPlugins {
                 return FALSE;
             }
             $zip->close();
-            $metaInfo = openRead($tmpPath."/metainfo.xml");
-            if (!$metaInfo) {
-                Files::remove($tmpPath);
-                self::setError(ERROR_NOT_EXECUTED, "unpack: unable to read meta-info");
-                return FALSE;
+            // validate xml components
+            $serviceData = new \DOMDocument();
+            $xmlComponents = array(
+                "policy.xml" => "policy-v01.rng",
+                "log.xml" => "logman-events-v01.rng",
+                "texts.xml" => "langman-text-v01.rng",
+                "titles.xml" => "langman-title-v01.rng",
+                "depends.xml" => "plugins-package-depends-v01.rng",
+                "metainfo.xml" => "plugins-package-metainfo-v01.rng"
+                );
+            foreach ($xmlComponents as $valComponent=> $valSchema) {
+                $xmlComponent = openRead($tmpPath."/$valComponent");
+                if (!$xmlComponent) {
+                    Files::remove($tmpPath);
+                    self::setError(ERROR_NOT_EXECUTED, "unpack: unable to read [$valComponent]");
+                    return FALSE;
+                }
+                if (mime_content_type($tmpPath."/$valComponent") != "application/xml") {
+                    Files::remove($tmpPath);
+                    self::setError(ERROR_NOT_EXECUTED, "unpack: [$valComponent] is not XML-structured");
+                    return FALSE;
+                }
+                $serviceData->loadXML($xmlComponent);
+                if (!@$serviceData->relaxNGValidate(MECCANO_CORE_DIR."/validation-schemas/$valSchema")) {
+                    Files::remove($tmpPath);
+                    self::setError(ERROR_INCORRECT_DATA, "unpack: invalid [$valComponent] structure");
+                    return FALSE;
+                }
             }
-            if (mime_content_type($tmpPath."/metainfo.xml") != "application/xml") {
-                Files::remove($tmpPath);
-                self::setError(ERROR_NOT_EXECUTED, "unpack: meta-info is not XML-structured");
-                return FALSE;
-            }
-            $metaDOM = new \DOMDocument();
-            $metaDOM->loadXML($metaInfo);
-            if (!@$metaDOM->relaxNGValidate(MECCANO_CORE_DIR.'/validation-schemas/plugins-package-metainfo-v01.rng')) {
-                Files::remove($tmpPath);
-                self::setError(ERROR_INCORRECT_DATA, 'unpack: invalid meta-info structure');
-                return FALSE;
-            }
-            $shortName = $metaDOM->getElementsByTagName('shortname')->item(0)->nodeValue;
+            // get data from metainfo.xml
+            $shortName = $serviceData->getElementsByTagName('shortname')->item(0)->nodeValue;
             $qIsUnpacked = self::$dbLink->query("SELECT `id` "
                     . "FROM `".MECCANO_TPREF."_core_plugins_unpacked` "
                     . "WHERE `short`='$shortName' ;");
@@ -117,38 +129,32 @@ class Plugins implements intPlugins {
             }
             if (self::$dbLink->affected_rows) {
                 Files::remove($tmpPath);
-                self::setError(ERROR_ALREADY_EXISTS, "unpack: plugin [$shortName] is already unpacked");
+                self::setError(ERROR_ALREADY_EXISTS, "unpack: plugin [$shortName] was already unpacked");
                 return FALSE;
             }
-            $fullName = self::$dbLink->real_escape_string(htmlspecialchars($metaDOM->getElementsByTagName('fullname')->item(0)->nodeValue));
-            $version = $metaDOM->getElementsByTagName('version')->item(0)->nodeValue;
+            $fullName = self::$dbLink->real_escape_string(htmlspecialchars($serviceData->getElementsByTagName('fullname')->item(0)->nodeValue));
+            $version = $serviceData->getElementsByTagName('version')->item(0)->nodeValue;
             $insertColumns = "`short`, `full`, `version`, `dirname`";
             $insertValues = "'$shortName', '$fullName', '$version', '$tmpName'";
-            if ($optional = $metaDOM->getElementsByTagName('about')->item(0)->nodeValue) {
-                $optional = self::$dbLink->real_escape_string($optional);
-                $insertColumns = $insertColumns.", `about`";
-                $insertValues = $insertValues.", '$optional'";
+            // get optional data
+            $optionalData = array('about', 'credits', 'url', 'email', 'license');
+            foreach ($optionalData as $optNode) {
+                if ($optional = $serviceData->getElementsByTagName("$optNode")->item(0)->nodeValue) {
+                    $optional = self::$dbLink->real_escape_string($optional);
+                    $insertColumns = $insertColumns.", `$optNode`";
+                    $insertValues = $insertValues.", '$optional'";
+                }
             }
-            if ($optional = $metaDOM->getElementsByTagName('credits')->item(0)->nodeValue) {
-                $optional = self::$dbLink->real_escape_string($optional);
-                $insertColumns = $insertColumns.", `credits`";
-                $insertValues = $insertValues.", '$optional'";
+            // get list of the needed dependences
+            $serviceData->load($tmpPath."/depends.xml");
+            $depends = "";
+            $dependsNodes = $serviceData->getElementsByTagName("plugin");
+            foreach ($dependsNodes as $dependsNode) {
+                $depends = $depends.$dependsNode->getAttribute('name')." (".$dependsNode->getAttribute('operator')." ".$dependsNode->getAttribute('version')."), ";
             }
-            if ($optional = $metaDOM->getElementsByTagName('url')->item(0)->nodeValue) {
-                $optional = self::$dbLink->real_escape_string($optional);
-                $insertColumns = $insertColumns.", `url`";
-                $insertValues = $insertValues.", '$optional'";
-            }
-            if ($optional = $metaDOM->getElementsByTagName('email')->item(0)->nodeValue) {
-                $optional = self::$dbLink->real_escape_string($optional);
-                $insertColumns = $insertColumns.", `email`";
-                $insertValues = $insertValues.", '$optional'";
-            }
-            if ($optional = $metaDOM->getElementsByTagName('license')->item(0)->nodeValue) {
-                $optional = self::$dbLink->real_escape_string($optional);
-                $insertColumns = $insertColumns.", `license`";
-                $insertValues = $insertValues.", '$optional'";
-            }
+            $depends = htmlspecialchars(substr($depends, 0, -2));
+            $insertColumns = $insertColumns.", `depends`";
+            $insertValues = $insertValues.", '$depends'";
             self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_plugins_unpacked` ($insertColumns)"
                     . "VALUES ($insertValues) ;");
             if (self::$dbLink->errno) {
