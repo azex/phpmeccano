@@ -118,6 +118,12 @@ class Plugins implements intPlugins {
                 }
             }
             // get data from metainfo.xml
+            $packVersion = $serviceData->getElementsByTagName('metainfo')->item(0)->getAttribute('version');
+            if ($packVersion != '0.1') {
+                Files::remove($tmpPath);
+                self::setError(ERROR_INCORRECT_DATA, "unpack: installer is incompatible with package specification [$packVersion]");
+                return FALSE;
+            }
             $shortName = $serviceData->getElementsByTagName('shortname')->item(0)->nodeValue;
             $qIsUnpacked = self::$dbLink->query("SELECT `id` "
                     . "FROM `".MECCANO_TPREF."_core_plugins_unpacked` "
@@ -134,8 +140,8 @@ class Plugins implements intPlugins {
             }
             $fullName = self::$dbLink->real_escape_string(htmlspecialchars($serviceData->getElementsByTagName('fullname')->item(0)->nodeValue));
             $version = $serviceData->getElementsByTagName('version')->item(0)->nodeValue;
-            $insertColumns = "`short`, `full`, `version`, `dirname`";
-            $insertValues = "'$shortName', '$fullName', '$version', '$tmpName'";
+            $insertColumns = "`short`, `full`, `version`, `spec`, `dirname`";
+            $insertValues = "'$shortName', '$fullName', '$version', '$packVersion', '$tmpName'";
             // get optional data
             $optionalData = array('about', 'credits', 'url', 'email', 'license');
             foreach ($optionalData as $optNode) {
