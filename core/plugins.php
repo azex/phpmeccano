@@ -30,7 +30,7 @@ interface intPlugins {
     public static function delUnpacked($id);
     public static function listUnpacked();
     public static function aboutUnpacked($id);
-    public static function getVersion($plugin);
+    public static function pluginData($plugin);
 }
 
 class Plugins implements intPlugins {
@@ -223,8 +223,8 @@ class Plugins implements intPlugins {
         $unpackedNode = $xml->createElement('unpacked');
         $xml->appendChild($unpackedNode);
         while ($row = $qUncpacked->fetch_row()) {
-            if ($curVersion = self::getVersion($row[1])) {
-                $curSumVersion = calcSumVersion($curVersion);
+            if ($curVersion = self::pluginData($row[1])) {
+                $curSumVersion = calcSumVersion($curVersion["version"]);
                 $newSumVersion = calcSumVersion($row[3]);
                 if ($curSumVersion < $newSumVersion) {
                     $action = "upgrade";
@@ -268,8 +268,8 @@ class Plugins implements intPlugins {
             return FALSE;
         }
         list($shortName, $fullName, $version, $about, $credits, $url, $email, $license, $depends) = $qUncpacked->fetch_row();
-        if ($curVersion = self::getVersion($shortName)) {
-            $curSumVersion = calcSumVersion($curVersion);
+        if ($curVersion = self::pluginData($shortName)) {
+            $curSumVersion = calcSumVersion($curVersion["version"]);
             $newSumVersion = calcSumVersion($version);
             if ($curSumVersion < $newSumVersion) {
                 $action = "upgrade";
@@ -301,24 +301,24 @@ class Plugins implements intPlugins {
         return $xml;
     }
     
-    public static function getVersion($plugin) {
+    public static function pluginData($plugin) {
         self::zeroizeError();
         if (!pregPlugin($plugin)) {
-            self::setError(ERROR_INCORRECT_DATA, "getVersion: incorrect name");
+            self::setError(ERROR_INCORRECT_DATA, "pluginData: incorrect name");
             return FALSE;
         }
-        $qPlugin = self::$dbLink->query("SELECT `version` "
+        $qPlugin = self::$dbLink->query("SELECT `id`, `version` "
                 . "FROM `".MECCANO_TPREF."_core_plugins_installed` "
                 . "WHERE `name`='$plugin'");
         if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, "getVersion: unable to get plugin version | ".self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, "pluginData: unable to get plugin version | ".self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setError(ERROR_NOT_FOUND, "getVersion: plugin not found");
+            self::setError(ERROR_NOT_FOUND, "pluginData: plugin not found");
             return FALSE;
         }
-        list($version) = $qPlugin->fetch_row();
-        return $version;
+        list($id, $version) = $qPlugin->fetch_row();
+        return array("id" => $id, "version" => $version);
     }
 }
