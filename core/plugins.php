@@ -20,7 +20,7 @@ require_once 'files.php';
  */
 
 interface intPlugins {
-    public function __construct(\mysqli $dbLink, LogMan $logObject, Policy $policyObject);
+    public function __construct(\mysqli $dbLink, LogMan $logObject, Policy $policyObject, LangMan $langmanObject);
     public static function setDbLink(\mysqli $dbLink);
     public static function setLogObject(LogMan $logObject);
     public static function setPolicyObject(Policy $policyObject);
@@ -31,6 +31,7 @@ interface intPlugins {
     public static function listUnpacked();
     public static function aboutUnpacked($id);
     public static function pluginData($plugin);
+    public static function install($id);
 }
 
 class Plugins implements intPlugins {
@@ -39,11 +40,13 @@ class Plugins implements intPlugins {
     private static $dbLink; // database link
     private static $logObject; // log object
     private static $policyObject; // policy object
+    private static $langmanObject; // policy object
     
-    public function __construct(\mysqli $dbLink, LogMan $logObject, Policy $policyObject) {
+    public function __construct(\mysqli $dbLink, LogMan $logObject, Policy $policyObject, LangMan $langmanObject) {
         self::$dbLink = $dbLink;
         self::$logObject = $logObject;
         self::$policyObject = $policyObject;
+        self::$langmanObject = $langmanObject;
     }
     
     public static function setDbLink(\mysqli $dbLink) {
@@ -121,7 +124,7 @@ class Plugins implements intPlugins {
             $packVersion = $serviceData->getElementsByTagName('metainfo')->item(0)->getAttribute('version');
             if ($packVersion != '0.1') {
                 Files::remove($tmpPath);
-                self::setError(ERROR_INCORRECT_DATA, "unpack: installer is incompatible with package specification [$packVersion]");
+                self::setError(ERROR_INCORRECT_DATA, "unpack: installer is incompatible with the package specification [$packVersion]");
                 return FALSE;
             }
             $shortName = $serviceData->getElementsByTagName('shortname')->item(0)->nodeValue;
@@ -319,6 +322,186 @@ class Plugins implements intPlugins {
             return FALSE;
         }
         list($id, $version) = $qPlugin->fetch_row();
-        return array("id" => $id, "version" => $version);
+        return array("id" => (int) $id, "version" => $version);
+    }
+    
+    public static function install($id, $reset = FALSE) {
+        if (!is_integer($id) || !is_bool($reset)) {
+            self::setError(ERROR_INCORRECT_DATA, "install: incorrect argument(s)");
+            return FALSE;
+        }
+        $qPlugin = self::$dbLink->query("SELECT `short`, `full`, `version`, `spec`, `dirname`, `about`, `credits`, `url`, `email`, `license` "
+                . "FROM `".MECCANO_TPREF."_core_plugins_unpacked` "
+                . "WHERE `id`=$id ;");
+        if (self::$dbLink->errno) {
+            self::setError(ERROR_NOT_EXECUTED, "install: ".self::$dbLink->error);
+            return FALSE;
+        }
+        if (!self::$dbLink->affected_rows) {
+            self::setError(ERROR_NOT_FOUND, "install: unpacked plugin with id [$id] not found");
+            return FALSE;
+        }
+        list($shortName, $fullName, $version, $packVersion, $plugDir, $about, $credits, $url, $email, $license) = $qPlugin->fetch_row();
+        if ($packVersion != '0.1') {
+                self::setError(ERROR_INCORRECT_DATA, "install: installer is incompatible with the package specification [$packVersion]");
+                return FALSE;
+            }
+        // revalidate xml components
+        $plugPath = MECCANO_UNPACKED_PLUGINS."/$plugDir";
+        $serviceData = new \DOMDocument();
+        $xmlComponents = array(
+            "policy.xml" => "policy-v01.rng",
+            "log.xml" => "logman-events-v01.rng",
+            "texts.xml" => "langman-text-v01.rng",
+            "titles.xml" => "langman-title-v01.rng",
+            "depends.xml" => "plugins-package-depends-v01.rng"
+            );
+        foreach ($xmlComponents as $valComponent=> $valSchema) {
+            $xmlComponent = openRead($plugPath."/$valComponent");
+            if (!$xmlComponent) {
+                self::setError(ERROR_NOT_EXECUTED, "unpack: unable to read [$valComponent]");
+                return FALSE;
+            }
+            if (mime_content_type($plugPath."/$valComponent") != "application/xml") {
+                self::setError(ERROR_NOT_EXECUTED, "unpack: [$valComponent] is not XML-structured");
+                return FALSE;
+            }
+            $serviceData->loadXML($xmlComponent);
+            if (!@$serviceData->relaxNGValidate(MECCANO_CORE_DIR."/validation-schemas/$valSchema")) {
+                self::setError(ERROR_INCORRECT_DATA, "unpack: invalid [$valComponent] structure");
+                return FALSE;
+            }
+        }
+        // check for plugin dependences
+        $dependsNodes = $serviceData->getElementsByTagName("plugin");
+        foreach ($dependsNodes as $dependsNode) {
+            $depPlugin = $depends.$dependsNode->getAttribute('name');
+            $depVersion = $dependsNode->getAttribute('version');
+            $operator = $dependsNode->getAttribute('operator');
+            $existDep = self::pluginData($depPlugin);
+            if (!$existDep || !compareVersions($existDep["version"], $depVersion, $operator)) {
+                self::setError(ERROR_NOT_FOUND, "install: required $depPlugin ($operator $depVersion)");
+                return FALSE;
+            }
+        }
+        // check existence of the required files and directories
+        $requiredFiles = array("inst.php", "rm.php");
+        foreach ($requiredFiles as $fileName) {
+            if (!is_file($plugPath."/$fileName")) {
+                self::setError(ERROR_NOT_FOUND, "install: file [$fileName] is required");
+                return FALSE;
+            }
+        }
+        $requiredDirs = array("documents","js","php");
+        foreach ($requiredDirs as $dirName) {
+            if (!is_dir($plugPath."/$dirName")) {
+                self::setError(ERROR_NOT_FOUND, "install: directory [$dirName] is required");
+                return FALSE;
+            }
+        }
+        // get identifier and version of the being installed plugin
+        if ($idAndVersion = self::pluginData($shortName)) {
+            $existId = (int) $idAndVersion["id"]; // identifier of the being reinstalled/upgraded/downgraded plugin
+            $existVersion = $idAndVersion["version"]; // version of the being reinstalled/upgraded/downgraded plugin
+        }
+        else {
+            self::$dbLink->query(
+                    "INSERT INTO `".MECCANO_TPREF."_core_plugins_installed` "
+                    . "(`name`, `version`) "
+                    . "VALUES ('$shortName', '$version') ;"
+                    );
+            if (self::$dbLink->errno) {
+                self::setError(ERROR_NOT_EXECUTED, "install: ".self::$dbLink->error);
+                return FALSE;
+            }
+            $existId = (int) self::$dbLink->insert_id; // identifier if the being installed plugin
+            $existVersion = ""; // empty version of the being installed plugin
+        }
+        // insert or update information about plugin
+        if ($existVersion) {
+            $sql = array(
+                "UPDATE `".MECCANO_TPREF."_core_plugins_installed` "
+                . "SET `version`='$version' "
+                . "WHERE `id`=$existId ;",
+                "UPDATE `".MECCANO_TPREF."_core_plugins_installed_about` "
+                . "SET `full`='$fullName', "
+                . "`about`='$about', "
+                . "`credits`='$credits', "
+                . "`url`='$url', "
+                . "`email`='$email', "
+                . "`license`='$license' "
+                . "WHERE `id`=$existId"
+            );
+        }
+        else {
+            $sql = array(
+                "INSERT INTO `".MECCANO_TPREF."_core_plugins_installed_about` "
+                . "(`id`, `full`, `about`, `credits`, `url`, `email`, `license`) "
+                . "VALUES ($existId, '$fullName', '$about', '$credits', '$url', '$email', '$license') ;"
+            );
+        }
+        foreach ($sql as $value) {
+            self::$dbLink->query($value);
+            if (self::$dbLink->errno) {
+                self::setError(ERROR_NOT_EXECUTED, "install: ".self::$dbLink->error);
+                return FALSE;
+            }
+        }
+        // run preinstallation
+        require_once $plugPath.'/inst.php';
+        $instObject = new Install(self::$dbLink, $existId, $existVersion, $reset);
+        if (!$instObject->preinst()) {
+            self::setError($instObject->errId(), "install -> ".$instObject->errExp());
+            return FALSE;
+        }
+        // install policy access rules
+        $serviceData->load($plugPath.'/policy.xml');
+        if (!self::$policyObject->install($serviceData, FALSE)) {
+            self::setError(self::$policyObject->errId(), "install -> ".self::$policyObject->errExp());
+            return FALSE;
+        }
+        // install log events
+        $serviceData->load($plugPath.'/log.xml');
+        if (!self::$logObject->installEvents($serviceData, FALSE)) {
+            self::setError(self::$logObject->errId(), "install -> ".self::$logObject->errExp());
+            return FALSE;
+        }
+        // install texts
+        $serviceData->load($plugPath.'/texts.xml');
+        if (!self::$langmanObject->installTexts($serviceData, FALSE)) {
+            self::setError(self::$langmanObject->errId(), "install -> ".self::$langmanObject->errExp());
+            return FALSE;
+        }
+        // install titles
+        $serviceData->load($plugPath.'/titles.xml');
+        if (!self::$langmanObject->installTitles($serviceData, FALSE)) {
+            self::setError(self::$langmanObject->errId(), "install -> ".self::$langmanObject->errExp());
+            return FALSE;
+        }
+        // copy files and directories to their destinations
+        if ($shortName == "core") {
+            $docDest = MECCANO_CORE_DIR;
+        }
+        else {
+            $docDest = MECCANO_PHP_DIR."/$shortName";
+        }
+        $beingCopied = array(
+            "documents" => MECCANO_DOCUMENTS_DIR."/$shortName",
+            "php" => $docDest,
+            "js" => MECCANO_JS_DIR."/$shortName",
+            "rm.php" => MECCANO_UNINSTALL."/$shortName.php"
+        );
+        foreach ($beingCopied as $source => $dest) {
+            if (!Files::copy($plugPath."/$source", $dest, TRUE, TRUE)) {
+                self::setError(Files::errId(), "install -> ".Files::errExp());
+                return FALSE;
+            }
+        }
+        // run postinstallation
+        if (!$instObject->postinst()) {
+            self::setError($instObject->errId(), "install -> ".$instObject->errExp());
+            return FALSE;
+        }
+        return $existId;
     }
 }
