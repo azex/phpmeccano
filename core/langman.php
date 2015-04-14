@@ -13,7 +13,7 @@ interface intLangMan {
     public static function addLang($code, $name);
     public static function delLang($code);
     public static function langList();
-    public static function installTiles(\DOMDocument $titles, $validate = TRUE);
+    public static function installTitles(\DOMDocument $titles, $validate = TRUE);
     public static function installTexts(\DOMDocument $texts, $validate = TRUE);
     public static function delPlugin($plugin);
     public static function addTitleSection($section, $plugin);
@@ -186,7 +186,7 @@ class LangMan implements intLangMan{
         return $xml;
     }
     
-    public static function installTiles(\DOMDocument $titles, $validate = TRUE) {
+    public static function installTitles(\DOMDocument $titles, $validate = TRUE) {
         self::zeroizeError();
         if ($validate && !@$titles->relaxNGValidate(MECCANO_CORE_DIR.'/validation-schemas/langman-title-v01.rng')) {
             self::setError(ERROR_INCORRECT_DATA, 'installTitles: incorrect structure of policy description');
