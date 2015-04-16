@@ -31,7 +31,8 @@ interface intPlugins {
     public static function listUnpacked();
     public static function aboutUnpacked($id);
     public static function pluginData($plugin);
-    public static function install($id);
+    public static function install($id, $reset = FALSE);
+    public static function delInstalled($id, $keepData = TRUE);
 }
 
 class Plugins implements intPlugins {
@@ -326,6 +327,7 @@ class Plugins implements intPlugins {
     }
     
     public static function install($id, $reset = FALSE) {
+        self::zeroizeError();
         if (!is_integer($id) || !is_bool($reset)) {
             self::setError(ERROR_INCORRECT_DATA, "install: incorrect argument(s)");
             return FALSE;
@@ -492,7 +494,7 @@ class Plugins implements intPlugins {
             "rm.php" => MECCANO_UNINSTALL."/$shortName.php"
         );
         foreach ($beingCopied as $source => $dest) {
-            if (!Files::copy($plugPath."/$source", $dest, TRUE, TRUE)) {
+            if (!Files::copy($plugPath."/$source", $dest, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, TRUE)) {
                 self::setError(Files::errId(), "install -> ".Files::errExp());
                 return FALSE;
             }
@@ -502,6 +504,94 @@ class Plugins implements intPlugins {
             self::setError($instObject->errId(), "install -> ".$instObject->errExp());
             return FALSE;
         }
+        // 
         return $existId;
+    }
+    
+    public static function delInstalled($id, $keepData = TRUE) {
+        self::zeroizeError();
+        if (!is_integer($id) || !is_bool($keepData)) {
+            self::setError(ERROR_INCORRECT_DATA, "install: incorrect argument(s)");
+            return FALSE;
+        }
+        // check whether the plugin installed
+        $qPlugin = self::$dbLink->query("SELECT `name` "
+                . "FROM `".MECCANO_TPREF."_core_plugins_installed` "
+                . "WHERE `id`=$id ;");
+        if (!self::$dbLink->affected_rows) {
+            self::setError(ERROR_NOT_FOUND, "delInstaled: plugin not found");
+            return FALSE;
+        }
+        if (self::$dbLink->errno) {
+            self::setError(ERROR_NOT_EXECUTED, "delInstalled: ".self::$dbLink->error);
+            return FALSE;
+        }
+        list($shortName) = $qPlugin->fetch_row();
+        if (strtolower($shortName) == "core") {
+            self::setError(ERROR_SYSTEM_INTERVENTION, "delInstalled: unable to remove [core]");
+            return FALSE;
+        }
+        // check whether the removement script exists
+        if (!is_file(MECCANO_UNINSTALL."/$shortName.php")) {
+            self::setError(ERROR_NOT_FOUND, "delInstalled: removement script [".MECCANO_UNINSTALL."/$shortName.php] not found");
+            return FALSE;
+        }
+        //run preremovement
+        require_once MECCANO_UNINSTALL."/$shortName.php";
+        $rmObject = new Remove(self::$dbLink, $id, $keepData);
+        if (!$rmObject->prerm()) {
+            self::setError($rmObject->errId(), "delInstalled -> ".$rmObject->errExp());
+            return FALSE;
+        }
+        // remove policy access rules
+        if (!self::$policyObject->delPolicy($shortName)) {
+            self::setError(self::$policyObject->errId(), "delInstalled -> ".self::$policyObject->errExp());
+            return FALSE;
+        }
+        // remove log events
+        if (!self::$logObject->delEvents($shortName)) {
+            self::setError(self::$logObject->errId(), "delInstalled -> ".self::$logObject->errExp());
+            return FALSE;
+        }
+        // remove texts and titles
+        if (!self::$langmanObject->delPlugin($shortName)) {
+            self::setError(self::$langmanObject->errId(), "delInstalled -> ".self::$langmanObject->errExp());
+            return FALSE;
+        }
+        // run postremovement
+        if (!$rmObject->postrm()) {
+            self::setError($rmObject->errId(), "delInstalled -> ".$rmObject->errExp());
+            return FALSE;
+        }
+        // remove files and directories of the plugin
+        $beingRemoved = array(
+            "php" => MECCANO_PHP_DIR."/$shortName",
+            "js" => MECCANO_JS_DIR."/$shortName",
+            "rm.php" => MECCANO_UNINSTALL."/$shortName.php"
+        );
+        if (!$keepData) {
+            $beingRemoved["documents"] = MECCANO_DOCUMENTS_DIR."/$shortName";
+        }
+        foreach ($beingRemoved as $source) {
+            if (!Files::remove($source)) {
+                self::setError(Files::errId(), "delInstalled -> ".Files::errExp());
+                return FALSE;
+            }
+        }
+        // delete information about plugin
+        $sql = array(
+            "DELETE FROM `".MECCANO_TPREF."_core_plugins_installed_about` "
+            . "WHERE `id`=$id",
+            "DELETE FROM `".MECCANO_TPREF."_core_plugins_installed` "
+            . "WHERE `id`=$id",
+        );
+        foreach ($sql as $value) {
+            self::$dbLink->query($value);
+            if (self::$dbLink->errno) {
+                self::setError(ERROR_NOT_EXECUTED, "delInstalled: ".self::$dbLink->error);
+                return FALSE;
+            }
+        }
+        return TRUE;
     }
 }
