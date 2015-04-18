@@ -33,6 +33,7 @@ interface intPlugins {
     public static function pluginData($plugin);
     public static function install($id, $reset = FALSE);
     public static function delInstalled($id, $keepData = TRUE);
+    public static function listInstalled();
 }
 
 class Plugins implements intPlugins {
@@ -223,7 +224,7 @@ class Plugins implements intPlugins {
             self::setError(ERROR_NOT_EXECUTED, "listUnpacked: ".self::$dbLink->error);
             return FALSE;
         }
-        $xml = new \DOMDocument();
+        $xml = new \DOMDocument('1.0', 'utf-8');
         $unpackedNode = $xml->createElement('unpacked');
         $xml->appendChild($unpackedNode);
         while ($row = $qUncpacked->fetch_row()) {
@@ -288,7 +289,7 @@ class Plugins implements intPlugins {
         else {
             $action = "install";
         }
-        $xml = new \DOMDocument();
+        $xml = new \DOMDocument('1.0', 'utf-8');
         $unpackedNode = $xml->createElement('unpacked');
         $xml->appendChild($unpackedNode);
         $unpackedNode->appendChild($xml->createElement('id', $id));
@@ -593,5 +594,30 @@ class Plugins implements intPlugins {
             }
         }
         return TRUE;
+    }
+    
+    public static function listInstalled() {
+        self::zeroizeError();
+        $qInstalled = self::$dbLink->query("SELECT `i`.`id`, `i`.`name`, `a`.`full`, `i`.`version`, `i`.`time` "
+                . "FROM `".MECCANO_TPREF."_core_plugins_installed` `i` "
+                . "JOIN `".MECCANO_TPREF."_core_plugins_installed_about` `a` "
+                . "ON `a`.`id`=`i`.`id` ;");
+        if (self::$dbLink->errno) {
+            self::setError(ERROR_NOT_EXECUTED, "listInstalled: ".self::$dbLink->error);
+            return FALSE;
+        }
+        $xml = new \DOMDocument('1.0', 'utf-8');
+        $installedNode = $xml->createElement("installed");
+        $xml->appendChild($installedNode);
+        while ($row = $qInstalled->fetch_row()) {
+            $pluginNode = $xml->createElement("plugin");
+            $installedNode->appendChild($pluginNode);
+            $pluginNode->appendChild($xml->createElement("id", $row[0]));
+            $pluginNode->appendChild($xml->createElement("short", $row[1]));
+            $pluginNode->appendChild($xml->createElement("full", $row[2]));
+            $pluginNode->appendChild($xml->createElement("version", $row[3]));
+            $pluginNode->appendChild($xml->createElement("time", $row[4]));
+        }
+        return $xml;
     }
 }
