@@ -2,13 +2,13 @@
 
 <grammar datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes" xmlns="http://relaxng.org/ns/structure/1.0" >
     <start>
-        <element name="titles">
+        <element name="texts">
             <attribute name="plugin">
                 <data type="string">
                     <param name="pattern">[a-zA-Z0-9_]{3,30}</param>
                 </data>
             </attribute>
-            <oneOrMore>
+            <zeroOrMore>
                 <choice>
                     <element name="section">
                         <attribute name="name">
@@ -27,7 +27,7 @@
                             <value>1</value>
                         </attribute>
                         <oneOrMore>
-                            <element name="title">
+                            <element name="text">
                                 <attribute name="name">
                                     <data type="string">
                                         <param name="pattern">[a-zA-Z0-9_]{3,40}</param>
@@ -40,10 +40,18 @@
                                                 <param name="pattern">[a-z]{2}-[A-Z]{2}</param>
                                             </data>
                                         </attribute>
-                                        <data type="string">
-                                            <param name="minLength">1</param>
-                                            <param name="maxLength">128</param>
-                                        </data>
+                                        <element name="title">
+                                            <data type="string">
+                                                <param name="minLength">1</param>
+                                                <param name="maxLength">128</param>
+                                            </data>
+                                        </element>
+                                        <element name="document">
+                                            <data type="string">
+                                                <param name="minLength">0</param>
+                                                <param name="maxLength">65535</param>
+                                            </data>
+                                        </element>
                                     </element>
                                 </oneOrMore>
                             </element>
@@ -67,7 +75,7 @@
                         </attribute>
                     </element>
                 </choice>
-            </oneOrMore>
+            </zeroOrMore>
         </element>
     </start>
 </grammar>

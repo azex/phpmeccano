@@ -13,8 +13,8 @@ interface intLangMan {
     public static function addLang($code, $name);
     public static function delLang($code);
     public static function langList();
-    public static function installTiles(\DOMDocument $titles);
-    public static function installTexts(\DOMDocument $texts);
+    public static function installTitles(\DOMDocument $titles, $validate = TRUE);
+    public static function installTexts(\DOMDocument $texts, $validate = TRUE);
     public static function delPlugin($plugin);
     public static function addTitleSection($section, $plugin);
     public static function delTitleSection($sid);
@@ -186,9 +186,9 @@ class LangMan implements intLangMan{
         return $xml;
     }
     
-    public static function installTiles(\DOMDocument $titles) {
+    public static function installTitles(\DOMDocument $titles, $validate = TRUE) {
         self::zeroizeError();
-        if (!$titles->relaxNGValidate(MECCANO_CORE_DIR.'/langman/title-schema-v1.rng')) {
+        if ($validate && !@$titles->relaxNGValidate(MECCANO_CORE_DIR.'/validation-schemas/langman-title-v01.rng')) {
             self::setError(ERROR_INCORRECT_DATA, 'installTitles: incorrect structure of policy description');
             return FALSE;
         }
@@ -394,9 +394,9 @@ class LangMan implements intLangMan{
         return TRUE;
     }
     
-    public static function installTexts(\DOMDocument $texts) {
+    public static function installTexts(\DOMDocument $texts, $validate = TRUE) {
         self::zeroizeError();
-        if (!$texts->relaxNGValidate(MECCANO_CORE_DIR.'/langman/text-schema-v1.rng')) {
+        if ($validate && !@$texts->relaxNGValidate(MECCANO_CORE_DIR.'/validation-schemas/langman-text-v01.rng')) {
             self::setError(ERROR_INCORRECT_DATA, 'installTexts: incorrect structure of policy description');
             return FALSE;
         }

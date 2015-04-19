@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+
+<grammar datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes" xmlns="http://relaxng.org/ns/structure/1.0" >
+    <start>
+        <element name="metainfo">
+            <attribute name="version">
+                <data type="string">
+                    <param name="pattern">[0-9]{1,2}\.[0-9]{1,2}</param>
+                </data>
+            </attribute>
+            <element name="shortname">
+                <data type="string">
+                    <param name="pattern">[a-zA-Z0-9_]{3,30}</param>
+                </data>
+            </element>
+            <element name="fullname">
+                <data type="string">
+                    <param name="minLength">1</param>
+                    <param name="maxLength">50</param>
+                </data>
+            </element>
+            <element name="version">
+                <data type="string">
+                    <param name="pattern">[0-9]{1,2}\.[0-9]{1,2}\.[0-9]{1,2}</param>
+                </data>
+            </element>
+            <element name="about">
+                <data type="string">
+                    <param name="maxLength">65535</param>
+                </data>
+            </element>
+            <element name="credits">
+                <data type="string">
+                    <param name="maxLength">65535</param>
+                </data>
+            </element>
+            <element name="url">
+                <data type="string">
+                    <param name="maxLength">100</param>
+                </data>
+            </element>
+            <element name="email">
+                <data type="string">
+                    <param name="pattern">[^@]+@[^\.]+\..+</param>
+                </data>
+            </element>
+            <element name="license">
+                <data type="string">
+                    <param name="maxLength">65535</param>
+                </data>
+            </element>
+        </element>
+    </start>
+</grammar>
