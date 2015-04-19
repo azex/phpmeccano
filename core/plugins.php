@@ -34,6 +34,7 @@ interface intPlugins {
     public static function install($id, $reset = FALSE);
     public static function delInstalled($id, $keepData = TRUE);
     public static function listInstalled();
+    public static function aboutInstalled($id);
 }
 
 class Plugins implements intPlugins {
@@ -618,6 +619,42 @@ class Plugins implements intPlugins {
             $pluginNode->appendChild($xml->createElement("version", $row[3]));
             $pluginNode->appendChild($xml->createElement("time", $row[4]));
         }
+        return $xml;
+    }
+    
+    public static function aboutInstalled($id) {
+        self::zeroizeError();
+        if (!is_integer($id)) {
+            self::setError(ERROR_INCORRECT_DATA, "aboutInstalled: id must be integer");
+            return FALSE;
+        }
+        $qPlugin = self::$dbLink->query("SELECT `i`.`name`, `a`.`full`, `i`.`version`, `i`.`time`, `a`.`about`, `a`.`credits`, `a`.`url`, `a`.`email`, `a`.`license` "
+                . "FROM `".MECCANO_TPREF."_core_plugins_installed` `i` "
+                . "JOIN `".MECCANO_TPREF."_core_plugins_installed_about` `a` "
+                . "ON `a`.`id`=`i`.`id` "
+                . "WHERE `i`.`id`=$id ;");
+        if (self::$dbLink->errno) {
+            self::setError(ERROR_NOT_EXECUTED, "aboutInstalled: ".self::$dbLink->error);
+            return FALSE;
+        }
+        if (!self::$dbLink->affected_rows) {
+            self::setError(ERROR_NOT_FOUND, "aboutInstalled: plugin not found");
+            return FALSE;
+        }
+        list($shortName, $fullName, $version, $instTime, $about, $credits, $url, $email, $license) = $qPlugin->fetch_row();
+        $xml = new \DOMDocument('1.0', 'utf-8');
+        $installedNode = $xml->createElement("installed");
+        $xml->appendChild($installedNode);
+        $installedNode->appendChild($xml->createElement("id", $id));
+        $installedNode->appendChild($xml->createElement("short", $shortName));
+        $installedNode->appendChild($xml->createElement("full", $fullName));
+        $installedNode->appendChild($xml->createElement("version", $version));
+        $installedNode->appendChild($xml->createElement("time", $instTime));
+        $installedNode->appendChild($xml->createElement("about", $about));
+        $installedNode->appendChild($xml->createElement("credits", $credits));
+        $installedNode->appendChild($xml->createElement("url", $url));
+        $installedNode->appendChild($xml->createElement("email", $email));
+        $installedNode->appendChild($xml->createElement("license", $license));
         return $xml;
     }
 }
