@@ -56,6 +56,18 @@ class Policy implements intPolicy {
             self::setError(ERROR_INCORRECT_DATA, 'delPolicy: incorrect plugin name');
             return FALSE;
         }
+        // checking if plugin exists
+        $qPlugin = self::$dbLink->query("SELECT `id` "
+                . "FROM `".MECCANO_TPREF."_core_plugins_installed` "
+                . "WHERE `name`='$plugin' ;");
+        if (self::$dbLink->errno) {
+            self::setError(ERROR_NOT_EXECUTED, 'delPolicy: '.self::$dbLink->error);
+            return FALSE;
+        }
+        if (!self::$dbLink->affected_rows) {
+            self::setError(ERROR_NOT_FOUND, 'delPolicy: unable to find plugin');
+            return FALSE;
+        }
         $queries = array(
             "DELETE `d` FROM `".MECCANO_TPREF."_core_policy_descriptions` `d` "
             . "JOIN `".MECCANO_TPREF."_core_policy_summary_list` `s` "
@@ -77,10 +89,6 @@ class Policy implements intPolicy {
                 self::setError(ERROR_NOT_EXECUTED, 'delPolicy: something went wrong | '.self::$dbLink->error);
                 return FALSE;
             }
-        }
-        if (!self::$dbLink->affected_rows) {
-            self::setError(ERROR_NOT_FOUND, 'delPolicy: policy of the plugin not found');
-            return FALSE;
         }
         return TRUE;
     }
