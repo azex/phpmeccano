@@ -219,7 +219,7 @@ class Plugins implements intPlugins {
     
     public static function listUnpacked() {
         self::zeroizeError();
-        $qUncpacked = self::$dbLink->query("SELECT `id`, `short`, `full`, `version` "
+        $qUncpacked = self::$dbLink->query("SELECT `short`, `full`, `version` "
                 . "FROM `".MECCANO_TPREF."_core_plugins_unpacked` ;");
         if (self::$dbLink->errno) {
             self::setError(ERROR_NOT_EXECUTED, "listUnpacked: ".self::$dbLink->error);
@@ -229,9 +229,9 @@ class Plugins implements intPlugins {
         $unpackedNode = $xml->createElement('unpacked');
         $xml->appendChild($unpackedNode);
         while ($row = $qUncpacked->fetch_row()) {
-            if ($curVersion = self::pluginData($row[1])) {
+            if ($curVersion = self::pluginData($row[0])) {
                 $curSumVersion = calcSumVersion($curVersion["version"]);
-                $newSumVersion = calcSumVersion($row[3]);
+                $newSumVersion = calcSumVersion($row[2]);
                 if ($curSumVersion < $newSumVersion) {
                     $action = "upgrade";
                 }
@@ -247,10 +247,9 @@ class Plugins implements intPlugins {
             }
             $pluginNode = $xml->createElement('plugin');
             $unpackedNode->appendChild($pluginNode);
-            $pluginNode->appendChild($xml->createElement('id', $row[0]));
-            $pluginNode->appendChild($xml->createElement('short', $row[1]));
-            $pluginNode->appendChild($xml->createElement('full', $row[2]));
-            $pluginNode->appendChild($xml->createElement('version', $row[3]));
+            $pluginNode->appendChild($xml->createElement('short', $row[0]));
+            $pluginNode->appendChild($xml->createElement('full', $row[1]));
+            $pluginNode->appendChild($xml->createElement('version', $row[2]));
             $pluginNode->appendChild($xml->createElement('action', $action));
         }
         return $xml;
