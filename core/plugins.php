@@ -255,21 +255,21 @@ class Plugins implements intPlugins {
         return $xml;
     }
     
-    public static function aboutUnpacked($id) {
+    public static function aboutUnpacked($plugin) {
         self::zeroizeError();
-        if (!is_integer($id)) {
-            self::setError(ERROR_INCORRECT_DATA, 'aboutUnpacked: id must be integer');
+        if (!pregPlugin($plugin)) {
+            self::setError(ERROR_INCORRECT_DATA, 'aboutUnpacked: incorrect plugin name');
             return FALSE;
         }
         $qUncpacked = self::$dbLink->query("SELECT `short`, `full`, `version`, `about`, `credits`, `url`, `email`, `license`, `depends` "
                 . "FROM `".MECCANO_TPREF."_core_plugins_unpacked` "
-                . "WHERE `id`=$id;");
+                . "WHERE `short`='$plugin' ;");
         if (self::$dbLink->errno) {
             self::setError(ERROR_NOT_EXECUTED, "aboutUnpacked: ".self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setError(ERROR_NOT_FOUND, "aboutUnpacked: cannot find defined plugin");
+            self::setError(ERROR_NOT_FOUND, "aboutUnpacked: plugin not found");
             return FALSE;
         }
         list($shortName, $fullName, $version, $about, $credits, $url, $email, $license, $depends) = $qUncpacked->fetch_row();
@@ -292,7 +292,6 @@ class Plugins implements intPlugins {
         $xml = new \DOMDocument('1.0', 'utf-8');
         $unpackedNode = $xml->createElement('unpacked');
         $xml->appendChild($unpackedNode);
-        $unpackedNode->appendChild($xml->createElement('id', $id));
         $unpackedNode->appendChild($xml->createElement('short', $shortName));
         $unpackedNode->appendChild($xml->createElement('full', $fullName));
         $unpackedNode->appendChild($xml->createElement('version', $version));
