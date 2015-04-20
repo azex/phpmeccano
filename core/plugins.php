@@ -326,21 +326,21 @@ class Plugins implements intPlugins {
         return array("id" => (int) $id, "version" => $version);
     }
     
-    public static function install($id, $reset = FALSE) {
+    public static function install($plugin, $reset = FALSE) {
         self::zeroizeError();
-        if (!is_integer($id) || !is_bool($reset)) {
+        if (!pregPlugin($plugin) || !is_bool($reset)) {
             self::setError(ERROR_INCORRECT_DATA, "install: incorrect argument(s)");
             return FALSE;
         }
         $qPlugin = self::$dbLink->query("SELECT `short`, `full`, `version`, `spec`, `dirname`, `about`, `credits`, `url`, `email`, `license` "
                 . "FROM `".MECCANO_TPREF."_core_plugins_unpacked` "
-                . "WHERE `id`=$id ;");
+                . "WHERE `short`='$plugin' ;");
         if (self::$dbLink->errno) {
             self::setError(ERROR_NOT_EXECUTED, "install: ".self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setError(ERROR_NOT_FOUND, "install: unpacked plugin with id [$id] not found");
+            self::setError(ERROR_NOT_FOUND, "install: unpacked plugin [$plugin] not found");
             return FALSE;
         }
         list($shortName, $fullName, $version, $packVersion, $plugDir, $about, $credits, $url, $email, $license) = $qPlugin->fetch_row();
@@ -505,7 +505,7 @@ class Plugins implements intPlugins {
             return FALSE;
         }
         // 
-        return $existId;
+        return $shortName;
     }
     
     public static function delInstalled($id, $keepData = TRUE) {
