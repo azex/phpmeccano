@@ -597,7 +597,7 @@ class Plugins implements intPlugins {
     
     public static function listInstalled() {
         self::zeroizeError();
-        $qInstalled = self::$dbLink->query("SELECT `i`.`id`, `i`.`name`, `a`.`full`, `i`.`version`, `i`.`time` "
+        $qInstalled = self::$dbLink->query("SELECT `i`.`name`, `a`.`full`, `i`.`version`, `i`.`time` "
                 . "FROM `".MECCANO_TPREF."_core_plugins_installed` `i` "
                 . "JOIN `".MECCANO_TPREF."_core_plugins_installed_about` `a` "
                 . "ON `a`.`id`=`i`.`id` ;");
@@ -611,11 +611,10 @@ class Plugins implements intPlugins {
         while ($row = $qInstalled->fetch_row()) {
             $pluginNode = $xml->createElement("plugin");
             $installedNode->appendChild($pluginNode);
-            $pluginNode->appendChild($xml->createElement("id", $row[0]));
-            $pluginNode->appendChild($xml->createElement("short", $row[1]));
-            $pluginNode->appendChild($xml->createElement("full", $row[2]));
-            $pluginNode->appendChild($xml->createElement("version", $row[3]));
-            $pluginNode->appendChild($xml->createElement("time", $row[4]));
+            $pluginNode->appendChild($xml->createElement("short", $row[0]));
+            $pluginNode->appendChild($xml->createElement("full", $row[1]));
+            $pluginNode->appendChild($xml->createElement("version", $row[2]));
+            $pluginNode->appendChild($xml->createElement("time", $row[3]));
         }
         return $xml;
     }
