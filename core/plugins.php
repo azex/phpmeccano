@@ -619,17 +619,17 @@ class Plugins implements intPlugins {
         return $xml;
     }
     
-    public static function aboutInstalled($id) {
+    public static function aboutInstalled($plugin) {
         self::zeroizeError();
-        if (!is_integer($id)) {
-            self::setError(ERROR_INCORRECT_DATA, "aboutInstalled: id must be integer");
+        if (!pregPlugin($plugin)) {
+            self::setError(ERROR_INCORRECT_DATA, "aboutInstalled: incorrect plugin name");
             return FALSE;
         }
         $qPlugin = self::$dbLink->query("SELECT `i`.`name`, `a`.`full`, `i`.`version`, `i`.`time`, `a`.`about`, `a`.`credits`, `a`.`url`, `a`.`email`, `a`.`license` "
                 . "FROM `".MECCANO_TPREF."_core_plugins_installed` `i` "
                 . "JOIN `".MECCANO_TPREF."_core_plugins_installed_about` `a` "
                 . "ON `a`.`id`=`i`.`id` "
-                . "WHERE `i`.`id`=$id ;");
+                . "WHERE `i`.`name`='$plugin' ;");
         if (self::$dbLink->errno) {
             self::setError(ERROR_NOT_EXECUTED, "aboutInstalled: ".self::$dbLink->error);
             return FALSE;
@@ -642,7 +642,6 @@ class Plugins implements intPlugins {
         $xml = new \DOMDocument('1.0', 'utf-8');
         $installedNode = $xml->createElement("installed");
         $xml->appendChild($installedNode);
-        $installedNode->appendChild($xml->createElement("id", $id));
         $installedNode->appendChild($xml->createElement("short", $shortName));
         $installedNode->appendChild($xml->createElement("full", $fullName));
         $installedNode->appendChild($xml->createElement("version", $version));
