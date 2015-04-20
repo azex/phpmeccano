@@ -505,7 +505,7 @@ class Plugins implements intPlugins {
             return FALSE;
         }
         // 
-        return $shortName;
+        return TRUE;
     }
     
     public static function delInstalled($id, $keepData = TRUE) {
