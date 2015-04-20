@@ -508,16 +508,16 @@ class Plugins implements intPlugins {
         return TRUE;
     }
     
-    public static function delInstalled($id, $keepData = TRUE) {
+    public static function delInstalled($plugin, $keepData = TRUE) {
         self::zeroizeError();
-        if (!is_integer($id) || !is_bool($keepData)) {
+        if (!pregPlugin($plugin) || !is_bool($keepData)) {
             self::setError(ERROR_INCORRECT_DATA, "install: incorrect argument(s)");
             return FALSE;
         }
         // check whether the plugin installed
-        $qPlugin = self::$dbLink->query("SELECT `name` "
+        $qPlugin = self::$dbLink->query("SELECT `id`, `name` "
                 . "FROM `".MECCANO_TPREF."_core_plugins_installed` "
-                . "WHERE `id`=$id ;");
+                . "WHERE `name`='$plugin' ;");
         if (!self::$dbLink->affected_rows) {
             self::setError(ERROR_NOT_FOUND, "delInstaled: plugin not found");
             return FALSE;
@@ -526,7 +526,7 @@ class Plugins implements intPlugins {
             self::setError(ERROR_NOT_EXECUTED, "delInstalled: ".self::$dbLink->error);
             return FALSE;
         }
-        list($shortName) = $qPlugin->fetch_row();
+        list($id, $shortName) = $qPlugin->fetch_row();
         if (strtolower($shortName) == "core") {
             self::setError(ERROR_SYSTEM_INTERVENTION, "delInstalled: unable to remove [core]");
             return FALSE;
