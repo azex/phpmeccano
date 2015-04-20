@@ -183,18 +183,18 @@ class Plugins implements intPlugins {
             self::setError(ERROR_NOT_EXECUTED, "unpack: unable to open package. ZipArchive error: $zipOpen");
             return FALSE;
         }
-        return (int) self::$dbLink->insert_id;
+        return $shortName;
     }
     
-    public static function delUnpacked($id) {
+    public static function delUnpacked($plugin) {
         self::zeroizeError();
-        if (!is_integer($id)) {
-            self::setError(ERROR_INCORRECT_DATA, 'delUnpacked: id must be integer');
+        if (!pregPlugin($plugin)) {
+            self::setError(ERROR_INCORRECT_DATA, 'delUnpacked: incorrect plugin name');
             return FALSE;
         }
         $qUnpacked = self::$dbLink->query("SELECT `dirname` "
                 . "FROM `".MECCANO_TPREF."_core_plugins_unpacked` "
-                . "WHERE `id`=$id ;");
+                . "WHERE `short`='$plugin' ;");
         if (self::$dbLink->errno) {
             self::setError(ERROR_NOT_EXECUTED, 'delUnpacked: '.self::$dbLink->error);
             return FALSE;
@@ -209,9 +209,9 @@ class Plugins implements intPlugins {
             return FALSE;
         }
         self::$dbLink->query("DELETE FROM `".MECCANO_TPREF."_core_plugins_unpacked` "
-                . "WHERE `id`=$id");
+                . "WHERE `short`='$plugin' ;");
         if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, 'delUnpacked: unable to delete unpacked plugin'.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'delUnpacked: unable to delete unpacked plugin ->'.self::$dbLink->error);
             return FALSE;
         }
         return TRUE;
