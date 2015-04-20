@@ -27,14 +27,14 @@ interface intPlugins {
     public static function errId();
     public static function errExp();
     public static function unpack($package);
-    public static function delUnpacked($id);
+    public static function delUnpacked($plugin);
     public static function listUnpacked();
-    public static function aboutUnpacked($id);
+    public static function aboutUnpacked($plugin);
     public static function pluginData($plugin);
-    public static function install($id, $reset = FALSE);
-    public static function delInstalled($id, $keepData = TRUE);
+    public static function install($plugin, $reset = FALSE);
+    public static function delInstalled($plugin, $keepData = TRUE);
     public static function listInstalled();
-    public static function aboutInstalled($id);
+    public static function aboutInstalled($plugin);
 }
 
 class Plugins implements intPlugins {
@@ -183,18 +183,18 @@ class Plugins implements intPlugins {
             self::setError(ERROR_NOT_EXECUTED, "unpack: unable to open package. ZipArchive error: $zipOpen");
             return FALSE;
         }
-        return (int) self::$dbLink->insert_id;
+        return $shortName;
     }
     
-    public static function delUnpacked($id) {
+    public static function delUnpacked($plugin) {
         self::zeroizeError();
-        if (!is_integer($id)) {
-            self::setError(ERROR_INCORRECT_DATA, 'delUnpacked: id must be integer');
+        if (!pregPlugin($plugin)) {
+            self::setError(ERROR_INCORRECT_DATA, 'delUnpacked: incorrect plugin name');
             return FALSE;
         }
         $qUnpacked = self::$dbLink->query("SELECT `dirname` "
                 . "FROM `".MECCANO_TPREF."_core_plugins_unpacked` "
-                . "WHERE `id`=$id ;");
+                . "WHERE `short`='$plugin' ;");
         if (self::$dbLink->errno) {
             self::setError(ERROR_NOT_EXECUTED, 'delUnpacked: '.self::$dbLink->error);
             return FALSE;
@@ -209,9 +209,9 @@ class Plugins implements intPlugins {
             return FALSE;
         }
         self::$dbLink->query("DELETE FROM `".MECCANO_TPREF."_core_plugins_unpacked` "
-                . "WHERE `id`=$id");
+                . "WHERE `short`='$plugin' ;");
         if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, 'delUnpacked: unable to delete unpacked plugin'.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'delUnpacked: unable to delete unpacked plugin ->'.self::$dbLink->error);
             return FALSE;
         }
         return TRUE;
@@ -219,7 +219,7 @@ class Plugins implements intPlugins {
     
     public static function listUnpacked() {
         self::zeroizeError();
-        $qUncpacked = self::$dbLink->query("SELECT `id`, `short`, `full`, `version` "
+        $qUncpacked = self::$dbLink->query("SELECT `short`, `full`, `version` "
                 . "FROM `".MECCANO_TPREF."_core_plugins_unpacked` ;");
         if (self::$dbLink->errno) {
             self::setError(ERROR_NOT_EXECUTED, "listUnpacked: ".self::$dbLink->error);
@@ -229,9 +229,9 @@ class Plugins implements intPlugins {
         $unpackedNode = $xml->createElement('unpacked');
         $xml->appendChild($unpackedNode);
         while ($row = $qUncpacked->fetch_row()) {
-            if ($curVersion = self::pluginData($row[1])) {
+            if ($curVersion = self::pluginData($row[0])) {
                 $curSumVersion = calcSumVersion($curVersion["version"]);
-                $newSumVersion = calcSumVersion($row[3]);
+                $newSumVersion = calcSumVersion($row[2]);
                 if ($curSumVersion < $newSumVersion) {
                     $action = "upgrade";
                 }
@@ -247,30 +247,29 @@ class Plugins implements intPlugins {
             }
             $pluginNode = $xml->createElement('plugin');
             $unpackedNode->appendChild($pluginNode);
-            $pluginNode->appendChild($xml->createElement('id', $row[0]));
-            $pluginNode->appendChild($xml->createElement('short', $row[1]));
-            $pluginNode->appendChild($xml->createElement('full', $row[2]));
-            $pluginNode->appendChild($xml->createElement('version', $row[3]));
+            $pluginNode->appendChild($xml->createElement('short', $row[0]));
+            $pluginNode->appendChild($xml->createElement('full', $row[1]));
+            $pluginNode->appendChild($xml->createElement('version', $row[2]));
             $pluginNode->appendChild($xml->createElement('action', $action));
         }
         return $xml;
     }
     
-    public static function aboutUnpacked($id) {
+    public static function aboutUnpacked($plugin) {
         self::zeroizeError();
-        if (!is_integer($id)) {
-            self::setError(ERROR_INCORRECT_DATA, 'aboutUnpacked: id must be integer');
+        if (!pregPlugin($plugin)) {
+            self::setError(ERROR_INCORRECT_DATA, 'aboutUnpacked: incorrect plugin name');
             return FALSE;
         }
         $qUncpacked = self::$dbLink->query("SELECT `short`, `full`, `version`, `about`, `credits`, `url`, `email`, `license`, `depends` "
                 . "FROM `".MECCANO_TPREF."_core_plugins_unpacked` "
-                . "WHERE `id`=$id;");
+                . "WHERE `short`='$plugin' ;");
         if (self::$dbLink->errno) {
             self::setError(ERROR_NOT_EXECUTED, "aboutUnpacked: ".self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setError(ERROR_NOT_FOUND, "aboutUnpacked: cannot find defined plugin");
+            self::setError(ERROR_NOT_FOUND, "aboutUnpacked: plugin not found");
             return FALSE;
         }
         list($shortName, $fullName, $version, $about, $credits, $url, $email, $license, $depends) = $qUncpacked->fetch_row();
@@ -293,7 +292,6 @@ class Plugins implements intPlugins {
         $xml = new \DOMDocument('1.0', 'utf-8');
         $unpackedNode = $xml->createElement('unpacked');
         $xml->appendChild($unpackedNode);
-        $unpackedNode->appendChild($xml->createElement('id', $id));
         $unpackedNode->appendChild($xml->createElement('short', $shortName));
         $unpackedNode->appendChild($xml->createElement('full', $fullName));
         $unpackedNode->appendChild($xml->createElement('version', $version));
@@ -328,21 +326,21 @@ class Plugins implements intPlugins {
         return array("id" => (int) $id, "version" => $version);
     }
     
-    public static function install($id, $reset = FALSE) {
+    public static function install($plugin, $reset = FALSE) {
         self::zeroizeError();
-        if (!is_integer($id) || !is_bool($reset)) {
+        if (!pregPlugin($plugin) || !is_bool($reset)) {
             self::setError(ERROR_INCORRECT_DATA, "install: incorrect argument(s)");
             return FALSE;
         }
         $qPlugin = self::$dbLink->query("SELECT `short`, `full`, `version`, `spec`, `dirname`, `about`, `credits`, `url`, `email`, `license` "
                 . "FROM `".MECCANO_TPREF."_core_plugins_unpacked` "
-                . "WHERE `id`=$id ;");
+                . "WHERE `short`='$plugin' ;");
         if (self::$dbLink->errno) {
             self::setError(ERROR_NOT_EXECUTED, "install: ".self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setError(ERROR_NOT_FOUND, "install: unpacked plugin with id [$id] not found");
+            self::setError(ERROR_NOT_FOUND, "install: unpacked plugin [$plugin] not found");
             return FALSE;
         }
         list($shortName, $fullName, $version, $packVersion, $plugDir, $about, $credits, $url, $email, $license) = $qPlugin->fetch_row();
@@ -507,19 +505,19 @@ class Plugins implements intPlugins {
             return FALSE;
         }
         // 
-        return $existId;
+        return TRUE;
     }
     
-    public static function delInstalled($id, $keepData = TRUE) {
+    public static function delInstalled($plugin, $keepData = TRUE) {
         self::zeroizeError();
-        if (!is_integer($id) || !is_bool($keepData)) {
+        if (!pregPlugin($plugin) || !is_bool($keepData)) {
             self::setError(ERROR_INCORRECT_DATA, "install: incorrect argument(s)");
             return FALSE;
         }
         // check whether the plugin installed
-        $qPlugin = self::$dbLink->query("SELECT `name` "
+        $qPlugin = self::$dbLink->query("SELECT `id`, `name` "
                 . "FROM `".MECCANO_TPREF."_core_plugins_installed` "
-                . "WHERE `id`=$id ;");
+                . "WHERE `name`='$plugin' ;");
         if (!self::$dbLink->affected_rows) {
             self::setError(ERROR_NOT_FOUND, "delInstaled: plugin not found");
             return FALSE;
@@ -528,7 +526,7 @@ class Plugins implements intPlugins {
             self::setError(ERROR_NOT_EXECUTED, "delInstalled: ".self::$dbLink->error);
             return FALSE;
         }
-        list($shortName) = $qPlugin->fetch_row();
+        list($id, $shortName) = $qPlugin->fetch_row();
         if (strtolower($shortName) == "core") {
             self::setError(ERROR_SYSTEM_INTERVENTION, "delInstalled: unable to remove [core]");
             return FALSE;
@@ -599,7 +597,7 @@ class Plugins implements intPlugins {
     
     public static function listInstalled() {
         self::zeroizeError();
-        $qInstalled = self::$dbLink->query("SELECT `i`.`id`, `i`.`name`, `a`.`full`, `i`.`version`, `i`.`time` "
+        $qInstalled = self::$dbLink->query("SELECT `i`.`name`, `a`.`full`, `i`.`version`, `i`.`time` "
                 . "FROM `".MECCANO_TPREF."_core_plugins_installed` `i` "
                 . "JOIN `".MECCANO_TPREF."_core_plugins_installed_about` `a` "
                 . "ON `a`.`id`=`i`.`id` ;");
@@ -613,26 +611,25 @@ class Plugins implements intPlugins {
         while ($row = $qInstalled->fetch_row()) {
             $pluginNode = $xml->createElement("plugin");
             $installedNode->appendChild($pluginNode);
-            $pluginNode->appendChild($xml->createElement("id", $row[0]));
-            $pluginNode->appendChild($xml->createElement("short", $row[1]));
-            $pluginNode->appendChild($xml->createElement("full", $row[2]));
-            $pluginNode->appendChild($xml->createElement("version", $row[3]));
-            $pluginNode->appendChild($xml->createElement("time", $row[4]));
+            $pluginNode->appendChild($xml->createElement("short", $row[0]));
+            $pluginNode->appendChild($xml->createElement("full", $row[1]));
+            $pluginNode->appendChild($xml->createElement("version", $row[2]));
+            $pluginNode->appendChild($xml->createElement("time", $row[3]));
         }
         return $xml;
     }
     
-    public static function aboutInstalled($id) {
+    public static function aboutInstalled($plugin) {
         self::zeroizeError();
-        if (!is_integer($id)) {
-            self::setError(ERROR_INCORRECT_DATA, "aboutInstalled: id must be integer");
+        if (!pregPlugin($plugin)) {
+            self::setError(ERROR_INCORRECT_DATA, "aboutInstalled: incorrect plugin name");
             return FALSE;
         }
         $qPlugin = self::$dbLink->query("SELECT `i`.`name`, `a`.`full`, `i`.`version`, `i`.`time`, `a`.`about`, `a`.`credits`, `a`.`url`, `a`.`email`, `a`.`license` "
                 . "FROM `".MECCANO_TPREF."_core_plugins_installed` `i` "
                 . "JOIN `".MECCANO_TPREF."_core_plugins_installed_about` `a` "
                 . "ON `a`.`id`=`i`.`id` "
-                . "WHERE `i`.`id`=$id ;");
+                . "WHERE `i`.`name`='$plugin' ;");
         if (self::$dbLink->errno) {
             self::setError(ERROR_NOT_EXECUTED, "aboutInstalled: ".self::$dbLink->error);
             return FALSE;
@@ -645,7 +642,6 @@ class Plugins implements intPlugins {
         $xml = new \DOMDocument('1.0', 'utf-8');
         $installedNode = $xml->createElement("installed");
         $xml->appendChild($installedNode);
-        $installedNode->appendChild($xml->createElement("id", $id));
         $installedNode->appendChild($xml->createElement("short", $shortName));
         $installedNode->appendChild($xml->createElement("full", $fullName));
         $installedNode->appendChild($xml->createElement("version", $version));
