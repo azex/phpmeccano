@@ -27,14 +27,14 @@ interface intPlugins {
     public static function errId();
     public static function errExp();
     public static function unpack($package);
-    public static function delUnpacked($id);
+    public static function delUnpacked($plugin);
     public static function listUnpacked();
-    public static function aboutUnpacked($id);
+    public static function aboutUnpacked($plugin);
     public static function pluginData($plugin);
-    public static function install($id, $reset = FALSE);
-    public static function delInstalled($id, $keepData = TRUE);
+    public static function install($plugin, $reset = FALSE);
+    public static function delInstalled($plugin, $keepData = TRUE);
     public static function listInstalled();
-    public static function aboutInstalled($id);
+    public static function aboutInstalled($plugin);
 }
 
 class Plugins implements intPlugins {
