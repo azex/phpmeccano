@@ -102,7 +102,7 @@ class UserMan implements intUserMan{
         self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_userman_groups` (`groupname`, `description`) "
                 . "VALUES ('$groupName', '$description') ;");
         if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, 'createGroup: group wasn\'t created | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'createGroup: group wasn\'t created -> '.self::$dbLink->error);
             return FALSE;
         }
         $groupId = self::$dbLink->insert_id;
@@ -140,7 +140,7 @@ class UserMan implements intUserMan{
                 . "SET `active`=$active "
                 . "WHERE `id`=$groupId ;");
         if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, 'groupStatus: status was not changed | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'groupStatus: status was not changed -> '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
@@ -171,7 +171,7 @@ class UserMan implements intUserMan{
                 . "FROM `".MECCANO_TPREF."_core_userman_groups` "
                 . "WHERE `groupname`='$groupName' ;");
         if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, 'groupExists: can\'t check group existence | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'groupExists: unable to check group existence -> '.self::$dbLink->error);
             return FALSE;
         }
         if (self::$dbLink->affected_rows) {
@@ -225,7 +225,7 @@ class UserMan implements intUserMan{
                 . "FROM `".MECCANO_TPREF."_core_userman_groups` "
                 . "WHERE `id`=$groupId");
         if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, 'aboutGroup: something went wrong | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'aboutGroup: something went wrong -> '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
@@ -262,7 +262,7 @@ class UserMan implements intUserMan{
                 . "SET `groupname`='$groupName' "
                 . "WHERE `id`=$groupId ;");
         if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, 'setGroupName: can\'t set groupname | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'setGroupName: unable to set groupname -> '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
@@ -287,7 +287,7 @@ class UserMan implements intUserMan{
                 . "SET `description`='$description' "
                 . "WHERE `id`=$groupId ;");
         if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, 'setGroupDesc: can\'t set description | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'setGroupDesc: unable to set description -> '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
@@ -307,7 +307,7 @@ class UserMan implements intUserMan{
                 . "FROM `".MECCANO_TPREF."_core_userman_users` "
                 . "WHERE `groupid`=$groupId ;");
         if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, 'delGroup: can\'t check existence of users in the group | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'delGroup: unable to check existence of users in the group -> '.self::$dbLink->error);
             return FALSE;
         }
         $users = $qUsers->fetch_row();
@@ -357,7 +357,7 @@ class UserMan implements intUserMan{
         }
         $qResult = self::$dbLink->query("SELECT COUNT(`id`) FROM `".MECCANO_TPREF."_core_userman_groups` ;");
         if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, 'sumGroups: total users couldn\'t be counted | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'sumGroups: total users couldn\'t be counted -> '.self::$dbLink->error);
             return FALSE;
         }
         list($totalGroups) = $qResult->fetch_array(MYSQLI_NUM);
@@ -422,7 +422,7 @@ class UserMan implements intUserMan{
                 . "FROM `".MECCANO_TPREF."_core_userman_groups` "
                 . "ORDER BY `$orderBy` $direct LIMIT $start, $rpp;");
         if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, 'getGroups: group info page couldn\'t be gotten | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'getGroups: group info page couldn\'t be gotten -> '.self::$dbLink->error);
             return FALSE;
         }
         $xml = new \DOMDocument('1.0', 'utf-8');
@@ -469,7 +469,7 @@ class UserMan implements intUserMan{
                 . "FROM `".MECCANO_TPREF."_core_userman_groups` "
                 . "ORDER BY `$orderBy` $direct ;");
         if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, 'getGroups: group info page couldn\'t be gotten | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'getGroups: group info page couldn\'t be gotten -> '.self::$dbLink->error);
             return FALSE;
         }
         $xml = new \DOMDocument('1.0', 'utf-8');
@@ -503,7 +503,7 @@ class UserMan implements intUserMan{
                 . "OR `i`.`email`='$email' "
                 . "LIMIT 1;");
         if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, 'createUser: can\'t check username and email | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'createUser: unable to check username and email -> '.self::$dbLink->error);
             return FALSE;
         }
         if (self::$dbLink->affected_rows) {
@@ -514,7 +514,7 @@ class UserMan implements intUserMan{
                 . "FROM `".MECCANO_TPREF."_core_langman_languages` "
                 . "WHERE `code`='$langCode' ;");
         if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, 'createUser: can\'t check defined language | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'createUser: unable to check defined language -> '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
@@ -526,7 +526,7 @@ class UserMan implements intUserMan{
                 . "FROM `".MECCANO_TPREF."_core_userman_groups` "
                 . "WHERE `id`=$groupId ;");
         if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, 'createUser: can\'t check group | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'createUser: unable to check group -> '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
@@ -551,7 +551,7 @@ class UserMan implements intUserMan{
         foreach ($sql as $key => $value) {
             self::$dbLink->query($value);
             if (self::$dbLink->errno) {
-                self::setError(ERROR_NOT_EXECUTED, 'createUser: something went wrong | '.self::$dbLink->error);
+                self::setError(ERROR_NOT_EXECUTED, 'createUser: something went wrong -> '.self::$dbLink->error);
                 return FALSE;
             }
             if ($key == 'userid') {
@@ -574,7 +574,7 @@ class UserMan implements intUserMan{
                 . "FROM `".MECCANO_TPREF."_core_userman_users` "
                 . "WHERE `username`='$username' ;");
         if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, 'userExists: can\'t check user existence | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'userExists: unable to check user existence -> '.self::$dbLink->error);
             return FALSE;
         }
         if (self::$dbLink->affected_rows) {
@@ -594,7 +594,7 @@ class UserMan implements intUserMan{
                 . "FROM `".MECCANO_TPREF."_core_userman_userinfo` "
                 . "WHERE `email`='$email' ;");
         if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, 'userExists: can\'t check email existence | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'userExists: unable to check email existence -> '.self::$dbLink->error);
             return FALSE;
         }
         if (self::$dbLink->affected_rows) {
@@ -628,7 +628,7 @@ class UserMan implements intUserMan{
                 . "SET `active`=$active "
                 . "WHERE `id`=$userId ;");
         if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, 'userStatus: status wasn\'t changed | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'userStatus: status wasn\'t changed -> '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
@@ -698,7 +698,7 @@ class UserMan implements intUserMan{
             return FALSE;
         }
         if ($userId == 1) {
-            self::setError(ERROR_SYSTEM_INTERVENTION, 'delUser: can\'t delete system user');
+            self::setError(ERROR_SYSTEM_INTERVENTION, 'delUser: unable to delete system user');
             return FALSE;
         }
         $qName = self::$dbLink->query("SELECT `username` "
@@ -724,7 +724,7 @@ class UserMan implements intUserMan{
         foreach ($sql as $value) {
             self::$dbLink->query($value);
             if (self::$dbLink->errno) {
-                self::setError(ERROR_NOT_EXECUTED, 'delUser: something went wrong | '.self::$dbLink->error);
+                self::setError(ERROR_NOT_EXECUTED, 'delUser: something went wrong -> '.self::$dbLink->error);
                 return FALSE;
             }
         }
@@ -749,7 +749,7 @@ class UserMan implements intUserMan{
                 . "AND `u`.`id`=$userId "
                 . "LIMIT 1 ;");
         if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, 'aboutUser: something went wrong | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'aboutUser: something went wrong -> '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
@@ -814,7 +814,7 @@ class UserMan implements intUserMan{
                 . "FROM `".MECCANO_TPREF."_core_userman_users` "
                 . "WHERE `id`=$userId ;");
         if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, 'addPassword: can\'t check defined user | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'addPassword: unable to check defined user -> '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
@@ -827,7 +827,7 @@ class UserMan implements intUserMan{
         self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_userman_userpass` (`userid`, `password`, `description`, `limited`) "
                 . "VALUES($userId, '$passwHash', '$description', 1) ;");
         if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, 'addPassword: can\'t add password | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'addPassword: unable to add password -> '.self::$dbLink->error);
             return FALSE;
         }
         $insertId = (int) self::$dbLink->insert_id;
@@ -835,7 +835,7 @@ class UserMan implements intUserMan{
         self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_auth_usi` (`id`, `usi`) "
                 . "VALUES($insertId, '$usi') ;");
         if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, 'addPassword: can\'t create unique session identifier | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'addPassword: unable to create unique session identifier -> '.self::$dbLink->error);
             return FALSE;
         }
         return (int) $insertId;
@@ -856,7 +856,7 @@ class UserMan implements intUserMan{
                 . "WHERE `id`=$passwId "
                 . "AND `userid`=$userId ;");
         if (self::$dbLink->errno) {
-            self::setError(ERROR_INCORRECT_DATA, 'delPassword: can\'t check limitation status of the password | '.self::$dbLink->error);
+            self::setError(ERROR_INCORRECT_DATA, 'delPassword: unable to check limitation status of the password -> '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
@@ -896,7 +896,7 @@ class UserMan implements intUserMan{
                 . "FROM `".MECCANO_TPREF."_core_userman_users` "
                 . "WHERE `id`=$userId ;");
         if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, 'setPassword: can\'t check defined user');
+            self::setError(ERROR_NOT_EXECUTED, 'setPassword: unable to check defined user');
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
@@ -910,7 +910,7 @@ class UserMan implements intUserMan{
                 . "WHERE `id`=$passwId "
                 . "AND `userid`=$userId ;");
         if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, 'setPassword: can\'t update password | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'setPassword: unable to update password -> '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
@@ -934,7 +934,7 @@ class UserMan implements intUserMan{
                 . "FROM `".MECCANO_TPREF."_core_userman_users` "
                 . "WHERE `username`='$username' ;");
         if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, 'setUserName: unable to check new name | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'setUserName: unable to check new name -> '.self::$dbLink->error);
             return FALSE;
         }
         if (self::$dbLink->affected_rows) {
@@ -945,7 +945,7 @@ class UserMan implements intUserMan{
                 . "SET `username`='$username' "
                 . "WHERE `id`=$userId ;");
         if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, 'setUserName: unable to set username | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'setUserName: unable to set username -> '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
@@ -972,7 +972,7 @@ class UserMan implements intUserMan{
                 . "SET `email`='$email' "
                 . "WHERE `id`=$userId ;");
         if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, 'setUserMail: unable to set email | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'setUserMail: unable to set email -> '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
@@ -993,7 +993,7 @@ class UserMan implements intUserMan{
                 . "SET `fullname`='$name' "
                 . "WHERE `id`=$userId ;");
         if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, 'setFullName: can\'t set name | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'setFullName: unable to set name -> '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
@@ -1013,7 +1013,7 @@ class UserMan implements intUserMan{
                 . "FROM `".MECCANO_TPREF."_core_userman_users` "
                 . "WHERE `id`=$userId ;");
         if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, 'changePassword: can\'t check defined user | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'changePassword: unable to check defined user -> '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
@@ -1039,7 +1039,7 @@ class UserMan implements intUserMan{
                     . "AND `password`='$oldPasswHash' ;");
         }
         if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, 'changePassword: can\'t update password | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'changePassword: unable to update password -> '.self::$dbLink->error);
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
@@ -1060,7 +1060,7 @@ class UserMan implements intUserMan{
         }
         $qResult = self::$dbLink->query("SELECT COUNT(`id`) FROM `".MECCANO_TPREF."_core_userman_users` ;");
         if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, 'sumUsers: total users couldn\'t be counted | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'sumUsers: total users couldn\'t be counted -> '.self::$dbLink->error);
             return FALSE;
         }
         list($totalUsers) = $qResult->fetch_array(MYSQLI_NUM);
@@ -1129,7 +1129,7 @@ class UserMan implements intUserMan{
                 . "ON `u`.`groupid` = `g`.`id` "
                 . "ORDER BY `$orderBy` $direct LIMIT $start, $rpp;");
         if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, 'getUsers: unable to get user info page | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'getUsers: unable to get user info page -> '.self::$dbLink->error);
             return FALSE;
         }
         $xml = new \DOMDocument('1.0', 'utf-8');
@@ -1184,7 +1184,7 @@ class UserMan implements intUserMan{
                 . "ON `u`.`groupid` = `g`.`id` "
                 . "ORDER BY `$orderBy` $direct ;");
         if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, 'getAllUsers: unable to get user info page | '.self::$dbLink->error);
+            self::setError(ERROR_NOT_EXECUTED, 'getAllUsers: unable to get user info page -> '.self::$dbLink->error);
             return FALSE;
         }
         $xml = new \DOMDocument('1.0', 'utf-8');
@@ -1203,5 +1203,41 @@ class UserMan implements intUserMan{
             $userNode->appendChild($xml->createElement('active', $row[7]));
         }
         return $xml;
+    }
+    
+    public static function setUserLang($userId, $code = MECCANO_DEF_LANG) {
+        self::zeroizeError();
+        if (!is_integer($userId) || !pregLang($code)) {
+            self::setError(ERROR_INCORRECT_DATA, "setUserLang: incorrect argument(s)");
+            return FALSE;
+        }
+        $sql = array(
+            "user" => "SELECT `username` "
+            . "FROM `".MECCANO_TPREF."_core_userman_users` "
+            . "WHERE `id` = $userId ;",
+            "language" => "SELECT `id` "
+            . "FROM `".MECCANO_TPREF."_core_langman_languages` "
+            . "WHERE `code` = '$code' ;"
+        );
+        foreach ($sql as $key => $value) {
+            $qCheck = self::$dbLink->query($value);
+            if (self::$dbLink->errno) {
+                self::setError(ERROR_NOT_EXECUTED, "setUserLang: ".self::$dbLink->error);
+                return FALSE;
+            }
+            if (!self::$dbLink->affected_rows) {
+                self::setError(ERROR_NOT_FOUND, "setUserLang: $key not found");
+                return FALSE;
+            }
+        }
+        list($codeId) = $qCheck->fetch_row();
+        self::$dbLink->query("UPDATE `".MECCANO_TPREF."_core_userman_users` "
+                . "SET `langid` = $codeId "
+                . "WHERE `id`=$userId ;");
+        if (self::$dbLink->errno) {
+            self::setError(ERROR_NOT_EXECUTED, "setUserLang: unable to set user language -> ".self::$dbLink->error);
+            return FALSE;
+        }
+        return TRUE;
     }
 }
