@@ -82,15 +82,15 @@ class LangMan implements intLangMan{
         return self::$errexp;
     }
     
-    public static function addLang($code, $name) {
+    public static function addLang($code, $name, $dir = 'ltr') {
         self::zeroizeError();
-        if (!pregLang($code) || !is_string($name)) {
+        if (!pregLang($code) || !is_string($name) || !in_array($dir, array('ltr', 'rtl'))) {
             self::setError(ERROR_INCORRECT_DATA, 'addLang: incorrect incoming parameters');
             return FALSE;
         }
         $name = self::$dbLink->real_escape_string(htmlspecialchars($name));
-        self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_languages` (`code`, `name`) "
-                . "VALUES('$code', '$name') ;");
+        self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_languages` (`code`, `name`, `dir`) "
+                . "VALUES('$code', '$name', '$dir') ;");
         if (self::$dbLink->errno) {
             self::setError(ERROR_NOT_EXECUTED, 'addLang: '.self::$dbLink->error);
             return FALSE;
