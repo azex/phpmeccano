@@ -1142,7 +1142,7 @@ class LangMan implements intLangMan{
             self::setError(ERROR_INCORRECT_DATA, 'getTitle: incorrect incoming parameters');
             return FALSE;
         }
-        $qTitle = self::$dbLink->query("SELECT `t`.`title` "
+        $qTitle = self::$dbLink->query("SELECT `t`.`title`, `l`.`dir` "
                 . "FROM `".MECCANO_TPREF."_core_langman_titles` `t` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_languages` `l` "
                 . "ON `l`.`id`=`t`.`codeid` "
@@ -1164,8 +1164,8 @@ class LangMan implements intLangMan{
             self::setError(ERROR_NOT_FOUND, 'getTitle: unable to find defined title');
             return FALSE;
         }
-        list($title) = $qTitle->fetch_row();
-        return $title;
+        list($title, $direction) = $qTitle->fetch_row();
+        return array('title' => $title, 'dir' => $direction);
     }
     
     public static function getText($name, $section, $plugin, $code = MECCANO_DEF_LANG) {
