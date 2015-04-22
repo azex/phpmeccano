@@ -163,7 +163,7 @@ class LangMan implements intLangMan{
 
     public static function langList() {
         self::zeroizeError();
-        $qLang = self::$dbLink->query("SELECT `id`, `code`, `name` "
+        $qLang = self::$dbLink->query("SELECT `id`, `code`, `name`, `dir` "
                 . "FROM `".MECCANO_TPREF."_core_langman_languages` ;");
         if (self::$dbLink->errno) {
             self::setError(ERROR_NOT_EXECUTED, 'langList: '.self::$dbLink->error);
@@ -182,6 +182,7 @@ class LangMan implements intLangMan{
             $lang->appendChild($xml->createElement('id', $row[0]));
             $lang->appendChild($xml->createElement('code', $row[1]));
             $lang->appendChild($xml->createElement('name', $row[2]));
+            $lang->appendChild($xml->createElement('dir', $row[3]));
         }
         return $xml;
     }
