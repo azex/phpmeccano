@@ -11,6 +11,18 @@
                     <attribute name="name">
                         <ref name="plugFuncName" />
                     </attribute>
+                    <attribute name="nonauth">
+                        <choice>
+                            <value>0</value>
+                            <value>1</value>
+                        </choice>
+                    </attribute>
+                    <attribute name="auth">
+                        <choice>
+                            <value>0</value>
+                            <value>1</value>
+                        </choice>
+                    </attribute>
                     <oneOrMore>
                         <element name="description">
                             <attribute name="code">
