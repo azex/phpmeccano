@@ -1604,6 +1604,7 @@ class LangMan implements intLangMan{
         elseif ($ascent == FALSE) {
             $direct = 'DESC';
         }
+        // get section titles
         $start = ($pageNumber - 1) * $rpp;
         $qTitles = self::$dbLink->query("SELECT `t`.`id` `id`, `t`.`title` `title`, `n`.`name` `name` "
                 . "FROM `".MECCANO_TPREF."_core_langman_titles` `t` "
@@ -1627,8 +1628,20 @@ class LangMan implements intLangMan{
             self::setError(ERROR_NOT_FOUND, 'getTitlesXML: unable to find defined section');
             return FALSE;
         }
+        // get text direction for defined language
+        $qDirection = self::$dbLink->query("SELECT `dir` "
+                . "FROM `".MECCANO_TPREF."_core_langman_languages` "
+                . "WHERE `code`='$code';");
+        list($direction) = $qDirection->fetch_row();
+        // create DOM
         $xml = new \DOMDocument('1.0', 'utf-8');
         $titlesNode = $xml->createElement('titles');
+        $codeAttribute =  $xml->createAttribute('code');
+        $codeAttribute->value = $code;
+        $dirAttribute = $xml->createAttribute('dir');
+        $dirAttribute->value = $direction;
+        $titlesNode->appendChild($codeAttribute);
+        $titlesNode->appendChild($dirAttribute);
         $xml->appendChild($titlesNode);
         while ($row = $qTitles->fetch_row()) {
             $titleNode = $xml->createElement('title');
@@ -1670,6 +1683,7 @@ class LangMan implements intLangMan{
         elseif ($ascent == FALSE) {
             $direct = 'DESC';
         }
+        // get section titles
         $qTitles = self::$dbLink->query("SELECT `t`.`id` `id`, `t`.`title` `title`, `n`.`name` `name` "
                 . "FROM `".MECCANO_TPREF."_core_langman_titles` `t` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_title_names` `n` "
@@ -1692,8 +1706,20 @@ class LangMan implements intLangMan{
             self::setError(ERROR_NOT_FOUND, 'getAllTitlesXML: unable to find defined section');
             return FALSE;
         }
+        // get text direction for defined language
+        $qDirection = self::$dbLink->query("SELECT `dir` "
+                . "FROM `".MECCANO_TPREF."_core_langman_languages` "
+                . "WHERE `code`='$code';");
+        list($direction) = $qDirection->fetch_row();
+        // create DOM
         $xml = new \DOMDocument('1.0', 'utf-8');
         $titlesNode = $xml->createElement('titles');
+        $codeAttribute =  $xml->createAttribute('code');
+        $codeAttribute->value = $code;
+        $dirAttribute = $xml->createAttribute('dir');
+        $dirAttribute->value = $direction;
+        $titlesNode->appendChild($codeAttribute);
+        $titlesNode->appendChild($dirAttribute);
         $xml->appendChild($titlesNode);
         while ($row = $qTitles->fetch_row()) {
             $titleNode = $xml->createElement('title');
