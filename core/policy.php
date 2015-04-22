@@ -269,9 +269,13 @@ class Policy implements intPolicy {
             $avLangCodes[] = $row[0];
         }
         $incomingPolicy = array();
+        $defaultRules = array();
         $funcNodes = $policy->getElementsByTagName('function');
         foreach ($funcNodes as $funcNode) {
             $funcName = $funcNode->getAttribute('name');
+            $nonAuthRule = $funcNode->getAttribute('nonauth');
+            $authRule = $funcNode->getAttribute('auth');
+            $defaultRules[$funcName] = array((int) $nonAuthRule, (int) $authRule);
             $incomingPolicy[$funcName] = array();
             $langNodes = $funcNode->getElementsByTagName('description');
             foreach ($langNodes as $langNode){
@@ -364,9 +368,11 @@ class Policy implements intPolicy {
                     return FALSE;
                 }
                 $insertId = self::$dbLink->insert_id;
+                // get default rules
+                list($nonAuthRule, $authRule) = $defaultRules[$funcName];
                 // policy for the inactive session (non-authorized user)
                 self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_policy_nosession` (`funcid`, `access`) "
-                        . "VALUES ($insertId, 0) ;");
+                        . "VALUES ($insertId, $nonAuthRule) ;");
                 if (self::$dbLink->errno) {
                     self::setError(ERROR_NOT_EXECUTED, 'install: unable to create policy for the inactive session | '.self::$dbLink->error);
                     return FALSE;
@@ -377,7 +383,7 @@ class Policy implements intPolicy {
                         $access = 1;
                     }
                     else {
-                        $access = 0;
+                        $access = $authRule;
                     }
                     self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_policy_access` (`groupid`, `funcid`, `access`) "
                             . "VALUES ($groupId, $insertId, $access) ;");
