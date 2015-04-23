@@ -230,7 +230,7 @@ class UserMan implements intUserMan{
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setError(ERROR_NOT_FOUND, 'aboutGroup: defined group doesn\'t exist');
+            self::setError(ERROR_NOT_FOUND, 'aboutGroup: defined group not found');
             return FALSE;
         }
         $qSum = self::$dbLink->query("SELECT COUNT(`id`) "
@@ -267,7 +267,7 @@ class UserMan implements intUserMan{
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setError(ERROR_ALREADY_EXISTS, 'setGroupName: defined group doesn\'t exist or groupname was repeated');
+            self::setError(ERROR_ALREADY_EXISTS, 'setGroupName: defined group not found or groupname was repeated');
             return FALSE;
         }
         return TRUE;
@@ -292,7 +292,7 @@ class UserMan implements intUserMan{
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setError(ERROR_ALREADY_EXISTS, 'setGroupDesc: defined group doesn\'t exist or description was repeated');
+            self::setError(ERROR_ALREADY_EXISTS, 'setGroupDesc: defined group not found or description was repeated');
             return FALSE;
         }
         return TRUE;
@@ -334,7 +334,7 @@ class UserMan implements intUserMan{
                 return FALSE;
             }
             if (!self::$dbLink->affected_rows) {
-                self::setError(ERROR_NOT_FOUND, 'delGroup: defined group doesn\'t exist');
+                self::setError(ERROR_NOT_FOUND, 'delGroup: defined group not found');
                 return FALSE;
             }
             if ($key == 0) {
@@ -519,7 +519,7 @@ class UserMan implements intUserMan{
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setError(ERROR_NOT_FOUND, 'createUser: defined language doesn\'t exist');
+            self::setError(ERROR_NOT_FOUND, 'createUser: defined language not found');
             return FALSE;
         }
         list($langId) = $qLang->fetch_row();
@@ -531,7 +531,7 @@ class UserMan implements intUserMan{
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setError(ERROR_NOT_FOUND, 'createUser: defined group doesn\'t exist');
+            self::setError(ERROR_NOT_FOUND, 'createUser: defined group not found');
             return FALSE;
         }
         $salt = makeSalt($username);
@@ -633,7 +633,7 @@ class UserMan implements intUserMan{
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setError(ERROR_NOT_FOUND, 'userStatus: incorrect user status or group doesn\'t exist');
+            self::setError(ERROR_NOT_FOUND, 'userStatus: incorrect user status or group not found');
             return FALSE;
         }
         if ($log) {
@@ -706,7 +706,7 @@ class UserMan implements intUserMan{
                 . "FROM `".MECCANO_TPREF."_core_userman_users` "
                 . "WHERE `id`=$userId ;");
         if (!self::$dbLink->affected_rows) {
-            self::setError(ERROR_NOT_FOUND, 'delUser: defined user doesn\'t exist');
+            self::setError(ERROR_NOT_FOUND, 'delUser: defined user not found');
             return FALSE;
         }
         $sql = array(
@@ -754,7 +754,7 @@ class UserMan implements intUserMan{
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setError(ERROR_NOT_FOUND, 'aboutUser: defined user doesn\'t exist');
+            self::setError(ERROR_NOT_FOUND, 'aboutUser: defined user not found');
             return FALSE;
         }
         $about = $qAbout->fetch_row();
@@ -785,7 +785,7 @@ class UserMan implements intUserMan{
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setError(ERROR_NOT_FOUND, 'userPasswords: defined user doesn\'t exist');
+            self::setError(ERROR_NOT_FOUND, 'userPasswords: defined user not found');
             return FALSE;
         }
         $xml = new \DOMDocument('1.0', 'utf-8');
@@ -819,7 +819,7 @@ class UserMan implements intUserMan{
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setError(ERROR_NOT_FOUND, 'addPassword: defined user doesn\'t exist');
+            self::setError(ERROR_NOT_FOUND, 'addPassword: defined user not found');
             return FALSE;
         }
         list($salt) = $qHash->fetch_row();
@@ -901,7 +901,7 @@ class UserMan implements intUserMan{
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setError(ERROR_NOT_FOUND, 'setPassword: defined user doesn\'t exist');
+            self::setError(ERROR_NOT_FOUND, 'setPassword: defined user not found');
             return FALSE;
         }
         list($salt) = $qSalt->fetch_row();
@@ -915,7 +915,7 @@ class UserMan implements intUserMan{
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setError(ERROR_ALREADY_EXISTS, 'setPassword: defined password doesn\'t exist or password was repeated');
+            self::setError(ERROR_ALREADY_EXISTS, 'setPassword: defined password not found or password was repeated');
             return FALSE;
         }
         return TRUE;
@@ -998,7 +998,7 @@ class UserMan implements intUserMan{
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setError(ERROR_ALREADY_EXISTS, 'setFullName: defined user doesn\'t exist or name was repeated');
+            self::setError(ERROR_ALREADY_EXISTS, 'setFullName: defined user not found or name was repeated');
             return FALSE;
         }
         return TRUE;
@@ -1018,12 +1018,26 @@ class UserMan implements intUserMan{
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setError(ERROR_NOT_FOUND, 'changePassword: defined user doesn\'t exist');
+            self::setError(ERROR_NOT_FOUND, 'changePassword: defined user not found');
             return FALSE;
         }
         list($salt) = $qSalt->fetch_row();
         $oldPasswHash = passwHash($oldPassw, $salt);
         $newPasswHash = passwHash($newPassw, $salt);
+        // check whether the new password repeates existing password
+        self::$dbLink->query("SELECT `id` "
+                . "FROM `".MECCANO_TPREF."_core_userman_userpass` "
+                . "WHERE `userid`=$userId "
+                . "AND `password`='$newPasswHash' ;");
+        if (self::$dbLink->errno) {
+            self::setError(ERROR_NOT_EXECUTED, "changePassword: unable to check uniqueness of the new password -> ".self::$dbLink->error);
+            return FALSE;
+        }
+        if (self::$dbLink->affected_rows) {
+            self::setError(ERROR_ALREADY_EXISTS, "changePassword: new password already in use");
+            return FALSE;
+        }
+        // change password
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
             self::$dbLink->query("UPDATE `".MECCANO_TPREF."_core_userman_userpass` "
                     . "SET `password`='$newPasswHash' "
@@ -1044,7 +1058,7 @@ class UserMan implements intUserMan{
             return FALSE;
         }
         if (!self::$dbLink->affected_rows) {
-            self::setError(ERROR_ALREADY_EXISTS, 'changePassword: defined password doesn\'t exist, new password repeats existing, was received invalid old password or usage of limited authentication');
+            self::setError(ERROR_NOT_FOUND, 'changePassword: defined password not found, it has been received invalid old password, or maybe your authentication is limited');
             return FALSE;
         }
         return TRUE;
