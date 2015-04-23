@@ -824,6 +824,19 @@ class UserMan implements intUserMan{
         }
         list($salt) = $qHash->fetch_row();
         $passwHash = passwHash($password, $salt);
+        // check whether the new password repeates existing password
+        self::$dbLink->query("SELECT `id` "
+                . "FROM `".MECCANO_TPREF."_core_userman_userpass` "
+                . "WHERE `userid`=$userId "
+                . "AND `password`='$passwHash' ;");
+        if (self::$dbLink->errno) {
+            self::setError(ERROR_NOT_EXECUTED, "addPassword: unable to check uniqueness of the password -> ".self::$dbLink->error);
+            return FALSE;
+        }
+        if (self::$dbLink->affected_rows) {
+            self::setError(ERROR_ALREADY_EXISTS, "changePassword: password already in use");
+            return FALSE;
+        }
         $description = self::$dbLink->real_escape_string($description);
         self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_userman_userpass` (`userid`, `password`, `description`, `limited`) "
                 . "VALUES($userId, '$passwHash', '$description', 1) ;");
