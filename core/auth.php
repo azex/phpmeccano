@@ -8,67 +8,67 @@ require_once 'logman.php';
 
 interface intAuth {
     public function __construct(\mysqli $dbLink, LogMan $logObject);
-    public static function setDbLink(\mysqli $dbLink);
-    public static function setLogObject(LogMan $logObject);
-    public static function errId();
-    public static function errExp();
-    public static function userLogin($username, $password, $log = FALSE, $useCookie = TRUE, $cookieTime = 'month');
-    public static function isSession();
-    public static function userLogout();
-    public static function getSession($log = FALSE);
+    public function setDbLink(\mysqli $dbLink);
+    public function setLogObject(LogMan $logObject);
+    public function errId();
+    public function errExp();
+    public function userLogin($username, $password, $log = FALSE, $useCookie = TRUE, $cookieTime = 'month');
+    public function isSession();
+    public function userLogout();
+    public function getSession($log = FALSE);
 }
 
 class Auth implements intAuth {
-    private static $errid = 0; // error's id
-    private static $errexp = ''; // error's explanation
-    private static $dbLink; // database link
-    private static $logObject; // log object
+    private $errid = 0; // error's id
+    private $errexp = ''; // error's explanation
+    private $dbLink; // database link
+    private $logObject; // log object
     
     public function __construct(\mysqli $dbLink, LogMan $logObject) {
         if (!session_id()) {
             session_start();
         }
-        self::$dbLink = $dbLink;
-        self::$logObject = $logObject;
+        $this->dbLink = $dbLink;
+        $this->logObject = $logObject;
     }
     
-    public static function setDbLink(\mysqli $dbLink) {
-        self::$dbLink = $dbLink;
+    public function setDbLink(\mysqli $dbLink) {
+        $this->dbLink = $dbLink;
     }
     
-    public static function setLogObject(LogMan $logObject) {
-        self::$logObject = $logObject;
+    public function setLogObject(LogMan $logObject) {
+        $this->logObject = $logObject;
     }
     
-    private static function setError($id, $exp) {
-        self::$errid = $id;
-        self::$errexp = $exp;
+    private function setError($id, $exp) {
+        $this->errid = $id;
+        $this->errexp = $exp;
     }
     
-    private static function zeroizeError() {
-        self::$errid = 0;        self::$errexp = '';
+    private function zeroizeError() {
+        $this->errid = 0;        $this->errexp = '';
     }
     
-    public static function errId() {
-        return self::$errid;
+    public function errId() {
+        return $this->errid;
     }
     
-    public static function errExp() {
-        return self::$errexp;
+    public function errExp() {
+        return $this->errexp;
     }
     
-    public static function userLogin($username, $password, $log = FALSE, $useCookie = TRUE, $cookieTime = 'month') {
-        self::zeroizeError();
+    public function userLogin($username, $password, $log = FALSE, $useCookie = TRUE, $cookieTime = 'month') {
+        $this->zeroizeError();
         if (isset($_SESSION[AUTH_USER_ID])) {
-            self::setError(ERROR_NOT_EXECUTED, 'userLogin: finish current session before starting new');
+            $this->setError(ERROR_NOT_EXECUTED, 'userLogin: finish current session before starting new');
             return FALSE;
         }
         if (!pregUName($username)) {
-            self::setError(ERROR_INCORRECT_DATA, 'userLogin: username can contain only letters and numbers and has length from 3 to 20');
+            $this->setError(ERROR_INCORRECT_DATA, 'userLogin: username can contain only letters and numbers and has length from 3 to 20');
             return FALSE;
         }
         if (!pregPassw($password)) {
-            self::setError(ERROR_INCORRECT_DATA, 'userLogin: password can contain only letters, numbers and common symbols and has length from 8 to 50');
+            $this->setError(ERROR_INCORRECT_DATA, 'userLogin: password can contain only letters, numbers and common symbols and has length from 8 to 50');
             return FALSE;
         }
         $curTime = time();
@@ -82,7 +82,7 @@ class Auth implements intAuth {
         if (!isset($terms[$cookieTime])) {
             $useCookie = FALSE;
         }
-        $qResult = self::$dbLink->query("SELECT `u`.`id`, `u`.`salt`, `l`.`code` "
+        $qResult = $this->dbLink->query("SELECT `u`.`id`, `u`.`salt`, `l`.`code` "
                 . "FROM `".MECCANO_TPREF."_core_userman_groups` `g` "
                 . "JOIN `".MECCANO_TPREF."_core_userman_users` `u` "
                 . "ON `g`.`id`=`u`.`groupid` "
@@ -91,44 +91,44 @@ class Auth implements intAuth {
                 . "WHERE `u`.`username`='$username' "
                 . "AND `u`.`active`=1 "
                 . "AND `g`.`active`=1 ;");
-        if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, 'userLogin: can\'t confirm username | '.self::$dbLink->error);
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'userLogin: unable to confirm username -> '.$this->dbLink->error);
             return FALSE;
         }
-        if (!self::$dbLink->affected_rows) {
-            self::setError(ERROR_NOT_FOUND, 'userLogin: invalid username or user (group) is disabled');
+        if (!$this->dbLink->affected_rows) {
+            $this->setError(ERROR_NOT_FOUND, 'userLogin: invalid username or user (group) is disabled');
             return FALSE;
         }
         list($userId, $salt, $lang) = $qResult->fetch_array(MYSQL_NUM);
         $passwEncoded = passwHash($password, $salt);
-        $qResult = self::$dbLink->query("SELECT `u`.`username`, `p`.`id`, `p`.`limited` "
+        $qResult = $this->dbLink->query("SELECT `u`.`username`, `p`.`id`, `p`.`limited` "
                 . "FROM `".MECCANO_TPREF."_core_userman_users` `u` "
                 . "JOIN `".MECCANO_TPREF."_core_userman_userpass` `p` "
                 . "ON `u`.`id`=`p`.`userid` "
                 . "WHERE `u`.`id`=$userId AND `p`.`password`='$passwEncoded' ;");
-        if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, 'userLogin: can\'t confirm password | '.self::$dbLink->error);
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'userLogin: unable to confirm password -> '.$this->dbLink->error);
             return FALSE;
         }
-        if (!self::$dbLink->affected_rows) {
-            self::setError(ERROR_NOT_FOUND, 'userLogin: invalid password');
+        if (!$this->dbLink->affected_rows) {
+            $this->setError(ERROR_NOT_FOUND, 'userLogin: invalid password');
             return FALSE;
         }
         list($username, $passId, $limited) = $qResult->fetch_array(MYSQLI_NUM);
         $usi = makeIdent($username);
         if ($useCookie) {
             $term = $terms[$cookieTime];
-            self::$dbLink->query("UPDATE `".MECCANO_TPREF."_core_auth_usi` "
+            $this->dbLink->query("UPDATE `".MECCANO_TPREF."_core_auth_usi` "
                     . "SET `usi`='$usi', `endtime`=FROM_UNIXTIME($term) "
                     . "WHERE `id`=$passId ;");
-            if (self::$dbLink->errno) {
-                self::setError(ERROR_NOT_EXECUTED, 'userLogin: can\'t set unique session identifier | '.self::$dbLink->error);
+            if ($this->dbLink->errno) {
+                $this->setError(ERROR_NOT_EXECUTED, 'userLogin: unable to set unique session identifier -> '.$this->dbLink->error);
                 return FALSE;
             }
             setcookie(COOKIE_UNIQUE_SESSION_ID, $usi, $term, '/');
         }
         if ($log) {
-            self::$logObject->newRecord('core', 'authLogin', $username);
+            $this->logObject->newRecord('core', 'authLogin', $username);
         }
         $_SESSION[AUTH_USERNAME] = $username;
         $_SESSION[AUTH_USER_ID] = (int) $userId;
@@ -143,15 +143,15 @@ class Auth implements intAuth {
         return TRUE;
     }
     
-    public static function isSession() {
-        self::zeroizeError();
+    public function isSession() {
+        $this->zeroizeError();
         if (isset($_SESSION[AUTH_USER_ID])) {
             if ($_SESSION[AUTH_IP] != $_SERVER['REMOTE_ADDR'] || $_SESSION[AUTH_USER_AGENT] != $_SERVER['HTTP_USER_AGENT']) {
-                self::userLogout();
-                self::setError(ERROR_NOT_EXECUTED, 'isSession: session probably is stolen');
+                $this->userLogout();
+                $this->setError(ERROR_NOT_EXECUTED, 'isSession: session probably is stolen');
                 return FALSE;
             }
-            $qResult = self::$dbLink->query("SELECT `g`.`groupname`, `u`.`id`, `p`.`password` "
+            $qResult = $this->dbLink->query("SELECT `g`.`groupname`, `u`.`id`, `p`.`password` "
                     . "FROM `".MECCANO_TPREF."_core_userman_groups` `g` "
                     . "JOIN `".MECCANO_TPREF."_core_userman_users` `u` "
                     . "ON `g`.`id`=`u`.`groupid` "
@@ -164,12 +164,12 @@ class Auth implements intAuth {
                     . "AND `g`.`active`=1 "
                     . "AND `p`.`id`=".$_SESSION[AUTH_PASSWORD_ID]." "
                     . "AND `s`.`usi`='".$_SESSION[AUTH_UNIQUE_SESSION_ID]."' ;");
-            if (self::$dbLink->errno) {
-                self::setError(ERROR_NOT_EXECUTED, 'isSession: can\'t check user availability | '.self::$dbLink->error);
+            if ($this->dbLink->errno) {
+                $this->setError(ERROR_NOT_EXECUTED, 'isSession: unable to check user availability -> '.$this->dbLink->error);
                 return FALSE;
             }
-            if (!self::$dbLink->affected_rows) {
-                self::userLogout();
+            if (!$this->dbLink->affected_rows) {
+                $this->userLogout();
                 return FALSE;
             }
             return TRUE;
@@ -177,23 +177,23 @@ class Auth implements intAuth {
         return FALSE;
     }
     
-    public static function userLogout() {
-        self::zeroizeError();
+    public function userLogout() {
+        $this->zeroizeError();
         if (isset($_SESSION[AUTH_USER_ID])) {
-            $qResult = self::$dbLink->query("SELECT `id` "
+            $qResult = $this->dbLink->query("SELECT `id` "
                     . "FROM `".MECCANO_TPREF."_core_auth_usi` "
                     . "WHERE `usi`='".$_SESSION[AUTH_UNIQUE_SESSION_ID]."' ;");
-            if (self::$dbLink->errno) {
-                self::setError(ERROR_NOT_EXECUTED, 'userLogout: can\'t check unique session identifier | '.self::$dbLink->error);
+            if ($this->dbLink->errno) {
+                $this->setError(ERROR_NOT_EXECUTED, 'userLogout: unable to check unique session identifier -> '.$this->dbLink->error);
                 return FALSE;
             }
-            if (self::$dbLink->affected_rows) {
+            if ($this->dbLink->affected_rows) {
                 $usi = makeIdent($_SESSION[AUTH_USERNAME]);
-                self::$dbLink->query("UPDATE `".MECCANO_TPREF."_core_auth_usi` "
+                $this->dbLink->query("UPDATE `".MECCANO_TPREF."_core_auth_usi` "
                         . "SET `usi`='$usi' "
                         . "WHERE `id`=".$_SESSION[AUTH_PASSWORD_ID]." ;");
-                if (self::$dbLink->errno) {
-                    self::setError(ERROR_NOT_EXECUTED, 'userLogout: can\'t reset unique session identifier | '.self::$dbLink->error);
+                if ($this->dbLink->errno) {
+                    $this->setError(ERROR_NOT_EXECUTED, 'userLogout: unable to reset unique session identifier -> '.$this->dbLink->error);
                     return FALSE;
                 }
             }
@@ -208,10 +208,10 @@ class Auth implements intAuth {
         return FALSE;
     }
     
-    public static function getSession($log = FALSE) {
-        self::zeroizeError();
+    public function getSession($log = FALSE) {
+        $this->zeroizeError();
         if (!isset($_SESSION[AUTH_USER_ID]) && isset($_COOKIE[AUTH_UNIQUE_SESSION_ID]) && pregIdent($_COOKIE[AUTH_UNIQUE_SESSION_ID])) {
-            $qResult = self::$dbLink->query("SELECT `p`.`id`, `p`.`limited`, `u`.`id`, `u`.`username`, `l`.`code` "
+            $qResult = $this->dbLink->query("SELECT `p`.`id`, `p`.`limited`, `u`.`id`, `u`.`username`, `l`.`code` "
                     . "FROM `".MECCANO_TPREF."_core_auth_usi` `s` "
                     . "JOIN `".MECCANO_TPREF."_core_userman_userpass` `p` "
                     . "ON `p`.`id`=`s`.`id` "
@@ -225,16 +225,16 @@ class Auth implements intAuth {
                     . "AND `s`.`endtime`>NOW() "
                     . "AND `u`.`active`=1 "
                     . "AND `g`.`active`=1 ;");
-            if (self::$dbLink->errno) {
-                self::setError(ERROR_NOT_EXECUTED, 'getSession: can\'t get user data | '.self::$dbLink->error);
+            if ($this->dbLink->errno) {
+                $this->setError(ERROR_NOT_EXECUTED, 'getSession: unable to get user data -> '.$this->dbLink->error);
                 return FALSE;
             }
-            if (!self::$dbLink->affected_rows) {
+            if (!$this->dbLink->affected_rows) {
                 return FALSE;
             }
             list($passId, $limited, $userId, $username, $lang) = $qResult->fetch_array(MYSQLI_NUM);
             if ($log) {
-                self::$logObject->newRecord('core', 'authLogin', $username);
+                $this->logObject->newRecord('core', 'authLogin', $username);
             }
             $_SESSION[AUTH_USERNAME] = $username;
             $_SESSION[AUTH_USER_ID] = (int) $userId;
