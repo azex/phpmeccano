@@ -7,65 +7,65 @@ require_once 'unifunctions.php';
 
 interface intPolicy {
     function __construct(\mysqli $dbLink);
-    public static function setDbLink(\mysqli $dbLink);
-    public static function errId();
-    public static function errExp();
-    public static function delPolicy($plugin);
-    public static function addGroup($id);
-    public static function delGroup($id);
-    public static function funcAccess($plugin, $func, $groupId, $access = TRUE);
-    public static function checkAccess($plugin, $func);
-    public static function install(\DOMDocument $policy, $validate = TRUE);
-    public static function groupPolicyList($plugin, $groupId, $code = MECCANO_DEF_LANG);
-    public static function getPolicyDescById($id);
+    public function setDbLink(\mysqli $dbLink);
+    public function errId();
+    public function errExp();
+    public function delPolicy($plugin);
+    public function addGroup($id);
+    public function delGroup($id);
+    public function funcAccess($plugin, $func, $groupId, $access = TRUE);
+    public function checkAccess($plugin, $func);
+    public function install(\DOMDocument $policy, $validate = TRUE);
+    public function groupPolicyList($plugin, $groupId, $code = MECCANO_DEF_LANG);
+    public function getPolicyDescById($id);
 }
 
 class Policy implements intPolicy {
-    private static $errid = 0; // error's id
-    private static $errexp = ''; // error's explanation
-    private static $dbLink; // database link
+    private $errid = 0; // error's id
+    private $errexp = ''; // error's explanation
+    private $dbLink; // database link
     
     public function __construct(\mysqli $dbLink) {
-        self::$dbLink = $dbLink;
+        $this->dbLink = $dbLink;
     }
     
-    public static function setDbLink(\mysqli $dbLink) {
-        self::$dbLink = $dbLink;
+    public function setDbLink(\mysqli $dbLink) {
+        $this->dbLink = $dbLink;
     }
     
-    private static function setError($id, $exp) {
-        self::$errid = $id;
-        self::$errexp = $exp;
+    private function setError($id, $exp) {
+        $this->errid = $id;
+        $this->errexp = $exp;
     }
     
-    private static function zeroizeError() {
-        self::$errid = 0;        self::$errexp = '';
+    private function zeroizeError() {
+        $this->errid = 0;        $this->errexp = '';
     }
 
-    public static function errId() {
-        return self::$errid;
+    public function errId() {
+        return $this->errid;
     }
     
-    public static function errExp() {
-        return self::$errexp;
+    public function errExp() {
+        return $this->errexp;
     }
     
-    public static function delPolicy($plugin) {
-        self::zeroizeError();
+    public function delPolicy($plugin) {
+        $this->zeroizeError();
         if (!pregPlugin($plugin)) {
-            self::setError(ERROR_INCORRECT_DATA, 'delPolicy: incorrect plugin name');
+            $this->setError(ERROR_INCORRECT_DATA, 'delPolicy: incorrect plugin name');
             return FALSE;
         }
         // checking if plugin exists
-        $qPlugin = self::$dbLink->query("SELECT `id` "
+        $qPlugin = $this->dbLink->query("SELECT `id` "
                 . "FROM `".MECCANO_TPREF."_core_plugins_installed` "
                 . "WHERE `name`='$plugin' ;");
-        if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, 'delPolicy: '.self::$dbLink->error);
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'delPolicy: '.$this->dbLink->error);
             return FALSE;
         }
-        if (!self::$dbLink->affected_rows) {
-            self::setError(ERROR_NOT_FOUND, 'delPolicy: unable to find plugin');
+        if (!$this->dbLink->affected_rows) {
+            $this->setError(ERROR_NOT_FOUND, 'delPolicy: unable to find plugin');
             return FALSE;
         }
         $queries = array(
@@ -84,67 +84,67 @@ class Policy implements intPolicy {
             "DELETE FROM `".MECCANO_TPREF."_core_policy_summary_list` "
             . "WHERE `name`='$plugin' ;");
         foreach ($queries as $value) {
-            self::$dbLink->query($value);
-            if (self::$dbLink->errno) {
-                self::setError(ERROR_NOT_EXECUTED, 'delPolicy: something went wrong | '.self::$dbLink->error);
+            $this->dbLink->query($value);
+            if ($this->dbLink->errno) {
+                $this->setError(ERROR_NOT_EXECUTED, 'delPolicy: something went wrong -> '.$this->dbLink->error);
                 return FALSE;
             }
         }
         return TRUE;
     }
     
-    public static function addGroup($id) {
-        self::zeroizeError();
+    public function addGroup($id) {
+        $this->zeroizeError();
         if (!is_integer($id)) {
-            self::setError(ERROR_INCORRECT_DATA, 'addGroup: id must be integer');
+            $this->setError(ERROR_INCORRECT_DATA, 'addGroup: id must be integer');
             return FALSE;
         }
-        $qIsGroup = self::$dbLink->query("SELECT `g`.`id` FROM `".MECCANO_TPREF."_core_userman_groups` `g` "
+        $qIsGroup = $this->dbLink->query("SELECT `g`.`id` FROM `".MECCANO_TPREF."_core_userman_groups` `g` "
                 . "WHERE `g`.`id`=$id "
                 . "AND NOT EXISTS ("
                 . "SELECT `a`.`id` "
                 . "FROM `".MECCANO_TPREF."_core_policy_access` `a` "
                 . "WHERE `a`.`groupid`=$id LIMIT 1) ;");
-        if (!self::$dbLink->affected_rows) {
-            self::setError(ERROR_ALREADY_EXISTS, 'addGroup: defined group is not found or already was added');
+        if (!$this->dbLink->affected_rows) {
+            $this->setError(ERROR_ALREADY_EXISTS, 'addGroup: defined group is not found or already was added');
             return FALSE;
         }
-        $qDbFuncs = self::$dbLink->query("SELECT `id` "
+        $qDbFuncs = $this->dbLink->query("SELECT `id` "
             . "FROM `".MECCANO_TPREF."_core_policy_summary_list` ;");
         while (list($row) = $qDbFuncs->fetch_row()) {
-            self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_policy_access` (`groupid`, `funcid`) "
+            $this->dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_policy_access` (`groupid`, `funcid`) "
                     . "VALUES ($id, $row) ;");
-            if (self::$dbLink->errno) {
-                self::setError(ERROR_NOT_EXECUTED, 'addPolicy: can\'t add policy | '.self::$dbLink->error);
+            if ($this->dbLink->errno) {
+                $this->setError(ERROR_NOT_EXECUTED, 'addPolicy: unable to add policy -> '.$this->dbLink->error);
                 return FALSE;
             }
         }
         return TRUE;
     }
     
-    public static function delGroup($id) {
-        self::zeroizeError();
+    public function delGroup($id) {
+        $this->zeroizeError();
         if (!is_integer($id)) {
-            self::setError(ERROR_INCORRECT_DATA, 'delGroup: id must be integer');
+            $this->setError(ERROR_INCORRECT_DATA, 'delGroup: id must be integer');
             return FALSE;
         }
-        self::$dbLink->query("DELETE FROM `".MECCANO_TPREF."_core_policy_access` "
+        $this->dbLink->query("DELETE FROM `".MECCANO_TPREF."_core_policy_access` "
                 . "WHERE `groupid`=$id ;");
-        if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, 'addPolicy: can\'t delete policy | '.self::$dbLink->error);
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'addPolicy: unable to delete policy -> '.$this->dbLink->error);
             return FALSE;
         }
-        if (!self::$dbLink->affected_rows) {
-            self::setError(ERROR_NOT_FOUND, 'delGroup: defined group is not found');
+        if (!$this->dbLink->affected_rows) {
+            $this->setError(ERROR_NOT_FOUND, 'delGroup: defined group is not found');
             return FALSE;
         }
         return TRUE;
     }
     
-    public static function funcAccess($plugin, $func, $groupId, $access = TRUE) {
-        self::zeroizeError();
+    public function funcAccess($plugin, $func, $groupId, $access = TRUE) {
+        $this->zeroizeError();
         if (!is_integer($groupId) || !pregPlugin($plugin) || !pregPlugin($func)) {
-            self::setError(ERROR_NOT_EXECUTED, 'funcAccess: incorect type of incoming parameters');
+            $this->setError(ERROR_NOT_EXECUTED, 'funcAccess: incorect type of incoming parameters');
             return FALSE;
         }
         if (!$groupId) {
@@ -154,7 +154,7 @@ class Policy implements intPolicy {
             else {
                 $access = 0;
             }
-            self::$dbLink->query("UPDATE `".MECCANO_TPREF."_core_policy_nosession` `n` "
+            $this->dbLink->query("UPDATE `".MECCANO_TPREF."_core_policy_nosession` `n` "
                     . "JOIN `".MECCANO_TPREF."_core_policy_summary_list` `s` "
                     . "ON `n`.`funcid`=`s`.`id` "
                     . "SET `n`.`access`=$access "
@@ -162,7 +162,7 @@ class Policy implements intPolicy {
                     . "AND  `s`.`name`='$plugin' ;");
         }
         elseif ($access) {
-            self::$dbLink->query("UPDATE `".MECCANO_TPREF."_core_policy_access` `a` "
+            $this->dbLink->query("UPDATE `".MECCANO_TPREF."_core_policy_access` `a` "
                     . "JOIN `".MECCANO_TPREF."_core_policy_summary_list` `s` "
                     . "ON `a`.`funcid`=`s`.`id` "
                     . "SET `a`.`access`=1 "
@@ -171,7 +171,7 @@ class Policy implements intPolicy {
                     . "AND `a`.`groupid`=$groupId ;");
         }
         elseif (!$access && $groupId!=1) {
-            self::$dbLink->query("UPDATE `".MECCANO_TPREF."_core_policy_access` `a` "
+            $this->dbLink->query("UPDATE `".MECCANO_TPREF."_core_policy_access` `a` "
                     . "JOIN `".MECCANO_TPREF."_core_policy_summary_list` `s` "
                     . "ON `a`.`funcid`=`s`.`id` "
                     . "SET `a`.`access`=0 "
@@ -180,28 +180,28 @@ class Policy implements intPolicy {
                     . "AND `a`.`groupid`=$groupId ;");
         }
         else {
-            self::setError(ERROR_SYSTEM_INTERVENTION, 'funcAccess: impossible to disable access for system group');
+            $this->setError(ERROR_SYSTEM_INTERVENTION, 'funcAccess: impossible to disable access for system group');
             return FALSE;
         }
-        if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, 'funcAccess: unable to change access | '.self::$dbLink->error);
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'funcAccess: unable to change access -> '.$this->dbLink->error);
             return FALSE;
         }
-        if (!self::$dbLink->affected_rows) {
-            self::setError(ERROR_NOT_FOUND, 'funcAccess: plugin name, function or group does not exist or access flag was not changed');
+        if (!$this->dbLink->affected_rows) {
+            $this->setError(ERROR_NOT_FOUND, 'funcAccess: plugin name, function or group does not exist or access flag was not changed');
             return FALSE;
         }
         return TRUE;
     }
     
-    public static function checkAccess($plugin, $func) {
-        self::zeroizeError();
+    public function checkAccess($plugin, $func) {
+        $this->zeroizeError();
         if (!pregPlugin($plugin) || !pregPlugin($func)) {
-            self::setError(ERROR_INCORRECT_DATA, 'checkAccess: check incoming parameters');
+            $this->setError(ERROR_INCORRECT_DATA, 'checkAccess: check incoming parameters');
             return FALSE;
         }
         if (isset($_SESSION[AUTH_USER_ID])) {
-            $qAccess = self::$dbLink->query("SELECT `a`.`access` "
+            $qAccess = $this->dbLink->query("SELECT `a`.`access` "
                     . "FROM `".MECCANO_TPREF."_core_policy_access` `a` "
                     . "JOIN `".MECCANO_TPREF."_core_policy_summary_list` `s` "
                     . "ON `a`.`funcid`=`s`.`id` "
@@ -215,7 +215,7 @@ class Policy implements intPolicy {
                     . "LIMIT 1 ;");
         }
         else {
-            $qAccess = self::$dbLink->query("SELECT `n`.`access` "
+            $qAccess = $this->dbLink->query("SELECT `n`.`access` "
                     . "FROM `".MECCANO_TPREF."_core_policy_nosession` `n` "
                     . "JOIN `".MECCANO_TPREF."_core_policy_summary_list` `s` "
                     . "ON `n`.`funcid`=`s`.`id` "
@@ -223,42 +223,42 @@ class Policy implements intPolicy {
                     . "AND `s`.`func`='$func' "
                     . "LIMIT 1 ;");
         }
-        if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, 'checkAccess: something went wrong | '.self::$dbLink->error);
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'checkAccess: something went wrong -> '.$this->dbLink->error);
             return FALSE;
         }
-        if (!self::$dbLink->affected_rows) {
-            self::setError(ERROR_NOT_FOUND, 'checkAccess: policy is not found');
+        if (!$this->dbLink->affected_rows) {
+            $this->setError(ERROR_NOT_FOUND, 'checkAccess: policy is not found');
             return FALSE;
         }
         list($access) = $qAccess->fetch_row();
         return (int) $access;
     }
     
-    public static function install(\DOMDocument $policy, $validate = TRUE) {
-        self::zeroizeError();
+    public function install(\DOMDocument $policy, $validate = TRUE) {
+        $this->zeroizeError();
         if ($validate && !@$policy->relaxNGValidate(MECCANO_CORE_DIR.'/validation-schemas/policy-v01.rng')) {
-            self::setError(ERROR_INCORRECT_DATA, 'install: incorrect structure of incoming data');
+            $this->setError(ERROR_INCORRECT_DATA, 'install: incorrect structure of incoming data');
             return FALSE;
         }
         $pluginName = $policy->getElementsByTagName('policy')->item(0)->getAttribute('plugin');
         // check whether plugin is installed
-        $qPlugin = self::$dbLink->query("SELECT `id` "
+        $qPlugin = $this->dbLink->query("SELECT `id` "
                 . "FROM `".MECCANO_TPREF."_core_plugins_installed` "
                 . "WHERE `name`='$pluginName' ;");
-        if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, "install: unable to check whether the plugin [$pluginName] is installed | ".self::$dbLink->errno);
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, "install: unable to check whether the plugin [$pluginName] is installed -> ".$this->dbLink->errno);
             return FALSE;
         }
-        if (!self::$dbLink->affected_rows) {
-            self::setError(ERROR_NOT_FOUND, "install: plugin [$pluginName] is not installed");
+        if (!$this->dbLink->affected_rows) {
+            $this->setError(ERROR_NOT_FOUND, "install: plugin [$pluginName] is not installed");
             return FALSE;
         }
         // get list of available languages
-        $qAvaiLang = self::$dbLink->query("SELECT `code`, `id` "
+        $qAvaiLang = $this->dbLink->query("SELECT `code`, `id` "
                 . "FROM `".MECCANO_TPREF."_core_langman_languages` ;");
-        if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, 'install: unable to get list of available languages: '.self::$dbLink->error);
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'install: unable to get list of available languages: '.$this->dbLink->error);
             return FALSE;
         }
         // avaiable languages
@@ -287,11 +287,11 @@ class Policy implements intPolicy {
             }
         }
         // get installed policies of the plugin
-        $qPolicy = self::$dbLink->query("SELECT `func`, `id` "
+        $qPolicy = $this->dbLink->query("SELECT `func`, `id` "
                 . "FROM `".MECCANO_TPREF."_core_policy_summary_list` "
                 . "WHERE `name`='$pluginName' ;");
-        if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, 'installEvents: unable to get installed events | '.self::$dbLink->error);
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'installEvents: unable to get installed events -> '.$this->dbLink->error);
             return FALSE;
         }
         $installedPolicy = array();
@@ -313,18 +313,18 @@ class Policy implements intPolicy {
                 . "WHERE `id`=$funcId ;"
             );
             foreach ($sql as $dQuery) {
-                self::$dbLink->query($dQuery);
-                if (self::$dbLink->errno) {
-                    self::setError(ERROR_NOT_EXECUTED, "install: unable to delete outdated policy | ".self::$dbLink->error);
+                $this->dbLink->query($dQuery);
+                if ($this->dbLink->errno) {
+                    $this->setError(ERROR_NOT_EXECUTED, "install: unable to delete outdated policy -> ".$this->dbLink->error);
                     return FALSE;
                 }
             }
         }
         // getting of group identifiers
-        $qGroupIds = self::$dbLink->query("SELECT `id` "
+        $qGroupIds = $this->dbLink->query("SELECT `id` "
                 . "FROM `".MECCANO_TPREF."_core_userman_groups` ;");
-        if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, 'install: unable to get group identifiers | '.self::$dbLink->error);
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'install: unable to get group identifiers -> '.$this->dbLink->error);
             return FALSE;
         }
         $groupIds = array();
@@ -345,15 +345,15 @@ class Policy implements intPolicy {
                 $funcId = $installedPolicy[$funcName];
                 foreach ($descriptions as $inCode => $desc) {
                     $codeId = $avLangIds[$inCode];
-                    $updateShort = self::$dbLink->real_escape_string($desc['short']);
-                    $updateDetailed = self::$dbLink->real_escape_string($desc['detailed']);
+                    $updateShort = $this->dbLink->real_escape_string($desc['short']);
+                    $updateDetailed = $this->dbLink->real_escape_string($desc['detailed']);
                     // update policy description
-                    self::$dbLink->query("UPDATE `".MECCANO_TPREF."_core_policy_descriptions` "
+                    $this->dbLink->query("UPDATE `".MECCANO_TPREF."_core_policy_descriptions` "
                             . "SET `short`='$updateShort', `detailed`='$updateDetailed' "
                             . "WHERE `policyid`=$funcId "
                             . "AND `codeid`=$codeId ;");
-                    if (self::$dbLink->errno) {
-                        self::setError(ERROR_NOT_EXECUTED, 'install: unable to update policy description | '.self::$dbLink->error);
+                    if ($this->dbLink->errno) {
+                        $this->setError(ERROR_NOT_EXECUTED, 'install: unable to update policy description -> '.$this->dbLink->error);
                         return FALSE;
                     }
                 }
@@ -361,20 +361,20 @@ class Policy implements intPolicy {
             // install policy
             else {
                 // create record in the summary list
-                self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_policy_summary_list` (`name`, `func`) "
+                $this->dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_policy_summary_list` (`name`, `func`) "
                         . "VALUES ('$pluginName', '$funcName') ;");
-                if (self::$dbLink->errno) {
-                    self::setError(ERROR_NOT_EXECUTED, 'install: unable to add policy into the summary list | '.self::$dbLink->error);
+                if ($this->dbLink->errno) {
+                    $this->setError(ERROR_NOT_EXECUTED, 'install: unable to add policy into the summary list -> '.$this->dbLink->error);
                     return FALSE;
                 }
-                $insertId = self::$dbLink->insert_id;
+                $insertId = $this->dbLink->insert_id;
                 // get default rules
                 list($nonAuthRule, $authRule) = $defaultRules[$funcName];
                 // policy for the inactive session (non-authorized user)
-                self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_policy_nosession` (`funcid`, `access`) "
+                $this->dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_policy_nosession` (`funcid`, `access`) "
                         . "VALUES ($insertId, $nonAuthRule) ;");
-                if (self::$dbLink->errno) {
-                    self::setError(ERROR_NOT_EXECUTED, 'install: unable to create policy for the inactive session | '.self::$dbLink->error);
+                if ($this->dbLink->errno) {
+                    $this->setError(ERROR_NOT_EXECUTED, 'install: unable to create policy for the inactive session -> '.$this->dbLink->error);
                     return FALSE;
                 }
                 // policy for the groups
@@ -385,23 +385,23 @@ class Policy implements intPolicy {
                     else {
                         $access = $authRule;
                     }
-                    self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_policy_access` (`groupid`, `funcid`, `access`) "
+                    $this->dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_policy_access` (`groupid`, `funcid`, `access`) "
                             . "VALUES ($groupId, $insertId, $access) ;");
-                    if (self::$dbLink->errno) {
-                        self::setError(ERROR_NOT_EXECUTED, 'install: unable to install group policy | '.self::$dbLink->error);
+                    if ($this->dbLink->errno) {
+                        $this->setError(ERROR_NOT_EXECUTED, 'install: unable to install group policy -> '.$this->dbLink->error);
                         return FALSE;
                     }
                 }
                 // create policy description
                 foreach ($descriptions as $inCode => $desc) {
                     $codeId = $avLangIds[$inCode];
-                    $insertShort = self::$dbLink->real_escape_string($desc['short']);
-                    $insertDetailed = self::$dbLink->real_escape_string($desc['detailed']);
-                    self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_policy_descriptions` "
+                    $insertShort = $this->dbLink->real_escape_string($desc['short']);
+                    $insertDetailed = $this->dbLink->real_escape_string($desc['detailed']);
+                    $this->dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_policy_descriptions` "
                             . "(`codeid`, `policyid`, `short`, `detailed`) "
                             . "VALUES ($codeId, $insertId, '$insertShort', '$insertDetailed') ;");
-                    if (self::$dbLink->errno) {
-                        self::setError(ERROR_NOT_EXECUTED, 'install: unable to install policy description | '.self::$dbLink->error);
+                    if ($this->dbLink->errno) {
+                        $this->setError(ERROR_NOT_EXECUTED, 'install: unable to install policy description -> '.$this->dbLink->error);
                         return FALSE;
                     }
                 }
@@ -411,14 +411,14 @@ class Policy implements intPolicy {
         return TRUE;
     }
     
-    public static function groupPolicyList($plugin, $groupId, $code = MECCANO_DEF_LANG) {
-        self::zeroizeError();
+    public function groupPolicyList($plugin, $groupId, $code = MECCANO_DEF_LANG) {
+        $this->zeroizeError();
         if (!pregPlugin($plugin) || !(is_integer($groupId) || is_bool($groupId)) || !pregLang($code)) {
-            self::setError(ERROR_INCORRECT_DATA, 'groupPolicyList: incorect incoming parameters');
+            $this->setError(ERROR_INCORRECT_DATA, 'groupPolicyList: incorect incoming parameters');
             return FALSE;
         }
         if (!$groupId) {
-            $qList = self::$dbLink->query("SELECT `d`.`id`, `d`.`short`, `s`.`func`, `n`.`access` "
+            $qList = $this->dbLink->query("SELECT `d`.`id`, `d`.`short`, `s`.`func`, `n`.`access` "
                     . "FROM `".MECCANO_TPREF."_core_policy_summary_list` `s` "
                     . "JOIN `".MECCANO_TPREF."_core_policy_nosession` `n` "
                     . "ON `s`.`id`=`n`.`funcid` "
@@ -430,7 +430,7 @@ class Policy implements intPolicy {
                     . "AND `l`.`code`='$code' ;");
         }
         else {
-            $qList = self::$dbLink->query("SELECT `d`.`id`, `d`.`short`, `s`.`func`, `a`.`access` "
+            $qList = $this->dbLink->query("SELECT `d`.`id`, `d`.`short`, `s`.`func`, `a`.`access` "
                     . "FROM `".MECCANO_TPREF."_core_policy_summary_list` `s` "
                     . "JOIN `".MECCANO_TPREF."_core_policy_access` `a` "
                     . "ON `s`.`id`=`a`.`funcid` "
@@ -442,12 +442,12 @@ class Policy implements intPolicy {
                     . "AND `a`.`groupid`=$groupId "
                     . "AND `l`.`code`='$code' ;");
         }
-        if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, 'groupPolicyList: something went wrong | '.self::$dbLink->error);
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'groupPolicyList: something went wrong -> '.$this->dbLink->error);
             return FALSE;
         }
-        if (!self::$dbLink->affected_rows) {
-            self::setError(ERROR_NOT_FOUND, 'groupPolicyList: not found');
+        if (!$this->dbLink->affected_rows) {
+            $this->setError(ERROR_NOT_FOUND, 'groupPolicyList: not found');
             return FALSE;
         }
         $xml = new \DOMDocument('1.0', 'utf-8');
@@ -464,21 +464,21 @@ class Policy implements intPolicy {
         return $xml;
     }
     
-    public static function getPolicyDescById($id) {
-        self::zeroizeError();
+    public function getPolicyDescById($id) {
+        $this->zeroizeError();
         if (!is_integer($id)) {
-            self::setError(ERROR_INCORRECT_DATA, 'getPolicyDescById: identifier must be integer');
+            $this->setError(ERROR_INCORRECT_DATA, 'getPolicyDescById: identifier must be integer');
             return FALSE;
         }
-        $qDesc = self::$dbLink->query("SELECT `short`, `detailed` "
+        $qDesc = $this->dbLink->query("SELECT `short`, `detailed` "
                 . "FROM `".MECCANO_TPREF."_core_policy_descriptions` "
                 . "WHERE `id`=$id ;");
-        if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, 'getPolicyDescById: can\'t get description | '.self::$dbLink->error);
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'getPolicyDescById: unable to get description -> '.$this->dbLink->error);
             return FALSE;
         }
-        if (!self::$dbLink->affected_rows) {
-            self::setError(ERROR_NOT_FOUND, 'getPolicyDescById: description was not found');
+        if (!$this->dbLink->affected_rows) {
+            $this->setError(ERROR_NOT_FOUND, 'getPolicyDescById: description was not found');
             return FALSE;
         }
         list($short, $detailed) = $qDesc->fetch_row();
