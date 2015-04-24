@@ -6,77 +6,77 @@ require_once 'swconst.php';
 
 interface intLogMan {
     function __construct(\mysqli $dbLink);
-    public static function setDbLink(\mysqli $dbLink);
-    public static function errId();
-    public static function errExp();
-    public static function installEvents(\DOMDocument $events, $validate = TRUE);
-    public static function delEvents($plugin);
-    public static function newRecord($plugin, $event, $insertion = '');
-    public static function clearLog();
-    public static function sumLogAllPlugins($rpp = 20);
-    public static function getPageAllPlugins($pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE);
-    public static function sumLogByPlugin($plugin, $rpp = 20);
-    public static function getPageByPlugin($plugin, $pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE);
-    public static function getLogAllPlugins($code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE);
-    public static function getLogByPlugin($plugin, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE);
+    public function setDbLink(\mysqli $dbLink);
+    public function errId();
+    public function errExp();
+    public function installEvents(\DOMDocument $events, $validate = TRUE);
+    public function delEvents($plugin);
+    public function newRecord($plugin, $event, $insertion = '');
+    public function clearLog();
+    public function sumLogAllPlugins($rpp = 20);
+    public function getPageAllPlugins($pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE);
+    public function sumLogByPlugin($plugin, $rpp = 20);
+    public function getPageByPlugin($plugin, $pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE);
+    public function getLogAllPlugins($code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE);
+    public function getLogByPlugin($plugin, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE);
 }
 
 class LogMan implements intLogMan {
-    private static $errid = 0; // error's id
-    private static $errexp = ''; // error's explanation
-    private static $dbLink; // database link
+    private $errid = 0; // error's id
+    private $errexp = ''; // error's explanation
+    private $dbLink; // database link
     
     public function __construct(\mysqli $dbLink) {
-        self::$dbLink = $dbLink;
+        $this->dbLink = $dbLink;
     }
     
-    public static function setDbLink(\mysqli $dbLink) {
-        self::$dbLink = $dbLink;
+    public function setDbLink(\mysqli $dbLink) {
+        $this->dbLink = $dbLink;
     }
     
-    private static function setError($id, $exp) {
-        self::$errid = $id;
-        self::$errexp = $exp;
+    private function setError($id, $exp) {
+        $this->errid = $id;
+        $this->errexp = $exp;
     }
     
-    private static function zeroizeError() {
-        self::$errid = 0;        self::$errexp = '';
+    private function zeroizeError() {
+        $this->errid = 0;        $this->errexp = '';
     }
     
-    public static function errId() {
-        return self::$errid;
+    public function errId() {
+        return $this->errid;
     }
     
-    public static function errExp() {
-        return self::$errexp;
+    public function errExp() {
+        return $this->errexp;
     }
     
-    public static function installEvents(\DOMDocument $events, $validate = TRUE) {
-        self::zeroizeError();
+    public function installEvents(\DOMDocument $events, $validate = TRUE) {
+        $this->zeroizeError();
         if ($validate && !@$events->relaxNGValidate(MECCANO_CORE_DIR.'/validation-schemas/logman-events-v01.rng')) {
-            self::setError(ERROR_INCORRECT_DATA, 'installEvents: incorrect structure of the events');
+            $this->setError(ERROR_INCORRECT_DATA, 'installEvents: incorrect structure of the events');
             return FALSE;
         }
         $pluginName = $events->getElementsByTagName('log')->item(0)->getAttribute("plugin");
         // check whether plugin is installed
-        $qPlugin = self::$dbLink->query("SELECT `id` "
+        $qPlugin = $this->dbLink->query("SELECT `id` "
                 . "FROM `".MECCANO_TPREF."_core_plugins_installed` "
                 . "WHERE `name`='$pluginName' ;");
-        if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, "installEvents: cannot check whether the plugin is installed | ".self::$dbLink->errno);
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, "installEvents: cannot check whether the plugin is installed -> ".$this->dbLink->errno);
             return FALSE;
         }
-        if (!self::$dbLink->affected_rows) {
-            self::setError(ERROR_NOT_FOUND, "installEvents: required plugin [$pluginName] is not installed");
+        if (!$this->dbLink->affected_rows) {
+            $this->setError(ERROR_NOT_FOUND, "installEvents: required plugin [$pluginName] is not installed");
             return FALSE;
         }
         // plugin identifier
         list($pluginId) = $qPlugin->fetch_row();
         // get list of available languages
-        $qAvaiLang = self::$dbLink->query("SELECT `code`, `id` "
+        $qAvaiLang = $this->dbLink->query("SELECT `code`, `id` "
                 . "FROM `".MECCANO_TPREF."_core_langman_languages` ;");
-        if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, 'installEvents: cannot get list of available languages: '.self::$dbLink->error);
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'installEvents: cannot get list of available languages: '.$this->dbLink->error);
             return FALSE;
         }
         // avaiable languages
@@ -101,11 +101,11 @@ class LogMan implements intLogMan {
             }
         }
         // get installed events of the plugin
-        $qEvents = self::$dbLink->query("SELECT `keyword`, `id` "
+        $qEvents = $this->dbLink->query("SELECT `keyword`, `id` "
                 . "FROM `".MECCANO_TPREF."_core_logman_events` "
                 . "WHERE `plugid`=$pluginId");
-        if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, 'installEvents: unable to get installed events | '.self::$dbLink->error);
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'installEvents: unable to get installed events -> '.$this->dbLink->error);
             return FALSE;
         }
         $installedEvents = array();
@@ -129,9 +129,9 @@ class LogMan implements intLogMan {
                 . "WHERE `id`=$eventId ;",
             );
             foreach ($sql as $dQuery) {
-                self::$dbLink->query($dQuery);
-                if (self::$dbLink->errno) {
-                    self::setError(ERROR_NOT_EXECUTED, "installEvents: unable to delete outdated event | ".self::$dbLink->error);
+                $this->dbLink->query($dQuery);
+                if ($this->dbLink->errno) {
+                    $this->setError(ERROR_NOT_EXECUTED, "installEvents: unable to delete outdated event -> ".$this->dbLink->error);
                     return FALSE;
                 }
             }
@@ -149,36 +149,36 @@ class LogMan implements intLogMan {
                 $eventId = $installedEvents[$keyword];
                 foreach ($descriptions as $inCode => $desc) {
                     $codeId = $avLangIds[$inCode];
-                    $updateDesc = self::$dbLink->real_escape_string($desc);
+                    $updateDesc = $this->dbLink->real_escape_string($desc);
                     $eventId = $installedEvents[$keyword];
-                    self::$dbLink->query("UPDATE `".MECCANO_TPREF."_core_logman_descriptions` "
+                    $this->dbLink->query("UPDATE `".MECCANO_TPREF."_core_logman_descriptions` "
                             . "SET `description`='$updateDesc' "
                             . "WHERE `eventid`=$eventId "
                             . "AND `codeid`=$codeId ;");
-                    if (self::$dbLink->errno) {
-                        self::setError(ERROR_NOT_EXECUTED, 'installEvents: unable to update event description | '.self::$dbLink->error);
+                    if ($this->dbLink->errno) {
+                        $this->setError(ERROR_NOT_EXECUTED, 'installEvents: unable to update event description -> '.$this->dbLink->error);
                         return FALSE;
                     }
                 }
             }
             // install event
             else {
-                self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_logman_events` "
+                $this->dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_logman_events` "
                         . "(`keyword`, `plugid`) "
                         . "VALUES ('$keyword', $pluginId) ;");
-                if (self::$dbLink->errno) {
-                    self::setError(ERROR_NOT_EXECUTED, 'installEvents: unable add new event | '.self::$dbLink->error);
+                if ($this->dbLink->errno) {
+                    $this->setError(ERROR_NOT_EXECUTED, 'installEvents: unable add new event -> '.$this->dbLink->error);
                     return FALSE;
                 }
-                $eventId = self::$dbLink->insert_id;
+                $eventId = $this->dbLink->insert_id;
                 foreach ($descriptions as $inCode => $desc) {
                     $codeId = $avLangIds[$inCode];
-                    $newDesc = self::$dbLink->real_escape_string($desc);
-                    self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_logman_descriptions` "
+                    $newDesc = $this->dbLink->real_escape_string($desc);
+                    $this->dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_logman_descriptions` "
                             . "(`description`, `eventid`, `codeid`) "
                             . "VALUES ('$newDesc', $eventId, $codeId) ;");
-                    if (self::$dbLink->errno) {
-                        self::setError(ERROR_NOT_EXECUTED, 'installEvents: unable to add new event description | '.self::$dbLink->error);
+                    if ($this->dbLink->errno) {
+                        $this->setError(ERROR_NOT_EXECUTED, 'installEvents: unable to add new event description -> '.$this->dbLink->error);
                         return FALSE;
                     }
                 }
@@ -187,14 +187,14 @@ class LogMan implements intLogMan {
         return TRUE;
     }
     
-    public static function delEvents($plugin) {
-        self::zeroizeError();
+    public function delEvents($plugin) {
+        $this->zeroizeError();
         if (!pregPlugin($plugin)) {
-            self::setError(ERROR_INCORRECT_DATA, "delEvents: incorrect plugin name");
+            $this->setError(ERROR_INCORRECT_DATA, "delEvents: incorrect plugin name");
             return FALSE;
         }
         if ($plugin == "core") {
-            self::setError(ERROR_SYSTEM_INTERVENTION, "delEvents: unable to delete core events");
+            $this->setError(ERROR_SYSTEM_INTERVENTION, "delEvents: unable to delete core events");
             return FALSE;
         }
         $sql = array(
@@ -219,84 +219,84 @@ class LogMan implements intLogMan {
             . "WHERE `p`.`name`='$plugin' ;"
         );
         foreach ($sql as $value) {
-            self::$dbLink->query($value);
-            if (self::$dbLink->errno) {
-                self::setError(ERROR_NOT_EXECUTED, "delEvents: unable remove events | ".self::$dbLink->error);
+            $this->dbLink->query($value);
+            if ($this->dbLink->errno) {
+                $this->setError(ERROR_NOT_EXECUTED, "delEvents: unable remove events -> ".$this->dbLink->error);
                 return FALSE;
             }
         }
         return TRUE;
     }
 
-        public static function newRecord($plugin, $keyword, $insertion = '') {
-        self::zeroizeError();
+        public function newRecord($plugin, $keyword, $insertion = '') {
+        $this->zeroizeError();
         if (!pregPlugin($plugin) || !pregPlugin($keyword) || !is_string($insertion)) {
-            self::setError(ERROR_INCORRECT_DATA, 'newRecord: check arguments');
+            $this->setError(ERROR_INCORRECT_DATA, 'newRecord: check arguments');
             return FALSE;
         }
-        $keyword = self::$dbLink->real_escape_string($keyword);
-        $insertion = self::$dbLink->real_escape_string($insertion);
+        $keyword = $this->dbLink->real_escape_string($keyword);
+        $insertion = $this->dbLink->real_escape_string($insertion);
         // get event identifier
-        $qEvent = self::$dbLink->query("SELECT `e`.`id` "
+        $qEvent = $this->dbLink->query("SELECT `e`.`id` "
                 . "FROM `".MECCANO_TPREF."_core_logman_events` `e` "
                 . "JOIN `".MECCANO_TPREF."_core_plugins_installed` `p` "
                 . "ON `p`.`id`=`e`.`plugid` "
                 . "WHERE `e`.`keyword`='$keyword' "
                 . "AND `p`.`name`='$plugin' ;");
-        if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, 'newRecord: unable to get event identifier | '.self::$dbLink->error);
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'newRecord: unable to get event identifier -> '.$this->dbLink->error);
             return FALSE;
         }
-        if (!self::$dbLink->affected_rows) {
-            self::setError(ERROR_NOT_FOUND, 'newRecord: plugin or event not found');
+        if (!$this->dbLink->affected_rows) {
+            $this->setError(ERROR_NOT_FOUND, 'newRecord: plugin or event not found');
             return FALSE;
         }
         list($eventId) = $qEvent->fetch_row();
         // make new record
         if (isset($_SESSION[AUTH_LIMITED])) {
-            self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_logman_records` (`eventid`, `insertion`, `user`) "
+            $this->dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_logman_records` (`eventid`, `insertion`, `user`) "
                     . "VALUES ($eventId, '$insertion', '".$_SESSION[AUTH_USERNAME]."') ;");
         }
         else {
-            self::$dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_logman_records` (`eventid`, `insertion`) "
+            $this->dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_logman_records` (`eventid`, `insertion`) "
                     . "VALUES ($eventId, '$insertion') ;");
         }
-        if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, 'newRecord: unable to make new record | '.self::$dbLink->error);
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'newRecord: unable to make new record -> '.$this->dbLink->error);
             return FALSE;
         }
         return TRUE;
     }
 //    
-    public static function clearLog() {
-        self::zeroizeError();
+    public function clearLog() {
+        $this->zeroizeError();
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
-            self::setError(ERROR_RESTRICTED_ACCESS, 'clearLog: function execution was terminated because of using of limited authentication');
+            $this->setError(ERROR_RESTRICTED_ACCESS, 'clearLog: function execution was terminated because of using of limited authentication');
             return FALSE;
         }
-        self::$dbLink->query("TRUNCATE TABLE `".MECCANO_TPREF."_core_logman_records` ;");
-        if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, 'clearLog: unable to clear log | '.self::$dbLink->error);
+        $this->dbLink->query("TRUNCATE TABLE `".MECCANO_TPREF."_core_logman_records` ;");
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'clearLog: unable to clear log -> '.$this->dbLink->error);
             return FALSE;
         }
-        if (!self::newRecord('core', 'clearLog')) {
+        if (!$this->newRecord('core', 'clearLog')) {
             return FALSE;
         }
         return TRUE;
     }
     
-    public static function sumLogAllPlugins($rpp = 20) { // rpp - records per page
-        self::zeroizeError();
+    public function sumLogAllPlugins($rpp = 20) { // rpp - records per page
+        $this->zeroizeError();
         if (!is_integer($rpp)) {
-            self::setError(ERROR_INCORRECT_DATA, 'sumLog: rpp must be integer');
+            $this->setError(ERROR_INCORRECT_DATA, 'sumLog: rpp must be integer');
             return FALSE;
         }
         if ($rpp < 1) {
             $rpp = 1;
         }
-        $qResult = self::$dbLink->query("SELECT COUNT(`id`) FROM `".MECCANO_TPREF."_core_logman_records` ;");
-        if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, 'sumLog: unable to counted total records | '.self::$dbLink->error);
+        $qResult = $this->dbLink->query("SELECT COUNT(`id`) FROM `".MECCANO_TPREF."_core_logman_records` ;");
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'sumLog: unable to counted total records -> '.$this->dbLink->error);
             return FALSE;
         }
         list($totalRecs) = $qResult->fetch_row();
@@ -314,10 +314,10 @@ class LogMan implements intLogMan {
         return array('records' => (int) $totalRecs, 'pages' => (int) $totalPages);
     }
     
-    public static function getPageAllPlugins($pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE) {
-        self::zeroizeError();
+    public function getPageAllPlugins($pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE) {
+        $this->zeroizeError();
         if (!pregLang($code) || !is_integer($pageNumber) || !is_integer($totalPages) || !is_integer($rpp)) {
-            self::setError(ERROR_INCORRECT_DATA, 'getPage: check arguments');
+            $this->setError(ERROR_INCORRECT_DATA, 'getPage: check arguments');
             return FALSE;
         }
         $rightEntry = array('id', 'user', 'event', 'time');
@@ -335,7 +335,7 @@ class LogMan implements intLogMan {
             }
         }
         else {
-            self::setError(ERROR_INCORRECT_DATA, 'getPage: check order parameters');
+            $this->setError(ERROR_INCORRECT_DATA, 'getPage: check order parameters');
             return FALSE;
         }
         if ($pageNumber < 1) {
@@ -357,7 +357,7 @@ class LogMan implements intLogMan {
             $direct = 'DESC';
         }
         $start = ($pageNumber - 1) * $rpp;
-        $qResult = self::$dbLink->query("SELECT `r`.`id` `id`, `r`.`time` `time`, REPLACE(`d`.`description`, '%d', `r`.`insertion`) `event`, `r`.`user` `user` "
+        $qResult = $this->dbLink->query("SELECT `r`.`id` `id`, `r`.`time` `time`, REPLACE(`d`.`description`, '%d', `r`.`insertion`) `event`, `r`.`user` `user` "
                 . "FROM `".MECCANO_TPREF."_core_logman_records` `r` "
                 . "JOIN `".MECCANO_TPREF."_core_logman_descriptions` `d` "
                 . "ON `r`.`eventid` = `d`.`eventid` "
@@ -365,8 +365,8 @@ class LogMan implements intLogMan {
                 . "ON `d`.`codeid` = `l`.`id` "
                 . "WHERE `l`.`code` = '$code' "
                 . "ORDER BY `$orderBy` $direct LIMIT $start, $rpp;");
-        if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, 'getPage: unable to get log page | '.self::$dbLink->error);
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'getPage: unable to get log page -> '.$this->dbLink->error);
             return FALSE;
         }
         $xml = new \DOMDocument('1.0', 'utf-8');
@@ -383,24 +383,24 @@ class LogMan implements intLogMan {
         return $xml;
     }
     
-    public static function sumLogByPlugin($plugin, $rpp = 20) {
-        self::zeroizeError();
+    public function sumLogByPlugin($plugin, $rpp = 20) {
+        $this->zeroizeError();
         if (!pregPlugin($plugin) || !is_integer($rpp)) {
-            self::setError(ERROR_INCORRECT_DATA, 'sumLog: check arguments');
+            $this->setError(ERROR_INCORRECT_DATA, 'sumLog: check arguments');
             return FALSE;
         }
         if ($rpp < 1) {
             $rpp = 1;
         }
-        $qResult = self::$dbLink->query("SELECT COUNT(`r`.`id`) "
+        $qResult = $this->dbLink->query("SELECT COUNT(`r`.`id`) "
                 . "FROM `".MECCANO_TPREF."_core_logman_records` `r`"
                 . "JOIN `".MECCANO_TPREF."_core_logman_events` `e` "
                 . "ON `e`.`id`=`r`.`eventid` "
                 . "JOIN `".MECCANO_TPREF."_core_plugins_installed` `p` "
                 . "ON `p`.`id`=`e`.`plugid` "
                 . "WHERE `p`.`name`='$plugin' ;");
-        if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, 'sumLog: unable to counted total records | '.self::$dbLink->error);
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'sumLog: unable to counted total records -> '.$this->dbLink->error);
             return FALSE;
         }
         list($totalRecs) = $qResult->fetch_row();
@@ -418,10 +418,10 @@ class LogMan implements intLogMan {
         return array('records' => (int) $totalRecs, 'pages' => (int) $totalPages);
     }
     
-    public static function getPageByPlugin($plugin, $pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE) {
-        self::zeroizeError();
+    public function getPageByPlugin($plugin, $pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE) {
+        $this->zeroizeError();
         if (!pregPlugin($plugin) || !pregLang($code) || !is_integer($pageNumber) || !is_integer($totalPages) || !is_integer($rpp)) {
-            self::setError(ERROR_INCORRECT_DATA, 'getPage: check arguments');
+            $this->setError(ERROR_INCORRECT_DATA, 'getPage: check arguments');
             return FALSE;
         }
         $rightEntry = array('id', 'user', 'event', 'time');
@@ -439,7 +439,7 @@ class LogMan implements intLogMan {
             }
         }
         else {
-            self::setError(ERROR_INCORRECT_DATA, 'getPage: check order parameters');
+            $this->setError(ERROR_INCORRECT_DATA, 'getPage: check order parameters');
             return FALSE;
         }
         if ($pageNumber < 1) {
@@ -461,7 +461,7 @@ class LogMan implements intLogMan {
             $direct = 'DESC';
         }
         $start = ($pageNumber - 1) * $rpp;
-        $qResult = self::$dbLink->query("SELECT `r`.`id` `id`, `r`.`time` `time`, REPLACE(`d`.`description`, '%d', `r`.`insertion`) `event`, `r`.`user` `user` "
+        $qResult = $this->dbLink->query("SELECT `r`.`id` `id`, `r`.`time` `time`, REPLACE(`d`.`description`, '%d', `r`.`insertion`) `event`, `r`.`user` `user` "
                 . "FROM `".MECCANO_TPREF."_core_logman_records` `r` "
                 . "JOIN `".MECCANO_TPREF."_core_logman_descriptions` `d` "
                 . "ON `r`.`eventid` = `d`.`eventid` "
@@ -474,8 +474,8 @@ class LogMan implements intLogMan {
                 . "WHERE `l`.`code` = '$code' "
                 . "AND `p`.`name`='$plugin' "
                 . "ORDER BY `$orderBy` $direct LIMIT $start, $rpp;");
-        if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, 'getPage: unable to get log page | '.self::$dbLink->error);
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'getPage: unable to get log page -> '.$this->dbLink->error);
             return FALSE;
         }
         $xml = new \DOMDocument('1.0', 'utf-8');
@@ -495,10 +495,10 @@ class LogMan implements intLogMan {
         return $xml;
     }
     
-    public static function getLogAllPlugins($code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE) {
-        self::zeroizeError();
+    public function getLogAllPlugins($code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE) {
+        $this->zeroizeError();
         if (!pregLang($code)) {
-            self::setError(ERROR_INCORRECT_DATA, 'getPage: check arguments');
+            $this->setError(ERROR_INCORRECT_DATA, 'getPage: check arguments');
             return FALSE;
         }
         $rightEntry = array('id', 'user', 'event', 'time');
@@ -516,7 +516,7 @@ class LogMan implements intLogMan {
             }
         }
         else {
-            self::setError(ERROR_INCORRECT_DATA, 'getPage: check order parameters');
+            $this->setError(ERROR_INCORRECT_DATA, 'getPage: check order parameters');
             return FALSE;
         }
         if ($ascent == TRUE) {
@@ -525,7 +525,7 @@ class LogMan implements intLogMan {
         elseif ($ascent == FALSE) {
             $direct = 'DESC';
         }
-        $qResult = self::$dbLink->query("SELECT `r`.`id` `id`, `r`.`time` `time`, REPLACE(`d`.`description`, '%d', `r`.`insertion`) `event`, `r`.`user` `user` "
+        $qResult = $this->dbLink->query("SELECT `r`.`id` `id`, `r`.`time` `time`, REPLACE(`d`.`description`, '%d', `r`.`insertion`) `event`, `r`.`user` `user` "
                 . "FROM `".MECCANO_TPREF."_core_logman_records` `r` "
                 . "JOIN `".MECCANO_TPREF."_core_logman_descriptions` `d` "
                 . "ON `r`.`eventid` = `d`.`eventid` "
@@ -533,8 +533,8 @@ class LogMan implements intLogMan {
                 . "ON `d`.`codeid` = `l`.`id` "
                 . "WHERE `l`.`code` = '$code' "
                 . "ORDER BY `$orderBy` $direct ;");
-        if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, 'getPage: unable to get log | '.self::$dbLink->error);
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'getPage: unable to get log -> '.$this->dbLink->error);
             return FALSE;
         }
         $xml = new \DOMDocument('1.0', 'utf-8');
@@ -551,10 +551,10 @@ class LogMan implements intLogMan {
         return $xml;
     }
     
-    public static function getLogByPlugin($plugin, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE) {
-        self::zeroizeError();
+    public function getLogByPlugin($plugin, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE) {
+        $this->zeroizeError();
         if (!pregPlugin($plugin) || !pregLang($code)) {
-            self::setError(ERROR_INCORRECT_DATA, 'getPage: check arguments');
+            $this->setError(ERROR_INCORRECT_DATA, 'getPage: check arguments');
             return FALSE;
         }
         $rightEntry = array('id', 'user', 'event', 'time');
@@ -572,7 +572,7 @@ class LogMan implements intLogMan {
             }
         }
         else {
-            self::setError(ERROR_INCORRECT_DATA, 'getPage: check order parameters');
+            $this->setError(ERROR_INCORRECT_DATA, 'getPage: check order parameters');
             return FALSE;
         }
         if ($ascent == TRUE) {
@@ -581,7 +581,7 @@ class LogMan implements intLogMan {
         elseif ($ascent == FALSE) {
             $direct = 'DESC';
         }
-        $qResult = self::$dbLink->query("SELECT `r`.`id` `id`, `r`.`time` `time`, REPLACE(`d`.`description`, '%d', `r`.`insertion`) `event`, `r`.`user` `user` "
+        $qResult = $this->dbLink->query("SELECT `r`.`id` `id`, `r`.`time` `time`, REPLACE(`d`.`description`, '%d', `r`.`insertion`) `event`, `r`.`user` `user` "
                 . "FROM `".MECCANO_TPREF."_core_logman_records` `r` "
                 . "JOIN `".MECCANO_TPREF."_core_logman_descriptions` `d` "
                 . "ON `r`.`eventid` = `d`.`eventid` "
@@ -594,8 +594,8 @@ class LogMan implements intLogMan {
                 . "WHERE `l`.`code` = '$code' "
                 . "AND `p`.`name`='$plugin' "
                 . "ORDER BY `$orderBy` $direct ;");
-        if (self::$dbLink->errno) {
-            self::setError(ERROR_NOT_EXECUTED, 'getPage: unable to get log | '.self::$dbLink->error);
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'getPage: unable to get log -> '.$this->dbLink->error);
             return FALSE;
         }
         $xml = new \DOMDocument('1.0', 'utf-8');
