@@ -6,7 +6,6 @@ require_once 'swconst.php';
 
 interface intLogMan {
     function __construct(\mysqli $dbLink);
-    public function setDbLink(\mysqli $dbLink);
     public function errId();
     public function errExp();
     public function installEvents(\DOMDocument $events, $validate = TRUE);
@@ -27,10 +26,6 @@ class LogMan implements intLogMan {
     private $dbLink; // database link
     
     public function __construct(\mysqli $dbLink) {
-        $this->dbLink = $dbLink;
-    }
-    
-    public function setDbLink(\mysqli $dbLink) {
         $this->dbLink = $dbLink;
     }
     
