@@ -9,9 +9,6 @@ require_once 'policy.php';
 
 interface intUserMan {
     public function __construct(\mysqli $dbLink, LogMan $logObject, Policy $policyObject);
-    public function setDbLink(\mysqli $dbLink);
-    public function setLogObject(LogMan $logObject);
-    public function setPolicyObject(Policy $policyObject);
     public function errId();
     public function errExp();
     public function createGroup($groupName, $description, $log = TRUE);
@@ -56,18 +53,6 @@ class UserMan implements intUserMan{
     public function __construct(\mysqli $dbLink, LogMan $logObject, Policy $policyObject) {
         $this->dbLink = $dbLink;
         $this->logObject = $logObject;
-        $this->policyObject = $policyObject;
-    }
-    
-    public function setDbLink(\mysqli $dbLink) {
-        $this->dbLink = $dbLink;
-    }
-    
-    public function setLogObject(LogMan $logObject) {
-        $this->logObject = $logObject;
-    }
-    
-    public function setPolicyObject(Policy $policyObject) {
         $this->policyObject = $policyObject;
     }
     

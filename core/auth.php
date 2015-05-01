@@ -8,8 +8,6 @@ require_once 'logman.php';
 
 interface intAuth {
     public function __construct(\mysqli $dbLink, LogMan $logObject);
-    public function setDbLink(\mysqli $dbLink);
-    public function setLogObject(LogMan $logObject);
     public function errId();
     public function errExp();
     public function userLogin($username, $password, $log = FALSE, $useCookie = TRUE, $cookieTime = 'month');
@@ -29,14 +27,6 @@ class Auth implements intAuth {
             session_start();
         }
         $this->dbLink = $dbLink;
-        $this->logObject = $logObject;
-    }
-    
-    public function setDbLink(\mysqli $dbLink) {
-        $this->dbLink = $dbLink;
-    }
-    
-    public function setLogObject(LogMan $logObject) {
         $this->logObject = $logObject;
     }
     

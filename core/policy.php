@@ -7,7 +7,6 @@ require_once 'unifunctions.php';
 
 interface intPolicy {
     function __construct(\mysqli $dbLink);
-    public function setDbLink(\mysqli $dbLink);
     public function errId();
     public function errExp();
     public function delPolicy($plugin);
@@ -26,10 +25,6 @@ class Policy implements intPolicy {
     private $dbLink; // database link
     
     public function __construct(\mysqli $dbLink) {
-        $this->dbLink = $dbLink;
-    }
-    
-    public function setDbLink(\mysqli $dbLink) {
         $this->dbLink = $dbLink;
     }
     
