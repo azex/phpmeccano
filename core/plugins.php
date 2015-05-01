@@ -21,9 +21,6 @@ require_once 'files.php';
 
 interface intPlugins {
     public function __construct(\mysqli $dbLink, LogMan $logObject, Policy $policyObject, LangMan $langmanObject);
-    public function setDbLink(\mysqli $dbLink);
-    public function setLogObject(LogMan $logObject);
-    public function setPolicyObject(Policy $policyObject);
     public function errId();
     public function errExp();
     public function unpack($package);
@@ -50,18 +47,6 @@ class Plugins implements intPlugins {
         $this->logObject = $logObject;
         $this->policyObject = $policyObject;
         $this->langmanObject = $langmanObject;
-    }
-    
-    public function setDbLink(\mysqli $dbLink) {
-        $this->dbLink = $dbLink;
-    }
-    
-    public function setLogObject(LogMan $logObject) {
-        $this->logObject = $logObject;
-    }
-    
-    public function setPolicyObject(Policy $policyObject) {
-        $this->policyObject = $policyObject;
     }
     
     private function setError($id, $exp) {
