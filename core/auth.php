@@ -72,7 +72,7 @@ class Auth implements intAuth {
         if (!isset($terms[$cookieTime])) {
             $useCookie = FALSE;
         }
-        $qResult = $this->dbLink->query("SELECT `u`.`id`, `u`.`salt`, `l`.`code` "
+        $qResult = $this->dbLink->query("SELECT `u`.`id`, `u`.`salt`, `l`.`code`, `l`.`dir` "
                 . "FROM `".MECCANO_TPREF."_core_userman_groups` `g` "
                 . "JOIN `".MECCANO_TPREF."_core_userman_users` `u` "
                 . "ON `g`.`id`=`u`.`groupid` "
@@ -89,7 +89,7 @@ class Auth implements intAuth {
             $this->setError(ERROR_NOT_FOUND, 'userLogin: invalid username or user (group) is disabled');
             return FALSE;
         }
-        list($userId, $salt, $lang) = $qResult->fetch_array(MYSQL_NUM);
+        list($userId, $salt, $lang, $direction) = $qResult->fetch_array(MYSQL_NUM);
         $passwEncoded = passwHash($password, $salt);
         $qResult = $this->dbLink->query("SELECT `u`.`username`, `p`.`id`, `p`.`limited` "
                 . "FROM `".MECCANO_TPREF."_core_userman_users` `u` "
@@ -124,6 +124,7 @@ class Auth implements intAuth {
         $_SESSION[AUTH_USER_ID] = (int) $userId;
         $_SESSION[AUTH_LIMITED] = (int) $limited;
         $_SESSION[AUTH_LANGUAGE] = $lang;
+        $_SESSION[AUTH_LANGUAGE_DIR] = $direction;
         // control parameters
         $_SESSION[AUTH_UNIQUE_SESSION_ID] = $usi;
         $_SESSION[AUTH_PASSWORD_ID] = (int) $passId;
@@ -141,7 +142,7 @@ class Auth implements intAuth {
                 $this->setError(ERROR_NOT_EXECUTED, 'isSession: session probably is stolen');
                 return FALSE;
             }
-            $qResult = $this->dbLink->query("SELECT `g`.`groupname`, `u`.`id`, `p`.`password` "
+            $qResult = $this->dbLink->query("SELECT `l`.`code`, `l`.`dir`, `u`.`username`, `g`.`groupname`, `u`.`id`, `p`.`password` "
                     . "FROM `".MECCANO_TPREF."_core_userman_groups` `g` "
                     . "JOIN `".MECCANO_TPREF."_core_userman_users` `u` "
                     . "ON `g`.`id`=`u`.`groupid` "
@@ -149,6 +150,8 @@ class Auth implements intAuth {
                     . "ON `p`.`userid`=`u`.`id` "
                     . "JOIN `".MECCANO_TPREF."_core_auth_usi` `s` "
                     . "ON `s`.`id`=`p`.`id` "
+                    . "JOIN `".MECCANO_TPREF."_core_langman_languages` `l`"
+                    . "ON `l`.`id`=`u`.`langid` "
                     . "WHERE `u`.`id`=".$_SESSION[AUTH_USER_ID]." "
                     . "AND `u`.`active`=1 "
                     . "AND `g`.`active`=1 "
@@ -162,6 +165,10 @@ class Auth implements intAuth {
                 $this->userLogout();
                 return FALSE;
             }
+            $userData = $qResult->fetch_row();
+            $_SESSION[AUTH_LANGUAGE] = $userData[0];
+            $_SESSION[AUTH_LANGUAGE_DIR] = $userData[1];
+            $_SESSION[AUTH_USERNAME] = $userData[2];
             return TRUE;
         }
         return FALSE;
@@ -201,7 +208,7 @@ class Auth implements intAuth {
     public function getSession($log = FALSE) {
         $this->zeroizeError();
         if (!isset($_SESSION[AUTH_USER_ID]) && isset($_COOKIE[AUTH_UNIQUE_SESSION_ID]) && pregIdent($_COOKIE[AUTH_UNIQUE_SESSION_ID])) {
-            $qResult = $this->dbLink->query("SELECT `p`.`id`, `p`.`limited`, `u`.`id`, `u`.`username`, `l`.`code` "
+            $qResult = $this->dbLink->query("SELECT `p`.`id`, `p`.`limited`, `u`.`id`, `u`.`username`, `l`.`code`, `l`.`dir` "
                     . "FROM `".MECCANO_TPREF."_core_auth_usi` `s` "
                     . "JOIN `".MECCANO_TPREF."_core_userman_userpass` `p` "
                     . "ON `p`.`id`=`s`.`id` "
@@ -222,7 +229,7 @@ class Auth implements intAuth {
             if (!$this->dbLink->affected_rows) {
                 return FALSE;
             }
-            list($passId, $limited, $userId, $username, $lang) = $qResult->fetch_array(MYSQLI_NUM);
+            list($passId, $limited, $userId, $username, $lang, $direction) = $qResult->fetch_array(MYSQLI_NUM);
             if ($log) {
                 $this->logObject->newRecord('core', 'authLogin', $username);
             }
@@ -230,6 +237,7 @@ class Auth implements intAuth {
             $_SESSION[AUTH_USER_ID] = (int) $userId;
             $_SESSION[AUTH_LIMITED] = (int) $limited;
             $_SESSION[AUTH_LANGUAGE] = $lang;
+            $_SESSION[AUTH_LANGUAGE_DIR] = $direction;
             // control parameters
             $_SESSION[AUTH_UNIQUE_SESSION_ID] = $_COOKIE[AUTH_UNIQUE_SESSION_ID];
             $_SESSION[AUTH_PASSWORD_ID] = (int) $passId;

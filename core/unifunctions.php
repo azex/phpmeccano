@@ -150,6 +150,14 @@ function authLang() {
     return FALSE;
 }
 
+// returns language code if there is active session
+function authLangDir() {
+    if (isset($_SESSION[AUTH_LANGUAGE_DIR])) {
+        return $_SESSION[AUTH_LANGUAGE_DIR];
+    }
+    return FALSE;
+}
+
 // returns session token if there is active session
 function authToken() {
     if (isset($_SESSION[AUTH_TOKEN])) {
