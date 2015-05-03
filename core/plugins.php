@@ -1,9 +1,25 @@
 <?php
 
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools -> Templates
- * and open the template in the editor.
+ *     phpMeccano v0.0.1. Web-framework written with php programming language. Core module [plugins.php].
+ *     Copyright (C) 2015  Alexei Muzarov
+ * 
+ *     This program is free software; you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation; either version 2 of the License, or
+ *     (at your option) any later version.
+ * 
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ * 
+ *     You should have received a copy of the GNU General Public License along
+ *     with this program; if not, write to the Free Software Foundation, Inc.,
+ *     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * 
+ *     e-mail: azexmail@gmail.com
+ *     e-mail: azexmail@mail.ru
  */
 
 namespace core;
@@ -12,12 +28,6 @@ require_once 'swconst.php';
 require_once 'unifunctions.php';
 require_once 'logman.php';
 require_once 'files.php';
-
-/**
- * Description of Plugins
- *
- * @author azex
- */
 
 interface intPlugins {
     public function __construct(\mysqli $dbLink, LogMan $logObject, Policy $policyObject, LangMan $langmanObject);
