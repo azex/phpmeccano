@@ -32,7 +32,8 @@ define('MECCANO_DBPORT', '3306');
 define('MECCANO_DBNAME', 'phpmeccano');
 define('MECCANO_TPREF', 'meccano');
 
-// system folders
+// system paths
+define('MECCANO_CONF_FILE', __FILE__);
 define('MECCANO_ROOT_DIR', dirname(__FILE__));
 define('MECCANO_CORE_DIR', MECCANO_ROOT_DIR.'/core');
 define('MECCANO_TMP_DIR', MECCANO_ROOT_DIR.'/tmp');
