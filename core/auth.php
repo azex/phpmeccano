@@ -139,8 +139,10 @@ class Auth implements intAuth {
             }
             setcookie(COOKIE_UNIQUE_SESSION_ID, $usi, $term, '/');
         }
-        if ($log) {
-            $this->logObject->newRecord('core', 'authLogin', $username);
+        $ipAddress = $_SERVER['REMOTE_ADDR'];
+        $userAgent = $_SERVER['HTTP_USER_AGENT'];
+        if ($log && !$this->logObject->newRecord('core', 'auth_session', "name: $username; ID: $userId; IP: $ipAddress; User-agent: $userAgent")) {
+            $this->setError(ERROR_NOT_CRITICAL, "userLogin: -> ".$this->logObject->errExp());
         }
         $_SESSION[AUTH_USERNAME] = $username;
         $_SESSION[AUTH_USER_ID] = (int) $userId;
@@ -150,8 +152,8 @@ class Auth implements intAuth {
         // control parameters
         $_SESSION[AUTH_UNIQUE_SESSION_ID] = $usi;
         $_SESSION[AUTH_PASSWORD_ID] = (int) $passId;
-        $_SESSION[AUTH_IP] = $_SERVER['REMOTE_ADDR'];
-        $_SESSION[AUTH_USER_AGENT] = $_SERVER['HTTP_USER_AGENT'];
+        $_SESSION[AUTH_IP] = $ipAddress;
+        $_SESSION[AUTH_USER_AGENT] = $userAgent;
         $_SESSION[AUTH_TOKEN] = makeIdent($username);
         return TRUE;
     }
@@ -252,8 +254,10 @@ class Auth implements intAuth {
                 return FALSE;
             }
             list($passId, $limited, $userId, $username, $lang, $direction) = $qResult->fetch_array(MYSQLI_NUM);
-            if ($log) {
-                $this->logObject->newRecord('core', 'authLogin', $username);
+            $ipAddress = $_SERVER['REMOTE_ADDR'];
+            $userAgent = $_SERVER['HTTP_USER_AGENT'];
+            if ($log && !$this->logObject->newRecord('core', 'auth_session', "name: $username; ID: $userId; IP: $ipAddress; User-agent: $userAgent")) {
+                $this->setError(ERROR_NOT_CRITICAL, "getSession: -> ".$this->logObject->errExp());
             }
             $_SESSION[AUTH_USERNAME] = $username;
             $_SESSION[AUTH_USER_ID] = (int) $userId;
@@ -263,8 +267,8 @@ class Auth implements intAuth {
             // control parameters
             $_SESSION[AUTH_UNIQUE_SESSION_ID] = $_COOKIE[AUTH_UNIQUE_SESSION_ID];
             $_SESSION[AUTH_PASSWORD_ID] = (int) $passId;
-            $_SESSION[AUTH_IP] = $_SERVER['REMOTE_ADDR'];
-            $_SESSION[AUTH_USER_AGENT] = $_SERVER['HTTP_USER_AGENT'];
+            $_SESSION[AUTH_IP] = $ipAddress;
+            $_SESSION[AUTH_USER_AGENT] = $userAgent;
             $_SESSION[AUTH_TOKEN] = makeIdent($username);
             return TRUE;
         }
