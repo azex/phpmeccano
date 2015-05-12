@@ -321,7 +321,7 @@ class Plugins implements intPlugins {
         return array("id" => (int) $id, "version" => $version);
     }
     
-    public function install($plugin, $reset = FALSE) {
+    public function install($plugin, $reset = FALSE, $log = TRUE) {
         $this->zeroizeError();
         if (!pregPlugin($plugin) || !is_bool($reset)) {
             $this->setError(ERROR_INCORRECT_DATA, "install: incorrect argument(s)");
@@ -499,18 +499,21 @@ class Plugins implements intPlugins {
             $this->setError($instObject->errId(), "install -> ".$instObject->errExp());
             return FALSE;
         }
-        // 
+        //
+        if ($log && !$this->logObject->newRecord('core', 'plugins_install', "$shortName; v$version; ID: $existId")) {
+            $this->setError(ERROR_NOT_CRITICAL, "install -> ".$this->logObject->errExp());
+        }
         return TRUE;
     }
     
-    public function delInstalled($plugin, $keepData = TRUE) {
+    public function delInstalled($plugin, $keepData = TRUE, $log = TRUE) {
         $this->zeroizeError();
         if (!pregPlugin($plugin) || !is_bool($keepData)) {
             $this->setError(ERROR_INCORRECT_DATA, "install: incorrect argument(s)");
             return FALSE;
         }
         // check whether the plugin installed
-        $qPlugin = $this->dbLink->query("SELECT `id`, `name` "
+        $qPlugin = $this->dbLink->query("SELECT `id`, `name`, `version` "
                 . "FROM `".MECCANO_TPREF."_core_plugins_installed` "
                 . "WHERE `name`='$plugin' ;");
         if (!$this->dbLink->affected_rows) {
@@ -521,7 +524,7 @@ class Plugins implements intPlugins {
             $this->setError(ERROR_NOT_EXECUTED, "delInstalled: ".$this->dbLink->error);
             return FALSE;
         }
-        list($id, $shortName) = $qPlugin->fetch_row();
+        list($id, $shortName, $version) = $qPlugin->fetch_row();
         if (strtolower($shortName) == "core") {
             $this->setError(ERROR_SYSTEM_INTERVENTION, "delInstalled: unable to remove [core]");
             return FALSE;
@@ -586,6 +589,10 @@ class Plugins implements intPlugins {
                 $this->setError(ERROR_NOT_EXECUTED, "delInstalled: ".$this->dbLink->error);
                 return FALSE;
             }
+        }
+        //
+        if ($log && !$this->logObject->newRecord('core', 'plugins_del_installed', "$shortName; v$version; ID: $id")) {
+            $this->setError(ERROR_NOT_CRITICAL, "install -> ".$this->logObject->errExp());
         }
         return TRUE;
     }
