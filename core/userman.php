@@ -36,10 +36,10 @@ interface intUserMan {
     public function createGroup($groupName, $description, $log = TRUE);
     public function groupStatus($groupId, $active, $log = TRUE);
     public function groupExists($groupName);
-    public function moveGroupTo($groupId, $destId);
+    public function moveGroupTo($groupId, $destId, $log = TRUE);
     public function aboutGroup($groupId);
-    public function setGroupName($groupId, $groupName);
-    public function setGroupDesc($groupId, $description);
+    public function setGroupName($groupId, $groupName, $log = TRUE);
+    public function setGroupDesc($groupId, $description, $log = TRUE);
     public function delGroup($groupId, $log = TRUE);
     public function sumGroups($rpp = 20);
     public function getGroups($pageNumber, $totalGroups, $rpp = 20, $orderBy = array('id'), $ascent = FALSE);
@@ -48,17 +48,17 @@ interface intUserMan {
     public function userExists($username);
     public function mailExists($email);
     public function userStatus($userId, $active, $log = TRUE);
-    public function moveUserTo($userId, $destId);
+    public function moveUserTo($userId, $destId, $log = TRUE);
     public function delUser($userId, $log = TRUE);
     public function aboutUser($userId);
     public function userPasswords($userId);
-    public function addPassword($userId, $password, $description='');
-    public function delPassword($passwId, $userId);
-    public function setPassword($passwId, $userId, $password);
+    public function addPassword($userId, $password, $description='', $log = TRUE);
+    public function delPassword($passwId, $userId, $log = TRUE);
+    public function setPassword($passwId, $userId, $password, $log = TRUE);
     public function setUserName($userId, $username, $log = TRUE);
-    public function setUserMail($userId, $email);
-    public function setFullName($userId, $name);
-    public function changePassword($passwId, $userId, $oldPassw, $newPassw);
+    public function setUserMail($userId, $email, $log = TRUE);
+    public function setFullName($userId, $name, $log = TRUE);
+    public function changePassword($passwId, $userId, $oldPassw, $newPassw, $log = TRUE);
     public function sumUsers($rpp = 20);
     public function getUsers($pageNumber, $totalUsers, $rpp = 20, $orderBy = array('id'), $ascent = FALSE);
     public function getAllUsers($orderBy = array('id'), $ascent = FALSE);
@@ -110,16 +110,16 @@ class UserMan implements intUserMan{
         $this->dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_userman_groups` (`groupname`, `description`) "
                 . "VALUES ('$groupName', '$description') ;");
         if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'createGroup: group wasn\'t created -> '.$this->dbLink->error);
+            $this->setError(ERROR_NOT_EXECUTED, 'createGroup: group was not created -> '.$this->dbLink->error);
             return FALSE;
         }
         $groupId = $this->dbLink->insert_id;
         if (!$this->policyObject->addGroup($groupId)) {
-            $this->setError(ERROR_NOT_EXECUTED, $this->policyObject->errExp());
+            $this->setError(ERROR_NOT_EXECUTED, "createGroup -> ".$this->policyObject->errExp());
             return FALSE;
         }
-        if ($log && !$this->logObject->newRecord('core', 'createGroup', "$groupName; ID: $groupId")) {
-            $this->setError(ERROR_NOT_CRITICAL, $this->logObject->errExp());
+        if ($log && !$this->logObject->newRecord('core', 'userman_create_group', "$groupName; ID: $groupId")) {
+            $this->setError(ERROR_NOT_CRITICAL, "createGroup -> ".$this->logObject->errExp());
         }
         return (int) $groupId;
     }
@@ -155,16 +155,8 @@ class UserMan implements intUserMan{
             $this->setError(ERROR_NOT_FOUND, 'groupStatus: incorrect group status or group does not exist');
             return FALSE;
         }
-        if ($log) {
-            if ($active) {
-                $l = $this->logObject->newRecord('core', 'enGroup', "ID: $groupId");
-            }
-            else {
-                $l = $this->logObject->newRecord('core', 'disGroup', "ID: $groupId");
-            }
-            if (!$l) {
-                $this->setError(ERROR_NOT_CRITICAL, $this->logObject->errExp());
-            }
+        if ($log && !$this->logObject->newRecord('core', 'userman_group_status', "ID: $groupId; status: $active")) {
+            $this->setError(ERROR_NOT_CRITICAL, "groupStatus -> ".$this->logObject->errExp());
         }
         return TRUE;
     }
@@ -189,7 +181,7 @@ class UserMan implements intUserMan{
         return FALSE;
     }
     
-    public function moveGroupTo($groupId, $destId) {
+    public function moveGroupTo($groupId, $destId, $log = TRUE) {
         $this->zeroizeError();
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
             $this->setError(ERROR_RESTRICTED_ACCESS, 'moveGroupTo: function execution was terminated because of using of limited authentication');
@@ -220,7 +212,11 @@ class UserMan implements intUserMan{
             $this->setError(ERROR_NOT_EXECUTED, 'moveGroupTo: unable to move users into another group |'.$this->dbLink->error);
             return FALSE;
         }
-        return (int) $this->dbLink->affected_rows;
+        $movedUsers = (int) $this->dbLink->affected_rows;
+        if ($log && !$this->logObject->newRecord('core', 'userman_move_group', "∑=$movedUsers; ID:$groupId -> ID:$destId")) {
+            $this->setError(ERROR_NOT_CRITICAL, "moveGroupTo -> ".$this->logObject->errExp());
+        }
+        return $movedUsers;
     }
     
     public function aboutGroup($groupId) {
@@ -237,7 +233,7 @@ class UserMan implements intUserMan{
             return FALSE;
         }
         if (!$this->dbLink->affected_rows) {
-            $this->setError(ERROR_NOT_FOUND, 'aboutGroup: defined group not found');
+            $this->setError(ERROR_NOT_FOUND, 'aboutGroup: group not found');
             return FALSE;
         }
         $qSum = $this->dbLink->query("SELECT COUNT(`id`) "
@@ -256,7 +252,7 @@ class UserMan implements intUserMan{
         return $xml;
     }
     
-    public function setGroupName($groupId, $groupName) {
+    public function setGroupName($groupId, $groupName, $log = TRUE) {
         $this->zeroizeError();
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
             $this->setError(ERROR_RESTRICTED_ACCESS, 'setGroupName: function execution was terminated because of using of limited authentication');
@@ -274,13 +270,16 @@ class UserMan implements intUserMan{
             return FALSE;
         }
         if (!$this->dbLink->affected_rows) {
-            $this->setError(ERROR_ALREADY_EXISTS, 'setGroupName: defined group not found or groupname was repeated');
+            $this->setError(ERROR_ALREADY_EXISTS, 'setGroupName: group not found or group name already exists');
             return FALSE;
+        }
+        if ($log && !$this->logObject->newRecord('core', 'userman_set_group_name', "ID: $groupId; $groupName")) {
+            $this->setError(ERROR_NOT_CRITICAL, "setGroupName -> ".$this->logObject->errExp());
         }
         return TRUE;
     }
     
-    public function setGroupDesc($groupId, $description) {
+    public function setGroupDesc($groupId, $description, $log = TRUE) {
         $this->zeroizeError();
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
             $this->setError(ERROR_RESTRICTED_ACCESS, 'setGroupDesc: function execution was terminated because of using of limited authentication');
@@ -299,8 +298,11 @@ class UserMan implements intUserMan{
             return FALSE;
         }
         if (!$this->dbLink->affected_rows) {
-            $this->setError(ERROR_ALREADY_EXISTS, 'setGroupDesc: defined group not found or description was repeated');
+            $this->setError(ERROR_ALREADY_EXISTS, 'setGroupDesc: group not found or description was repeated');
             return FALSE;
+        }
+        if ($log && !$this->logObject->newRecord('core', 'userman_set_group_desc', "ID: $groupId")) {
+            $this->setError(ERROR_NOT_CRITICAL, "setGroupDesc -> ".$this->logObject->errExp());
         }
         return TRUE;
     }
@@ -341,15 +343,15 @@ class UserMan implements intUserMan{
                 return FALSE;
             }
             if (!$this->dbLink->affected_rows) {
-                $this->setError(ERROR_NOT_FOUND, 'delGroup: defined group not found');
+                $this->setError(ERROR_NOT_FOUND, 'delGroup: group not found');
                 return FALSE;
             }
             if ($key == 0) {
                 list($groupname) = $qGroup->fetch_row();
             }
         }
-        if ($log && !$this->logObject->newRecord('core', 'delGroup', "$groupname; ID: $groupId")) {
-            $this->setError(ERROR_NOT_CRITICAL, $this->logObject->errExp());
+        if ($log && !$this->logObject->newRecord('core', 'userman_del_group', "$groupname; ID: $groupId")) {
+            $this->setError(ERROR_NOT_CRITICAL, "delGroup -> ".$this->logObject->errExp());
         }
         return TRUE;
     }
@@ -365,7 +367,7 @@ class UserMan implements intUserMan{
         }
         $qResult = $this->dbLink->query("SELECT COUNT(`id`) FROM `".MECCANO_TPREF."_core_userman_groups` ;");
         if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'sumGroups: total users couldn\'t be counted -> '.$this->dbLink->error);
+            $this->setError(ERROR_NOT_EXECUTED, 'sumGroups: total users could not be counted -> '.$this->dbLink->error);
             return FALSE;
         }
         list($totalGroups) = $qResult->fetch_array(MYSQLI_NUM);
@@ -430,7 +432,7 @@ class UserMan implements intUserMan{
                 . "FROM `".MECCANO_TPREF."_core_userman_groups` "
                 . "ORDER BY `$orderBy` $direct LIMIT $start, $rpp;");
         if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'getGroups: group info page couldn\'t be gotten -> '.$this->dbLink->error);
+            $this->setError(ERROR_NOT_EXECUTED, 'getGroups: group info page could not be gotten -> '.$this->dbLink->error);
             return FALSE;
         }
         $xml = new \DOMDocument('1.0', 'utf-8');
@@ -477,7 +479,7 @@ class UserMan implements intUserMan{
                 . "FROM `".MECCANO_TPREF."_core_userman_groups` "
                 . "ORDER BY `$orderBy` $direct ;");
         if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'getGroups: group info page couldn\'t be gotten -> '.$this->dbLink->error);
+            $this->setError(ERROR_NOT_EXECUTED, 'getGroups: group info page could not be gotten -> '.$this->dbLink->error);
             return FALSE;
         }
         $xml = new \DOMDocument('1.0', 'utf-8');
@@ -522,11 +524,11 @@ class UserMan implements intUserMan{
                 . "FROM `".MECCANO_TPREF."_core_langman_languages` "
                 . "WHERE `code`='$langCode' ;");
         if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'createUser: unable to check defined language -> '.$this->dbLink->error);
+            $this->setError(ERROR_NOT_EXECUTED, 'createUser: unable to get language identifier -> '.$this->dbLink->error);
             return FALSE;
         }
         if (!$this->dbLink->affected_rows) {
-            $this->setError(ERROR_NOT_FOUND, 'createUser: defined language not found');
+            $this->setError(ERROR_NOT_FOUND, 'createUser: language not found');
             return FALSE;
         }
         list($langId) = $qLang->fetch_row();
@@ -538,7 +540,7 @@ class UserMan implements intUserMan{
             return FALSE;
         }
         if (!$this->dbLink->affected_rows) {
-            $this->setError(ERROR_NOT_FOUND, 'createUser: defined group not found');
+            $this->setError(ERROR_NOT_FOUND, 'createUser: group not found');
             return FALSE;
         }
         $salt = makeSalt($username);
@@ -566,8 +568,8 @@ class UserMan implements intUserMan{
                 $userid = $this->dbLink->insert_id;
             }
         }
-        if ($log && !$this->logObject->newRecord('core', 'createUser', "$username; ID: $userid")) {
-            $this->setError(ERROR_NOT_CRITICAL, $this->logObject->errExp());
+        if ($log && !$this->logObject->newRecord('core', 'userman_create_user', "$username; ID: $userid")) {
+            $this->setError(ERROR_NOT_CRITICAL, "createUser -> ".$this->logObject->errExp());
         }
         return (int) $userid;
     }
@@ -636,28 +638,20 @@ class UserMan implements intUserMan{
                 . "SET `active`=$active "
                 . "WHERE `id`=$userId ;");
         if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'userStatus: status wasn\'t changed -> '.$this->dbLink->error);
+            $this->setError(ERROR_NOT_EXECUTED, 'userStatus: status was not changed -> '.$this->dbLink->error);
             return FALSE;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'userStatus: incorrect user status or group not found');
             return FALSE;
         }
-        if ($log) {
-            if ($active) {
-                $l = $this->logObject->newRecord('core', 'enUser', "ID: $userId");
-            }
-            else {
-                $l = $this->logObject->newRecord('core', 'disUser', "ID: $userId");
-            }
-            if (!$l) {
-                $this->setError(ERROR_NOT_CRITICAL, $this->logObject->errExp());
-            }
+        if ($log && !$this->logObject->newRecord('core', 'userman_user_status', "ID: $userId; status: $active")) {
+            $this->setError(ERROR_NOT_CRITICAL, "userStatus -> ".$this->logObject->errExp());
         }
         return TRUE;
     }
     
-    public function moveUserTo($userId, $destId) {
+    public function moveUserTo($userId, $destId, $log = TRUE) {
         $this->zeroizeError();
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
             $this->setError(ERROR_RESTRICTED_ACCESS, 'moveUserTo: function execution was terminated because of using of limited authentication');
@@ -692,6 +686,9 @@ class UserMan implements intUserMan{
             $this->setError(ERROR_NOT_FOUND, 'moveUserTo: user not found');
             return FALSE;
         }
+        if ($log && !$this->logObject->newRecord('core', 'userman_move_user', "USER_ID:$userId -> GROUP_ID:$destId")) {
+            $this->setError(ERROR_NOT_CRITICAL, "moveUserTo -> ".$this->logObject->errExp());
+        }
         return TRUE;
     }
     
@@ -713,7 +710,7 @@ class UserMan implements intUserMan{
                 . "FROM `".MECCANO_TPREF."_core_userman_users` "
                 . "WHERE `id`=$userId ;");
         if (!$this->dbLink->affected_rows) {
-            $this->setError(ERROR_NOT_FOUND, 'delUser: defined user not found');
+            $this->setError(ERROR_NOT_FOUND, 'delUser: user not found');
             return FALSE;
         }
         $sql = array(
@@ -737,8 +734,8 @@ class UserMan implements intUserMan{
             }
         }
         list($username) = $qName->fetch_row();
-        if ($log && !$this->logObject->newRecord('core', 'delUser', "$username; ID: $userId")) {
-            $this->setError(ERROR_NOT_CRITICAL, $this->logObject->errExp());
+        if ($log && !$this->logObject->newRecord('core', 'userman_del_user', "$username; ID: $userId")) {
+            $this->setError(ERROR_NOT_CRITICAL, "delUser -> ".$this->logObject->errExp());
         }
         return TRUE;
     }
@@ -761,7 +758,7 @@ class UserMan implements intUserMan{
             return FALSE;
         }
         if (!$this->dbLink->affected_rows) {
-            $this->setError(ERROR_NOT_FOUND, 'aboutUser: defined user not found');
+            $this->setError(ERROR_NOT_FOUND, 'aboutUser: user not found');
             return FALSE;
         }
         $about = $qAbout->fetch_row();
@@ -792,7 +789,7 @@ class UserMan implements intUserMan{
             return FALSE;
         }
         if (!$this->dbLink->affected_rows) {
-            $this->setError(ERROR_NOT_FOUND, 'userPasswords: defined user not found');
+            $this->setError(ERROR_NOT_FOUND, 'userPasswords: user not found');
             return FALSE;
         }
         $xml = new \DOMDocument('1.0', 'utf-8');
@@ -808,7 +805,7 @@ class UserMan implements intUserMan{
         return $xml;
     }
     
-    public function addPassword($userId, $password, $description='') {
+    public function addPassword($userId, $password, $description='', $log = TRUE) {
         $this->zeroizeError();
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
             $this->setError(ERROR_RESTRICTED_ACCESS, 'addPassword: function execution was terminated because of using of limited authentication');
@@ -822,11 +819,11 @@ class UserMan implements intUserMan{
                 . "FROM `".MECCANO_TPREF."_core_userman_users` "
                 . "WHERE `id`=$userId ;");
         if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'addPassword: unable to check defined user -> '.$this->dbLink->error);
+            $this->setError(ERROR_NOT_EXECUTED, 'addPassword: unable to check user existence -> '.$this->dbLink->error);
             return FALSE;
         }
         if (!$this->dbLink->affected_rows) {
-            $this->setError(ERROR_NOT_FOUND, 'addPassword: defined user not found');
+            $this->setError(ERROR_NOT_FOUND, 'addPassword: user not found');
             return FALSE;
         }
         list($salt) = $qHash->fetch_row();
@@ -859,10 +856,13 @@ class UserMan implements intUserMan{
             $this->setError(ERROR_NOT_EXECUTED, 'addPassword: unable to create unique session identifier -> '.$this->dbLink->error);
             return FALSE;
         }
-        return (int) $insertId;
+        if ($log && !$this->logObject->newRecord('core', 'userman_add_password', "PASSW_ID: $insertId; USER_ID: $userId")) {
+            $this->setError(ERROR_NOT_CRITICAL, "addPassword -> ".$this->logObject->errExp());
+        }
+        return $insertId;
     }
     
-    public function delPassword($passwId, $userId) {
+    public function delPassword($passwId, $userId, $log = TRUE) {
         $this->zeroizeError();
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
             $this->setError(ERROR_RESTRICTED_ACCESS, 'delPassword: function execution was terminated because of using of limited authentication');
@@ -900,10 +900,13 @@ class UserMan implements intUserMan{
                 return FALSE;
             }
         }
+        if ($log && !$this->logObject->newRecord('core', 'userman_del_password', "PASSW_ID: $passwId; USER_ID: $userId")) {
+            $this->setError(ERROR_NOT_CRITICAL, "delPassword -> ".$this->logObject->errExp());
+        }
         return TRUE;
     }
     
-    public function setPassword($passwId, $userId, $password) {
+    public function setPassword($passwId, $userId, $password, $log = TRUE) {
         $this->zeroizeError();
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
             $this->setError(ERROR_RESTRICTED_ACCESS, 'setPassword: function execution was terminated because of using of limited authentication');
@@ -917,11 +920,11 @@ class UserMan implements intUserMan{
                 . "FROM `".MECCANO_TPREF."_core_userman_users` "
                 . "WHERE `id`=$userId ;");
         if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'setPassword: unable to check defined user');
+            $this->setError(ERROR_NOT_EXECUTED, 'setPassword: unable to check user existence');
             return FALSE;
         }
         if (!$this->dbLink->affected_rows) {
-            $this->setError(ERROR_NOT_FOUND, 'setPassword: defined user not found');
+            $this->setError(ERROR_NOT_FOUND, 'setPassword: user not found');
             return FALSE;
         }
         list($salt) = $qSalt->fetch_row();
@@ -935,8 +938,11 @@ class UserMan implements intUserMan{
             return FALSE;
         }
         if (!$this->dbLink->affected_rows) {
-            $this->setError(ERROR_ALREADY_EXISTS, 'setPassword: defined password not found or password was repeated');
+            $this->setError(ERROR_ALREADY_EXISTS, 'setPassword: password not found or password was repeated');
             return FALSE;
+        }
+        if ($log && !$this->logObject->newRecord('core', 'userman_set_password', "PASSW_ID: $passwId; USER_ID: $userId")) {
+            $this->setError(ERROR_NOT_CRITICAL, "setPassword -> ".$this->logObject->errExp());
         }
         return TRUE;
     }
@@ -959,7 +965,7 @@ class UserMan implements intUserMan{
             return FALSE;
         }
         if ($this->dbLink->affected_rows) {
-            $this->setError(ERROR_ALREADY_EXISTS, 'setUserName: new name already in use');
+            $this->setError(ERROR_ALREADY_EXISTS, 'setUserName: username already in use');
             return FALSE;
         }
         $this->dbLink->query("UPDATE `".MECCANO_TPREF."_core_userman_users` "
@@ -970,16 +976,16 @@ class UserMan implements intUserMan{
             return FALSE;
         }
         if (!$this->dbLink->affected_rows) {
-            $this->setError(ERROR_NOT_FOUND, 'setUserName: unable to find defined user');
+            $this->setError(ERROR_NOT_FOUND, 'setUserName: unable to find user');
             return FALSE;
         }
-        if ($log && !$this->logObject->newRecord('core', 'setUserName', "$username; ID: $userId")) {
-            $this->setError(ERROR_NOT_CRITICAL, $this->logObject->errExp());
+        if ($log && !$this->logObject->newRecord('core', 'userman_set_username', "$username; ID: $userId")) {
+            $this->setError(ERROR_NOT_CRITICAL, "setUserName -> ".$this->logObject->errExp());
         }
         return TRUE;
     }
     
-    public function setUserMail($userId, $email) {
+    public function setUserMail($userId, $email, $log = TRUE) {
         $this->zeroizeError();
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
             $this->setError(ERROR_RESTRICTED_ACCESS, 'setUserMail: function execution was terminated because of using of limited authentication');
@@ -997,13 +1003,16 @@ class UserMan implements intUserMan{
             return FALSE;
         }
         if (!$this->dbLink->affected_rows) {
-            $this->setError(ERROR_ALREADY_EXISTS, 'setUserMail: defined user does not exist or email was repeated');
+            $this->setError(ERROR_ALREADY_EXISTS, 'setUserMail: user does not exist or email was repeated');
             return FALSE;
+        }
+        if ($log && !$this->logObject->newRecord('core', 'userman_set_user_mail', "$email; ID: $userId;")) {
+            $this->setError(ERROR_NOT_CRITICAL, "setUserMail -> ".$this->logObject->errExp());
         }
         return TRUE;
     }
     
-    public function setFullName($userId, $name) {
+    public function setFullName($userId, $name, $log = TRUE) {
         $this->zeroizeError();
         if (!is_integer($userId) || !is_string($name)) {
             $this->setError(ERROR_INCORRECT_DATA, 'setFullName: incorrect incoming parameters');
@@ -1018,13 +1027,16 @@ class UserMan implements intUserMan{
             return FALSE;
         }
         if (!$this->dbLink->affected_rows) {
-            $this->setError(ERROR_ALREADY_EXISTS, 'setFullName: defined user not found or name was repeated');
+            $this->setError(ERROR_ALREADY_EXISTS, 'setFullName: user not found or name was repeated');
             return FALSE;
+        }
+        if ($log && !$this->logObject->newRecord('core', 'userman_set_full_name', "$name; ID: $userId")) {
+            $this->setError(ERROR_NOT_CRITICAL, "setFullName -> ".$this->logObject->errExp());
         }
         return TRUE;
     }
     
-    public function changePassword($passwId, $userId, $oldPassw, $newPassw) {
+    public function changePassword($passwId, $userId, $oldPassw, $newPassw, $log = TRUE) {
         $this->zeroizeError();
         if (!is_integer($passwId) || !is_integer($userId) || !pregPassw($oldPassw) || !pregPassw($newPassw)) {
             $this->setError(ERROR_INCORRECT_DATA, 'changePassword: incorrect incoming parameters');
@@ -1034,11 +1046,11 @@ class UserMan implements intUserMan{
                 . "FROM `".MECCANO_TPREF."_core_userman_users` "
                 . "WHERE `id`=$userId ;");
         if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'changePassword: unable to check defined user -> '.$this->dbLink->error);
+            $this->setError(ERROR_NOT_EXECUTED, 'changePassword: unable to check user existence -> '.$this->dbLink->error);
             return FALSE;
         }
         if (!$this->dbLink->affected_rows) {
-            $this->setError(ERROR_NOT_FOUND, 'changePassword: defined user not found');
+            $this->setError(ERROR_NOT_FOUND, 'changePassword: user not found');
             return FALSE;
         }
         list($salt) = $qSalt->fetch_row();
@@ -1078,8 +1090,11 @@ class UserMan implements intUserMan{
             return FALSE;
         }
         if (!$this->dbLink->affected_rows) {
-            $this->setError(ERROR_NOT_FOUND, 'changePassword: defined password not found, it has been received invalid old password, or maybe your authentication is limited');
+            $this->setError(ERROR_NOT_FOUND, 'changePassword: password not found, or it has been received invalid old password, or maybe your authentication is limited');
             return FALSE;
+        }
+        if ($log && !$this->logObject->newRecord('core', 'userman_change_password', "PASSW_ID: $passwId; USER_ID: $userId")) {
+            $this->setError(ERROR_NOT_CRITICAL, "changePassword -> ".$this->logObject->errExp());
         }
         return TRUE;
     }
@@ -1095,7 +1110,7 @@ class UserMan implements intUserMan{
         }
         $qResult = $this->dbLink->query("SELECT COUNT(`id`) FROM `".MECCANO_TPREF."_core_userman_users` ;");
         if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'sumUsers: total users couldn\'t be counted -> '.$this->dbLink->error);
+            $this->setError(ERROR_NOT_EXECUTED, 'sumUsers: total users could not be counted -> '.$this->dbLink->error);
             return FALSE;
         }
         list($totalUsers) = $qResult->fetch_array(MYSQLI_NUM);

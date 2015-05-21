@@ -296,7 +296,7 @@ class LogMan implements intLogMan {
             $this->setError(ERROR_NOT_EXECUTED, 'clearLog: unable to clear log -> '.$this->dbLink->error);
             return FALSE;
         }
-        if (!$this->newRecord('core', 'clearLog')) {
+        if (!$this->newRecord('core', 'logman_clear_log')) {
             return FALSE;
         }
         return TRUE;

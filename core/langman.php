@@ -26,31 +26,32 @@ namespace core;
 
 require_once 'swconst.php';
 require_once 'unifunctions.php';
+require_once 'logman.php';
 
 interface intLangMan {
-    public function __construct(\mysqli $dbLink);
+    public function __construct(\mysqli $dbLink, LogMan $logObject);
     public function errId();
     public function errExp();
-    public function addLang($code, $name);
-    public function delLang($code);
+    public function addLang($code, $name, $log = TRUE);
+    public function delLang($code, $log = TRUE);
     public function langList();
     public function installTitles(\DOMDocument $titles, $validate = TRUE);
     public function installTexts(\DOMDocument $texts, $validate = TRUE);
     public function delPlugin($plugin);
-    public function addTitleSection($section, $plugin);
-    public function delTitleSection($sid);
-    public function addTextSection($section, $plugin);
-    public function delTextSection($sid);
-    public function addTitleName($name, $section, $plugin);
-    public function delTitleName($nameid);
-    public function addTextName($name, $section, $plugin);
-    public function delTextName($nameid);
-    public function addTitle($title, $name, $section, $plugin, $code = MECCANO_DEF_LANG);
-    public function delTitle($tid);
-    public function addText($title, $document, $name, $section, $plugin, $code = MECCANO_DEF_LANG);
-    public function delText($tid);
-    public function updateTitle($id, $title);
-    public function updateText($id, $title, $document);
+    public function addTitleSection($section, $plugin, $log = TRUE);
+    public function delTitleSection($sid, $log = TRUE);
+    public function addTextSection($section, $plugin, $log = TRUE);
+    public function delTextSection($sid, $log = TRUE);
+    public function addTitleName($name, $section, $plugin, $log = TRUE);
+    public function delTitleName($nameid, $log = TRUE);
+    public function addTextName($name, $section, $plugin, $log = TRUE);
+    public function delTextName($nameid, $log = TRUE);
+    public function addTitle($title, $name, $section, $plugin, $code = MECCANO_DEF_LANG, $log = TRUE);
+    public function delTitle($tid, $log = TRUE);
+    public function addText($title, $document, $name, $section, $plugin, $code = MECCANO_DEF_LANG, $log = TRUE);
+    public function delText($tid, $log = TRUE);
+    public function updateTitle($id, $title, $log = TRUE);
+    public function updateText($id, $title, $document, $log = TRUE);
     public function getTitle($name, $section, $plugin, $code = MECCANO_DEF_LANG);
     public function getText($name, $section, $plugin, $code = MECCANO_DEF_LANG);
     public function getTitles($section, $plugin, $code = MECCANO_DEF_LANG);
@@ -77,9 +78,11 @@ class LangMan implements intLangMan{
     private $errid = 0; // error's id
     private $errexp = ''; // error's explanation
     private $dbLink; // database link
+    private $logObject; // log object
     
-    public function __construct(\mysqli $dbLink) {
+    public function __construct(\mysqli $dbLink, LogMan $logObject) {
         $this->dbLink = $dbLink;
+        $this->logObject = $logObject;
     }
     
     private function setError($id, $exp) {
@@ -99,7 +102,7 @@ class LangMan implements intLangMan{
         return $this->errexp;
     }
     
-    public function addLang($code, $name, $dir = 'ltr') {
+    public function addLang($code, $name, $dir = 'ltr', $log = TRUE) {
         $this->zeroizeError();
         if (!pregLang($code) || !is_string($name) || !in_array($dir, array('ltr', 'rtl'))) {
             $this->setError(ERROR_INCORRECT_DATA, 'addLang: incorrect incoming parameters');
@@ -112,10 +115,14 @@ class LangMan implements intLangMan{
             $this->setError(ERROR_NOT_EXECUTED, 'addLang: '.$this->dbLink->error);
             return FALSE;
         }
+        $codeId = $this->dbLink->insert_id;
+        if ($log && !$this->logObject->newRecord('core', 'langman_add_lang', "$name; code: $code; DIR: $dir; ID: $codeId")) {
+            $this->setError(ERROR_NOT_CRITICAL, "addLang -> ".$this->logObject->errExp());
+        }
         return TRUE;
     }
     
-    public function delLang($code) {
+    public function delLang($code, $log = TRUE) {
         $this->zeroizeError();
         if (!pregLang($code)) {
             $this->setError(ERROR_INCORRECT_DATA, 'delLang: incorrect incoming parameter');
@@ -125,7 +132,7 @@ class LangMan implements intLangMan{
             $this->setError(ERROR_SYSTEM_INTERVENTION, 'delLang: it is impossible to delete default language');
             return FALSE;
         }
-        $qLang = $this->dbLink->query("SELECT `id` "
+        $qLang = $this->dbLink->query("SELECT `id`, `name`, `dir` "
                 . "FROM `".MECCANO_TPREF."_core_langman_languages` "
                 . "WHERE `code`='$code' ;");
         if ($this->dbLink->errno) {
@@ -136,7 +143,7 @@ class LangMan implements intLangMan{
             $this->setError(ERROR_NOT_FOUND, "delLang: language [$code] is not found");
             return FALSE;
         }
-        list($codeId) = $qLang->fetch_row();
+        list($codeId, $name, $dir) = $qLang->fetch_row();
         $defLang = MECCANO_DEF_LANG;
         $qDefLang = $this->dbLink->query("SELECT `id` "
                 . "FROM `".MECCANO_TPREF."_core_langman_languages` "
@@ -175,6 +182,9 @@ class LangMan implements intLangMan{
             $this->setError(ERROR_NOT_EXECUTED, 'delLang: '.$this->dbLink->error);
             return FALSE;
         }
+        if ($log && !$this->logObject->newRecord('core', 'langman_del_lang', "$name; code: $code; DIR: $dir; ID: $codeId")) {
+            $this->setError(ERROR_NOT_CRITICAL, "delLang -> ".$this->logObject->errExp());
+        }
         return TRUE;
     }
 
@@ -187,7 +197,7 @@ class LangMan implements intLangMan{
             return FALSE;
         }
         if (!$this->dbLink->affected_rows) {
-            $this->setError(ERROR_NOT_FOUND, 'langList: there wasn\'t found any language');
+            $this->setError(ERROR_NOT_FOUND, 'langList: there was not found any language');
             return FALSE;
         }
         $xml = new \DOMDocument('1.0', 'utf-8');
@@ -691,7 +701,7 @@ class LangMan implements intLangMan{
         return TRUE;
     }
     
-    public function addTitleSection($section, $plugin) {
+    public function addTitleSection($section, $plugin, $log = TRUE) {
         $this->zeroizeError();
         if (!pregName40($section) || !pregPlugin($plugin)) {
             $this->setError(ERROR_INCORRECT_DATA, 'addTitleSection: incorrect incoming parameters');
@@ -717,10 +727,14 @@ class LangMan implements intLangMan{
             $this->setError(ERROR_NOT_EXECUTED, 'addTitleSection: '.$this->dbLink->error);
             return FALSE;
         }
-        return (int) $this->dbLink->insert_id;
+        $sectionId = (int) $this->dbLink->insert_id;
+        if ($log && !$this->logObject->newRecord('core', 'langman_add_title_sec', "$section; plugin: $plugin; ID: $sectionId")) {
+            $this->setError(ERROR_NOT_CRITICAL, "addTitleSection -> ".$this->logObject->errExp());
+        }
+        return $sectionId;
     }
     
-    public function delTitleSection($sid) {
+    public function delTitleSection($sid, $log = TRUE) {
         $this->zeroizeError();
         if (!is_integer($sid)) {
             $this->setError(ERROR_INCORRECT_DATA, 'delTitleSection: incorrect identifier');
@@ -751,13 +765,16 @@ class LangMan implements intLangMan{
             }
         }
         if (!$this->dbLink->affected_rows) {
-            $this->setError(ERROR_NOT_FOUND, 'delTitleSection: defined section doesn\'t exist or your are trying to delete section');
+            $this->setError(ERROR_NOT_FOUND, 'delTitleSection: defined section does not exist or your are trying to delete static section');
             return FALSE;
+        }
+        if ($log && !$this->logObject->newRecord('core', 'langman_del_title_sec', "ID: $sid")) {
+            $this->setError(ERROR_NOT_CRITICAL, "delTitleSection -> ".$this->logObject->errExp());
         }
         return TRUE;
     }
     
-    public function addTextSection($section, $plugin) {
+    public function addTextSection($section, $plugin, $log = TRUE) {
         $this->zeroizeError();
         if (!pregName40($section) || !pregPlugin($plugin)) {
             $this->setError(ERROR_INCORRECT_DATA, 'addTextSection: incorrect incoming parameters');
@@ -783,10 +800,14 @@ class LangMan implements intLangMan{
             $this->setError(ERROR_NOT_EXECUTED, 'addTextSection: '.$this->dbLink->error);
             return FALSE;
         }
-        return (int) $this->dbLink->insert_id;
+        $sectionId = (int) $this->dbLink->insert_id;
+        if ($log && !$this->logObject->newRecord('core', 'langman_add_text_sec', "$section; plugin: $plugin; ID: $sectionId")) {
+            $this->setError(ERROR_NOT_CRITICAL, "addTextSection -> ".$this->logObject->errExp());
+        }
+        return $sectionId;
     }
     
-    public function delTextSection($sid) {
+    public function delTextSection($sid, $log = TRUE) {
         $this->zeroizeError();
         if (!is_integer($sid)) {
             $this->setError(ERROR_INCORRECT_DATA, 'delTextSection: incorrect identifier');
@@ -817,13 +838,16 @@ class LangMan implements intLangMan{
             }
         }
         if (!$this->dbLink->affected_rows) {
-            $this->setError(ERROR_NOT_FOUND, 'delTextSection: defined section doesn\'t exist or your are trying to delete section');
+            $this->setError(ERROR_NOT_FOUND, 'delTextSection: defined section does not exist or your are trying to delete static section');
             return FALSE;
+        }
+        if ($log && !$this->logObject->newRecord('core', 'langman_del_text_sec', "ID: $sid")) {
+            $this->setError(ERROR_NOT_CRITICAL, "delTitleSection -> ".$this->logObject->errExp());
         }
         return TRUE;
     }
     
-    public function addTitleName($name, $section, $plugin) {
+    public function addTitleName($name, $section, $plugin, $log = TRUE) {
         $this->zeroizeError();
         if (!pregName40($name) || !pregName40($section) || !pregPlugin($plugin)) {
             $this->setError(ERROR_INCORRECT_DATA, 'addTitleName: incorrect incoming parameters');
@@ -852,10 +876,14 @@ class LangMan implements intLangMan{
             $this->setError(ERROR_NOT_EXECUTED, 'addTitleName: unable to create name -> '.$this->dbLink->error);
             return FALSE;
         }
-        return (int) $this->dbLink->insert_id;
+        $nameId = (int) $this->dbLink->insert_id;
+        if ($log && !$this->logObject->newRecord('core', 'langman_add_title_name', "$name; section: $section; plugin: $plugin; ID: $nameId")) {
+            $this->setError(ERROR_NOT_CRITICAL, "addTitleName -> ".$this->logObject->errExp());
+        }
+        return $nameId;
     }
     
-    public function delTitleName($nameid) {
+    public function delTitleName($nameid, $log = TRUE) {
         $this->zeroizeError();
         if (!is_integer($nameid)) {
             $this->setError(ERROR_INCORRECT_DATA, 'delTitleName: incorrect identifier');
@@ -883,13 +911,16 @@ class LangMan implements intLangMan{
             }
         }
         if (!$this->dbLink->affected_rows) {
-            $this->setError(ERROR_NOT_FOUND, 'delTitleName: defined tile name doesn\'t exist or your are trying to delete name from section');
+            $this->setError(ERROR_NOT_FOUND, 'delTitleName: defined tile name does not exist or your are trying to delete name from section');
             return FALSE;
+        }
+        if ($log && !$this->logObject->newRecord('core', 'langman_del_title_name', "ID: $nameid")) {
+            $this->setError(ERROR_NOT_CRITICAL, "delTitleName -> ".$this->logObject->errExp());
         }
         return TRUE;
     }
     
-    public function addTextName($name, $section, $plugin) {
+    public function addTextName($name, $section, $plugin, $log = TRUE) {
         $this->zeroizeError();
         if (!pregName40($name) || !pregName40($section) || !pregPlugin($plugin)) {
             $this->setError(ERROR_INCORRECT_DATA, 'addTextName: incorrect incoming parameters');
@@ -918,10 +949,14 @@ class LangMan implements intLangMan{
             $this->setError(ERROR_NOT_EXECUTED, 'addTextName: unable to create name -> '.$this->dbLink->error);
             return FALSE;
         }
-        return (int) $this->dbLink->insert_id;
+        $nameId = (int) $this->dbLink->insert_id;
+        if ($log && !$this->logObject->newRecord('core', 'langman_add_text_name', "$name; section: $section; plugin: $plugin; ID: $nameId")) {
+            $this->setError(ERROR_NOT_CRITICAL, " -> ".$this->logObject->errExp());
+        }
+        return $nameId;
     }
     
-    public function delTextName($nameid) {
+    public function delTextName($nameid, $log = TRUE) {
         $this->zeroizeError();
         if (!is_integer($nameid)) {
             $this->setError(ERROR_INCORRECT_DATA, 'delTextName: incorrect identifier');
@@ -949,13 +984,16 @@ class LangMan implements intLangMan{
             }
         }
         if (!$this->dbLink->affected_rows) {
-            $this->setError(ERROR_NOT_FOUND, 'delTextName: defined tile name doesn\'t exist or your are trying to delete name from section');
+            $this->setError(ERROR_NOT_FOUND, 'delTextName: defined tile name does not exist or your are trying to delete name from section');
             return FALSE;
+        }
+        if ($log && !$this->logObject->newRecord('core', 'langman_del_text_name', "ID: $nameid")) {
+            $this->setError(ERROR_NOT_CRITICAL, "delTexteName -> ".$this->logObject->errExp());
         }
         return TRUE;
     }
     
-    public function addTitle($title, $name, $section, $plugin, $code = MECCANO_DEF_LANG) {
+    public function addTitle($title, $name, $section, $plugin, $code = MECCANO_DEF_LANG, $log = TRUE) {
         $this->zeroizeError();
         if (!is_string($title) || !pregName40($name) || !pregName40($section) || !pregPlugin($plugin) || !pregLang($code)) {
             $this->setError(ERROR_INCORRECT_DATA, 'addTitle: incorrect incoming parameters');
@@ -1000,10 +1038,14 @@ class LangMan implements intLangMan{
             $this->setError(ERROR_NOT_EXECUTED, 'addTitle: unable to insert title -> '.$this->dbLink->error);
             return FALSE;
         }
-        return (int) $this->dbLink->insert_id;
+        $titleId = (int) $this->dbLink->insert_id;
+        if ($log && !$this->logObject->newRecord('core', 'langman_add_title', "name: $name; section: $section; plugin: $plugin; code: $code; ID: $titleId")) {
+            $this->setError(ERROR_NOT_CRITICAL, "addTitle -> ".$this->logObject->errExp());
+        }
+        return $titleId;
     }
     
-    public function delTitle($tid) {
+    public function delTitle($tid, $log = TRUE) {
         $this->zeroizeError();
         if (!is_integer($tid)) {
             $this->setError(ERROR_INCORRECT_DATA, 'delTitle: incorrect title identifier');
@@ -1017,17 +1059,20 @@ class LangMan implements intLangMan{
                 . "WHERE `t`.`id`=$tid "
                 . "AND `s`.`static`=0 ;");
         if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'delTitle: unable to delete defined title');
+            $this->setError(ERROR_NOT_EXECUTED, 'delTitle: unable to delete defined title -> '.$this->dbLink->error);
             return FALSE;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'delTitle: unable to find defined title');
             return FALSE;
         }
+        if ($log && !$this->logObject->newRecord('core', 'langman_del_title', "ID: $tid")) {
+            $this->setError(ERROR_NOT_CRITICAL, "delTitle -> ".$this->logObject->errExp());
+        }
         return TRUE;
     }
     
-    public function addText($title, $document, $name, $section, $plugin, $code = MECCANO_DEF_LANG) {
+    public function addText($title, $document, $name, $section, $plugin, $code = MECCANO_DEF_LANG, $log = TRUE) {
         $this->zeroizeError();
         if (!is_string($title) || !is_string($document) || !pregName40($name) || !pregName40($section) || !pregPlugin($plugin) || !pregLang($code)) {
             $this->setError(ERROR_INCORRECT_DATA, 'addText: incorrect incoming parameters');
@@ -1073,10 +1118,14 @@ class LangMan implements intLangMan{
             $this->setError(ERROR_NOT_EXECUTED, 'addText: unable to insert text -> '.$this->dbLink->error);
             return FALSE;
         }
-        return (int) $this->dbLink->insert_id;
+        $textId = (int) $this->dbLink->insert_id;
+        if ($log && !$this->logObject->newRecord('core', 'langman_add_text', "name: $name; section: $section; plugin: $plugin; code: $code; ID: $textId")) {
+            $this->setError(ERROR_NOT_CRITICAL, "addText -> ".$this->logObject->errExp());
+        }
+        return $textId;
     }
     
-    public function delText($tid) {
+    public function delText($tid, $log = TRUE) {
         $this->zeroizeError();
         if (!is_integer($tid)) {
             $this->setError(ERROR_INCORRECT_DATA, 'delText: incorrect text identifier');
@@ -1097,10 +1146,13 @@ class LangMan implements intLangMan{
             $this->setError(ERROR_NOT_FOUND, 'delText: unable to find defined text');
             return FALSE;
         }
+        if ($log && !$this->logObject->newRecord('core', 'langman_del_text', "ID: $tid")) {
+            $this->setError(ERROR_NOT_CRITICAL, "delText -> ".$this->logObject->errExp());
+        }
         return TRUE;
     }
     
-    public function updateTitle($id, $title) {
+    public function updateTitle($id, $title, $log = TRUE) {
         $this->zeroizeError();
         if (!is_integer($id) || !is_string($title)) {
             $this->setError(ERROR_INCORRECT_DATA, 'updateTitle: incorrect incoming parameters');
@@ -1123,10 +1175,13 @@ class LangMan implements intLangMan{
             $this->setError(ERROR_NOT_FOUND, 'updateTitle: unable to find defined title');
             return FALSE;
         }
+        if ($log && !$this->logObject->newRecord('core', 'langman_update_title', "ID: $id")) {
+            $this->setError(ERROR_NOT_CRITICAL, "updateTitle -> ".$this->logObject->errExp());
+        }
         return TRUE;
     }
     
-    public function updateText($id, $title, $document) {
+    public function updateText($id, $title, $document, $log = TRUE) {
         $this->zeroizeError();
         if (!is_integer($id) || !is_string($title) || !is_string($document)) {
             $this->setError(ERROR_INCORRECT_DATA, 'updateText: incorrect incoming parameters');
@@ -1149,6 +1204,9 @@ class LangMan implements intLangMan{
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'updateText: unable to find defined text');
             return FALSE;
+        }
+        if ($log && !$this->logObject->newRecord('core', 'langman_update_text', "ID: $id")) {
+            $this->setError(ERROR_NOT_CRITICAL, " -> ".$this->logObject->errExp());
         }
         return TRUE;
     }
