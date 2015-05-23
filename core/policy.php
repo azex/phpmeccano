@@ -470,6 +470,12 @@ class Policy implements intPolicy {
         $xml = new \DOMDocument('1.0', 'utf-8');
         $policyNode = $xml->createElement('policy');
         $xml->appendChild($policyNode);
+        $attr_plugin = $xml->createAttribute('plugin');
+        $attr_plugin->value = $plugin;
+        $policyNode->appendChild($attr_plugin);
+        $attr_group = $xml->createAttribute('group');
+        $attr_group->value = $groupId;
+        $policyNode->appendChild($attr_group);
         while ($row = $qList->fetch_row()) {
             $funcNode = $xml->createElement('function');
             $policyNode->appendChild($funcNode);
