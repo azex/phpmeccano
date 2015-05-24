@@ -25,15 +25,16 @@
 namespace core;
 
 require_once 'swconst.php';
+require_once 'policy.php';
 
 interface intLogMan {
-    function __construct(\mysqli $dbLink);
+    function __construct(\mysqli $dbLink, Policy $policyObject);
     public function errId();
     public function errExp();
     public function installEvents(\DOMDocument $events, $validate = TRUE);
     public function delEvents($plugin);
     public function newRecord($plugin, $event, $insertion = '');
-    public function clearLog();
+    public function clearLog($usePolicy = TRUE);
     public function sumLogAllPlugins($rpp = 20);
     public function getPageAllPlugins($pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE);
     public function sumLogByPlugin($plugin, $rpp = 20);
@@ -46,9 +47,11 @@ class LogMan implements intLogMan {
     private $errid = 0; // error's id
     private $errexp = ''; // error's explanation
     private $dbLink; // database link
+    private $policyObject; // policy object
     
-    public function __construct(\mysqli $dbLink) {
+    public function __construct(\mysqli $dbLink, Policy $policyObject) {
         $this->dbLink = $dbLink;
+        $this->policyObject = $policyObject;
     }
     
     private function setError($id, $exp) {
@@ -285,8 +288,12 @@ class LogMan implements intLogMan {
         return TRUE;
     }
 //    
-    public function clearLog() {
+    public function clearLog($usePolicy = TRUE) {
         $this->zeroizeError();
+        if ($usePolicy && !$this->policyObject->checkAccess('core', 'logman_clear_log')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "clearLog: restricted by the policy");
+            return FALSE;
+        }
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
             $this->setError(ERROR_RESTRICTED_ACCESS, 'clearLog: function execution was terminated because of using of limited authentication');
             return FALSE;
