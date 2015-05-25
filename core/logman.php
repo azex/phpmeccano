@@ -25,13 +25,12 @@
 namespace core;
 
 require_once 'swconst.php';
+require_once 'unifunctions.php';
+require_once 'extclass.php';
 require_once 'policy.php';
 
 interface intLogMan {
     function __construct(\mysqli $dbLink, Policy $policyObject);
-    public function errId();
-    public function errExp();
-    public function applyPolicy($flag);
     public function installEvents(\DOMDocument $events, $validate = TRUE);
     public function delEvents($plugin);
     public function newRecord($plugin, $event, $insertion = '');
@@ -44,45 +43,16 @@ interface intLogMan {
     public function getLogByPlugin($plugin, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE);
 }
 
-class LogMan implements intLogMan {
-    private $errid = 0; // error's id
-    private $errexp = ''; // error's explanation
+class LogMan extends serviceMethods implements intLogMan {
     private $dbLink; // database link
     private $policyObject; // policy objectobject
-    private $usePolicy = TRUE; // flag of the policy application
     
     public function __construct(\mysqli $dbLink, Policy $policyObject) {
         $this->dbLink = $dbLink;
         $this->policyObject = $policyObject;
     }
-    
-    private function setError($id, $exp) {
-        $this->errid = $id;
-        $this->errexp = $exp;
-    }
-    
-    private function zeroizeError() {
-        $this->errid = 0;        $this->errexp = '';
-    }
-    
-    public function errId() {
-        return $this->errid;
-    }
-    
-    public function errExp() {
-        return $this->errexp;
-    }
-    
-    public function applyPolicy($flag) {
-        if ($flag) {
-            $this->usePolicy = TRUE;
-        }
-        else {
-            $this->usePolicy = FALSE;
-        }
-    }
 
-        public function installEvents(\DOMDocument $events, $validate = TRUE) {
+    public function installEvents(\DOMDocument $events, $validate = TRUE) {
         $this->zeroizeError();
         if ($validate && !@$events->relaxNGValidate(MECCANO_CORE_DIR.'/validation-schemas/logman-events-v01.rng')) {
             $this->setError(ERROR_INCORRECT_DATA, 'installEvents: incorrect structure of the events');
