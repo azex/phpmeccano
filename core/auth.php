@@ -33,10 +33,11 @@ interface intAuth {
     public function __construct(\mysqli $dbLink, LogMan $logObject, Policy $policyObject);
     public function errId();
     public function errExp();
-    public function userLogin($username, $password, $log = FALSE, $useCookie = TRUE, $cookieTime = 'month', $usePolicy = TRUE);
-    public function isSession($usePolicy = TRUE);
+    public function applyPolicy($flag);
+    public function userLogin($username, $password, $log = FALSE, $useCookie = TRUE, $cookieTime = 'month');
+    public function isSession();
     public function userLogout();
-    public function getSession($log = FALSE, $usePolicy = TRUE);
+    public function getSession($log = FALSE);
 }
 
 class Auth implements intAuth {
@@ -45,6 +46,7 @@ class Auth implements intAuth {
     private $dbLink; // database link
     private $logObject; // log object
     private $policyObject; // policy object
+    private $usePolicy = TRUE; // flag of the policy application
     
     public function __construct(\mysqli $dbLink, LogMan $logObject, Policy $policyObject) {
         if (!session_id()) {
@@ -72,9 +74,19 @@ class Auth implements intAuth {
         return $this->errexp;
     }
     
-    public function userLogin($username, $password, $log = FALSE, $useCookie = TRUE, $cookieTime = 'month', $usePolicy = TRUE) {
+    public function applyPolicy($flag) {
+        if ($flag) {
+            $this->usePolicy = TRUE;
+        }
+        else {
+            $this->usePolicy = FALSE;
+        }
+    }
+
+
+    public function userLogin($username, $password, $log = FALSE, $useCookie = TRUE, $cookieTime = 'month') {
         $this->zeroizeError();
-        if ($usePolicy && !$this->policyObject->checkAccess('core', 'auth_session')) {
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'auth_session')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "userLogin: restricted by the policy");
             return FALSE;
         }
@@ -165,9 +177,9 @@ class Auth implements intAuth {
         return TRUE;
     }
     
-    public function isSession($usePolicy = TRUE) {
+    public function isSession() {
         $this->zeroizeError();
-        if ($usePolicy && !$this->policyObject->checkAccess('core', 'auth_session')) {
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'auth_session')) {
             $this->userLogout();
             $this->setError(ERROR_RESTRICTED_ACCESS, "isSession: restricted by the policy");
             return FALSE;
@@ -241,9 +253,9 @@ class Auth implements intAuth {
         return FALSE;
     }
     
-    public function getSession($log = FALSE, $usePolicy = TRUE) {
+    public function getSession($log = FALSE) {
         $this->zeroizeError();
-        if ($usePolicy && !$this->policyObject->checkAccess('core', 'auth_session')) {
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'auth_session')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "getSession: restricted by the policy");
             return FALSE;
         }

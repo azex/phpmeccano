@@ -31,10 +31,11 @@ interface intLogMan {
     function __construct(\mysqli $dbLink, Policy $policyObject);
     public function errId();
     public function errExp();
+    public function applyPolicy($flag);
     public function installEvents(\DOMDocument $events, $validate = TRUE);
     public function delEvents($plugin);
     public function newRecord($plugin, $event, $insertion = '');
-    public function clearLog($usePolicy = TRUE);
+    public function clearLog();
     public function sumLogAllPlugins($rpp = 20);
     public function getPageAllPlugins($pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE);
     public function sumLogByPlugin($plugin, $rpp = 20);
@@ -47,7 +48,8 @@ class LogMan implements intLogMan {
     private $errid = 0; // error's id
     private $errexp = ''; // error's explanation
     private $dbLink; // database link
-    private $policyObject; // policy object
+    private $policyObject; // policy objectobject
+    private $usePolicy = TRUE; // flag of the policy application
     
     public function __construct(\mysqli $dbLink, Policy $policyObject) {
         $this->dbLink = $dbLink;
@@ -71,7 +73,16 @@ class LogMan implements intLogMan {
         return $this->errexp;
     }
     
-    public function installEvents(\DOMDocument $events, $validate = TRUE) {
+    public function applyPolicy($flag) {
+        if ($flag) {
+            $this->usePolicy = TRUE;
+        }
+        else {
+            $this->usePolicy = FALSE;
+        }
+    }
+
+        public function installEvents(\DOMDocument $events, $validate = TRUE) {
         $this->zeroizeError();
         if ($validate && !@$events->relaxNGValidate(MECCANO_CORE_DIR.'/validation-schemas/logman-events-v01.rng')) {
             $this->setError(ERROR_INCORRECT_DATA, 'installEvents: incorrect structure of the events');
@@ -288,9 +299,9 @@ class LogMan implements intLogMan {
         return TRUE;
     }
 //    
-    public function clearLog($usePolicy = TRUE) {
+    public function clearLog() {
         $this->zeroizeError();
-        if ($usePolicy && !$this->policyObject->checkAccess('core', 'logman_clear_log')) {
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'logman_clear_log')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "clearLog: restricted by the policy");
             return FALSE;
         }
