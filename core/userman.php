@@ -24,15 +24,10 @@
 
 namespace core;
 
-require_once 'swconst.php';
-require_once 'unifunctions.php';
 require_once 'logman.php';
-require_once 'policy.php';
 
 interface intUserMan {
     public function __construct(\mysqli $dbLink, LogMan $logObject, Policy $policyObject);
-    public function errId();
-    public function errExp();
     public function createGroup($groupName, $description, $log = TRUE);
     public function groupStatus($groupId, $active, $log = TRUE);
     public function groupExists($groupName);
@@ -65,9 +60,7 @@ interface intUserMan {
     public function setUserLang($userId, $code = MECCANO_DEF_LANG);
 }
 
-class UserMan implements intUserMan{
-    private $errid = 0; // error's id
-    private $errexp = ''; // error's explanation
+class UserMan extends serviceMethods implements intUserMan{
     private $dbLink; // database link
     private $logObject; // log object
     private $policyObject; // policy object
@@ -76,23 +69,6 @@ class UserMan implements intUserMan{
         $this->dbLink = $dbLink;
         $this->logObject = $logObject;
         $this->policyObject = $policyObject;
-    }
-    
-    private function setError($id, $exp) {
-        $this->errid = $id;
-        $this->errexp = $exp;
-    }
-    
-    private function zeroizeError() {
-        $this->errid = 0;        $this->errexp = '';
-    }
-    
-    public function errId() {
-        return $this->errid;
-    }
-    
-    public function errExp() {
-        return $this->errexp;
     }
     
     //group methods
