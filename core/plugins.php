@@ -24,15 +24,11 @@
 
 namespace core;
 
-require_once 'swconst.php';
-require_once 'unifunctions.php';
 require_once 'logman.php';
 require_once 'files.php';
 
 interface intPlugins {
     public function __construct(\mysqli $dbLink, LogMan $logObject, Policy $policyObject, LangMan $langmanObject);
-    public function errId();
-    public function errExp();
     public function unpack($package);
     public function delUnpacked($plugin);
     public function listUnpacked();
@@ -44,9 +40,7 @@ interface intPlugins {
     public function aboutInstalled($plugin);
 }
 
-class Plugins implements intPlugins {
-    private $errid = 0; // error's id
-    private $errexp = ''; // error's explanation
+class Plugins extends serviceMethods implements intPlugins {
     private $dbLink; // database link
     private $logObject; // log object
     private $policyObject; // policy object
@@ -57,23 +51,6 @@ class Plugins implements intPlugins {
         $this->logObject = $logObject;
         $this->policyObject = $policyObject;
         $this->langmanObject = $langmanObject;
-    }
-    
-    private function setError($id, $exp) {
-        $this->errid = $id;
-        $this->errexp = $exp;
-    }
-    
-    private function zeroizeError() {
-        $this->errid = 0;        $this->errexp = '';
-    }
-    
-    public function errId() {
-        return $this->errid;
-    }
-    
-    public function errExp() {
-        return $this->errexp;
     }
     
     public function unpack($package) {
@@ -509,7 +486,7 @@ class Plugins implements intPlugins {
     public function delInstalled($plugin, $keepData = TRUE, $log = TRUE) {
         $this->zeroizeError();
         if (!pregPlugin($plugin) || !is_bool($keepData)) {
-            $this->setError(ERROR_INCORRECT_DATA, "install: incorrect argument(s)");
+            $this->setError(ERROR_INCORRECT_DATA, "delInstalled: incorrect argument(s)");
             return FALSE;
         }
         // check whether the plugin installed
@@ -517,7 +494,7 @@ class Plugins implements intPlugins {
                 . "FROM `".MECCANO_TPREF."_core_plugins_installed` "
                 . "WHERE `name`='$plugin' ;");
         if (!$this->dbLink->affected_rows) {
-            $this->setError(ERROR_NOT_FOUND, "delInstaled: plugin not found");
+            $this->setError(ERROR_NOT_FOUND, "delInstalled: plugin not found");
             return FALSE;
         }
         if ($this->dbLink->errno) {
