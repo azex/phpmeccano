@@ -24,14 +24,10 @@
 
 namespace core;
 
-require_once 'swconst.php';
-require_once 'unifunctions.php';
 require_once 'logman.php';
 
 interface intLangMan {
-    public function __construct(\mysqli $dbLink, LogMan $logObject);
-    public function errId();
-    public function errExp();
+    public function __construct(\mysqli $dbLink, LogMan $logObject, Policy $policyObject);
     public function addLang($code, $name, $log = TRUE);
     public function delLang($code, $log = TRUE);
     public function langList();
@@ -74,32 +70,15 @@ interface intLangMan {
     public function getTitleNamesXML($plugin, $section, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('id'), $ascent = FALSE);
 }
 
-class LangMan implements intLangMan{
-    private $errid = 0; // error's id
-    private $errexp = ''; // error's explanation
+class LangMan extends serviceMethods implements intLangMan{
     private $dbLink; // database link
     private $logObject; // log object
+    private $policyObject; // policy objectobject
     
-    public function __construct(\mysqli $dbLink, LogMan $logObject) {
+    public function __construct(\mysqli $dbLink, LogMan $logObject, Policy $policyObject) {
         $this->dbLink = $dbLink;
         $this->logObject = $logObject;
-    }
-    
-    private function setError($id, $exp) {
-        $this->errid = $id;
-        $this->errexp = $exp;
-    }
-    
-    private function zeroizeError() {
-        $this->errid = 0;        $this->errexp = '';
-    }
-
-    public function errId() {
-        return $this->errid;
-    }
-    
-    public function errExp() {
-        return $this->errexp;
+        $this->policyObject = $policyObject;
     }
     
     public function addLang($code, $name, $dir = 'ltr', $log = TRUE) {
