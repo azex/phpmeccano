@@ -140,6 +140,10 @@ class Policy extends serviceMethods implements intPolicy {
     
     public function funcAccess($plugin, $func, $groupId, $access = TRUE) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->checkAccess('core', 'policy_func_access')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "funcAccess: restricted by the policy");
+            return FALSE;
+        }
         if (!is_integer($groupId) || !pregPlugin($plugin) || !pregPlugin($func)) {
             $this->setError(ERROR_NOT_EXECUTED, 'funcAccess: incorect type of incoming parameters');
             return FALSE;
@@ -410,6 +414,10 @@ class Policy extends serviceMethods implements intPolicy {
     
     public function groupPolicyList($plugin, $groupId, $code = MECCANO_DEF_LANG) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->checkAccess('core', 'policy_list_about')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "groupPolicyList: restricted by the policy");
+            return FALSE;
+        }
         if (!pregPlugin($plugin) || !(is_integer($groupId) || is_bool($groupId)) || !pregLang($code)) {
             $this->setError(ERROR_INCORRECT_DATA, 'groupPolicyList: incorect incoming parameters');
             return FALSE;
@@ -469,6 +477,10 @@ class Policy extends serviceMethods implements intPolicy {
     
     public function getPolicyDescById($id) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->checkAccess('core', 'policy_list_about')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "getPolicyDescById: restricted by the policy");
+            return FALSE;
+        }
         if (!is_integer($id)) {
             $this->setError(ERROR_INCORRECT_DATA, 'getPolicyDescById: identifier must be integer');
             return FALSE;
