@@ -351,6 +351,10 @@ class LogMan implements intLogMan {
     
     public function getPageAllPlugins($pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'logman_get_log')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "getPageAllPlugins: restricted by the policy");
+            return FALSE;
+        }
         if (!pregLang($code) || !is_integer($pageNumber) || !is_integer($totalPages) || !is_integer($rpp)) {
             $this->setError(ERROR_INCORRECT_DATA, 'getPage: check arguments');
             return FALSE;
@@ -455,6 +459,10 @@ class LogMan implements intLogMan {
     
     public function getPageByPlugin($plugin, $pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'logman_get_log')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "getPageByPlugin: restricted by the policy");
+            return FALSE;
+        }
         if (!pregPlugin($plugin) || !pregLang($code) || !is_integer($pageNumber) || !is_integer($totalPages) || !is_integer($rpp)) {
             $this->setError(ERROR_INCORRECT_DATA, 'getPage: check arguments');
             return FALSE;
@@ -532,6 +540,10 @@ class LogMan implements intLogMan {
     
     public function getLogAllPlugins($code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'logman_get_log')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "getLogAllPlugins: restricted by the policy");
+            return FALSE;
+        }
         if (!pregLang($code)) {
             $this->setError(ERROR_INCORRECT_DATA, 'getPage: check arguments');
             return FALSE;
@@ -588,6 +600,10 @@ class LogMan implements intLogMan {
     
     public function getLogByPlugin($plugin, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'logman_get_log')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "getLogByPlugin: restricted by the policy");
+            return FALSE;
+        }
         if (!pregPlugin($plugin) || !pregLang($code)) {
             $this->setError(ERROR_INCORRECT_DATA, 'getPage: check arguments');
             return FALSE;
