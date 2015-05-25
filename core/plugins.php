@@ -55,6 +55,10 @@ class Plugins extends serviceMethods implements intPlugins {
     
     public function unpack($package) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'plugins_install')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "unpack: restricted by the policy");
+            return FALSE;
+        }
         $zip = new \ZipArchive();
         $zipOpen = $zip->open($package);
         if ($zipOpen === TRUE) {
@@ -160,6 +164,10 @@ class Plugins extends serviceMethods implements intPlugins {
     
     public function delUnpacked($plugin) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'plugins_install')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "delUnpacked: restricted by the policy");
+            return FALSE;
+        }
         if (!pregPlugin($plugin)) {
             $this->setError(ERROR_INCORRECT_DATA, 'delUnpacked: incorrect plugin name');
             return FALSE;
@@ -191,6 +199,10 @@ class Plugins extends serviceMethods implements intPlugins {
     
     public function listUnpacked() {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'plugins_install')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "listUnpacked: restricted by the policy");
+            return FALSE;
+        }
         $qUncpacked = $this->dbLink->query("SELECT `short`, `full`, `version` "
                 . "FROM `".MECCANO_TPREF."_core_plugins_unpacked` ;");
         if ($this->dbLink->errno) {
@@ -229,6 +241,10 @@ class Plugins extends serviceMethods implements intPlugins {
     
     public function aboutUnpacked($plugin) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'plugins_install')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "aboutUnpacked: restricted by the policy");
+            return FALSE;
+        }
         if (!pregPlugin($plugin)) {
             $this->setError(ERROR_INCORRECT_DATA, 'aboutUnpacked: incorrect plugin name');
             return FALSE;
@@ -300,6 +316,10 @@ class Plugins extends serviceMethods implements intPlugins {
     
     public function install($plugin, $reset = FALSE, $log = TRUE) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'plugins_install')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "install: restricted by the policy");
+            return FALSE;
+        }
         if (!pregPlugin($plugin) || !is_bool($reset)) {
             $this->setError(ERROR_INCORRECT_DATA, "install: incorrect argument(s)");
             return FALSE;
@@ -485,6 +505,10 @@ class Plugins extends serviceMethods implements intPlugins {
     
     public function delInstalled($plugin, $keepData = TRUE, $log = TRUE) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'plugins_del_installed')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "delInstalled: restricted by the policy");
+            return FALSE;
+        }
         if (!pregPlugin($plugin) || !is_bool($keepData)) {
             $this->setError(ERROR_INCORRECT_DATA, "delInstalled: incorrect argument(s)");
             return FALSE;
@@ -576,6 +600,10 @@ class Plugins extends serviceMethods implements intPlugins {
     
     public function listInstalled() {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'plugins_installed')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "listInstalled: restricted by the policy");
+            return FALSE;
+        }
         $qInstalled = $this->dbLink->query("SELECT `i`.`name`, `a`.`full`, `i`.`version`, `i`.`time` "
                 . "FROM `".MECCANO_TPREF."_core_plugins_installed` `i` "
                 . "JOIN `".MECCANO_TPREF."_core_plugins_installed_about` `a` "
@@ -600,6 +628,10 @@ class Plugins extends serviceMethods implements intPlugins {
     
     public function aboutInstalled($plugin) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'plugins_installed')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "aboutInstalled: restricted by the policy");
+            return FALSE;
+        }
         if (!pregPlugin($plugin)) {
             $this->setError(ERROR_INCORRECT_DATA, "aboutInstalled: incorrect plugin name");
             return FALSE;
