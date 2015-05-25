@@ -26,27 +26,22 @@ namespace core;
 
 require_once 'swconst.php';
 require_once 'unifunctions.php';
+require_once 'extclass.php';
 require_once 'logman.php';
 require_once 'policy.php';
 
 interface intAuth {
     public function __construct(\mysqli $dbLink, LogMan $logObject, Policy $policyObject);
-    public function errId();
-    public function errExp();
-    public function applyPolicy($flag);
     public function userLogin($username, $password, $log = FALSE, $useCookie = TRUE, $cookieTime = 'month');
     public function isSession();
     public function userLogout();
     public function getSession($log = FALSE);
 }
 
-class Auth implements intAuth {
-    private $errid = 0; // error's id
-    private $errexp = ''; // error's explanation
+class Auth extends serviceMethods implements intAuth {
     private $dbLink; // database link
     private $logObject; // log object
     private $policyObject; // policy object
-    private $usePolicy = TRUE; // flag of the policy application
     
     public function __construct(\mysqli $dbLink, LogMan $logObject, Policy $policyObject) {
         if (!session_id()) {
@@ -57,33 +52,6 @@ class Auth implements intAuth {
         $this->policyObject = $policyObject;
     }
     
-    private function setError($id, $exp) {
-        $this->errid = $id;
-        $this->errexp = $exp;
-    }
-    
-    private function zeroizeError() {
-        $this->errid = 0;        $this->errexp = '';
-    }
-    
-    public function errId() {
-        return $this->errid;
-    }
-    
-    public function errExp() {
-        return $this->errexp;
-    }
-    
-    public function applyPolicy($flag) {
-        if ($flag) {
-            $this->usePolicy = TRUE;
-        }
-        else {
-            $this->usePolicy = FALSE;
-        }
-    }
-
-
     public function userLogin($username, $password, $log = FALSE, $useCookie = TRUE, $cookieTime = 'month') {
         $this->zeroizeError();
         if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'auth_session')) {
