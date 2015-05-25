@@ -26,11 +26,10 @@ namespace core;
 
 require_once 'swconst.php';
 require_once 'unifunctions.php';
+require_once 'extclass.php';
 
 interface intPolicy {
     function __construct(\mysqli $dbLink);
-    public function errId();
-    public function errExp();
     public function delPolicy($plugin);
     public function addGroup($id);
     public function delGroup($id);
@@ -41,30 +40,11 @@ interface intPolicy {
     public function getPolicyDescById($id);
 }
 
-class Policy implements intPolicy {
-    private $errid = 0; // error's id
-    private $errexp = ''; // error's explanation
+class Policy extends serviceMethods implements intPolicy {
     private $dbLink; // database link
     
     public function __construct(\mysqli $dbLink) {
         $this->dbLink = $dbLink;
-    }
-    
-    private function setError($id, $exp) {
-        $this->errid = $id;
-        $this->errexp = $exp;
-    }
-    
-    private function zeroizeError() {
-        $this->errid = 0;        $this->errexp = '';
-    }
-
-    public function errId() {
-        return $this->errid;
-    }
-    
-    public function errExp() {
-        return $this->errexp;
     }
     
     public function delPolicy($plugin) {
