@@ -26,11 +26,10 @@ namespace core;
 
 require_once 'swconst.php';
 require_once 'unifunctions.php';
+require_once 'extclass.php';
 
 interface intPolicy {
     function __construct(\mysqli $dbLink);
-    public function errId();
-    public function errExp();
     public function delPolicy($plugin);
     public function addGroup($id);
     public function delGroup($id);
@@ -41,30 +40,11 @@ interface intPolicy {
     public function getPolicyDescById($id);
 }
 
-class Policy implements intPolicy {
-    private $errid = 0; // error's id
-    private $errexp = ''; // error's explanation
+class Policy extends serviceMethods implements intPolicy {
     private $dbLink; // database link
     
     public function __construct(\mysqli $dbLink) {
         $this->dbLink = $dbLink;
-    }
-    
-    private function setError($id, $exp) {
-        $this->errid = $id;
-        $this->errexp = $exp;
-    }
-    
-    private function zeroizeError() {
-        $this->errid = 0;        $this->errexp = '';
-    }
-
-    public function errId() {
-        return $this->errid;
-    }
-    
-    public function errExp() {
-        return $this->errexp;
     }
     
     public function delPolicy($plugin) {
@@ -160,6 +140,10 @@ class Policy implements intPolicy {
     
     public function funcAccess($plugin, $func, $groupId, $access = TRUE) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->checkAccess('core', 'policy_func_access')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "funcAccess: restricted by the policy");
+            return FALSE;
+        }
         if (!is_integer($groupId) || !pregPlugin($plugin) || !pregPlugin($func)) {
             $this->setError(ERROR_NOT_EXECUTED, 'funcAccess: incorect type of incoming parameters');
             return FALSE;
@@ -430,6 +414,10 @@ class Policy implements intPolicy {
     
     public function groupPolicyList($plugin, $groupId, $code = MECCANO_DEF_LANG) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->checkAccess('core', 'policy_list_about')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "groupPolicyList: restricted by the policy");
+            return FALSE;
+        }
         if (!pregPlugin($plugin) || !(is_integer($groupId) || is_bool($groupId)) || !pregLang($code)) {
             $this->setError(ERROR_INCORRECT_DATA, 'groupPolicyList: incorect incoming parameters');
             return FALSE;
@@ -470,6 +458,12 @@ class Policy implements intPolicy {
         $xml = new \DOMDocument('1.0', 'utf-8');
         $policyNode = $xml->createElement('policy');
         $xml->appendChild($policyNode);
+        $attr_plugin = $xml->createAttribute('plugin');
+        $attr_plugin->value = $plugin;
+        $policyNode->appendChild($attr_plugin);
+        $attr_group = $xml->createAttribute('group');
+        $attr_group->value = $groupId;
+        $policyNode->appendChild($attr_group);
         while ($row = $qList->fetch_row()) {
             $funcNode = $xml->createElement('function');
             $policyNode->appendChild($funcNode);
@@ -483,6 +477,10 @@ class Policy implements intPolicy {
     
     public function getPolicyDescById($id) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->checkAccess('core', 'policy_list_about')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "getPolicyDescById: restricted by the policy");
+            return FALSE;
+        }
         if (!is_integer($id)) {
             $this->setError(ERROR_INCORRECT_DATA, 'getPolicyDescById: identifier must be integer');
             return FALSE;

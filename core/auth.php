@@ -24,53 +24,36 @@
 
 namespace core;
 
-require_once 'swconst.php';
-require_once 'unifunctions.php';
 require_once 'logman.php';
 
 interface intAuth {
-    public function __construct(\mysqli $dbLink, LogMan $logObject);
-    public function errId();
-    public function errExp();
+    public function __construct(\mysqli $dbLink, LogMan $logObject, Policy $policyObject);
     public function userLogin($username, $password, $log = FALSE, $useCookie = TRUE, $cookieTime = 'month');
     public function isSession();
     public function userLogout();
     public function getSession($log = FALSE);
 }
 
-class Auth implements intAuth {
-    private $errid = 0; // error's id
-    private $errexp = ''; // error's explanation
+class Auth extends serviceMethods implements intAuth {
     private $dbLink; // database link
     private $logObject; // log object
+    private $policyObject; // policy object
     
-    public function __construct(\mysqli $dbLink, LogMan $logObject) {
+    public function __construct(\mysqli $dbLink, LogMan $logObject, Policy $policyObject) {
         if (!session_id()) {
             session_start();
         }
         $this->dbLink = $dbLink;
         $this->logObject = $logObject;
-    }
-    
-    private function setError($id, $exp) {
-        $this->errid = $id;
-        $this->errexp = $exp;
-    }
-    
-    private function zeroizeError() {
-        $this->errid = 0;        $this->errexp = '';
-    }
-    
-    public function errId() {
-        return $this->errid;
-    }
-    
-    public function errExp() {
-        return $this->errexp;
+        $this->policyObject = $policyObject;
     }
     
     public function userLogin($username, $password, $log = FALSE, $useCookie = TRUE, $cookieTime = 'month') {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'auth_session')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "userLogin: restricted by the policy");
+            return FALSE;
+        }
         if (isset($_SESSION[AUTH_USER_ID])) {
             $this->setError(ERROR_NOT_EXECUTED, 'userLogin: finish current session before starting new');
             return FALSE;
@@ -160,6 +143,11 @@ class Auth implements intAuth {
     
     public function isSession() {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'auth_session')) {
+            $this->userLogout();
+            $this->setError(ERROR_RESTRICTED_ACCESS, "isSession: restricted by the policy");
+            return FALSE;
+        }
         if (isset($_SESSION[AUTH_USER_ID])) {
             if ($_SESSION[AUTH_IP] != $_SERVER['REMOTE_ADDR'] || $_SESSION[AUTH_USER_AGENT] != $_SERVER['HTTP_USER_AGENT']) {
                 $this->userLogout();
@@ -231,6 +219,10 @@ class Auth implements intAuth {
     
     public function getSession($log = FALSE) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'auth_session')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "getSession: restricted by the policy");
+            return FALSE;
+        }
         if (!isset($_SESSION[AUTH_USER_ID]) && isset($_COOKIE[AUTH_UNIQUE_SESSION_ID]) && pregIdent($_COOKIE[AUTH_UNIQUE_SESSION_ID])) {
             $qResult = $this->dbLink->query("SELECT `p`.`id`, `p`.`limited`, `u`.`id`, `u`.`username`, `l`.`code`, `l`.`dir` "
                     . "FROM `".MECCANO_TPREF."_core_auth_usi` `s` "

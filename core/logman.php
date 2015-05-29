@@ -25,11 +25,12 @@
 namespace core;
 
 require_once 'swconst.php';
+require_once 'unifunctions.php';
+require_once 'extclass.php';
+require_once 'policy.php';
 
 interface intLogMan {
-    function __construct(\mysqli $dbLink);
-    public function errId();
-    public function errExp();
+    function __construct(\mysqli $dbLink, Policy $policyObject);
     public function installEvents(\DOMDocument $events, $validate = TRUE);
     public function delEvents($plugin);
     public function newRecord($plugin, $event, $insertion = '');
@@ -42,32 +43,15 @@ interface intLogMan {
     public function getLogByPlugin($plugin, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE);
 }
 
-class LogMan implements intLogMan {
-    private $errid = 0; // error's id
-    private $errexp = ''; // error's explanation
+class LogMan extends serviceMethods implements intLogMan {
     private $dbLink; // database link
+    private $policyObject; // policy objectobject
     
-    public function __construct(\mysqli $dbLink) {
+    public function __construct(\mysqli $dbLink, Policy $policyObject) {
         $this->dbLink = $dbLink;
+        $this->policyObject = $policyObject;
     }
-    
-    private function setError($id, $exp) {
-        $this->errid = $id;
-        $this->errexp = $exp;
-    }
-    
-    private function zeroizeError() {
-        $this->errid = 0;        $this->errexp = '';
-    }
-    
-    public function errId() {
-        return $this->errid;
-    }
-    
-    public function errExp() {
-        return $this->errexp;
-    }
-    
+
     public function installEvents(\DOMDocument $events, $validate = TRUE) {
         $this->zeroizeError();
         if ($validate && !@$events->relaxNGValidate(MECCANO_CORE_DIR.'/validation-schemas/logman-events-v01.rng')) {
@@ -287,6 +271,10 @@ class LogMan implements intLogMan {
 //    
     public function clearLog() {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'logman_clear_log')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "clearLog: restricted by the policy");
+            return FALSE;
+        }
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
             $this->setError(ERROR_RESTRICTED_ACCESS, 'clearLog: function execution was terminated because of using of limited authentication');
             return FALSE;
@@ -333,6 +321,10 @@ class LogMan implements intLogMan {
     
     public function getPageAllPlugins($pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'logman_get_log')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "getPageAllPlugins: restricted by the policy");
+            return FALSE;
+        }
         if (!pregLang($code) || !is_integer($pageNumber) || !is_integer($totalPages) || !is_integer($rpp)) {
             $this->setError(ERROR_INCORRECT_DATA, 'getPage: check arguments');
             return FALSE;
@@ -437,6 +429,10 @@ class LogMan implements intLogMan {
     
     public function getPageByPlugin($plugin, $pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'logman_get_log')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "getPageByPlugin: restricted by the policy");
+            return FALSE;
+        }
         if (!pregPlugin($plugin) || !pregLang($code) || !is_integer($pageNumber) || !is_integer($totalPages) || !is_integer($rpp)) {
             $this->setError(ERROR_INCORRECT_DATA, 'getPage: check arguments');
             return FALSE;
@@ -514,6 +510,10 @@ class LogMan implements intLogMan {
     
     public function getLogAllPlugins($code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'logman_get_log')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "getLogAllPlugins: restricted by the policy");
+            return FALSE;
+        }
         if (!pregLang($code)) {
             $this->setError(ERROR_INCORRECT_DATA, 'getPage: check arguments');
             return FALSE;
@@ -570,6 +570,10 @@ class LogMan implements intLogMan {
     
     public function getLogByPlugin($plugin, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'logman_get_log')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "getLogByPlugin: restricted by the policy");
+            return FALSE;
+        }
         if (!pregPlugin($plugin) || !pregLang($code)) {
             $this->setError(ERROR_INCORRECT_DATA, 'getPage: check arguments');
             return FALSE;

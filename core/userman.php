@@ -24,15 +24,10 @@
 
 namespace core;
 
-require_once 'swconst.php';
-require_once 'unifunctions.php';
 require_once 'logman.php';
-require_once 'policy.php';
 
 interface intUserMan {
     public function __construct(\mysqli $dbLink, LogMan $logObject, Policy $policyObject);
-    public function errId();
-    public function errExp();
     public function createGroup($groupName, $description, $log = TRUE);
     public function groupStatus($groupId, $active, $log = TRUE);
     public function groupExists($groupName);
@@ -65,9 +60,7 @@ interface intUserMan {
     public function setUserLang($userId, $code = MECCANO_DEF_LANG);
 }
 
-class UserMan implements intUserMan{
-    private $errid = 0; // error's id
-    private $errexp = ''; // error's explanation
+class UserMan extends serviceMethods implements intUserMan{
     private $dbLink; // database link
     private $logObject; // log object
     private $policyObject; // policy object
@@ -78,26 +71,13 @@ class UserMan implements intUserMan{
         $this->policyObject = $policyObject;
     }
     
-    private function setError($id, $exp) {
-        $this->errid = $id;
-        $this->errexp = $exp;
-    }
-    
-    private function zeroizeError() {
-        $this->errid = 0;        $this->errexp = '';
-    }
-    
-    public function errId() {
-        return $this->errid;
-    }
-    
-    public function errExp() {
-        return $this->errexp;
-    }
-    
     //group methods
     public function createGroup($groupName, $description, $log = TRUE) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'userman_create_group')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "createGroup: restricted by the policy");
+            return FALSE;
+        }
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
             $this->setError(ERROR_RESTRICTED_ACCESS, 'createGroup: function execution was terminated because of using of limited authentication');
             return FALSE;
@@ -126,6 +106,10 @@ class UserMan implements intUserMan{
     
     public function groupStatus($groupId, $active, $log = TRUE) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'userman_group_status')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "groupStatus: restricted by the policy");
+            return FALSE;
+        }
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
             $this->setError(ERROR_RESTRICTED_ACCESS, 'groupStatus: function execution was terminated because of using of limited authentication');
             return FALSE;
@@ -183,6 +167,10 @@ class UserMan implements intUserMan{
     
     public function moveGroupTo($groupId, $destId, $log = TRUE) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'userman_move_group')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "moveGroupTo: restricted by the policy");
+            return FALSE;
+        }
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
             $this->setError(ERROR_RESTRICTED_ACCESS, 'moveGroupTo: function execution was terminated because of using of limited authentication');
             return FALSE;
@@ -221,6 +209,10 @@ class UserMan implements intUserMan{
     
     public function aboutGroup($groupId) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'userman_get_groups')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "aboutGroup: restricted by the policy");
+            return FALSE;
+        }
         if (!is_integer($groupId)) {
             $this->setError(ERROR_INCORRECT_DATA, 'aboutGroup: identifier must be integer');
             return FALSE;
@@ -254,6 +246,10 @@ class UserMan implements intUserMan{
     
     public function setGroupName($groupId, $groupName, $log = TRUE) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'userman_set_about_group')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "setGroupName: restricted by the policy");
+            return FALSE;
+        }
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
             $this->setError(ERROR_RESTRICTED_ACCESS, 'setGroupName: function execution was terminated because of using of limited authentication');
             return FALSE;
@@ -281,6 +277,10 @@ class UserMan implements intUserMan{
     
     public function setGroupDesc($groupId, $description, $log = TRUE) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'userman_set_about_group')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "setGroupDesc: restricted by the policy");
+            return FALSE;
+        }
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
             $this->setError(ERROR_RESTRICTED_ACCESS, 'setGroupDesc: function execution was terminated because of using of limited authentication');
             return FALSE;
@@ -309,6 +309,10 @@ class UserMan implements intUserMan{
     
     public function delGroup($groupId, $log = TRUE) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'userman_del_group')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "delGroup: restricted by the policy");
+            return FALSE;
+        }
         if (!is_integer($groupId)) {
             $this->setError(ERROR_INCORRECT_DATA, 'delGroup: identifier must be integer');
             return FALSE;
@@ -387,6 +391,10 @@ class UserMan implements intUserMan{
     
     public function getGroups($pageNumber, $totalGroups, $rpp = 20, $orderBy = array('id'), $ascent = FALSE) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'userman_get_groups')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "getGroups: restricted by the policy");
+            return FALSE;
+        }
         if (!is_integer($pageNumber) || !is_integer($totalGroups) || !is_integer($rpp)) {
             $this->setError(ERROR_INCORRECT_DATA, 'getGroups: values of $pageNumber, $totalGroups, $gpp must be integers');
             return FALSE;
@@ -451,6 +459,10 @@ class UserMan implements intUserMan{
     
     public function getAllGroups($orderBy = array('id'), $ascent = FALSE) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'userman_get_groups')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "getAllGroups: restricted by the policy");
+            return FALSE;
+        }
         $rightEntry = array('id', 'name', 'time', 'active');
         if (is_array($orderBy)) {
             $arrayLen = count($orderBy);
@@ -499,6 +511,10 @@ class UserMan implements intUserMan{
     //user methods
     public function createUser($username, $password, $email, $groupId, $active = TRUE, $langCode = MECCANO_DEF_LANG, $log = TRUE) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'userman_create_user')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "createUser: restricted by the policy");
+            return FALSE;
+        }
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
             $this->setError(ERROR_RESTRICTED_ACCESS, 'createUser: function execution was terminated because of using of limited authentication');
             return FALSE;
@@ -616,6 +632,10 @@ class UserMan implements intUserMan{
     
     public function userStatus($userId, $active, $log = TRUE) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'userman_user_status')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "userStatus: restricted by the policy");
+            return FALSE;
+        }
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
             $this->setError(ERROR_RESTRICTED_ACCESS, 'userStatus: function execution was terminated because of using of limited authentication');
             return FALSE;
@@ -653,6 +673,10 @@ class UserMan implements intUserMan{
     
     public function moveUserTo($userId, $destId, $log = TRUE) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'userman_move_user')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "moveUserTo: restricted by the policy");
+            return FALSE;
+        }
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
             $this->setError(ERROR_RESTRICTED_ACCESS, 'moveUserTo: function execution was terminated because of using of limited authentication');
             return FALSE;
@@ -694,6 +718,10 @@ class UserMan implements intUserMan{
     
     public function delUser($userId, $log = TRUE) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'userman_del_user')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "delUser: restricted by the policy");
+            return FALSE;
+        }
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
             $this->setError(ERROR_RESTRICTED_ACCESS, 'delUser: function execution was terminated because of using of limited authentication');
             return FALSE;
@@ -742,6 +770,10 @@ class UserMan implements intUserMan{
     
     public function aboutUser($userId) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'userman_about_user')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "aboutUser: restricted by the policy");
+            return FALSE;
+        }
         if (!is_integer($userId)) {
             $this->setError(ERROR_INCORRECT_DATA, 'aboutUser: id must be integer');
             return FALSE;
@@ -777,6 +809,10 @@ class UserMan implements intUserMan{
     
     public function userPasswords($userId) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'userman_user_passwords')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "userPasswords: restricted by the policy");
+            return FALSE;
+        }
         if (!is_integer($userId)) {
             $this->setError(ERROR_INCORRECT_DATA, 'userPasswords: id must be integer');
             return FALSE;
@@ -807,6 +843,10 @@ class UserMan implements intUserMan{
     
     public function addPassword($userId, $password, $description='', $log = TRUE) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'userman_add_password')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "addPassword: restricted by the policy");
+            return FALSE;
+        }
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
             $this->setError(ERROR_RESTRICTED_ACCESS, 'addPassword: function execution was terminated because of using of limited authentication');
             return FALSE;
@@ -864,6 +904,10 @@ class UserMan implements intUserMan{
     
     public function delPassword($passwId, $userId, $log = TRUE) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'userman_del_password')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "delPassword: restricted by the policy");
+            return FALSE;
+        }
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
             $this->setError(ERROR_RESTRICTED_ACCESS, 'delPassword: function execution was terminated because of using of limited authentication');
             return FALSE;
@@ -908,6 +952,10 @@ class UserMan implements intUserMan{
     
     public function setPassword($passwId, $userId, $password, $log = TRUE) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'userman_set_password')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "setPassword: restricted by the policy");
+            return FALSE;
+        }
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
             $this->setError(ERROR_RESTRICTED_ACCESS, 'setPassword: function execution was terminated because of using of limited authentication');
             return FALSE;
@@ -949,6 +997,10 @@ class UserMan implements intUserMan{
     
     public function setUserName($userId, $username, $log = TRUE) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'userman_set_username')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "setUserName: restricted by the policy");
+            return FALSE;
+        }
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
             $this->setError(ERROR_RESTRICTED_ACCESS, 'setUserName: function execution was terminated because of using of limited authentication');
             return FALSE;
@@ -987,6 +1039,10 @@ class UserMan implements intUserMan{
     
     public function setUserMail($userId, $email, $log = TRUE) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'userman_set_user_mail')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "setUserMail: restricted by the policy");
+            return FALSE;
+        }
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
             $this->setError(ERROR_RESTRICTED_ACCESS, 'setUserMail: function execution was terminated because of using of limited authentication');
             return FALSE;
@@ -1014,6 +1070,10 @@ class UserMan implements intUserMan{
     
     public function setFullName($userId, $name, $log = TRUE) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'userman_set_full_name')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "setFullName: restricted by the policy");
+            return FALSE;
+        }
         if (!is_integer($userId) || !is_string($name)) {
             $this->setError(ERROR_INCORRECT_DATA, 'setFullName: incorrect incoming parameters');
             return FALSE;
@@ -1038,6 +1098,10 @@ class UserMan implements intUserMan{
     
     public function changePassword($passwId, $userId, $oldPassw, $newPassw, $log = TRUE) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'userman_change_password')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "changePassword: restricted by the policy");
+            return FALSE;
+        }
         if (!is_integer($passwId) || !is_integer($userId) || !pregPassw($oldPassw) || !pregPassw($newPassw)) {
             $this->setError(ERROR_INCORRECT_DATA, 'changePassword: incorrect incoming parameters');
             return FALSE;
@@ -1130,6 +1194,10 @@ class UserMan implements intUserMan{
     
     public function getUsers($pageNumber, $totalUsers, $rpp = 20, $orderBy = array('id'), $ascent = FALSE) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'userman_get_users')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "getUsers: restricted by the policy");
+            return FALSE;
+        }
         if (!is_integer($pageNumber) || !is_integer($totalUsers) || !is_integer($rpp)) {
             $this->setError(ERROR_INCORRECT_DATA, 'getUsers: values of $pageNumber, $totalUsers, $upp must be integers');
             return FALSE;
@@ -1202,6 +1270,10 @@ class UserMan implements intUserMan{
     
     public function getAllUsers($orderBy = array('id'), $ascent = FALSE) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'userman_get_users')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "getAllUsers: restricted by the policy");
+            return FALSE;
+        }
         $rightEntry = array('id', 'username', 'time', 'fullname', 'email', 'group', 'gid', 'active');
         if (is_array($orderBy)) {
             $arrayLen = count($orderBy);
@@ -1257,6 +1329,10 @@ class UserMan implements intUserMan{
     
     public function setUserLang($userId, $code = MECCANO_DEF_LANG) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'userman_set_user_lang')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "setUserLang: restricted by the policy");
+            return FALSE;
+        }
         if (!is_integer($userId) || !pregLang($code)) {
             $this->setError(ERROR_INCORRECT_DATA, "setUserLang: incorrect argument(s)");
             return FALSE;

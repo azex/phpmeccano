@@ -24,14 +24,10 @@
 
 namespace core;
 
-require_once 'swconst.php';
-require_once 'unifunctions.php';
 require_once 'logman.php';
 
 interface intLangMan {
-    public function __construct(\mysqli $dbLink, LogMan $logObject);
-    public function errId();
-    public function errExp();
+    public function __construct(\mysqli $dbLink, LogMan $logObject, Policy $policyObject);
     public function addLang($code, $name, $log = TRUE);
     public function delLang($code, $log = TRUE);
     public function langList();
@@ -74,36 +70,23 @@ interface intLangMan {
     public function getTitleNamesXML($plugin, $section, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('id'), $ascent = FALSE);
 }
 
-class LangMan implements intLangMan{
-    private $errid = 0; // error's id
-    private $errexp = ''; // error's explanation
+class LangMan extends serviceMethods implements intLangMan{
     private $dbLink; // database link
     private $logObject; // log object
+    private $policyObject; // policy objectobject
     
-    public function __construct(\mysqli $dbLink, LogMan $logObject) {
+    public function __construct(\mysqli $dbLink, LogMan $logObject, Policy $policyObject) {
         $this->dbLink = $dbLink;
         $this->logObject = $logObject;
-    }
-    
-    private function setError($id, $exp) {
-        $this->errid = $id;
-        $this->errexp = $exp;
-    }
-    
-    private function zeroizeError() {
-        $this->errid = 0;        $this->errexp = '';
-    }
-
-    public function errId() {
-        return $this->errid;
-    }
-    
-    public function errExp() {
-        return $this->errexp;
+        $this->policyObject = $policyObject;
     }
     
     public function addLang($code, $name, $dir = 'ltr', $log = TRUE) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'langman_syswide_lang')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "addLang: restricted by the policy");
+            return FALSE;
+        }
         if (!pregLang($code) || !is_string($name) || !in_array($dir, array('ltr', 'rtl'))) {
             $this->setError(ERROR_INCORRECT_DATA, 'addLang: incorrect incoming parameters');
             return FALSE;
@@ -124,6 +107,10 @@ class LangMan implements intLangMan{
     
     public function delLang($code, $log = TRUE) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'langman_syswide_lang')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "delLang: restricted by the policy");
+            return FALSE;
+        }
         if (!pregLang($code)) {
             $this->setError(ERROR_INCORRECT_DATA, 'delLang: incorrect incoming parameter');
             return FALSE;
@@ -703,6 +690,10 @@ class LangMan implements intLangMan{
     
     public function addTitleSection($section, $plugin, $log = TRUE) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'langman_add_title_sec')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "addTitleSection: restricted by the policy");
+            return FALSE;
+        }
         if (!pregName40($section) || !pregPlugin($plugin)) {
             $this->setError(ERROR_INCORRECT_DATA, 'addTitleSection: incorrect incoming parameters');
             return FALSE;
@@ -736,6 +727,10 @@ class LangMan implements intLangMan{
     
     public function delTitleSection($sid, $log = TRUE) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'langman_del_title_sec')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "delTitleSection: restricted by the policy");
+            return FALSE;
+        }
         if (!is_integer($sid)) {
             $this->setError(ERROR_INCORRECT_DATA, 'delTitleSection: incorrect identifier');
             return FALSE;
@@ -776,6 +771,10 @@ class LangMan implements intLangMan{
     
     public function addTextSection($section, $plugin, $log = TRUE) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'langman_add_text_sec')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "addTextSection: restricted by the policy");
+            return FALSE;
+        }
         if (!pregName40($section) || !pregPlugin($plugin)) {
             $this->setError(ERROR_INCORRECT_DATA, 'addTextSection: incorrect incoming parameters');
             return FALSE;
@@ -809,6 +808,10 @@ class LangMan implements intLangMan{
     
     public function delTextSection($sid, $log = TRUE) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'langman_del_text_sec')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "delTextSection: restricted by the policy");
+            return FALSE;
+        }
         if (!is_integer($sid)) {
             $this->setError(ERROR_INCORRECT_DATA, 'delTextSection: incorrect identifier');
             return FALSE;
@@ -849,6 +852,10 @@ class LangMan implements intLangMan{
     
     public function addTitleName($name, $section, $plugin, $log = TRUE) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'langman_add_title')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "addTitleName: restricted by the policy");
+            return FALSE;
+        }
         if (!pregName40($name) || !pregName40($section) || !pregPlugin($plugin)) {
             $this->setError(ERROR_INCORRECT_DATA, 'addTitleName: incorrect incoming parameters');
             return FALSE;
@@ -885,6 +892,10 @@ class LangMan implements intLangMan{
     
     public function delTitleName($nameid, $log = TRUE) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'langman_del_title')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "delTitleName: restricted by the policy");
+            return FALSE;
+        }
         if (!is_integer($nameid)) {
             $this->setError(ERROR_INCORRECT_DATA, 'delTitleName: incorrect identifier');
             return FALSE;
@@ -922,6 +933,10 @@ class LangMan implements intLangMan{
     
     public function addTextName($name, $section, $plugin, $log = TRUE) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'langman_add_text')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "addTextName: restricted by the policy");
+            return FALSE;
+        }
         if (!pregName40($name) || !pregName40($section) || !pregPlugin($plugin)) {
             $this->setError(ERROR_INCORRECT_DATA, 'addTextName: incorrect incoming parameters');
             return FALSE;
@@ -958,6 +973,10 @@ class LangMan implements intLangMan{
     
     public function delTextName($nameid, $log = TRUE) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'langman_del_text')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "delTextName: restricted by the policy");
+            return FALSE;
+        }
         if (!is_integer($nameid)) {
             $this->setError(ERROR_INCORRECT_DATA, 'delTextName: incorrect identifier');
             return FALSE;
@@ -995,6 +1014,10 @@ class LangMan implements intLangMan{
     
     public function addTitle($title, $name, $section, $plugin, $code = MECCANO_DEF_LANG, $log = TRUE) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'langman_add_title')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "addTitle: restricted by the policy");
+            return FALSE;
+        }
         if (!is_string($title) || !pregName40($name) || !pregName40($section) || !pregPlugin($plugin) || !pregLang($code)) {
             $this->setError(ERROR_INCORRECT_DATA, 'addTitle: incorrect incoming parameters');
             return FALSE;
@@ -1047,6 +1070,10 @@ class LangMan implements intLangMan{
     
     public function delTitle($tid, $log = TRUE) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'langman_del_title')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "delTitle: restricted by the policy");
+            return FALSE;
+        }
         if (!is_integer($tid)) {
             $this->setError(ERROR_INCORRECT_DATA, 'delTitle: incorrect title identifier');
             return FALSE;
@@ -1074,6 +1101,10 @@ class LangMan implements intLangMan{
     
     public function addText($title, $document, $name, $section, $plugin, $code = MECCANO_DEF_LANG, $log = TRUE) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'langman_add_text')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "addText: restricted by the policy");
+            return FALSE;
+        }
         if (!is_string($title) || !is_string($document) || !pregName40($name) || !pregName40($section) || !pregPlugin($plugin) || !pregLang($code)) {
             $this->setError(ERROR_INCORRECT_DATA, 'addText: incorrect incoming parameters');
             return FALSE;
@@ -1127,6 +1158,10 @@ class LangMan implements intLangMan{
     
     public function delText($tid, $log = TRUE) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'langman_del_text')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "delText: restricted by the policy");
+            return FALSE;
+        }
         if (!is_integer($tid)) {
             $this->setError(ERROR_INCORRECT_DATA, 'delText: incorrect text identifier');
             return FALSE;
@@ -1154,6 +1189,10 @@ class LangMan implements intLangMan{
     
     public function updateTitle($id, $title, $log = TRUE) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'langman_update_title')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "updateTitle: restricted by the policy");
+            return FALSE;
+        }
         if (!is_integer($id) || !is_string($title)) {
             $this->setError(ERROR_INCORRECT_DATA, 'updateTitle: incorrect incoming parameters');
             return FALSE;
@@ -1183,6 +1222,10 @@ class LangMan implements intLangMan{
     
     public function updateText($id, $title, $document, $log = TRUE) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'langman_update_text')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "updateText: restricted by the policy");
+            return FALSE;
+        }
         if (!is_integer($id) || !is_string($title) || !is_string($document)) {
             $this->setError(ERROR_INCORRECT_DATA, 'updateText: incorrect incoming parameters');
             return FALSE;
