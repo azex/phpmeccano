@@ -28,10 +28,10 @@ require_once 'logman.php';
 
 interface intAuth {
     public function __construct(\mysqli $dbLink, LogMan $logObject, Policy $policyObject);
-    public function userLogin($username, $password, $log = FALSE, $useCookie = TRUE, $cookieTime = 'month');
+    public function userLogin($username, $password, $useCookie = TRUE, $cookieTime = 'month', $log = TRUE);
     public function isSession();
     public function userLogout();
-    public function getSession($log = FALSE);
+    public function getSession($log = TRUE);
 }
 
 class Auth extends serviceMethods implements intAuth {
@@ -48,7 +48,7 @@ class Auth extends serviceMethods implements intAuth {
         $this->policyObject = $policyObject;
     }
     
-    public function userLogin($username, $password, $log = FALSE, $useCookie = TRUE, $cookieTime = 'month') {
+    public function userLogin($username, $password, $useCookie = TRUE, $cookieTime = 'month', $log = TRUE) {
         $this->zeroizeError();
         if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'auth_session')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "userLogin: restricted by the policy");
@@ -217,7 +217,7 @@ class Auth extends serviceMethods implements intAuth {
         return FALSE;
     }
     
-    public function getSession($log = FALSE) {
+    public function getSession($log = TRUE) {
         $this->zeroizeError();
         if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'auth_session')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "getSession: restricted by the policy");
