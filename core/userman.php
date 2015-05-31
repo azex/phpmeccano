@@ -60,7 +60,7 @@ interface intUserMan {
     public function setUserLang($userId, $code = MECCANO_DEF_LANG);
 }
 
-class UserMan extends serviceMethods implements intUserMan{
+class UserMan extends ServiceMethods implements intUserMan{
     private $dbLink; // database link
     private $logObject; // log object
     private $policyObject; // policy object

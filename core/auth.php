@@ -34,7 +34,7 @@ interface intAuth {
     public function getSession($log = TRUE);
 }
 
-class Auth extends serviceMethods implements intAuth {
+class Auth extends ServiceMethods implements intAuth {
     private $dbLink; // database link
     private $logObject; // log object
     private $policyObject; // policy object

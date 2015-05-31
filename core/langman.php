@@ -70,7 +70,7 @@ interface intLangMan {
     public function getTitleNamesXML($plugin, $section, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('id'), $ascent = FALSE);
 }
 
-class LangMan extends serviceMethods implements intLangMan{
+class LangMan extends ServiceMethods implements intLangMan{
     private $dbLink; // database link
     private $logObject; // log object
     private $policyObject; // policy objectobject

@@ -40,7 +40,7 @@ interface intPlugins {
     public function aboutInstalled($plugin);
 }
 
-class Plugins extends serviceMethods implements intPlugins {
+class Plugins extends ServiceMethods implements intPlugins {
     private $dbLink; // database link
     private $logObject; // log object
     private $policyObject; // policy object
