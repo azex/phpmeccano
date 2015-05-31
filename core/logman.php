@@ -43,7 +43,7 @@ interface intLogMan {
     public function getLogByPlugin($plugin, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE);
 }
 
-class LogMan extends serviceMethods implements intLogMan {
+class LogMan extends ServiceMethods implements intLogMan {
     private $dbLink; // database link
     private $policyObject; // policy objectobject
     
@@ -284,9 +284,7 @@ class LogMan extends serviceMethods implements intLogMan {
             $this->setError(ERROR_NOT_EXECUTED, 'clearLog: unable to clear log -> '.$this->dbLink->error);
             return FALSE;
         }
-        if (!$this->newRecord('core', 'logman_clear_log')) {
-            return FALSE;
-        }
+        $this->newRecord('core', 'logman_clear_log');
         return TRUE;
     }
     

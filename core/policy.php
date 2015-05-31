@@ -40,7 +40,7 @@ interface intPolicy {
     public function getPolicyDescById($id);
 }
 
-class Policy extends serviceMethods implements intPolicy {
+class Policy extends ServiceMethods implements intPolicy {
     private $dbLink; // database link
     
     public function __construct(\mysqli $dbLink) {
