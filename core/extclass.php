@@ -30,7 +30,7 @@ interface intServiceMethods {
     public function applyPolicy($flag);
 }
 
-class ServiceMethods implements intServiceMethods {
+class ServiceMethods {
     protected $errid = 0; // error's id
     protected $errexp = ''; // error's explanation
     protected $usePolicy = TRUE; // flag of the policy application
