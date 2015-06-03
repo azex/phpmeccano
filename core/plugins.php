@@ -34,8 +34,8 @@ interface intPlugins {
     public function listUnpacked();
     public function aboutUnpacked($plugin);
     public function pluginData($plugin);
-    public function install($plugin, $reset = FALSE);
-    public function delInstalled($plugin, $keepData = TRUE);
+    public function install($plugin, $reset = FALSE, $log = TRUE);
+    public function delInstalled($plugin, $keepData = TRUE, $log = TRUE);
     public function listInstalled();
     public function aboutInstalled($plugin);
 }
