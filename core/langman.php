@@ -555,8 +555,8 @@ class LangMan extends ServiceMethods implements intLangMan{
                             $codeId = $avaiLang[$langCode];
                             $title = $this->dbLink->real_escape_string($text[0]);
                             $document = $this->dbLink->real_escape_string($text[1]);
-                            $this->dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_texts` (`codeid`, `nameid`, `title`, `document`) "
-                                    . "VALUES ($codeId, $nameId, '$title', '$document') ;");
+                            $this->dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_texts` (`codeid`, `nameid`, `title`, `document`, `created`) "
+                                    . "VALUES ($codeId, $nameId, '$title', '$document', CURRENT_TIMESTAMP) ;");
                             if ($this->dbLink->errno) {
                                 $this->setError(ERROR_NOT_EXECUTED, 'installTexts: unable to update text -> '.$this->dbLink->error);
                                 return FALSE;
@@ -598,8 +598,8 @@ class LangMan extends ServiceMethods implements intLangMan{
                             $codeId = $avaiLang[$langCode];
                             $title = $this->dbLink->real_escape_string($text[0]);
                             $document = $this->dbLink->real_escape_string($text[1]);
-                            $this->dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_texts` (`codeid`, `nameid`, `title`, `document`) "
-                                    . "VALUES ($codeId, $nameId, '$title', '$document') ;");
+                            $this->dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_texts` (`codeid`, `nameid`, `title`, `document`, `created`) "
+                                    . "VALUES ($codeId, $nameId, '$title', '$document', CURRENT_TIMESTAMP) ;");
                             if ($this->dbLink->errno) {
                                 $this->setError(ERROR_NOT_EXECUTED, 'installTexts: unable to create text -> '.$this->dbLink->error);
                                 return FALSE;
@@ -1143,8 +1143,8 @@ class LangMan extends ServiceMethods implements intLangMan{
         $title = $this->dbLink->real_escape_string($title);
         $document = $this->dbLink->real_escape_string($document);
         $this->dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_texts` "
-                . "(`title`, `document`, `nameid`, `codeid`) "
-                . "VALUES ('$title', '$document', $nameId, $codeId) ;");
+                . "(`title`, `document`, `nameid`, `codeid`, `created`) "
+                . "VALUES ('$title', '$document', $nameId, $codeId, CURRENT_TIMESTAMP) ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'addText: unable to insert text -> '.$this->dbLink->error);
             return FALSE;
