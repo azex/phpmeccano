@@ -37,11 +37,11 @@ define('MECCANO_CONF_FILE', __FILE__);
 define('MECCANO_ROOT_DIR', dirname(__FILE__));
 define('MECCANO_CORE_DIR', MECCANO_ROOT_DIR.'/core');
 define('MECCANO_TMP_DIR', MECCANO_ROOT_DIR.'/tmp');
-define('MECCANO_PHP_DIR', MECCANO_ROOT_DIR.'/php');
-define('MECCANO_JS_DIR', MECCANO_ROOT_DIR.'/js');
+define('MECCANO_PHP_DIR', MECCANO_ROOT_DIR.'/phplibs');
+define('MECCANO_JS_DIR', MECCANO_ROOT_DIR.'/jslibs');
 define('MECCANO_DOCUMENTS_DIR', MECCANO_ROOT_DIR.'/documents');
 define('MECCANO_UNPACKED_PLUGINS', MECCANO_ROOT_DIR.'/unpacked');
 define('MECCANO_UNINSTALL', MECCANO_ROOT_DIR.'/uninstall');
 
-//default language
+// default language
 define('MECCANO_DEF_LANG', 'en-US');
