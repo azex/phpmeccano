@@ -170,7 +170,7 @@ class Files implements intFiles {
                     mkdir($destPath);
                 }
                 else {
-                    self::setError(ERROR_RESTRICTED_ACCESS, 'copy: unable to create destination directory');
+                    self::setError(ERROR_RESTRICTED_ACCESS, "copy: unable to create destination directory [$destPath]");
                     return FALSE;
                 }
             }
