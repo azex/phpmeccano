@@ -386,9 +386,9 @@ class Plugins extends ServiceMethods implements intPlugins {
                 return FALSE;
             }
         }
-        $requiredDirs = array("documents","js","php");
+        $requiredDirs = array($plugPath."/documents", $plugPath."/js", $plugPath."/php", MECCANO_DOCUMENTS_DIR, MECCANO_JS_DIR, MECCANO_PHP_DIR);
         foreach ($requiredDirs as $dirName) {
-            if (!is_dir($plugPath."/$dirName")) {
+            if (!is_dir($dirName)) {
                 $this->setError(ERROR_NOT_FOUND, "install: directory [$dirName] is required");
                 return FALSE;
             }
