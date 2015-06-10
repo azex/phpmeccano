@@ -72,7 +72,7 @@ interface intLangMan {
 
 class LangMan extends ServiceMethods implements intLangMan{
     private $dbLink; // database link
-    private $logObject; // log object
+    public $logObject; // log object
     private $policyObject; // policy objectobject
     
     public function __construct(LogMan $logObject) {
