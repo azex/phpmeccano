@@ -41,7 +41,7 @@ interface intPolicy {
 }
 
 class Policy extends ServiceMethods implements intPolicy {
-    private $dbLink; // database link
+    public $dbLink; // database link
     
     public function __construct(\mysqli $dbLink) {
         $this->dbLink = $dbLink;

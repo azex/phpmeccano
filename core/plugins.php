@@ -28,7 +28,7 @@ require_once 'logman.php';
 require_once 'files.php';
 
 interface intPlugins {
-    public function __construct(\mysqli $dbLink, LogMan $logObject, Policy $policyObject, LangMan $langmanObject);
+    public function __construct(LangMan $langmanObject);
     public function unpack($package);
     public function delUnpacked($plugin);
     public function listUnpacked();
@@ -46,10 +46,10 @@ class Plugins extends ServiceMethods implements intPlugins {
     private $policyObject; // policy object
     private $langmanObject; // policy object
     
-    public function __construct(\mysqli $dbLink, LogMan $logObject, Policy $policyObject, LangMan $langmanObject) {
-        $this->dbLink = $dbLink;
-        $this->logObject = $logObject;
-        $this->policyObject = $policyObject;
+    public function __construct(LangMan $langmanObject) {
+        $this->dbLink = $langmanObject->logObject->dbLink;
+        $this->logObject = $langmanObject->logObject;
+        $this->policyObject = $langmanObject->logObject->policyObject;
         $this->langmanObject = $langmanObject;
     }
     

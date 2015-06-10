@@ -30,7 +30,7 @@ require_once 'extclass.php';
 require_once 'policy.php';
 
 interface intLogMan {
-    function __construct(\mysqli $dbLink, Policy $policyObject);
+    function __construct(Policy $policyObject);
     public function installEvents(\DOMDocument $events, $validate = TRUE);
     public function delEvents($plugin);
     public function newRecord($plugin, $event, $insertion = '');
@@ -44,11 +44,11 @@ interface intLogMan {
 }
 
 class LogMan extends ServiceMethods implements intLogMan {
-    private $dbLink; // database link
-    private $policyObject; // policy objectobject
+    public $dbLink; // database link
+    public $policyObject; // policy objectobject
     
-    public function __construct(\mysqli $dbLink, Policy $policyObject) {
-        $this->dbLink = $dbLink;
+    public function __construct(Policy $policyObject) {
+        $this->dbLink = $policyObject->dbLink;
         $this->policyObject = $policyObject;
     }
 

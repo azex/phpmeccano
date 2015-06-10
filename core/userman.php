@@ -27,7 +27,7 @@ namespace core;
 require_once 'logman.php';
 
 interface intUserMan {
-    public function __construct(\mysqli $dbLink, LogMan $logObject, Policy $policyObject);
+    public function __construct(LogMan $logObject);
     public function createGroup($groupName, $description, $log = TRUE);
     public function groupStatus($groupId, $active, $log = TRUE);
     public function groupExists($groupName);
@@ -65,10 +65,10 @@ class UserMan extends ServiceMethods implements intUserMan{
     private $logObject; // log object
     private $policyObject; // policy object
     
-    public function __construct(\mysqli $dbLink, LogMan $logObject, Policy $policyObject) {
-        $this->dbLink = $dbLink;
+    public function __construct(LogMan $logObject) {
+        $this->dbLink = $logObject->dbLink;
         $this->logObject = $logObject;
-        $this->policyObject = $policyObject;
+        $this->policyObject = $logObject->policyObject;
     }
     
     //group methods

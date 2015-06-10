@@ -27,7 +27,7 @@ namespace core;
 require_once 'logman.php';
 
 interface intAuth {
-    public function __construct(\mysqli $dbLink, LogMan $logObject, Policy $policyObject);
+    public function __construct(LogMan $logObject);
     public function userLogin($username, $password, $useCookie = TRUE, $cookieTime = 'month', $log = TRUE);
     public function isSession();
     public function userLogout();
@@ -39,13 +39,13 @@ class Auth extends ServiceMethods implements intAuth {
     private $logObject; // log object
     private $policyObject; // policy object
     
-    public function __construct(\mysqli $dbLink, LogMan $logObject, Policy $policyObject) {
+    public function __construct(LogMan $logObject) {
         if (!session_id()) {
             session_start();
         }
-        $this->dbLink = $dbLink;
+        $this->dbLink = $logObject->dbLink;
         $this->logObject = $logObject;
-        $this->policyObject = $policyObject;
+        $this->policyObject = $logObject->policyObject;
     }
     
     public function userLogin($username, $password, $useCookie = TRUE, $cookieTime = 'month', $log = TRUE) {
