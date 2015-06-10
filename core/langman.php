@@ -27,7 +27,7 @@ namespace core;
 require_once 'logman.php';
 
 interface intLangMan {
-    public function __construct(\mysqli $dbLink, LogMan $logObject, Policy $policyObject);
+    public function __construct(LogMan $logObject);
     public function addLang($code, $name, $log = TRUE);
     public function delLang($code, $log = TRUE);
     public function langList();
@@ -75,10 +75,10 @@ class LangMan extends ServiceMethods implements intLangMan{
     private $logObject; // log object
     private $policyObject; // policy objectobject
     
-    public function __construct(\mysqli $dbLink, LogMan $logObject, Policy $policyObject) {
-        $this->dbLink = $dbLink;
+    public function __construct(LogMan $logObject) {
+        $this->dbLink = $logObject->dbLink;
         $this->logObject = $logObject;
-        $this->policyObject = $policyObject;
+        $this->policyObject = $logObject->policyObject;
     }
     
     public function addLang($code, $name, $dir = 'ltr', $log = TRUE) {
