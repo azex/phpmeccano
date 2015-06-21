@@ -24,7 +24,7 @@
 
 namespace core;
 
-require_once 'logman.php';
+require_once 'langman.php';
 require_once 'files.php';
 
 interface intPlugins {
