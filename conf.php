@@ -25,6 +25,7 @@
 // system configurations
 
 // database parameters
+define('MECCANO_DBSTORAGE_ENGINE', 'MyISAM');
 define('MECCANO_DBANAME', 'root');
 define('MECCANO_DBAPASS', 'MySQLpassw');
 define('MECCANO_DBHOST', 'localhost');
