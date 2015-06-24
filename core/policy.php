@@ -108,9 +108,19 @@ class Policy extends ServiceMethods implements intPolicy {
         }
         $qDbFuncs = $this->dbLink->query("SELECT `id` "
             . "FROM `".MECCANO_TPREF."_core_policy_summary_list` ;");
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'addPolicy: unable to get policies -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        if ($id == 1) {
+            $access = 1;
+        }
+        else {
+            $access = 0;
+        }
         while (list($row) = $qDbFuncs->fetch_row()) {
-            $this->dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_policy_access` (`groupid`, `funcid`) "
-                    . "VALUES ($id, $row) ;");
+            $this->dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_policy_access` (`groupid`, `funcid`, `access`) "
+                    . "VALUES ($id, $row, $access) ;");
             if ($this->dbLink->errno) {
                 $this->setError(ERROR_NOT_EXECUTED, 'addPolicy: unable to add policy -> '.$this->dbLink->error);
                 return FALSE;
