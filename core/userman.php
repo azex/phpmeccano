@@ -86,7 +86,8 @@ class UserMan extends ServiceMethods implements intUserMan{
             $this->setError(ERROR_NOT_EXECUTED, 'createGroup: incorect type of incoming parameters');
             return FALSE;
         }
-        $description = $this->dbLink->real_escape_string($description);
+        $groupName = $this->dbLink->real_escape_string(htmlspecialchars($groupName));
+        $description = $this->dbLink->real_escape_string(htmlspecialchars($description));
         $this->dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_userman_groups` (`groupname`, `description`) "
                 . "VALUES ('$groupName', '$description') ;");
         if ($this->dbLink->errno) {
