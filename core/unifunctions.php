@@ -64,7 +64,7 @@ function pregUName($username) {
 
 // it checks group name
 function pregGName($groupname) {
-    if (is_string($groupname) && preg_match('/^.{1,50}$/', $groupname)) {
+    if (is_string($groupname) && preg_match('/^.{1,50}$/', $groupname) && preg_replace("/[\s\n\r\t]+/", "", $groupname)) {
         return TRUE;
     }
     return FALSE;
