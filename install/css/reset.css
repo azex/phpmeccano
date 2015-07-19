@@ -1,0 +1,62 @@
+/*
+     phpMeccano v0.0.1. Web-framework written with php programming language. Stylesheet of the web installer.
+     Copyright (C) 2015  Alexei Muzarov
+ 
+     This program is free software; you can redistribute it and/or modify
+     it under the terms of the GNU General Public License as published by
+     the Free Software Foundation; either version 2 of the License, or
+     (at your option) any later version.
+ 
+     This program is distributed in the hope that it will be useful,
+     but WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+     GNU General Public License for more details.
+ 
+     You should have received a copy of the GNU General Public License along
+     with this program; if not, write to the Free Software Foundation, Inc.,
+     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ 
+     e-mail: azexmail@gmail.com
+     e-mail: azexmail@mail.ru
+*/
+
+body, div, dl, dt, dd, ul, ol, li, h1, h2, h3, h4, h5, h6, pre, form, fieldset, input, textarea, button, a, p, blockquote, th, td { 
+    margin:0;
+    padding:0;
+}
+
+table {
+    border-collapse:collapse;
+    border-spacing:0;
+}
+
+fieldset, img { 
+    border:0;
+}
+
+address, caption, cite, code, dfn, em, strong, th, var, input, textarea, select {
+    font-style:normal;
+    font-weight:normal;
+}
+
+ol, ul {
+    list-style:none;
+}
+
+caption, th {
+    text-align:left;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-size:100%;
+    font-weight:normal;
+}
+
+q:before, q:after {
+    content:'';
+}
+
+abbr, acronym {
+    border:0;
+}
+

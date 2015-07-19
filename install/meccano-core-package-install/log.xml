@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<log plugin="core">
+    <event keyword="auth_session">
+        <desc code="en-US">User has passed authentication [%d]</desc>
+        <desc code="ru-RU">Пользователь прошёл аутентификацию [%d]</desc>
+    </event>
+    <event keyword="logman_clear_log">
+        <desc code="en-US">Log records have been removed</desc>
+        <desc code="ru-RU">Записи журнала были удалены</desc>
+    </event>
+    <event keyword="plugins_install">
+        <desc code="en-US">Plugin [%d] has been installed (reinstalled, updated, downgraded)</desc>
+        <desc code="ru-RU">Плагин [%d] был установлен (переустановлен, обновлён, откачен)</desc>
+    </event>
+    <event keyword="plugins_del_installed">
+        <desc code="en-US">Plugin [%d] has been removed</desc>
+        <desc code="ru-RU">Плагин [%d] был удалён</desc>
+    </event>
+    <event keyword="langman_add_lang">
+        <desc code="en-US">New language [%d] has been added.</desc>
+        <desc code="ru-RU">Был добавлен новый язык [%d]</desc>
+    </event>
+    <event keyword="langman_del_lang">
+        <desc code="en-US">Language [%d] has been removed</desc>
+        <desc code="ru-RU">Язык [%d] был удалён</desc>
+    </event>
+    <event keyword="langman_add_title_sec">
+        <desc code="en-US">Title section [%d] has been created</desc>
+        <desc code="ru-RU">Был создан заголовочный раздел [%d]</desc>
+    </event>
+    <event keyword="langman_del_title_sec">
+        <desc code="en-US">Title section [%d] has been removed</desc>
+        <desc code="ru-RU">Был удалён заголовочный раздел [%d]</desc>
+    </event>
+    <event keyword="langman_add_text_sec">
+        <desc code="en-US">Text section [%d] has been created</desc>
+        <desc code="ru-RU">Был создан текстовый раздел [%d]</desc>
+    </event>
+    <event keyword="langman_del_text_sec">
+        <desc code="en-US">Text section [%d] has been removed</desc>
+        <desc code="ru-RU">Был удалён текстовый раздел [%d]</desc>
+    </event>
+    <event keyword="langman_add_title_name">
+        <desc code="en-US">Title name [%d] has been created</desc>
+        <desc code="ru-RU">Было создано заголовочное имя [%d]</desc>
+    </event>
+    <event keyword="langman_add_title">
+        <desc code="en-US">Title [%d] has been created</desc>
+        <desc code="ru-RU">Был создан заголовок [%d]</desc>
+    </event>
+    <event keyword="langman_del_title">
+        <desc code="en-US">Title [%d] has been removed</desc>
+        <desc code="ru-RU">Был удалён заголовок [%d]</desc>
+    </event>
+    <event keyword="langman_del_title_name">
+        <desc code="en-US">Title name [%d] has been removed</desc>
+        <desc code="ru-RU">Было удалено заголовочное имя [%d]</desc>
+    </event>
+    <event keyword="langman_add_text_name">
+        <desc code="en-US">Text name [%d] has been created</desc>
+        <desc code="ru-RU">Было создано текстое имя [%d]</desc>
+    </event>
+    <event keyword="langman_add_text">
+        <desc code="en-US">Text [%d] has been created</desc>
+        <desc code="ru-RU">Был создан текст [%d]</desc>
+    </event>
+    <event keyword="langman_del_text">
+        <desc code="en-US">Text [%d] has been removed</desc>
+        <desc code="ru-RU">Был удалён текст [%d]</desc>
+    </event>
+    <event keyword="langman_del_text_name">
+        <desc code="en-US">Text name [%d] has been removed</desc>
+        <desc code="ru-RU">Было удалено текстовое имя [%d]</desc>
+    </event>
+    <event keyword="langman_update_title">
+        <desc code="en-US">Title [%d] has been updated</desc>
+        <desc code="ru-RU">Заголовок [%d] был обновлён</desc>
+    </event>
+    <event keyword="langman_update_text">
+        <desc code="en-US">Text [%d] has been updated</desc>
+        <desc code="ru-RU">Текст [%d] был обновлён</desc>
+    </event>
+    <event keyword="userman_create_group">
+        <desc code="en-US">User group [%d] has been created</desc>
+        <desc code="ru-RU">Была создана пользовательская группа [%d]</desc>
+    </event>
+    <event keyword="userman_group_status">
+        <desc code="en-US">Group status has been changed [%d]</desc>
+        <desc code="ru-RU">Статус группы был изменен [%d]</desc>
+    </event>
+    <event keyword="userman_move_group">
+        <desc code="en-US">Group has been moved [%d]</desc>
+        <desc code="ru-RU">Группа был перемещена [%d]</desc>
+    </event>
+    <event keyword="userman_set_group_name">
+        <desc code="en-US">Group name has been changed [%d]</desc>
+        <desc code="ru-RU">Имя группы было изменено [%d]</desc>
+    </event>
+    <event keyword="userman_set_group_desc">
+        <desc code="en-US">Description of the group [%d] has been updated</desc>
+        <desc code="ru-RU">Описание группы [%d] было обновлено</desc>
+    </event>
+    <event keyword="userman_del_group">
+        <desc code="en-US">User group [%d] has been removed</desc>
+        <desc code="ru-RU">Пользовательская группа [%d] была удалена</desc>
+    </event>
+    <event keyword="userman_create_user">
+        <desc code="en-US">New user [%d] has been created</desc>
+        <desc code="ru-RU">Был создан новый пользователь [%d]</desc>
+    </event>
+    <event keyword="userman_user_status">
+        <desc code="en-US">User status has been changed [%d]</desc>
+        <desc code="ru-RU">Статус пользователя был изменен [%d]</desc>
+    </event>
+    <event keyword="userman_move_user">
+        <desc code="en-US">User has been moved [%d]</desc>
+        <desc code="ru-RU">Пользователь был перемещен [%d]</desc>
+    </event>
+    <event keyword="userman_del_user">
+        <desc code="en-US">User [%d] has been removed</desc>
+        <desc code="ru-RU">Пользователь [%d] был удалён</desc>
+    </event>
+    <event keyword="userman_add_password">
+        <desc code="en-US">Password [%d] has been added</desc>
+        <desc code="ru-RU">Был добавлен пароль [%d]</desc>
+    </event>
+    <event keyword="userman_del_password">
+        <desc code="en-US">Password [%d] has been removed</desc>
+        <desc code="ru-RU">Пароль [%d] был удалён</desc>
+    </event>
+    <event keyword="userman_set_password">
+        <desc code="en-US">Password [%d] has been updated</desc>
+        <desc code="ru-RU">Пароль [%d] был обновлён</desc>
+    </event>
+    <event keyword="userman_set_username">
+        <desc code="en-US">Username [%d] has been changed</desc>
+        <desc code="ru-RU">Имя пользователя [%d] было изменено</desc>
+    </event>
+    <event keyword="userman_set_user_mail">
+        <desc code="en-US">E-mail address of user [%d] has been changed</desc>
+        <desc code="ru-RU">E-mail адрес пользователя [%d] был изменено</desc>
+    </event>
+    <event keyword="userman_set_full_name">
+        <desc code="en-US">Full name of user [%d] has been changed</desc>
+        <desc code="ru-RU">Полное имя пользователя [%d] было изменено</desc>
+    </event>
+    <event keyword="userman_change_password">
+        <desc code="en-US">Password [%d] has been changed</desc>
+        <desc code="ru-RU">Пароль [%d] был изменён</desc>
+    </event>
+</log>

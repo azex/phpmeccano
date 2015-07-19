@@ -1,0 +1,64 @@
+<?php
+
+namespace core;
+
+interface intInstall {
+    public function __construct(\mysqli $dblink, $id, $version = '', $reset = FALSE);
+    public function errId();
+    public function errExp();
+    public function preinst();
+    public function postinst();
+}
+
+class Install implements intInstall {
+    
+    private $errid = 0; // error code
+    private $errexp = ''; // error description
+    private $dbLink; // mysqli object
+    private $id; // identifier of the installing plugin
+    private $version; // version of the existing plugin
+    private $reset; // 
+
+    public function __construct(\mysqli $dblink, $id, $version = '', $reset = FALSE) {
+        $this->dbLink = $dblink;
+        $this->id = $id;
+        $this->version = $version;
+        $this->reset = $reset;
+    }
+    
+    private function setError($id, $exp) {
+        $this->errid = $id;
+        $this->errexp = $exp;
+    }
+    
+    public function errId() {
+        return $this->errid;
+    }
+    
+    public function errExp() {
+        return $this->errexp;
+    }
+    
+    public function preinst() {
+        if (!$this->version) {
+            $this->dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_languages` (`code`, `name`, `dir`) VALUES"
+                    . "('en-US', 'English (USA)', 'ltr'),"
+                    . "('ru-RU', 'Русский (Россия)', 'ltr') ;");
+            if ($this->dbLink->errno) {
+                $this->setError(ERROR_NOT_EXECUTED, 'prerinst: '.$this->dbLink->error);
+                return FALSE;
+            }
+        }
+        else {
+            $this->setError(ERROR_NOT_EXECUTED, 'preinst: package is intended only for installation');
+            return FALSE;
+        }
+        return TRUE;
+    }
+    
+    public function postinst() {
+        // put your code here
+        return TRUE;
+    }
+    
+}
