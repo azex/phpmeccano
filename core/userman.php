@@ -520,7 +520,7 @@ class UserMan extends ServiceMethods implements intUserMan{
             $this->setError(ERROR_RESTRICTED_ACCESS, 'createUser: function execution was terminated because of using of limited authentication');
             return FALSE;
         }
-        if (!pregUName($username) || !pregPassw($password) || !filter_var($email, FILTER_VALIDATE_EMAIL) || !is_integer($groupId) || !pregLang($langCode)) {
+        if (!pregUName($username) || !pregPassw($password) || !pregMail($email) || !is_integer($groupId) || !pregLang($langCode)) {
             $this->setError(ERROR_INCORRECT_DATA, 'createUser: incorrect incoming parameters');
             return FALSE;
         }
@@ -613,7 +613,7 @@ class UserMan extends ServiceMethods implements intUserMan{
     
     public function mailExists($email) {
         $this->zeroizeError();
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        if (!pregMail($email)) {
             $this->setError(ERROR_INCORRECT_DATA, 'userExists: incorrect email');
             return FALSE;
         }
@@ -1048,7 +1048,7 @@ class UserMan extends ServiceMethods implements intUserMan{
             $this->setError(ERROR_RESTRICTED_ACCESS, 'setUserMail: function execution was terminated because of using of limited authentication');
             return FALSE;
         }
-        if (!is_integer($userId) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        if (!is_integer($userId) || !pregMail($email)) {
             $this->setError(ERROR_INCORRECT_DATA, 'setUserMail: incorrect incoming parameters');
             return FALSE;
         }

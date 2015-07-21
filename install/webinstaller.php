@@ -191,7 +191,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
             $this->setError(ERROR_INCORRECT_DATA, "revalidateAll: invalid password or passwords mismatch");
             return FALSE;
         }
-        if (!filter_var($post['email'], FILTER_VALIDATE_EMAIL)) {
+        if (!pregMail($post['email'])) {
             $this->setError(ERROR_INCORRECT_DATA, "revalidateAll: incorrect e-mail address");
             return FALSE;
         }

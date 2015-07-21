@@ -102,6 +102,16 @@ function pregPlugin($name) {
     return FALSE;
 }
 
+function pregMail($email) {
+    // regex from Blink engine
+    // https://chromium.googlesource.com/chromium/blink/+/master/Source/core/html/forms/EmailInputType.cpp
+    // line 48
+    if (is_string($email) && preg_match("/^[a-z0-9!#$%&'*+\/=?^_`{|}~.-]+@[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)*$/", $email)) {
+        return TRUE;
+    }
+    return FALSE;
+}
+
 // it checks name identifiers with length from 3 to 40 characters
 function pregName40($name) {
     if (is_string($name) && preg_match('/^[a-zA-Z\d_]{3,40}$/', $name)) {
