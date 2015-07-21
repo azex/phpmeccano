@@ -50,4 +50,6 @@
     <creatingroot>Creation of the root group and user</creatingroot>
     <error>Error: </error>
     <completed>Installation successfully completed. The engine went to full speed and ready to use in your project.</completed>
+    <selfremove>It is highly recommended to remove installer after the installation is finished</selfremove>
+    <removed>Installer successfully removed</removed>
 </interface>

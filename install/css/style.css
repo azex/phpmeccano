@@ -21,6 +21,7 @@
 */
 
 body {
+    font-family: sans-serif;
     background: #8193E9;
 }
 
@@ -63,7 +64,6 @@ textarea + p {
 
 input {
     font-size: 0.9em;
-    font-family: sans-serif;
     padding: 0.3em;
     width: 50%;
     background: #EAEAEA;
@@ -75,9 +75,14 @@ input[type="submit"] {
     width: auto;
 }
 
+input[disabled=""] {
+    color: grey;
+    background: white;
+}
+
 textarea {
-    font-size: 0.9em;
     font-family: sans-serif;
+    font-size: 0.9em;
     padding: 0.3em;
     width: 95%;
     max-width: 95%;
@@ -91,7 +96,6 @@ textarea {
 
 select {
     font-size: 0.9em;
-    font-family: sans-serif;
     padding: 0.3em;
     background: #EAEAEA;
 }
@@ -105,7 +109,6 @@ select {
 }
 
 .main {
-    font-family: sans-serif;
     background: white;
     width: auto;
     margin: 0 5% 60px 5%;

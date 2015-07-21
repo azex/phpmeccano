@@ -1,5 +1,27 @@
 <?xml version="1.0"?>
-<!-- comment -->
+
+<!--
+    phpMeccano v0.0.1. Web-framework written with php programming language. Transformation stylesheet for localization of the web installer.
+    Copyright (C) 2015  Alexei Muzarov
+    
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+    
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+    
+    e-mail: azexmail@gmail.com
+    e-mail: azexmail@mail.ru
+-->
+
 <xsl:stylesheet version="1.0"
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
@@ -19,6 +41,23 @@
                 <p id="creatingdb" class="hidden"><xsl:value-of select="creatingdb" /></p>
                 <p id="instpack" class="hidden"><xsl:value-of select="instpack" /></p>
                 <p id="creatingroot" class="hidden"><xsl:value-of select="creatingroot" /></p>
+                <br/>
+                <p id="selfremove" class="hidden">
+                    <br/>
+                    <xsl:value-of select="selfremove" />
+                    <br/>
+                    <iframe id="trash" name="trash" style="border: none;" src="svg/trash.svg" width="54" height="64" />
+                    <iframe id="waitgear" name="waitgear" class="hidden" style="border: none;" src="svg/wait-gear.svg" width="62" height="62" />
+                    <br/>
+                    <br/>
+                </p>
+                <p id="removed" class="hidden">
+                    <br/>
+                    <xsl:value-of select="removed" />
+                    <br/>
+                    <br/>
+                </p>
+                <p id="removed" class="hidden"><br/><xsl:value-of select="removed" /><br/><br/></p>
             </div>
             <div id="settings" class="hidden">
                 <h1 class="center"><xsl:value-of select="head"/></h1>
