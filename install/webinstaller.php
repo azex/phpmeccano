@@ -146,7 +146,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
             }
         }
         //validate default language
-        if (pregLang(MECCANO_DEF_LANG)) {
+        if (in_array(MECCANO_DEF_LANG, array("en-US", "ru-RU"))) {
             $constStatus['MECCANO_DEF_LANG'] = array(TRUE, MECCANO_DEF_LANG);
         }
         elseif (!is_string(MECCANO_DEF_LANG) || !preg_replace("/[\s\n\r\t]+/", "", MECCANO_DEF_LANG)) {
