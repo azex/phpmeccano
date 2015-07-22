@@ -20,6 +20,7 @@
  * 
  *     e-mail: azexmail@gmail.com
  *     e-mail: azexmail@mail.ru
+ *     https://bitbucket.org/azexmail/phpmeccano
  */
 
 namespace core;
@@ -64,7 +65,7 @@ function pregUName($username) {
 
 // it checks group name
 function pregGName($groupname) {
-    if (is_string($groupname) && preg_match('/^[-a-zA-Z\d\s_]{1,50}$/', $groupname)) {
+    if (is_string($groupname) && preg_match('/^.{1,50}$/', $groupname) && preg_replace("/[\s\n\r\t]+/", "", $groupname)) {
         return TRUE;
     }
     return FALSE;
@@ -97,6 +98,16 @@ function pregLang($code) {
 // it checks entered plugin name
 function pregPlugin($name) {
     if (is_string($name) && preg_match('/^[a-zA-Z\d_]{3,30}$/', $name)) {
+        return TRUE;
+    }
+    return FALSE;
+}
+
+function pregMail($email) {
+    // regex from Blink engine
+    // https://chromium.googlesource.com/chromium/blink/+/master/Source/core/html/forms/EmailInputType.cpp
+    // line 48
+    if (is_string($email) && preg_match("/^[a-z0-9!#$%&'*+\/=?^_`{|}~.-]+@[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)*$/", $email)) {
         return TRUE;
     }
     return FALSE;

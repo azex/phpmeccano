@@ -20,13 +20,11 @@
  * 
  *     e-mail: azexmail@gmail.com
  *     e-mail: azexmail@mail.ru
+ *     https://bitbucket.org/azexmail/phpmeccano
  */
 
 namespace core;
 
-require_once 'swconst.php';
-require_once 'unifunctions.php';
-require_once 'extclass.php';
 require_once 'policy.php';
 
 interface intLogMan {

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+    phpMeccano v0.0.1. Web-framework written with php programming language. Localization file of the web installer.
+    Copyright (C) 2015  Alexei Muzarov
+    
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+    
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+    
+    e-mail: azexmail@gmail.com
+    e-mail: azexmail@mail.ru
+    https://bitbucket.org/azexmail/phpmeccano
+-->
+
+<interface code="ru-RU" name="Русский (Россия)" dir="ltr">
+    <loading>Загрузка...</loading>
+    <head>Установка</head>
+    <rootgroup>Корневая группа</rootgroup>
+    <groupname>Название:</groupname>
+    <groupdesc>Описание:</groupdesc>
+    <rootuser>Корневой пользователь</rootuser>
+    <username>Имя пользователя:</username>
+    <entpassw>Пароль (минимум 8 символов):</entpassw>
+    <repassw>Повторите пароль:</repassw>
+    <email>Адрес электронной почты:</email>
+    <runinst>Начать установку</runinst>
+    <dbparam>Параметры базы данных</dbparam>
+    <dbsengine>Движок хранения</dbsengine>
+    <dbaname>Имя пользователя</dbaname>
+    <dbapassw>Пароль пользователя</dbapassw>
+    <dbhost>Хост</dbhost>
+    <dbport>Порт</dbport>
+    <dbname>Имя базы данных</dbname>
+    <tpref>Префикс таблиц</tpref>
+    <syspaths>Системные пути</syspaths>
+    <deflang>Язык по умолчанию</deflang>
+    <instprogress>Идёт установка...</instprogress>
+    <creatingdb>Создание базы данных и таблиц</creatingdb>
+    <instpack>Установка пакета</instpack>
+    <creatingroot>Создание корневых группы и пользователя</creatingroot>
+    <error>Ошибка: </error>
+    <completed>Установка успешно завершена. Движок вышел на полные обороты и готов к использованию в Вашем проекте.</completed>
+    <selfremove>После завершения установки настоятельно рекомендуется удалить установщик</selfremove>
+    <removed>Установщик успешно удалён</removed>
+</interface>

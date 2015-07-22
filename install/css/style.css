@@ -1,0 +1,172 @@
+/*
+    phpMeccano v0.0.1. Web-framework written with php programming language. Stylesheet of the web installer.
+    Copyright (C) 2015  Alexei Muzarov
+    
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+    
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+    
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+    
+    e-mail: azexmail@gmail.com
+    e-mail: azexmail@mail.ru
+    https://bitbucket.org/azexmail/phpmeccano
+*/
+
+body {
+    font-family: sans-serif;
+    background: #8193E9;
+}
+
+a, a:hover a:visited a:active {
+    text-decoration: none;
+    color: #8193E9;
+}
+
+h1 {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #DB270A;
+    margin-bottom: 0.5em;
+}
+
+h2 {
+    font-size: 1.3em;
+    font-weight: bold;
+    margin-top: 1em;
+    color: #DB270A;
+}
+
+p {
+    font-size: 1em;
+    margin: 0.3em 0;
+    word-wrap: break-word;
+}
+
+p + p {
+    margin-top: 0.5em;
+}
+
+input + p {
+    margin-top: 1em;
+}
+
+textarea + p {
+    margin-top: 1em;
+}
+
+input {
+    font-size: 0.9em;
+    padding: 0.3em;
+    width: 50%;
+    background: #EAEAEA;
+    border: 1px solid grey;
+}
+
+input[type="submit"] {
+    color: black;
+    width: auto;
+}
+
+input[disabled=""] {
+    color: grey;
+    background: white;
+}
+
+textarea {
+    font-family: sans-serif;
+    font-size: 0.9em;
+    padding: 0.3em;
+    width: 95%;
+    max-width: 95%;
+    min-width: 95%;
+    height: 10em;
+    max-height: 15em;
+    min-height: 1.3em;
+    background: #EAEAEA;
+    border: 1px solid darkgreen;
+}
+
+select {
+    font-size: 0.9em;
+    padding: 0.3em;
+    background: #EAEAEA;
+}
+
+.logo {
+    background: white;
+    width: auto;
+    height: 46px;
+    text-align: center;
+    margin: 30px 0;
+}
+
+.main {
+    background: white;
+    width: auto;
+    margin: 0 5% 60px 5%;
+    padding: 1em;
+}
+
+.user {
+    position: relative;
+    float: left;
+    width: 47%;
+    padding-bottom: 0.5em;
+    border-top: 2px solid #8193E9;
+}
+
+.conf {
+    position: relative;
+    float: right;
+    width: 47%;
+    padding-bottom: 0.5em;
+    border-top: 2px solid #8193E9;
+}
+
+.cut {clear: both;}
+
+.true {
+    background: #ADFFAF;
+    border: 1px solid darkgreen;
+}
+
+.false {
+    background: #FDDDDD;
+    border: 1px solid darkred;
+}
+
+span.true {
+    display: block;
+    background: #ADFFAF;
+    padding: 0.1em;
+}
+
+span.false {
+    display: block;
+    background: #FDDDDD;
+    padding: 0.1em;
+}
+
+.hidden {
+    display: none;
+}
+
+.center {
+    text-align: center;
+}
+
+.licence {
+    font-size: 0.5em;
+    color: grey;
+    margin: 0;
+    padding: 0;
+}

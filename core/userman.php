@@ -20,6 +20,7 @@
  * 
  *     e-mail: azexmail@gmail.com
  *     e-mail: azexmail@mail.ru
+ *     https://bitbucket.org/azexmail/phpmeccano
  */
 
 namespace core;
@@ -86,7 +87,8 @@ class UserMan extends ServiceMethods implements intUserMan{
             $this->setError(ERROR_NOT_EXECUTED, 'createGroup: incorect type of incoming parameters');
             return FALSE;
         }
-        $description = $this->dbLink->real_escape_string($description);
+        $groupName = $this->dbLink->real_escape_string(htmlspecialchars($groupName));
+        $description = $this->dbLink->real_escape_string(htmlspecialchars($description));
         $this->dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_userman_groups` (`groupname`, `description`) "
                 . "VALUES ('$groupName', '$description') ;");
         if ($this->dbLink->errno) {
@@ -519,7 +521,7 @@ class UserMan extends ServiceMethods implements intUserMan{
             $this->setError(ERROR_RESTRICTED_ACCESS, 'createUser: function execution was terminated because of using of limited authentication');
             return FALSE;
         }
-        if (!pregUName($username) || !pregPassw($password) || !filter_var($email, FILTER_VALIDATE_EMAIL) || !is_integer($groupId) || !pregLang($langCode)) {
+        if (!pregUName($username) || !pregPassw($password) || !pregMail($email) || !is_integer($groupId) || !pregLang($langCode)) {
             $this->setError(ERROR_INCORRECT_DATA, 'createUser: incorrect incoming parameters');
             return FALSE;
         }
@@ -612,7 +614,7 @@ class UserMan extends ServiceMethods implements intUserMan{
     
     public function mailExists($email) {
         $this->zeroizeError();
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        if (!pregMail($email)) {
             $this->setError(ERROR_INCORRECT_DATA, 'userExists: incorrect email');
             return FALSE;
         }
@@ -1047,7 +1049,7 @@ class UserMan extends ServiceMethods implements intUserMan{
             $this->setError(ERROR_RESTRICTED_ACCESS, 'setUserMail: function execution was terminated because of using of limited authentication');
             return FALSE;
         }
-        if (!is_integer($userId) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        if (!is_integer($userId) || !pregMail($email)) {
             $this->setError(ERROR_INCORRECT_DATA, 'setUserMail: incorrect incoming parameters');
             return FALSE;
         }
