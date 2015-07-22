@@ -94,79 +94,80 @@
                 <div class="conf">
                     <h2><xsl:value-of select="dbparam" /></h2>
                     <p>
-                        <xsl:value-of select="dbsengine" /> (MECCANO_DBSTORAGE_ENGINE):
+                        <xsl:value-of select="dbsengine" /> / MECCANO_DBSTORAGE_ENGINE:
                         <span id="MECCANO_DBSTORAGE_ENGINE"></span>
                     </p>
                     <p>
-                        <xsl:value-of select="dbaname" /> (MECCANO_DBANAME):
+                        <xsl:value-of select="dbaname" /> / MECCANO_DBANAME:
                         <span id="MECCANO_DBANAME"></span>
                     </p>
                     <p>
-                        <xsl:value-of select="dbapassw" /> (MECCANO_DBAPASS):
+                        <xsl:value-of select="dbapassw" /> / MECCANO_DBAPASS:
                         <span id="MECCANO_DBAPASS"></span>
                     </p>
                     <p>
-                        <xsl:value-of select="dbhost" /> (MECCANO_DBHOST):
+                        <xsl:value-of select="dbhost" /> / MECCANO_DBHOST:
                         <span id="MECCANO_DBHOST"></span>
                     </p>
                     <p>
-                        <xsl:value-of select="dbport" /> (MECCANO_DBPORT):
+                        <xsl:value-of select="dbport" /> / MECCANO_DBPORT:
                         <span id="MECCANO_DBPORT"></span>
                     </p>
                     <p>
-                        <xsl:value-of select="dbname" /> (MECCANO_DBNAME):
+                        <xsl:value-of select="dbname" /> / MECCANO_DBNAME:
                         <span id="MECCANO_DBNAME"></span>
                     </p>
                     <p>
-                        <xsl:value-of select="tpref" /> (MECCANO_TPREF):
+                        <xsl:value-of select="tpref" /> / MECCANO_TPREF:
                         <span id="MECCANO_TPREF"></span>
                     </p>
                     <h2><xsl:value-of select="syspaths" /></h2>
                     <p>
-                        MECCANO_CONF_FILE
+                        MECCANO_CONF_FILE:
                         <span id="MECCANO_CONF_FILE"></span>
                     </p>
                     <p>
-                        MECCANO_ROOT_DIR
+                        MECCANO_ROOT_DIR:
                         <span id="MECCANO_ROOT_DIR"></span>
                     </p>
                     <p>
-                        MECCANO_CORE_DIR
+                        MECCANO_CORE_DIR:
                         <span id="MECCANO_CORE_DIR"></span>
                     </p>
                     <p>
-                        MECCANO_TMP_DIR
+                        MECCANO_TMP_DIR:
                         <span id="MECCANO_TMP_DIR"></span>
                     </p>
                     <p>
-                        MECCANO_PHP_DIR
+                        MECCANO_PHP_DIR:
                         <span id="MECCANO_PHP_DIR"></span>
                     </p>
                     <p>
-                        MECCANO_JS_DIR
+                        MECCANO_JS_DIR:
                         <span id="MECCANO_JS_DIR"></span>
                     </p>
                     <p>
-                        MECCANO_DOCUMENTS_DIR
+                        MECCANO_DOCUMENTS_DIR:
                         <span id="MECCANO_DOCUMENTS_DIR"></span>
                     </p>
                     <p>
-                        MECCANO_UNPACKED_PLUGINS
+                        MECCANO_UNPACKED_PLUGINS:
                         <span id="MECCANO_UNPACKED_PLUGINS"></span>
                     </p>
                     <p>
-                        MECCANO_UNINSTALL
+                        MECCANO_UNINSTALL:
                         <span id="MECCANO_UNINSTALL"></span>
                     </p>
                     <h2><xsl:value-of select="deflang" /></h2>
                     <p>
-                        MECCANO_DEF_LANG
+                        MECCANO_DEF_LANG:
                         <span id="MECCANO_DEF_LANG"></span>
                     </p>
                 </div>
             </div>
             <div class="cut"></div>
-            
+            <p class="licence center">phpMeccano v0.0.1alpha</p>
+            <p class="licence center">Licensed under GPL2+. Copyright (C) 2015  Alexei Muzarov</p>
         </div>
     </xsl:template>
 </xsl:stylesheet>
