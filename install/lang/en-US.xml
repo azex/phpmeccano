@@ -20,6 +20,7 @@
     
     e-mail: azexmail@gmail.com
     e-mail: azexmail@mail.ru
+    https://bitbucket.org/azexmail/phpmeccano
 -->
 
 <interface code="en-US" name="English (USA)" dir="ltr">
@@ -49,7 +50,7 @@
     <instpack>Installation of the package</instpack>
     <creatingroot>Creation of the root group and user</creatingroot>
     <error>Error: </error>
-    <completed>Installation successfully completed. The engine went to full speed and ready to use in your project.</completed>
+    <completed>Installation has been completed successfully. The engine went to full speed and ready to use in your project.</completed>
     <selfremove>It is highly recommended to remove installer after the installation is finished</selfremove>
     <removed>Installer successfully removed</removed>
 </interface>

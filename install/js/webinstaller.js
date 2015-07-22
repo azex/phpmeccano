@@ -18,6 +18,7 @@
  * 
  *     e-mail: azexmail@gmail.com
  *     e-mail: azexmail@mail.ru
+ *     https://bitbucket.org/azexmail/phpmeccano
  */
 
 "use strict";

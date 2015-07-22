@@ -20,6 +20,7 @@
  * 
  *     e-mail: azexmail@gmail.com
  *     e-mail: azexmail@mail.ru
+ *     https://bitbucket.org/azexmail/phpmeccano
  */
 
 header('Content-type: text/plain; charset=utf-8');
