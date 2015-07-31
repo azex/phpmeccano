@@ -168,7 +168,7 @@
             </div>
             <div class="cut"></div>
             <p class="licence center">phpMeccano v0.0.1alpha</p>
-            <p class="licence center">Licensed under GPL2+. Copyright (C) 2015  Alexei Muzarov</p>
+            <p class="licence center">Licensed under GNU GPLv2+. Copyright (C) 2015  Alexei Muzarov</p>
         </div>
     </xsl:template>
 </xsl:stylesheet>
