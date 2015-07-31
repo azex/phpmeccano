@@ -1,0 +1,55 @@
+<?xml version="1.0"?>
+
+<!--
+     phpMeccano v0.0.1. Web-framework written with php programming language. Validation schema [plugins-package-depends-v01.rng].
+     Copyright (C) 2015  Alexei Muzarov
+ 
+     This program is free software; you can redistribute it and/or modify
+     it under the terms of the GNU General Public License as published by
+     the Free Software Foundation; either version 2 of the License, or
+     (at your option) any later version.
+ 
+     This program is distributed in the hope that it will be useful,
+     but WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+     GNU General Public License for more details.
+ 
+     You should have received a copy of the GNU General Public License along
+     with this program; if not, write to the Free Software Foundation, Inc.,
+     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ 
+     e-mail: azexmail@gmail.com
+     e-mail: azexmail@mail.ru
+     https://bitbucket.org/azexmail/phpmeccano
+-->
+
+<grammar datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes" xmlns="http://relaxng.org/ns/structure/1.0" >
+    <start>
+        <element name="depends">
+            <zeroOrMore>
+                <element name="plugin">
+                    <attribute name="name">
+                        <data type="string">
+                            <param name="pattern">[a-zA-Z0-9_]{3,30}</param>
+                        </data>
+                    </attribute>
+                    <attribute name="version">
+                        <data type="string">
+                            <param name="pattern">[0-9]{1,2}\.[0-9]{1,2}\.[0-9]{1,2}</param>
+                        </data>
+                    </attribute>
+                    <attribute name="operator">
+                        <choice>
+                            <value>&gt;=</value>
+                            <value>&lt;=</value>
+                            <value>&gt;</value>
+                            <value>&lt;</value>
+                            <value>==</value>
+                            <value>!=</value>
+                        </choice>
+                    </attribute>
+                </element>
+            </zeroOrMore>
+        </element>
+    </start>
+</grammar>

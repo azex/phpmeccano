@@ -1,0 +1,193 @@
+<?xml version="1.0"?>
+
+<!--
+     phpMeccano v0.0.1. Web-framework written with php programming language. Validation schema of the localization files of the web installer.
+     Copyright (C) 2015  Alexei Muzarov
+ 
+     This program is free software; you can redistribute it and/or modify
+     it under the terms of the GNU General Public License as published by
+     the Free Software Foundation; either version 2 of the License, or
+     (at your option) any later version.
+ 
+     This program is distributed in the hope that it will be useful,
+     but WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+     GNU General Public License for more details.
+ 
+     You should have received a copy of the GNU General Public License along
+     with this program; if not, write to the Free Software Foundation, Inc.,
+     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ 
+     e-mail: azexmail@gmail.com
+     e-mail: azexmail@mail.ru
+     https://bitbucket.org/azexmail/phpmeccano
+-->
+
+<grammar datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes" xmlns="http://relaxng.org/ns/structure/1.0" >
+    <start>
+        <element name="interface">
+            <attribute name="code">
+                <data type="string">
+                    <param name="pattern">[a-z]{2}-[A-Z]{2}</param>
+                </data>
+            </attribute>
+            <attribute name="name">
+                <data type="string">
+                    <param name="minLength">1</param>
+                    <param name="maxLength">50</param>
+                </data>
+            </attribute>
+            <attribute name="dir">
+                <choice>
+                    <value>ltr</value>
+                    <value>rtl</value>
+                </choice>
+            </attribute>
+            <element name="loading">
+                <data type="string">
+                    <param name="minLength">1</param>
+                </data>
+            </element>
+            <element name="head">
+                <data type="string">
+                    <param name="minLength">1</param>
+                </data>
+            </element>
+            <element name="rootgroup">
+                <data type="string">
+                    <param name="minLength">1</param>
+                </data>
+            </element>
+            <element name="groupname">
+                <data type="string">
+                    <param name="minLength">1</param>
+                </data>
+            </element>
+            <element name="groupdesc">
+                <data type="string">
+                    <param name="minLength">1</param>
+                </data>
+            </element>
+            <element name="rootuser">
+                <data type="string">
+                    <param name="minLength">1</param>
+                </data>
+            </element>
+            <element name="username">
+                <data type="string">
+                    <param name="minLength">1</param>
+                </data>
+            </element>
+            <element name="entpassw">
+                <data type="string">
+                    <param name="minLength">1</param>
+                </data>
+            </element>
+            <element name="repassw">
+                <data type="string">
+                    <param name="minLength">1</param>
+                </data>
+            </element>
+            <element name="email">
+                <data type="string">
+                    <param name="minLength">1</param>
+                </data>
+            </element>
+            <element name="runinst">
+                <data type="string">
+                    <param name="minLength">1</param>
+                </data>
+            </element>
+            <element name="dbparam">
+                <data type="string">
+                    <param name="minLength">1</param>
+                </data>
+            </element>
+            <element name="dbsengine">
+                <data type="string">
+                    <param name="minLength">1</param>
+                </data>
+            </element>
+            <element name="dbaname">
+                <data type="string">
+                    <param name="minLength">1</param>
+                </data>
+            </element>
+            <element name="dbapassw">
+                <data type="string">
+                    <param name="minLength">1</param>
+                </data>
+            </element>
+            <element name="dbhost">
+                <data type="string">
+                    <param name="minLength">1</param>
+                </data>
+            </element>
+            <element name="dbport">
+                <data type="string">
+                    <param name="minLength">1</param>
+                </data>
+            </element>
+            <element name="dbname">
+                <data type="string">
+                    <param name="minLength">1</param>
+                </data>
+            </element>
+            <element name="tpref">
+                <data type="string">
+                    <param name="minLength">1</param>
+                </data>
+            </element>
+            <element name="syspaths">
+                <data type="string">
+                    <param name="minLength">1</param>
+                </data>
+            </element>
+            <element name="deflang">
+                <data type="string">
+                    <param name="minLength">1</param>
+                </data>
+            </element>
+            <element name="instprogress">
+                <data type="string">
+                    <param name="minLength">1</param>
+                </data>
+            </element>
+            <element name="creatingdb">
+                <data type="string">
+                    <param name="minLength">1</param>
+                </data>
+            </element>
+            <element name="instpack">
+                <data type="string">
+                    <param name="minLength">1</param>
+                </data>
+            </element>
+            <element name="creatingroot">
+                <data type="string">
+                    <param name="minLength">1</param>
+                </data>
+            </element>
+            <element name="error">
+                <data type="string">
+                    <param name="minLength">1</param>
+                </data>
+            </element>
+            <element name="completed">
+                <data type="string">
+                    <param name="minLength">1</param>
+                </data>
+            </element>
+            <element name="selfremove">
+                <data type="string">
+                    <param name="minLength">1</param>
+                </data>
+            </element>
+            <element name="removed">
+                <data type="string">
+                    <param name="minLength">1</param>
+                </data>
+            </element>
+        </element>
+    </start>
+</grammar>
