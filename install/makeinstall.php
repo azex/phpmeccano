@@ -25,7 +25,7 @@
 
 header('Content-type: text/plain; charset=utf-8');
 
-require_once 'conf.php';
+require_once 'getconf.php';
 require_once 'webinstaller.php';
 
 $webinst = new \core\WebInstaller();

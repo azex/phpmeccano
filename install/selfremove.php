@@ -25,7 +25,7 @@
 
 header('Content-Type: text/plain; charset=utf-8');
 
-require_once 'conf.php';
+require_once 'getconf.php';
 require_once MECCANO_CORE_DIR.'/files.php';
 
 if (!session_id()) {
