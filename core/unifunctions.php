@@ -47,9 +47,17 @@ function passwHash($password, $salt) {
     }
 }
 
+// it checks database name
+function pregDbName($dbname) {
+    if (is_string($dbname) && preg_match('/^[a-zA-Z\d_]{1,64}$/', $dbname)) {
+        return TRUE;
+    }
+    return FALSE;
+}
+
 // it checks database prefix
 function pregPref($prefix) {
-    if (is_string($prefix) && preg_match('/^[a-zA-Z\d]{1,20}$/', $prefix)) {
+    if (is_string($prefix) && preg_match('/^[a-zA-Z\d]{1,10}$/', $prefix)) {
         return TRUE;
     }
     return FALSE;

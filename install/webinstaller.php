@@ -109,7 +109,10 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
             'MECCANO_TPREF' => MECCANO_TPREF
         );
         foreach ($dbConf2 as $key => $value) {
-            if (pregPref($value)) {
+            if ($key == 'MECCANO_DBNAME' && pregDbName($value)) {
+                $constStatus[$key] = array(TRUE, $value);
+            }
+            elseif ($key == 'MECCANO_TPREF' && pregPref($value)) {
                 $constStatus[$key] = array(TRUE, $value);
             }
             elseif (!is_string($value) || !preg_replace("/[\s\n\r\t]+/", "", $value)) {
