@@ -47,3 +47,7 @@ define('MECCANO_UNINSTALL', MECCANO_ROOT_DIR.'/uninstall');
 
 // default language
 define('MECCANO_DEF_LANG', 'en-US');
+
+// temporary blocking of the user authentication
+define('MECCANO_AUTH_LIMIT', 5);
+define('MECCANO_AUTH_BLOCK_PERIOD', '00:05:00');
