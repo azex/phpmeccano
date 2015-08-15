@@ -38,7 +38,6 @@ interface intAuth {
 class Auth extends ServiceMethods implements intAuth {
     private $dbLink; // database link
     private $logObject; // log object
-    private $policyObject; // policy object
     
     public function __construct(LogMan $logObject) {
         if (!session_id()) {
@@ -46,15 +45,10 @@ class Auth extends ServiceMethods implements intAuth {
         }
         $this->dbLink = $logObject->dbLink;
         $this->logObject = $logObject;
-        $this->policyObject = $logObject->policyObject;
     }
     
     public function userLogin($username, $password, $useCookie = TRUE, $cookieTime = 'month', $log = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'auth_session')) {
-            $this->setError(ERROR_RESTRICTED_ACCESS, "userLogin: restricted by the policy");
-            return FALSE;
-        }
         if (isset($_SESSION[AUTH_USER_ID])) {
             $this->setError(ERROR_NOT_EXECUTED, 'userLogin: finish current session before starting new');
             return FALSE;
@@ -144,11 +138,6 @@ class Auth extends ServiceMethods implements intAuth {
     
     public function isSession() {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'auth_session')) {
-            $this->userLogout();
-            $this->setError(ERROR_RESTRICTED_ACCESS, "isSession: restricted by the policy");
-            return FALSE;
-        }
         if (isset($_SESSION[AUTH_USER_ID])) {
             if ($_SESSION[AUTH_IP] != $_SERVER['REMOTE_ADDR'] || $_SESSION[AUTH_USER_AGENT] != $_SERVER['HTTP_USER_AGENT']) {
                 $this->userLogout();
@@ -220,10 +209,6 @@ class Auth extends ServiceMethods implements intAuth {
     
     public function getSession($log = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'auth_session')) {
-            $this->setError(ERROR_RESTRICTED_ACCESS, "getSession: restricted by the policy");
-            return FALSE;
-        }
         if (!isset($_SESSION[AUTH_USER_ID]) && isset($_COOKIE[AUTH_UNIQUE_SESSION_ID]) && pregIdent($_COOKIE[AUTH_UNIQUE_SESSION_ID])) {
             $qResult = $this->dbLink->query("SELECT `p`.`id`, `p`.`limited`, `u`.`id`, `u`.`username`, `l`.`code`, `l`.`dir` "
                     . "FROM `".MECCANO_TPREF."_core_auth_usi` `s` "

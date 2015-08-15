@@ -24,16 +24,6 @@
 -->
 
 <policy plugin="core">
-    <function name="auth_session" nonauth="1" auth="0">
-        <description code="en-US">
-            <short>Authentication of the user</short>
-            <detailed>Refers to the methods [userLogin] and [getSession] of the class [Auth].</detailed>
-        </description>
-        <description code="ru-RU">
-            <short>Аутентицикация пользователя</short>
-            <detailed>Относится к методам [userLogin] и [getSession] класса [Auth].</detailed>
-        </description>
-    </function>
     <function name="logman_clear_log" nonauth="0" auth="0">
         <description code="en-US">
             <short>Remove log records</short>
