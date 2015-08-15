@@ -571,6 +571,8 @@ class UserMan extends ServiceMethods implements intUserMan{
             . "VALUES ('$username', '$groupId', '$salt', $active, $langId) ;",
             'mail' => "INSERT INTO `".MECCANO_TPREF."_core_userman_userinfo` (`id`, `email`) "
             . "VALUES (LAST_INSERT_ID(), '$email') ;",
+            'tblock' => "INSERT INTO `".MECCANO_TPREF."_core_userman_temp_block` (`id`) "
+            . "VALUES (LAST_INSERT_ID()) ;",
             'passw' => "INSERT INTO `".MECCANO_TPREF."_core_userman_userpass` (`userid`, `password`, `limited`) "
             . "VALUES (LAST_INSERT_ID(), '$passw', 0) ;",
             'usi' => "INSERT INTO `".MECCANO_TPREF."_core_auth_usi` (`id`, `usi`) "
@@ -752,6 +754,8 @@ class UserMan extends ServiceMethods implements intUserMan{
             "DELETE FROM `".MECCANO_TPREF."_core_userman_userpass` "
             . "WHERE `userid`=$userId ;",
             "DELETE FROM `".MECCANO_TPREF."_core_userman_userinfo` "
+            . "WHERE `id`=$userId ;",
+            "DELETE FROM `".MECCANO_TPREF."_core_userman_temp_block` "
             . "WHERE `id`=$userId ;",
             "DELETE FROM `".MECCANO_TPREF."_core_userman_users` "
             . "WHERE `id`=$userId ;"
