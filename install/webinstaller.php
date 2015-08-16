@@ -408,8 +408,9 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
             'CREATE TABLE `'.$tabPrefix.'_core_userman_temp_block` (
                 `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
                 `tempblock` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT \'Timestamp to define temporary blocking of the user authentication to prevent brute force of the password\',
-                `counter` tinyint(2) UNSIGNED NOT NULL DEFAULT 0 COMMENT \'Counter of the incorrect inputs of the password\',
+                `counter` tinyint(2) UNSIGNED NOT NULL DEFAULT 1 COMMENT \'Counter of the incorrect inputs of the password\',
                 FOREIGN KEY (`id`) REFERENCES `'.$tabPrefix.'_core_userman_users` (`id`),
+                KEY `tempblock` (`tempblock`),
                 PRIMARY KEY (`id`)
             ) ENGINE='.$sEngine.' DEFAULT CHARSET=utf8 COMMENT \'Information about users\' AUTO_INCREMENT=1 ;',
             
