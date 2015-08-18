@@ -1,0 +1,417 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+    This file is part of phpMeccano project.
+    Copyright (C) 2015  Alexei Muzarov
+    
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+    
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+    
+    e-mail: azexmail@gmail.com
+    e-mail: azexmail@mail.ru
+    https://bitbucket.org/azexmail/phpmeccano
+-->
+
+<policy plugin="core">
+    <function name="logman_clear_log" nonauth="0" auth="0">
+        <description code="en-US">
+            <short>Remove log records</short>
+            <detailed>Refers to the method [clearLog] of the class [LogMan].</detailed>
+        </description>
+        <description code="ru-RU">
+            <short>Удалить записи журнала</short>
+            <detailed>Относится к методу [clearLog] метода [LogMan].</detailed>
+        </description>
+    </function>
+    <function name="logman_get_log" nonauth="0" auth="0">
+        <description code="en-US">
+            <short>Get log records</short>
+            <detailed>Refers to the methods [getPageAllPlugins], [getPageByPlugin], [getLogAllPlugins] and [getLogByPlugin] of the class [LogMan].</detailed>
+        </description>
+        <description code="ru-RU">
+            <short>Удалить записи журнала</short>
+            <detailed>Относится к методам [getPageAllPlugins], [getPageByPlugin], [getLogAllPlugins] и [getLogByPlugin] метода [LogMan].</detailed>
+        </description>
+    </function>
+    <function name="plugins_install" nonauth="0" auth="0">
+        <description code="en-US">
+            <short>Unpack and install plugin</short>
+            <detailed>Refers to the methods [unpack], [listUnpacked], [aboutUnpacked], [install] and [delUnpacked] of the class [Plugins].</detailed>
+        </description>
+        <description code="ru-RU">
+            <short>Распаковать и установить плагин</short>
+            <detailed>Относится к методам [unpack], [listUnpacked], [aboutUnpacked], [install] и [delUnpacked] класса [Plugins].</detailed>
+        </description>
+    </function>
+    <function name="plugins_installed" nonauth="0" auth="0">
+        <description code="en-US">
+            <short>Information about installed plugins</short>
+            <detailed>Refers to the methods [listInstalled] and [aboutInstalled] of the class [Plugins].</detailed>
+        </description>
+        <description code="ru-RU">
+            <short>Информация об установленных плагинах</short>
+            <detailed>Относится к методам [listInstalled] и [aboutInstalled] класса [Plugins].</detailed>
+        </description>
+    </function>
+    <function name="plugins_del_installed" nonauth="0" auth="0">
+        <description code="en-US">
+            <short>Remove installed plugins</short>
+            <detailed>Refers to the method [delInstalled] of the class [Plugins].</detailed>
+        </description>
+        <description code="ru-RU">
+            <short>Удалить установленные плагины</short>
+            <detailed>Относится к методу [delInstalled] класса [Plugins].</detailed>
+        </description>
+    </function>
+    <function name="policy_func_access" nonauth="0" auth="0">
+        <description code="en-US">
+            <short>Restriction of the access</short>
+            <detailed>Refers to the method [funcAccess] of the class [Policy].</detailed>
+        </description>
+        <description code="ru-RU">
+            <short>Ограничение доступа</short>
+            <detailed>Относится к методу [funcAccess] класса [Policy].</detailed>
+        </description>
+    </function>
+    <function name="policy_list_about" nonauth="0" auth="0">
+        <description code="en-US">
+            <short>Information about policies</short>
+            <detailed>Refers to the methods [groupPolicyList] and [getPolicyDescById] of the class [Policy].</detailed>
+        </description>
+        <description code="ru-RU">
+            <short>Информация о политиках</short>
+            <detailed>Относится к методам [groupPolicyList] и [getPolicyDescById] класса [Policy].</detailed>
+        </description>
+    </function>
+    <function name="langman_syswide_lang" nonauth="0" auth="0">
+        <description code="en-US">
+            <short>Add or remove system-wide language</short>
+            <detailed>Refers to the methods [addLang] and [delLang] of the class [LangMan].</detailed>
+        </description>
+        <description code="ru-RU">
+            <short>Добавить или удалить общесистемный язык</short>
+            <detailed>Относится к методам [addLang] и [delLang] класса [LangMan].</detailed>
+        </description>
+    </function>
+    <function name="langman_add_title_sec" nonauth="0" auth="0">
+        <description code="en-US">
+            <short>Add a title section</short>
+            <detailed>Refers to the method [addTitleSection] of the class [LangMan].</detailed>
+        </description>
+        <description code="ru-RU">
+            <short>Добавить заголовочный раздел</short>
+            <detailed>Относится к методу [addTitleSection] класса [LangMan].</detailed>
+        </description>
+    </function>
+    <function name="langman_del_title_sec" nonauth="0" auth="0">
+        <description code="en-US">
+            <short>Remove a title section</short>
+            <detailed>Refers to the method [delTitleSection] of the class [LangMan].</detailed>
+        </description>
+        <description code="ru-RU">
+            <short>Удалить заголовочный раздел</short>
+            <detailed>Относится к методу [delTitleSection] класса [LangMan].</detailed>
+        </description>
+    </function>
+    <function name="langman_add_text_sec" nonauth="0" auth="0">
+        <description code="en-US">
+            <short>Add a text section</short>
+            <detailed>Refers to the method [addTextSection] of the class [LangMan].</detailed>
+        </description>
+        <description code="ru-RU">
+            <short>Добавить текстовый раздел</short>
+            <detailed>Относится к методу [addTextSection] класса [LangMan].</detailed>
+        </description>
+    </function>
+    <function name="langman_del_text_sec" nonauth="0" auth="0">
+        <description code="en-US">
+            <short>Remove a text section</short>
+            <detailed>Refers to the method [delTextSection] of the class [LangMan].</detailed>
+        </description>
+        <description code="ru-RU">
+            <short>Удалить текстовый раздел</short>
+            <detailed>Относится к методу [delTextSection] класса [LangMan].</detailed>
+        </description>
+    </function>
+    <function name="langman_add_title" nonauth="0" auth="0">
+        <description code="en-US">
+            <short>Add a title</short>
+            <detailed>Refers to the methods [addTitleName] and [addTitle] of the class [LangMan].</detailed>
+        </description>
+        <description code="ru-RU">
+            <short>Добавить заголовок</short>
+            <detailed>Относится к методам [addTitleName] и [addTitle] класса [LangMan].</detailed>
+        </description>
+    </function>
+    <function name="langman_del_title" nonauth="0" auth="0">
+        <description code="en-US">
+            <short>Remove a title</short>
+            <detailed>Refers to the methods [delTitleName] and [delTitle] of the class [LangMan].</detailed>
+        </description>
+        <description code="ru-RU">
+            <short>Удалить заголовок</short>
+            <detailed>Относится к методу [delTitleName] и [delTitle] класса [LangMan].</detailed>
+        </description>
+    </function>
+    <function name="langman_add_text" nonauth="0" auth="0">
+        <description code="en-US">
+            <short>Add a text section</short>
+            <detailed>Refers to the methods [addTextName] and [addText] of the class [LangMan].</detailed>
+        </description>
+        <description code="ru-RU">
+            <short>Добавить текстовый раздел</short>
+            <detailed>Относится к методам [addTextName] и [addText] класса [LangMan].</detailed>
+        </description>
+    </function>
+    <function name="langman_del_text" nonauth="0" auth="0">
+        <description code="en-US">
+            <short>Remove a text section</short>
+            <detailed>Refers to the methods [delTextName] and [delText] of the class [LangMan].</detailed>
+        </description>
+        <description code="ru-RU">
+            <short>Удалить текстовый раздел</short>
+            <detailed>Относиться к методам [delTextName] и [delText] класса [LangMan].</detailed>
+        </description>
+    </function>
+    <function name="langman_update_title" nonauth="0" auth="0">
+        <description code="en-US">
+            <short>Update title</short>
+            <detailed>Refers to the method [updateTitle] of the class [LangMan].</detailed>
+        </description>
+        <description code="ru-RU">
+            <short>Обновить заголовок</short>
+            <detailed>Относится к методу [updateTitle] класса [LangMan].</detailed>
+        </description>
+    </function>
+    <function name="langman_update_text" nonauth="0" auth="0">
+        <description code="en-US">
+            <short>Update text</short>
+            <detailed>Refers to the method [updateText] of the class [LangMan].</detailed>
+        </description>
+        <description code="ru-RU">
+            <short>Обновить текст</short>
+            <detailed>Относится к методу [updateText] класса [LangMan].</detailed>
+        </description>
+    </function>
+    <function name="userman_create_group" nonauth="0" auth="0">
+        <description code="en-US">
+            <short>Create user group</short>
+            <detailed>Refers to the method [createGroup] of the class [UserMan].</detailed>
+        </description>
+        <description code="ru-RU">
+            <short>Создать группу пользователей</short>
+            <detailed>Относится к методу [createGroup] класса [UserMan].</detailed>
+        </description>
+    </function>
+    <function name="userman_group_status" nonauth="0" auth="0">
+        <description code="en-US">
+            <short>Change group status</short>
+            <detailed>Refers to the method [groupStatus] of the class [UserMan].</detailed>
+        </description>
+        <description code="ru-RU">
+            <short>Изменить статус группы</short>
+            <detailed>Относится к методу [groupStatus] класса [UserMan].</detailed>
+        </description>
+    </function>
+    <function name="userman_move_group" nonauth="0" auth="0">
+        <description code="en-US">
+            <short>Move all the users of the group into another group</short>
+            <detailed>Refers to the method [moveGroupTo] of the class [UserMan].</detailed>
+        </description>
+        <description code="ru-RU">
+            <short>Переместить всех пользователей группы в другую группу.</short>
+            <detailed>Относится к методу [moveGroupTo] класса [UserMan].</detailed>
+        </description>
+    </function>
+    <function name="userman_get_groups" nonauth="0" auth="0">
+        <description code="en-US">
+            <short>Information about group</short>
+            <detailed>Refers to the methods [aboutGroup], [getGroups] and [getAllGroups] of the class [UserMan].</detailed>
+        </description>
+        <description code="ru-RU">
+            <short>Информация о группах</short>
+            <detailed>Относится к методам [aboutGroup], [getGroups] и [getAllGroups] класса [UserMan].</detailed>
+        </description>
+    </function>
+    <function name="userman_set_about_group" nonauth="0" auth="0">
+        <description code="en-US">
+            <short>Change name and description of the group</short>
+            <detailed>Refers to the methods [setGroupName] and [setGroupDesc] of the class [UserMan].</detailed>
+        </description>
+        <description code="ru-RU">
+            <short>Изменить название и описание группы</short>
+            <detailed>Относится к методам [setGroupName] и [setGroupDesc] класса [UserMan].</detailed>
+        </description>
+    </function>
+    <function name="userman_del_group" nonauth="0" auth="0">
+        <description code="en-US">
+            <short>Remove user group</short>
+            <detailed>Refers to the method [delGroup] of the class [UserMan].</detailed>
+        </description>
+        <description code="ru-RU">
+            <short>Удалить группу пользователей</short>
+            <detailed>Относится к методу [delGroup] класса [UserMan].</detailed>
+        </description>
+    </function>
+    <function name="userman_create_user" nonauth="0" auth="0">
+        <description code="en-US">
+            <short>Create user</short>
+            <detailed>Refers to the method [createUser] of the class [UserMan].</detailed>
+        </description>
+        <description code="ru-RU">
+            <short>Создать пользователя</short>
+            <detailed>Относится к методу [createUser] класса [UserMan].</detailed>
+        </description>
+    </function>
+    <function name="userman_user_status" nonauth="0" auth="0">
+        <description code="en-US">
+            <short>Change user status</short>
+            <detailed>Refers to the method [userStatus] of the class [UserMan].</detailed>
+        </description>
+        <description code="ru-RU">
+            <short>Изменить статус пользователя</short>
+            <detailed>Относится к методу [userStatus] класса [UserMan].</detailed>
+        </description>
+    </function>
+    <function name="userman_move_user" nonauth="0" auth="0">
+        <description code="en-US">
+            <short>Move user into another group</short>
+            <detailed>Refers to the method [moveUserTo] of the class [UserMan].</detailed>
+        </description>
+        <description code="ru-RU">
+            <short>Переместить пользователя в другую группу</short>
+            <detailed>Относится к методу [moveUserTo] класса [UserMan].</detailed>
+        </description>
+    </function>
+    <function name="userman_del_user" nonauth="0" auth="0">
+        <description code="en-US">
+            <short>Remove user</short>
+            <detailed>Refers to the method [delUser] of the class [UserMan].</detailed>
+        </description>
+        <description code="ru-RU">
+            <short>Удалить пользователя</short>
+            <detailed>Относится к методу [delUser] класса [UserMan].</detailed>
+        </description>
+    </function>
+    <function name="userman_about_user" nonauth="0" auth="1">
+        <description code="en-US">
+            <short>About user</short>
+            <detailed>Refers to the method [aboutUser] of the class [UserMan].</detailed>
+        </description>
+        <description code="ru-RU">
+            <short>О пользователе</short>
+            <detailed>Относится к методу [aboutUser] класса [UserMan].</detailed>
+        </description>
+    </function>
+    <function name="userman_get_users" nonauth="0" auth="0">
+        <description code="en-US">
+            <short>Get list of the users</short>
+            <detailed>Refers to the methods [getUsers] and [getAllUsers] of the class [UserMan].</detailed>
+        </description>
+        <description code="ru-RU">
+            <short>Получить список пользователей</short>
+            <detailed>ОТносится к методам [getUsers] и [getAllUsers] класса [UserMan].</detailed>
+        </description>
+    </function>
+    <function name="userman_user_passwords" nonauth="0" auth="1">
+        <description code="en-US">
+            <short>Passwords of the user</short>
+            <detailed>Refers to the method [userPasswords] of the class [UserMan].</detailed>
+        </description>
+        <description code="ru-RU">
+            <short>Пароли пользователя</short>
+            <detailed>Относится к методу [userPasswords] класса [UserMan].</detailed>
+        </description>
+    </function>
+    <function name="userman_add_password" nonauth="0" auth="1">
+        <description code="en-US">
+            <short>Add a secondary password of the user</short>
+            <detailed>Refers to the method [addPassword] of the class [UserMan].</detailed>
+        </description>
+        <description code="ru-RU">
+            <short>Добавить дополнительный пароль пользователя</short>
+            <detailed>ОТносится к методу [addPassword] класса [UserMan].</detailed>
+        </description>
+    </function>
+    <function name="userman_del_password" nonauth="0" auth="1">
+        <description code="en-US">
+            <short>Remove a secondary password of the user</short>
+            <detailed>Refers to the method [delPassword] of the class [UserMan].</detailed>
+        </description>
+        <description code="ru-RU">
+            <short>Удалить дополнительный пароль пользователя</short>
+            <detailed>Относится к методу [delPassword] класса [UserMan].</detailed>
+        </description>
+    </function>
+    <function name="userman_set_password" nonauth="0" auth="1">
+        <description code="en-US">
+            <short>Set new password of the user</short>
+            <detailed>Refers to the method [setPassword] of the class [UserMan].</detailed>
+        </description>
+        <description code="ru-RU">
+            <short>Задать новый пароль пользователя</short>
+            <detailed>Относится к методу [setPassword] класса [UserMan].</detailed>
+        </description>
+    </function>
+    <function name="userman_set_username" nonauth="0" auth="1">
+        <description code="en-US">
+            <short>Set new username</short>
+            <detailed>Refers to the method [setUserName] of the class [UserMan].</detailed>
+        </description>
+        <description code="ru-RU">
+            <short>Задать новое имя пользователя</short>
+            <detailed>Относится к методу [setUserName] класса [UserMan].</detailed>
+        </description>
+    </function>
+    <function name="userman_set_user_mail" nonauth="0" auth="1">
+        <description code="en-US">
+            <short>Set new e-mail address of the user</short>
+            <detailed>Refers to the method [setUserMail] of the class [UserMan].</detailed>
+        </description>
+        <description code="ru-RU">
+            <short>Задать новый e-mail адрес пользователя</short>
+            <detailed>Относится к методу [setUserMail] класса [UserMan].</detailed>
+        </description>
+    </function>
+    <function name="userman_set_full_name" nonauth="0" auth="1">
+        <description code="en-US">
+            <short>Set full name of the user</short>
+            <detailed>Refers to the method [setFullName] of the class [UserMan].</detailed>
+        </description>
+        <description code="ru-RU">
+            <short>Задать полное имя пользователя</short>
+            <detailed>Относится к методу [setFullName] класса [UserMan].</detailed>
+        </description>
+    </function>
+    <function name="userman_change_password" nonauth="0" auth="1">
+        <description code="en-US">
+            <short>Change a password of the user</short>
+            <detailed>Refers to the method [changePassword] of the class [UserMan].</detailed>
+        </description>
+        <description code="ru-RU">
+            <short>Изменить пароль пользователя</short>
+            <detailed>Относится к методу [changePassword] класса [UserMan].</detailed>
+        </description>
+    </function>
+    <function name="userman_set_user_lang" nonauth="0" auth="1">
+        <description code="en-US">
+            <short>Set user language</short>
+            <detailed>Refers to the method [setUserLang] of the class [UserMan].</detailed>
+        </description>
+        <description code="ru-RU">
+            <short>Задать язык пользователя</short>
+            <detailed>Относится к методу [setUserLang] класса [UserMan].</detailed>
+        </description>
+    </function>
+</policy>
