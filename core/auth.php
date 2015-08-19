@@ -50,7 +50,7 @@ class Auth extends ServiceMethods implements intAuth {
     public function userLogin($username, $password, $useCookie = TRUE, $cookieTime = 'month', $log = TRUE, $blockBrute = FALSE) {
         $this->zeroizeError();
         if (isset($_SESSION[AUTH_USER_ID])) {
-            $this->setError(ERROR_NOT_EXECUTED, 'userLogin: finish current session before starting new');
+            $this->setError(ERROR_NOT_EXECUTED, 'userLogin: close current session before to start new');
             return FALSE;
         }
         if (!pregUName($username)) {
@@ -92,12 +92,26 @@ class Auth extends ServiceMethods implements intAuth {
         list($userId, $salt, $lang, $direction) = $qResult->fetch_row();
         $passwEncoded = passwHash($password, $salt);
         // check whether password is valid
-        $qResult = $this->dbLink->query("SELECT `u`.`username`, `p`.`id`, `p`.`limited` "
-                . "FROM `".MECCANO_TPREF."_core_userman_users` `u` "
-                . "JOIN `".MECCANO_TPREF."_core_userman_userpass` `p` "
-                . "ON `u`.`id`=`p`.`userid` "
-                . "WHERE `u`.`id`=$userId "
-                . "AND `p`.`password`='$passwEncoded' ;");
+        if ($blockBrute) {
+            $checkPassw = "SELECT `u`.`username`, `p`.`id`, `p`.`limited` "
+                    . "FROM `".MECCANO_TPREF."_core_userman_users` `u` "
+                    . "JOIN `".MECCANO_TPREF."_core_userman_userpass` `p` "
+                    . "ON `u`.`id`=`p`.`userid` "
+                    . "JOIN `".MECCANO_TPREF."_core_userman_temp_block` `b` "
+                    . "ON `u`.`id`=`b`.`id` "
+                    . "WHERE `u`.`id`=$userId "
+                    . "AND `p`.`password`='$passwEncoded' "
+                    . "AND `b`.`tempblock` < CURRENT_TIMESTAMP ;";
+        }
+        else {
+            $checkPassw = "SELECT `u`.`username`, `p`.`id`, `p`.`limited` "
+                    . "FROM `".MECCANO_TPREF."_core_userman_users` `u` "
+                    . "JOIN `".MECCANO_TPREF."_core_userman_userpass` `p` "
+                    . "ON `u`.`id`=`p`.`userid` "
+                    . "WHERE `u`.`id`=$userId "
+                    . "AND `p`.`password`='$passwEncoded' ;";
+        }
+        $qResult = $this->dbLink->query($checkPassw);
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'userLogin: unable to confirm password -> '.$this->dbLink->error);
             return FALSE;
