@@ -101,17 +101,60 @@ class LangMan extends ServiceMethods implements intLangMan{
         }
         // get languages to install
         $instLangs = $langs->getElementsByTagName('lang');
+        //get available policies
+        $qPolicy = $this->dbLink->query("SELECT `func`, `id` "
+                . "FROM `".MECCANO_TPREF."_core_policy_summary_list` ;");
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'installLang: unable to get list of available policies -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        $policy = array();
+        while ($row = $qPolicy->fetch_row()) {
+            $policy[$row[0]] = $row[1];
+        }
+        //get available log events
+        $qLog = $this->dbLink->query("SELECT `keyword`, `id` "
+                . "FROM `".MECCANO_TPREF."_core_logman_events` ;");
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'installLang: unable to get list of available policies -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        $events = array();
+        while ($row = $qLog->fetch_row()) {
+            $events[$row[0]] = $row[1];
+        }
         // install new language if not exists / update if exists
         foreach ($instLangs as $lg) {
             $code = $lg->getAttribute('code');
             $name = $lg->getAttribute('name');
             $dir = $lg->getAttribute('dir');
-            // not exists
+            // not exists / install
             if (!in_array($code, $avaiLang)) {
                 $this->dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_languages` (`code`, `name`, `dir`) "
                         . "VALUES('$code', '$name', '$dir') ;");
+                $codeId = $this->dbLink->insert_id;
+                // add new language into policies
+                foreach ($policy as $policyKey => $policyId) {
+                    $this->dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_policy_descriptions` "
+                            . "(`codeid`, `policyid`, `short`, `detailed`) "
+                            . "VALUES($codeId, $policyId, '$policyKey', '$policyKey') ;");
+                    if ($this->dbLink->errno) {
+                        $this->setError(ERROR_NOT_EXECUTED, "installLang: unable to add language [$code] into policies -> ".$this->dbLink->error);
+                        return FALSE;
+                    }
+                }
+                // add new language into log
+                foreach ($events as $eventKey => $eventId) {
+                    $this->dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_logman_descriptions` "
+                            . "(`description`, `eventid`, `codeid`) "
+                            . "VALUES('$eventKey: [%d]', $eventId, $codeId) ;");
+                    if ($this->dbLink->errno) {
+                        $this->setError(ERROR_NOT_EXECUTED, "installLang: unable to add language [$code] into policies -> ".$this->dbLink->error);
+                        return FALSE;
+                    }
+                }
             }
-            // exists
+            // exists / update
             else {
                 $this->dbLink->query("UPDATE `".MECCANO_TPREF."_core_langman_languages` "
                         . "SET `name`='$name', `dir`='$dir' "
@@ -143,6 +186,48 @@ class LangMan extends ServiceMethods implements intLangMan{
             return FALSE;
         }
         $codeId = $this->dbLink->insert_id;
+        //get available policies
+        $qPolicy = $this->dbLink->query("SELECT `func`, `id` "
+                . "FROM `".MECCANO_TPREF."_core_policy_summary_list` ;");
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'addLang: unable to get list of available policies -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        $policy = array();
+        while ($row = $qPolicy->fetch_row()) {
+            $policy[$row[0]] = $row[1];
+        }
+        //get available log events
+        $qLog = $this->dbLink->query("SELECT `keyword`, `id` "
+                . "FROM `".MECCANO_TPREF."_core_logman_events` ;");
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'addLang: unable to get list of available policies -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        $events = array();
+        while ($row = $qLog->fetch_row()) {
+            $events[$row[0]] = $row[1];
+        }
+        // add new language into policies
+        foreach ($policy as $policyKey => $policyId) {
+            $this->dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_policy_descriptions` "
+                    . "(`codeid`, `policyid`, `short`, `detailed`) "
+                    . "VALUES($codeId, $policyId, '$policyKey', '$policyKey') ;");
+            if ($this->dbLink->errno) {
+                $this->setError(ERROR_NOT_EXECUTED, "addLang: unable to add language [$code] into policies -> ".$this->dbLink->error);
+                return FALSE;
+            }
+        }
+        // add new language into log
+        foreach ($events as $eventKey => $eventId) {
+            $this->dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_logman_descriptions` "
+                    . "(`description`, `eventid`, `codeid`) "
+                    . "VALUES('$eventKey: [%d]', $eventId, $codeId) ;");
+            if ($this->dbLink->errno) {
+                $this->setError(ERROR_NOT_EXECUTED, "addLang: unable to add language [$code] into policies -> ".$this->dbLink->error);
+                return FALSE;
+            }
+        }
         if ($log && !$this->logObject->newRecord('core', 'langman_add_lang', "$name; code: $code; DIR: $dir; ID: $codeId")) {
             $this->setError(ERROR_NOT_CRITICAL, "addLang -> ".$this->logObject->errExp());
         }
