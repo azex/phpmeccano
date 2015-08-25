@@ -74,6 +74,7 @@ class Plugins extends ServiceMethods implements intPlugins {
             // validate xml components
             $serviceData = new \DOMDocument();
             $xmlComponents = array(
+                "languages.xml" => "langman-language-v01.rng",
                 "policy.xml" => "policy-v01.rng",
                 "log.xml" => "logman-events-v01.rng",
                 "texts.xml" => "langman-text-v01.rng",
@@ -102,7 +103,7 @@ class Plugins extends ServiceMethods implements intPlugins {
             }
             // get data from metainfo.xml
             $packVersion = $serviceData->getElementsByTagName('metainfo')->item(0)->getAttribute('version');
-            if ($packVersion != '0.1') {
+            if ($packVersion != '0.2') {
                 Files::remove($tmpPath);
                 $this->setError(ERROR_INCORRECT_DATA, "unpack: installer is incompatible with the package specification [$packVersion]");
                 return FALSE;
@@ -337,7 +338,7 @@ class Plugins extends ServiceMethods implements intPlugins {
             return FALSE;
         }
         list($shortName, $fullName, $version, $packVersion, $plugDir, $about, $credits, $url, $email, $license) = $qPlugin->fetch_row();
-        if ($packVersion != '0.1') {
+        if ($packVersion != '0.2') {
                 $this->setError(ERROR_INCORRECT_DATA, "install: installer is incompatible with the package specification [$packVersion]");
                 return FALSE;
             }
@@ -345,6 +346,7 @@ class Plugins extends ServiceMethods implements intPlugins {
         $plugPath = MECCANO_UNPACKED_PLUGINS."/$plugDir";
         $serviceData = new \DOMDocument();
         $xmlComponents = array(
+            "languages.xml" => "langman-language-v01.rng",
             "policy.xml" => "policy-v01.rng",
             "log.xml" => "logman-events-v01.rng",
             "texts.xml" => "langman-text-v01.rng",
@@ -447,6 +449,12 @@ class Plugins extends ServiceMethods implements intPlugins {
         $instObject = new Install($this->dbLink, $existId, $existVersion, $reset);
         if (!$instObject->preinst()) {
             $this->setError($instObject->errId(), "install -> ".$instObject->errExp());
+            return FALSE;
+        }
+        // install languages
+        $serviceData->load($plugPath.'/languages.xml');
+        if (!$this->langmanObject->installLang($serviceData, FALSE)) {
+            $this->setError($this->langmanObject->errId(), "install -> ".$this->langmanObject->errExp());
             return FALSE;
         }
         // install policy access rules

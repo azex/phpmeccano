@@ -23,13 +23,8 @@
     https://bitbucket.org/azexmail/phpmeccano
 -->
 
-<metainfo version="0.2">
-    <shortname>core</shortname>
-    <fullname>phpMeccano web framework</fullname>
-    <version>0.0.1</version>
-    <about>Framework phpMeccano gives API for creation and management of user groups; user authentication; access control to the functions by using group policy; creation of the multilingual interface; copying, moving and removing of local files and folders; event logging. System of plugins allows to extend functional and add new features. Current version is the first alpha and it is not recommended to use in production.</about>
-    <credits>Programmed and designed by Alexei Muzarov</credits>
-    <url>https://bitbucket.org/azexmail/phpmeccano</url>
-    <email>azexmail@gmail.com</email>
-    <license>GNU GPLv2+</license>
-</metainfo>
+
+<languages>
+    <lang code="en-US" name="English (USA)" dir="ltr" />
+    <lang code="ru-RU" name="Russian (Russia)" dir="ltr" />
+</languages>

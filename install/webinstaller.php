@@ -483,7 +483,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
             'CREATE TABLE `'.$tabPrefix.'_core_logman_descriptions` (
                 `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
                 `description` varchar(128) NOT NULL DEFAULT "" COMMENT "Pattern description of the event",
-                `eventid` int(11) unsigned NOT NULL COMMENT "Plugin identifier",
+                `eventid` int(11) unsigned NOT NULL COMMENT "Event identifier",
                 `codeid` int(11) unsigned NOT NULL COMMENT "Language code identifier",
                 FOREIGN KEY (`eventid`) REFERENCES `'.$tabPrefix.'_core_logman_events` (`id`),
                 FOREIGN KEY (`codeid`) REFERENCES `'.$tabPrefix.'_core_langman_languages` (`id`),
