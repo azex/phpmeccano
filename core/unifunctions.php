@@ -29,12 +29,12 @@ require_once 'swconst.php';
 
 // it generates and returns unique password salt
 function makeSalt($prefix = '') {
-    return substr(base64_encode(sha1(uniqid().microtime(TRUE).rand(1, 10e9).uniqid($prefix, TRUE))), 0, 22);
+    return substr(base64_encode(sha1(uniqid().microtime(TRUE).mt_rand(1, 10e9).uniqid($prefix, TRUE))), 0, 22);
 }
 
 // it generates and returns unique identifier for user, session etc.
 function makeIdent($prefix = '') {
-    return sha1(uniqid().microtime(TRUE).rand(1, 10e9).uniqid($prefix, TRUE));
+    return sha1(uniqid().microtime(TRUE).mt_rand(1, 10e9).uniqid($prefix, TRUE));
 }
 
 // it calculates password hash
@@ -81,7 +81,7 @@ function pregGName($groupname) {
 
 // it checks entered password
 function pregPassw($password) {
-    if (is_string($password) && preg_match('/^[-+=_a-zA-Z\d@.,?!;:"\'~`|#№*$%&^\][(){}<>\/\\\]{8,50}$/', $password)) {
+    if (is_string($password) && preg_match('/^[-+=_a-zA-Z\d@.,?!;:"\'~`|#*$%&^\][(){}<>\/\\\]{8,50}$/', $password)) {
         return TRUE;
     }
     return FALSE;
@@ -248,4 +248,52 @@ function calcSumVersion($version) {
     list($uv, $mv, $lv) = explode(".", $version);
     $sumVersion = 10000*$uv + 100*$mv + $lv;
     return (int) $sumVersion;
+}
+
+// password generator
+function genPassword($length = 8, $lower = TRUE, $upper = TRUE, $numbers = TRUE, $underline = TRUE, $minus = TRUE, $special = TRUE) {
+    if (!is_integer($length) || !($length >= 8 && $length <= 50)) {
+        return FALSE;
+    }
+    // charachter groups
+    $allGroups = array(
+        'lower' => 'abcdefghijklmnopqrstuwxyz',
+        'upper' => 'ABCDEFGHIJKLMNOPQRSTUWXYZ',
+        'numbers' => '0123456789',
+        'underline' => '_',
+        'minus' => '-',
+        'special' => '+=@.,?!;:"\'~`|#*$%&^][(){}<>/\\'
+    );
+    $parameters = array(
+        "lower" => $lower,
+        "upper" => $upper,
+        "numbers" => $numbers,
+        "underline" => $underline,
+        "minus" => $minus,
+        "special" => $special
+    );
+    $groupsInUse = array();
+    $groupLimits = array();
+    foreach ($parameters as $key => $value) {
+        if ($value) {
+            $groupLimits[$key] = strlen($allGroups[$key]) - 1;
+            $groupsInUse[] = $key;
+        }
+    }
+    // check whether at least one group is used
+    if (!count($groupsInUse)) {
+        return FALSE;
+    }
+    // temporary list of groups
+    $tmpGroups = array();
+    $password = '';
+    for ($i = 0; $i < $length; $i++) {
+        if (!count($tmpGroups)) {
+            $tmpGroups = $groupsInUse;
+            shuffle($tmpGroups);
+        }
+        $curGroup = array_pop($tmpGroups);
+        $password = $password.$allGroups[$curGroup][mt_rand(0, $groupLimits[$curGroup])];
+    }
+    return $password;
 }
