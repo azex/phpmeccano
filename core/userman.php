@@ -48,6 +48,7 @@ interface intUserMan {
     public function delUser($userId, $log = TRUE);
     public function aboutUser($userId);
     public function userPasswords($userId);
+    public function createPassword($userId, $description, $length = 8, $underline = TRUE, $minus = FALSE, $special = FALSE, $log = TRUE);
     public function addPassword($userId, $password, $description='', $log = TRUE);
     public function delPassword($passwId, $userId, $log = TRUE);
     public function setPassword($passwId, $userId, $password, $log = TRUE);
@@ -847,6 +848,74 @@ class UserMan extends ServiceMethods implements intUserMan{
         return $xml;
     }
     
+    public function createPassword($userId, $description, $length = 8, $underline = TRUE, $minus = FALSE, $special = FALSE, $log = TRUE) {
+        $this->zeroizeError();
+        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'userman_add_password')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "createPassword: restricted by the policy");
+            return FALSE;
+        }
+        if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, 'createPassword: function execution was terminated because of using of limited authentication');
+            return FALSE;
+        }
+        if (!is_integer($userId) || !is_string($description)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'createPassword: incorrect incoming parameters');
+            return FALSE;
+        }
+        if (!$password = genPassword($length, TRUE, TRUE, TRUE, $underline, $minus, $special)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'createPassword: incorrect password length');
+            return FALSE;
+        }
+        // get password salt
+        $qSalt = $this->dbLink->query("SELECT `salt` "
+                . "FROM `".MECCANO_TPREF."_core_userman_users` "
+                . "WHERE `id`=$userId ;");
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'createPassword: unable to get salt');
+            return FALSE;
+        }
+        if (!$this->dbLink->affected_rows) {
+            $this->setError(ERROR_NOT_FOUND, 'createPassword: user not found');
+            return FALSE;
+        }
+        list($salt) = $qSalt->fetch_row();
+        for ($i = 0; $i < 5; $i++) {
+            $passwHash = passwHash($password, $salt);
+            $this->dbLink->query("SELECT `id` "
+                    . "FROM `".MECCANO_TPREF."_core_userman_userpass` "
+                    . "WHERE `userid`=$userId "
+                    . "AND `password`='$passwHash' ;");
+            if ($this->dbLink->errno) {
+                $this->setError(ERROR_NOT_EXECUTED, "createPassword: unable to check uniqueness of the password -> ".$this->dbLink->error);
+                return FALSE;
+            }
+            if (!$this->dbLink->affected_rows) {
+                $description = $this->dbLink->real_escape_string($description);
+                $this->dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_userman_userpass` (`userid`, `password`, `description`, `limited`) "
+                        . "VALUES($userId, '$passwHash', '$description', 1) ;");
+                if ($this->dbLink->errno) {
+                    $this->setError(ERROR_NOT_EXECUTED, 'createPassword: unable to add password -> '.$this->dbLink->error);
+                    return FALSE;
+                }
+                $insertId = (int) $this->dbLink->insert_id;
+                $usi = makeIdent("$insertId");
+                $this->dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_auth_usi` (`id`, `usi`) "
+                        . "VALUES($insertId, '$usi') ;");
+                if ($this->dbLink->errno) {
+                    $this->setError(ERROR_NOT_EXECUTED, 'createPassword: unable to create unique session identifier -> '.$this->dbLink->error);
+                    return FALSE;
+                }
+                if ($log && !$this->logObject->newRecord('core', 'userman_add_password', "PASSW_ID: $insertId; USER_ID: $userId")) {
+                    $this->setError(ERROR_NOT_CRITICAL, "createPassword -> ".$this->logObject->errExp());
+                }
+                return $password;
+            }
+            $password = genPassword($length, TRUE, TRUE, TRUE, $underline, $minus, $special);
+        }
+        $this->setError(ERROR_ALREADY_EXISTS, 'createPassword: unable to create password, try again');
+        return FALSE;
+    }
+    
     public function addPassword($userId, $password, $description='', $log = TRUE) {
         $this->zeroizeError();
         if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'userman_add_password')) {
@@ -884,7 +953,7 @@ class UserMan extends ServiceMethods implements intUserMan{
             return FALSE;
         }
         if ($this->dbLink->affected_rows) {
-            $this->setError(ERROR_ALREADY_EXISTS, "changePassword: password already in use");
+            $this->setError(ERROR_ALREADY_EXISTS, "addPassword: password already in use");
             return FALSE;
         }
         $description = $this->dbLink->real_escape_string($description);
