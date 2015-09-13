@@ -29,12 +29,12 @@ require_once 'swconst.php';
 
 // it generates and returns unique password salt
 function makeSalt($prefix = '') {
-    return substr(base64_encode(sha1(uniqid().microtime(TRUE).mt_rand(1, 10e9).uniqid($prefix, TRUE))), 0, 22);
+    return substr(base64_encode(sha1(uniqid().microtime(TRUE).mt_rand(1, PHP_INT_MAX).uniqid($prefix, TRUE))), 0, 22);
 }
 
 // it generates and returns unique identifier for user, session etc.
 function makeIdent($prefix = '') {
-    return sha1(uniqid().microtime(TRUE).mt_rand(1, 10e9).uniqid($prefix, TRUE));
+    return sha1(uniqid().microtime(TRUE).mt_rand(1, PHP_INT_MAX).uniqid($prefix, TRUE));
 }
 
 // it calculates password hash
@@ -93,6 +93,23 @@ function pregIdent($ident) {
         return TRUE;
     }
     return FALSE;
+}
+
+// it checks entered guid
+function pregGuid($guid) {
+    if (is_string($guid) && preg_match('/^[a-z\d]{8}-[a-z\d]{4}-4[a-z\d]{3}-[a-z\d]{4}-[a-z\d]{12}$/', $guid)) {
+        return TRUE;
+    }
+    return FALSE;
+}
+
+// guid generator
+// used modified code from http://php.net/manual/en/function.com-create-guid.php#117893
+function guid() {
+    $data = openssl_random_pseudo_bytes(16);
+    $data[6] = chr(ord($data[6]) & 0x0f | 0x40); // set version to 0100
+    $data[8] = chr(ord($data[8]) & 0x3f | 0x80); // set bits 6-7 to 10
+    return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
 }
 
 // it checks entered language code
