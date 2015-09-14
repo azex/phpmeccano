@@ -30,6 +30,7 @@ require_once 'logman.php';
 interface intShare {
     public function __construct(LogMan $logObject);
     public function createCircle($userId, $name);
+    public function userCircles($userId, $output = 'json');
 }
 
 class Share extends ServiceMethods implements intShare {
@@ -74,5 +75,49 @@ class Share extends ServiceMethods implements intShare {
             return FALSE;
         }
         return $id;
+    }
+    
+    public function userCircles($userId, $output = 'json') {
+        $this->zeroizeError();
+        if (!is_integer($userId) || !in_array($output, array('xml', 'json'))) {
+            $this->setError(ERROR_INCORRECT_DATA, 'userCircles: incorrect parameter');
+            return FALSE;
+        }
+        $qCircles = $this->dbLink->query(
+                "SELECT `id`, `cname` "
+                . "FROM `".MECCANO_TPREF."_core_share_circles` "
+                . "WHERE `userid`=$userId "
+                . "ORDER BY `cname` ;"
+                );
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'userCircles: '.$this->dbLink->error);
+            return FALSE;
+        }
+        if ($output == 'xml') {
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $circlesNode = $xml->createElement('circles');
+            $xml->appendChild($circlesNode);
+            while ($row = $qCircles->fetch_row()) {
+                $circleNode = $xml->createElement('circle');
+                $idAttribute = $xml->createAttribute('id');
+                $idAttribute->value = $row[0];
+                $nameAttribute = $xml->createAttribute('name');
+                $nameAttribute->value = $row[1];
+                $circleNode->appendChild($idAttribute);
+                $circleNode->appendChild($nameAttribute);
+                $circlesNode->appendChild($circleNode);
+            }
+            return $xml;
+        }
+        else {
+            $circlesNode = array();
+            while ($row = $qCircles->fetch_row()) {
+                $circleNode = array();
+                $circleNode['id'] = $row[0];
+                $circleNode['name'] = $row[1];
+                $circlesNode[] = $circleNode;
+            }
+            return json_encode($circlesNode);
+        }
     }
 }
