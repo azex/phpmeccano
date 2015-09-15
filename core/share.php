@@ -32,6 +32,7 @@ interface intShare {
     public function createCircle($userId, $name);
     public function userCircles($userId, $output = 'json');
     public function renameCircle($userId, $circleId, $newName);
+    public function addToCircle($contactId, $circleId, $userId);
 }
 
 class Share extends ServiceMethods implements intShare {
@@ -138,6 +139,52 @@ class Share extends ServiceMethods implements intShare {
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'renameCircle: '.$this->dbLink->error);
+            return FALSE;
+        }
+        return TRUE;
+    }
+    
+    public function addToCircle($contactId, $circleId, $userId) {
+        $this->zeroizeError();
+        if (!is_integer($contactId) || !pregGuid($circleId) || !is_integer($userId)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'addToCircle: incorrect parameters');
+            return FALSE;
+        }
+        $qCircle = $this->dbLink->query(
+                "SELECT `cname` "
+                . "FROM `".MECCANO_TPREF."_core_share_circles` "
+                . "WHERE `id`='$circleId' "
+                . "AND `userid`=$userId ;"
+                );
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'addToCircle: unable to check user and circle -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        if (!$this->dbLink->affected_rows) {
+            $this->setError(ERROR_NOT_FOUND, 'addToCircle: circle or user not exist');
+            return FALSE;
+        }
+        $qContect = $this->dbLink->query(
+                "SELECT `username` "
+                . "FROM `".MECCANO_TPREF."_core_userman_users` "
+                . "WHERE `id`=$contactId ;"
+                );
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'addToCircle: unable to check contact -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        if (!$this->dbLink->affected_rows) {
+            $this->setError(ERROR_NOT_FOUND, 'addToCircle: contact not found');
+            return FALSE;
+        }
+        $id = guid();
+        $this->dbLink->query(
+                "INSERT INTO `".MECCANO_TPREF."_core_share_buddy_list` "
+                . "(`id`, `cid`, `bid`) "
+                . "VALUES('$id', '$circleId', $contactId) "
+                );
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'addToCircle: unable to insert contact into circle -> '.$this->dbLink->error);
             return FALSE;
         }
         return TRUE;
