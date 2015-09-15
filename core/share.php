@@ -31,6 +31,7 @@ interface intShare {
     public function __construct(LogMan $logObject);
     public function createCircle($userId, $name);
     public function userCircles($userId, $output = 'json');
+    public function renameCircle($userId, $circleId, $newName);
 }
 
 class Share extends ServiceMethods implements intShare {
@@ -102,7 +103,7 @@ class Share extends ServiceMethods implements intShare {
                 $idAttribute = $xml->createAttribute('id');
                 $idAttribute->value = $row[0];
                 $nameAttribute = $xml->createAttribute('name');
-                $nameAttribute->value = $row[1];
+                $nameAttribute->value = htmlspecialchars($row[1]);
                 $circleNode->appendChild($idAttribute);
                 $circleNode->appendChild($nameAttribute);
                 $circlesNode->appendChild($circleNode);
@@ -114,10 +115,31 @@ class Share extends ServiceMethods implements intShare {
             while ($row = $qCircles->fetch_row()) {
                 $circleNode = array();
                 $circleNode['id'] = $row[0];
-                $circleNode['name'] = $row[1];
+                $circleNode['name'] = htmlspecialchars($row[1]);
                 $circlesNode[] = $circleNode;
             }
             return json_encode($circlesNode);
         }
+    }
+    
+    public function renameCircle($userId, $circleId, $newName) {
+        $this->zeroizeError();
+        if (!is_integer($userId) || !pregGuid($circleId) || !is_string($newName)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'renameCircle: incorrect parameters');
+            return FALSE;
+        }
+        $newName = $this->dbLink->real_escape_string($newName);
+        $this->dbLink->query(
+                "UPDATE `".MECCANO_TPREF."_core_share_circles` "
+                . "SET `cname`='$newName' "
+                . "WHERE `id`='$circleId' "
+                . "AND `userid`=$userId "
+                . "LIMIT 1;"
+                );
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'renameCircle: '.$this->dbLink->error);
+            return FALSE;
+        }
+        return TRUE;
     }
 }
