@@ -34,6 +34,7 @@ interface intShare {
     public function renameCircle($userId, $circleId, $newName);
     public function addToCircle($contactId, $circleId, $userId);
     public function circleContacts($userId, $circleId, $output = 'json');
+    public function rmFromCircle($userId, $circleId, $contactId);
 }
 
 class Share extends ServiceMethods implements intShare {
@@ -277,5 +278,41 @@ class Share extends ServiceMethods implements intShare {
             }
             return json_encode($rootNode);
         }
+    }
+    
+    public function rmFromCircle($userId, $circleId, $contactId) {
+        $this->zeroizeError();
+        if (!is_integer($userId) || !pregGuid($circleId) || !is_integer($contactId)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'rmFromCircle: incorrect parameters');
+            return FALSE;
+        }
+        $this->dbLink->query(
+                "SELECT `cname` "
+                . "FROM `".MECCANO_TPREF."_core_share_circles` "
+                . "WHERE `id`='$circleId' "
+                . "AND `userid`=$userId ;"
+                );
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'rmFromCircle: unable to check circle -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        if (!$this->dbLink->affected_rows) {
+            $this->setError(ERROR_NOT_FOUND, 'rmFromCircle: circle not found');
+            return FALSE;
+        }
+        $this->dbLink->query(
+                "DELETE FROM `".MECCANO_TPREF."_core_share_buddy_list` "
+                . "WHERE `cid`='$circleId' "
+                . "AND `bid`=$contactId ;"
+                );
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'rmFromCircle: unable to remove contact -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        if (!$this->dbLink->affected_rows) {
+            $this->setError(ERROR_NOT_FOUND, 'rmFromCircle: contact not found');
+            return FALSE;
+        }
+        return TRUE;
     }
 }
