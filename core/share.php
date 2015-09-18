@@ -33,6 +33,7 @@ interface intShare {
     public function userCircles($userId, $output = 'json');
     public function renameCircle($userId, $circleId, $newName);
     public function addToCircle($contactId, $circleId, $userId);
+    public function circleContacts($userId, $circleId, $output = 'json');
 }
 
 class Share extends ServiceMethods implements intShare {
@@ -150,7 +151,7 @@ class Share extends ServiceMethods implements intShare {
             $this->setError(ERROR_INCORRECT_DATA, 'addToCircle: incorrect parameters');
             return FALSE;
         }
-        $qCircle = $this->dbLink->query(
+        $this->dbLink->query(
                 "SELECT `cname` "
                 . "FROM `".MECCANO_TPREF."_core_share_circles` "
                 . "WHERE `id`='$circleId' "
@@ -164,7 +165,7 @@ class Share extends ServiceMethods implements intShare {
             $this->setError(ERROR_NOT_FOUND, 'addToCircle: circle or user not exist');
             return FALSE;
         }
-        $qContect = $this->dbLink->query(
+        $this->dbLink->query(
                 "SELECT `username` "
                 . "FROM `".MECCANO_TPREF."_core_userman_users` "
                 . "WHERE `id`=$contactId ;"
@@ -175,6 +176,20 @@ class Share extends ServiceMethods implements intShare {
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'addToCircle: contact not found');
+            return FALSE;
+        }
+        $this->dbLink->query(
+                "SELECT `id` "
+                . "FROM `".MECCANO_TPREF."_core_share_buddy_list` "
+                . "WHERE `cid`='$circleId' AND "
+                . "`bid`=$contactId ;"
+                );
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'addToCircle: unable to check contact -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        if ($this->dbLink->affected_rows) {
+            $this->setError(ERROR_ALREADY_EXISTS, 'addToCircle: contact already in circle');
             return FALSE;
         }
         $id = guid();
@@ -188,5 +203,79 @@ class Share extends ServiceMethods implements intShare {
             return FALSE;
         }
         return TRUE;
+    }
+    
+    public function circleContacts($userId, $circleId, $output = 'json') {
+        $this->zeroizeError();
+        if (!is_integer($userId) || !pregGuid($circleId) || !in_array($output, array('xml', 'json'))) {
+            $this->setError(ERROR_INCORRECT_DATA, 'circleContacts: incorrect parameters');
+            return FALSE;
+        }
+        $qCircle = $this->dbLink->query(
+                "SELECT `cname` "
+                . "FROM `".MECCANO_TPREF."_core_share_circles` "
+                . "WHERE `id`='$circleId' "
+                . "AND `userid`=$userId ;"
+                );
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'circleContacts: unable to check circle'.$this->dbLink->error);
+            return FALSE;
+        }
+        if (!$this->dbLink->affected_rows) {
+            $this->setError(ERROR_NOT_FOUND, 'circleContacts: circle no found');
+            return FALSE;
+        }
+        list($circleName) = $qCircle->fetch_row();
+        $qContacts = $this->dbLink->query(
+                "SELECT `u`.`id`, `u`.`username`, `i`.`fullname` "
+                . "FROM `".MECCANO_TPREF."_core_userman_users` `u` "
+                . "JOIN `".MECCANO_TPREF."_core_userman_userinfo` `i` "
+                . "ON `u`.`id`=`i`.`id` "
+                . "JOIN `".MECCANO_TPREF."_core_share_buddy_list` `l` "
+                . "ON `i`.`id`=`l`.`bid` "
+                . "JOIN `".MECCANO_TPREF."_core_share_circles` `c` "
+                . "ON `l`.`cid`=`c`.`id`"
+                . "WHERE `c`.`id`='$circleId' ;"
+                );
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'circleContacts: '.$this->dbLink->error);
+            return FALSE;
+        }
+        if ($output == 'xml') {
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $contactsNode = $xml->createElement('contacts');
+            $xml->appendChild($contactsNode);
+            $cidAttribute = $xml->createAttribute('cid');
+            $cidAttribute->value = $circleId;
+            $cNameAttribute = $xml->createAttribute('cname');
+            $cNameAttribute->value = $circleName;
+            $contactsNode->appendChild($cidAttribute);
+            $contactsNode->appendChild($cNameAttribute);
+            while ($row = $qContacts->fetch_row()) {
+                $contactNode = $xml->createElement('contact');
+                $userIdNode = $xml->createElement('id', $row[0]);
+                $userNameNode = $xml->createElement('username', $row[1]);
+                $fullNameNode = $xml->createElement('fullname', $row[2]);
+                $contactNode->appendChild($userIdNode);
+                $contactNode->appendChild($userNameNode);
+                $contactNode->appendChild($fullNameNode);
+                $contactsNode->appendChild($contactNode);
+            }
+            return $xml;
+        }
+        else {
+            $rootNode = array();
+            $rootNode['cid'] = $circleId;
+            $rootNode['cname'] = $circleName;
+            $rootNode['contacts'] = array();
+            while ($row = $qContacts->fetch_row()) {
+                $rootNode['contacts'][] = array(
+                    'id' => $row[0],
+                    'username' => $row[1],
+                    'fullname' =>$row[2]
+                        );
+            }
+            return json_encode($rootNode);
+        }
     }
 }
