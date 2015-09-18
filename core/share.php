@@ -35,6 +35,7 @@ interface intShare {
     public function addToCircle($contactId, $circleId, $userId);
     public function circleContacts($userId, $circleId, $output = 'json');
     public function rmFromCircle($userId, $circleId, $contactId);
+    public function delCircle($userId, $circleId);
 }
 
 class Share extends ServiceMethods implements intShare {
@@ -312,6 +313,46 @@ class Share extends ServiceMethods implements intShare {
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'rmFromCircle: contact not found');
             return FALSE;
+        }
+        return TRUE;
+    }
+    
+    public function delCircle($userId, $circleId) {
+        $this->zeroizeError();
+        if (!is_integer($userId) || !pregGuid($circleId)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'delCircle: incorrect parameters');
+            return FALSE;
+        }
+        $qCircles = $this->dbLink->query(
+                "SELECT `cname` "
+                . "FROM `".MECCANO_TPREF."_core_share_circles` "
+                . "WHERE `id`='$circleId' "
+                . "AND `userid`=$userId ;"
+                );
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'delCircle:  unable to check circle -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        if (!$this->dbLink->affected_rows) {
+            $this->setError(ERROR_NOT_FOUND, 'createCircle: circle not found');
+            return FALSE;
+        }
+        $sql = array(
+            "DELETE FROM `".MECCANO_TPREF."_core_share_msg_accessibility` "
+            . "WHERE `cid`='$circleId' ;",
+            "DELETE FROM `".MECCANO_TPREF."_core_share_files_accessibility` "
+            . "WHERE `cid`='$circleId' ;",
+            "DELETE FROM `".MECCANO_TPREF."_core_share_buddy_list` "
+            . "WHERE `cid`='$circleId' ;",
+            "DELETE FROM `".MECCANO_TPREF."_core_share_circles` "
+            . "WHERE `id`='$circleId' ;",
+        );
+        foreach ($sql as $value) {
+            $this->dbLink->query($value);
+            if ($this->dbLink->errno) {
+                $this->setError(ERROR_NOT_EXECUTED, 'delCircle: unable to delete circle -> '.$this->dbLink->error);
+                return FALSE;
+            }
         }
         return TRUE;
     }
