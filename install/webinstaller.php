@@ -550,6 +550,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
                 `comment` varchar(1024) NOT NULL COMMENT \'Comment of the file\',
                 `path` varchar(1024) NOT NULL COMMENT \'Local path to the file\',
                 `mime` varchar(50) NOT NULL DEFAULT \'file\' COMMENT \'Mime type of the file\',
+                `size` int(11) UNSIGNED NOT NULL COMMENT \'File size in bytes (up to 4 GB)\',
                 `filetime` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT \'Time of the file creation\',
                 FOREIGN KEY (`userid`) REFERENCES `'.$tabPrefix.'_core_userman_users` (`id`),
                 PRIMARY KEY (`id`),
