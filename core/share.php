@@ -36,6 +36,7 @@ interface intShare {
     public function circleContacts($userId, $circleId, $output = 'json');
     public function rmFromCircle($userId, $circleId, $contactId);
     public function delCircle($userId, $circleId);
+    public function createMsg($userId, $title, $text);
 }
 
 class Share extends ServiceMethods implements intShare {
@@ -68,7 +69,7 @@ class Share extends ServiceMethods implements intShare {
             $this->setError(ERROR_NOT_FOUND, 'createCircle: user not found');
             return FALSE;
         }
-        $name = $this->dbLink->real_escape_string(htmlspecialchars($name));
+        $name = $this->dbLink->real_escape_string($name);
         $id = guid();
         $this->dbLink->query(
                 "INSERT INTO `".MECCANO_TPREF."_core_share_circles` "
@@ -355,5 +356,39 @@ class Share extends ServiceMethods implements intShare {
             }
         }
         return TRUE;
+    }
+    
+    public function createMsg($userId, $title, $text) {
+        $this->zeroizeError();
+        if (!is_integer($userId) || !is_string($title) || !strlen($title) || !is_string($text)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'createMsg: incorrect parameters');
+            return FALSE;
+        }
+        $this->dbLink->query(
+                "SELECT `username` "
+                . "FROM `".MECCANO_TPREF."_core_userman_users` "
+                . "WHERE `id`=$userId ;"
+                );
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'createMsg: unable to check user -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        if (!$this->dbLink->affected_rows) {
+            $this->setError(ERROR_NOT_FOUND, 'createMsg: user not found');
+            return FALSE;
+        }
+        $title = $this->dbLink->real_escape_string($title);
+        $text = $this->dbLink->real_escape_string($text);
+        $id = guid();
+        $this->dbLink->query(
+                "INSERT INTO `".MECCANO_TPREF."_core_share_msgs` "
+                . "(`id`, `userid`, `title`, `text`) "
+                . "VALUES('$id', $userId, '$title', '$text') ;"
+                );
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'createMsg: unable to create message -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        return $id;
     }
 }
