@@ -26,6 +26,7 @@
 namespace core;
 
 require_once 'logman.php';
+require_once 'files.php';
 
 interface intShare {
     public function __construct(LogMan $logObject);
@@ -37,6 +38,7 @@ interface intShare {
     public function rmFromCircle($userId, $circleId, $contactId);
     public function delCircle($userId, $circleId);
     public function createMsg($userId, $title, $text);
+    public function stageFile($file, $filename, $userid, $title, $comment);
 }
 
 class Share extends ServiceMethods implements intShare {
@@ -358,7 +360,7 @@ class Share extends ServiceMethods implements intShare {
         return TRUE;
     }
     
-    public function createMsg($userId, $title, $text) {
+    public function createMsg($userId, $title, $text = '') {
         $this->zeroizeError();
         if (!is_integer($userId) || !is_string($title) || !strlen($title) || !is_string($text)) {
             $this->setError(ERROR_INCORRECT_DATA, 'createMsg: incorrect parameters');
@@ -387,6 +389,62 @@ class Share extends ServiceMethods implements intShare {
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'createMsg: unable to create message -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        return $id;
+    }
+    
+    public function stageFile($file, $filename, $userid, $title = '', $comment = '') {
+        $this->zeroizeError();
+        if (!is_string($file) || !is_string($filename) || !is_integer($userid) || !is_string($title) || !is_string($comment)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'stageFile: incorrect parameters');
+            return FALSE;
+        }
+        if (!is_file($file) || is_link($file)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'stageFile: this is no file');
+            return FALSE;
+        }
+        elseif (!is_readable($file)) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, 'stageFile: file is not readable');
+            return FALSE;
+        }
+        $this->dbLink->query(
+                "SELECT `username` "
+                . "FROM `".MECCANO_TPREF."_core_userman_users` "
+                . "WHERE `id`=$userid ;"
+                );
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'stageFile: unable to check user -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        if (!$this->dbLink->affected_rows) {
+            $this->setError(ERROR_NOT_FOUND, 'stageFile: user not found');
+            return FALSE;
+        }
+        $id = guid();
+        $title = $this->dbLink->real_escape_string($title);
+        $comment = $this->dbLink->real_escape_string($comment);
+        $mimeType = mime_content_type($file);
+        $fileSize = filesize($file);
+        $storageDir = MECCANO_SHARED_STDIR;
+        if (!is_dir(MECCANO_SHARED_FILES."/$storageDir")) {
+           if (!@mkdir(MECCANO_SHARED_FILES."/$storageDir")) {
+               $this->setError(ERROR_NOT_EXECUTED, "stageFile: unable to create storage directory");
+               return FALSE;
+           }
+        }
+        if (!Files::move($file, MECCANO_SHARED_FILES.'/'."$storageDir/$id")) {
+            $this->setError(Files::errId(), 'stageFile -> '.Files::errExp());
+            return FALSE;
+        }
+        $this->dbLink->query(
+                "INSERT INTO `".MECCANO_TPREF."_core_share_files` "
+                . "(`id`, `userid`, `title`, `name`, `comment`, `stdir`, `mime`, `size`) "
+                . "VALUES('$id', $userid, '$title', '$filename', '$comment', '$storageDir', '$mimeType', '$fileSize') ;"
+                );
+        if ($this->dbLink->errno) {
+            unlink(MECCANO_SHARED_FILES."/$id");
+            $this->setError(ERROR_NOT_EXECUTED, 'stageFile: unable to stage file -> '.$this->dbLink->error);
             return FALSE;
         }
         return $id;
