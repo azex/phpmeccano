@@ -25,8 +25,8 @@
 
 namespace core;
 
-require_once 'logman.php';
-require_once 'files.php';
+require_once MECCANO_CORE_DIR.'/logman.php';
+require_once MECCANO_CORE_DIR.'/files.php';
 
 interface intShare {
     public function __construct(LogMan $logObject);
@@ -39,6 +39,7 @@ interface intShare {
     public function delCircle($userId, $circleId);
     public function createMsg($userId, $title, $text);
     public function stageFile($file, $filename, $userid, $title, $comment);
+    public function shareFile($fileId, $userId, $circles);
 }
 
 class Share extends ServiceMethods implements intShare {
@@ -448,5 +449,87 @@ class Share extends ServiceMethods implements intShare {
             return FALSE;
         }
         return $id;
+    }
+    
+    public function shareFile($fileId, $userId, $circles) {
+        $this->zeroizeError();
+        if (!pregGuid($fileId) || !is_integer($userId) || !is_array($circles)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'shareFile: incorrect parameters');
+            return FALSE;
+        }
+        // check file
+        $this->dbLink->query(
+                "SELECT `name` "
+                . "FROM `".MECCANO_TPREF."_core_share_files` "
+                . "WHERE `id`='$fileId' "
+                . "AND `userid`=$userId ;"
+                );
+        if ($stmt->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'shareFile: unable to check file -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        if (!$this->dbLink->affected_rows) {
+            $this->setError(ERROR_NOT_FOUND, 'shareFile: file or user not found');
+            return FALSE;
+        }
+        // check circles
+        $cKeys = \array_keys($circles);
+        foreach ($cKeys as $value) {
+            if (!pregGuid($value) && !(is_string($value) && strlen($value) == 0)) {
+                $this->setError(ERROR_INCORRECT_DATA, 'shareFile: incorrect circle identifiers');
+                return FALSE;
+            }
+        }
+        $stmt = $this->dbLink->prepare(
+                "SELECT `cname` "
+                . "FROM `".MECCANO_TPREF."_core_share_circles` "
+                . "WHERE `id`=? "
+                . "AND `userid`=? ;"
+                );
+        if (!$stmt) {
+            $this->setError(ERROR_NOT_EXECUTED, 'shareFile: unable to check circle ->'.$this->dbLink->error);
+            return FALSE;
+        }
+        foreach ($cKeys as $value) {
+            if (strlen($value) != 0) {
+                $stmt->bind_param('si', $value, $userId);
+                $stmt->execute();
+                $stmt->store_result();
+                if (!$stmt->affected_rows) {
+                    $this->setError(ERROR_NOT_FOUND, "shareFile: circle [$value] not found");
+                    return FALSE;
+                }
+            }
+        }
+        $stmt->close();
+        // share/unshare file
+        $stmtInsert = $this->dbLink->prepare(
+                "INSERT INTO `".MECCANO_TPREF."_core_share_files_accessibility` "
+                . "(`id`, `fid`, `cid`) "
+                . "VALUES (?, ?, ?) ;"
+                );
+        if (!$stmtInsert) {
+            $this->setError(ERROR_NOT_EXECUTED, 'shareFile: unable to grant access ->'.$this->dbLink->error);
+            return FALSE;
+        }
+        $stmtDelete = $this->dbLink->prepare(
+                "DELETE FROM `".MECCANO_TPREF."_core_share_files_accessibility` "
+                . "WHERE `fid`=? "
+                . "AND `cid`=? ;"
+                );
+        foreach ($circles as $key => $value) {
+            if ($value) {
+                $id = guid();
+                $stmtInsert->bind_param('sss', $id, $fileId, $key);
+                $stmtInsert->execute();
+            }
+            else {
+                $stmtDelete->bind_param('ss', $fileId, $key);
+                $stmtDelete->execute();
+            }
+        }
+        $stmtInsert->close();
+        $stmtDelete->close();
+        return TRUE;
     }
 }

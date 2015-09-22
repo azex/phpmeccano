@@ -25,7 +25,7 @@
 
 namespace core;
 
-require_once 'swconst.php';
+require_once MECCANO_CORE_DIR.'/swconst.php';
 
 // it generates and returns unique password salt
 function makeSalt($prefix = '') {
@@ -65,7 +65,7 @@ function pregPref($prefix) {
 
 // it checks user name
 function pregUName($username) {
-    if (is_string($username) && preg_match('/^[a-zA-Z\d]{3,20}$/', $username)) {
+    if (is_string($username) && preg_match('/^[a-zA-Z\d_]{3,20}$/', $username)) {
         return TRUE;
     }
     return FALSE;

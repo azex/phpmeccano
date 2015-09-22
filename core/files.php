@@ -25,7 +25,7 @@
 
 namespace core;
 
-require_once 'swconst.php';
+require_once MECCANO_CORE_DIR.'/swconst.php';
 
 interface intFiles {
     public static function errId();

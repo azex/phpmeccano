@@ -25,9 +25,9 @@
 
 namespace core;
 
-require_once 'swconst.php';
-require_once 'unifunctions.php';
-require_once 'extclass.php';
+require_once MECCANO_CORE_DIR.'/swconst.php';
+require_once MECCANO_CORE_DIR.'/unifunctions.php';
+require_once MECCANO_CORE_DIR.'/extclass.php';
 
 interface intPolicy {
     function __construct(\mysqli $dbLink);
