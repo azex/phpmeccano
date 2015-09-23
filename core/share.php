@@ -60,6 +60,19 @@ class Share extends ServiceMethods implements intShare {
             $this->setError(ERROR_INCORRECT_DATA, 'checkFileAccess: incorrect file identifier');
             return FALSE;
         }
+        //check whether file exists
+        $this->dbLink->query(
+                "SELECT `id` FROM `".MECCANO_TPREF."_core_share_files` "
+                . "WHERE `id`='$fileId' ;"
+                );
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'checkFileAccess: '.$this->dbLink->error);
+            return FALSE;
+        }
+        elseif (!$this->dbLink->affected_rows) {
+            $this->setError(ERROR_NOT_FOUND, "checkFileAccess: file [$fileId] not found in the database");
+            return FALSE;
+        }
         // check for public access
         $this->dbLink->query(
                 "SELECT `id` FROM `".MECCANO_TPREF."_core_share_files_accessibility` "
@@ -586,5 +599,40 @@ class Share extends ServiceMethods implements intShare {
         $stmtInsert->close();
         $stmtDelete->close();
         return TRUE;
+    }
+    
+    public function getFile($fileId) {
+        if ($this->checkFileAccess($fileId)) {
+            $qFile = $this->dbLink->query(
+                    "SELECT `name`, `stdir`, `mime`, `size` "
+                    . "FROM `".MECCANO_TPREF."_core_share_files` "
+                    . "WHERE `id`='$fileId' ;"
+                    );
+            if ($this->dbLink->errno) {
+                $this->setError(ERROR_NOT_EXECUTED, 'getFile: unable to get file information -> '.$this->dbLink->error);
+                return FALSE;
+            }
+            list($fileName, $storageDir, $mimeType, $fileSize) = $qFile->fetch_row();
+            $fullPath = realpath(MECCANO_SHARED_FILES."/$storageDir/$fileId");
+            if (is_file($fullPath) && is_readable($fullPath)) {
+                header("X-SendFile: $fullPath");
+                header("Content-Type: $mimeType");
+                header("Content-Length: $fileSize");
+                header("Content-Disposition: attachment; filename=$fileName");
+                exit;
+            }
+            else {
+                $this->setError(ERROR_NOT_FOUND, "getFile: file [$fileId] not found on the disk");
+                return FALSE;
+            }
+        }
+        elseif ($this->errid) {
+            $this->setError($this->errid, 'getFile -> '.$this->errexp);
+            return FALSE;
+        }
+        else {
+            $this->setError(ERROR_RESTRICTED_ACCESS, 'getFile: access denied');
+            return FALSE;
+        }
     }
 }
