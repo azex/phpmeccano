@@ -40,6 +40,7 @@ interface intShare {
     public function createMsg($userId, $title, $text);
     public function stageFile($file, $filename, $userid, $title, $comment);
     public function shareFile($fileId, $userId, $circles);
+    public function getFile($fileId);
 }
 
 class Share extends ServiceMethods implements intShare {
@@ -51,6 +52,60 @@ class Share extends ServiceMethods implements intShare {
         $this->dbLink = $logObject->dbLink;
         $this->logObject = $logObject;
         $this->policyObject = $logObject->policyObject;
+    }
+    
+    private function checkFileAccess($fileId) {
+        $this->zeroizeError();
+        if (!pregGuid($fileId)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'checkFileAccess: incorrect file identifier');
+            return FALSE;
+        }
+        // check for public access
+        $this->dbLink->query(
+                "SELECT `id` FROM `".MECCANO_TPREF."_core_share_files_accessibility` "
+                . "WHERE `fid`='$fileId' "
+                . "AND `cid`='' ;"
+                );
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'checkFileAccess: '.$this->dbLink->error);
+            return FALSE;
+        }
+        elseif ($this->dbLink->affected_rows) {
+            return TRUE;
+        }
+        elseif (!isset($_SESSION[AUTH_USER_ID])) {
+            return FALSE;
+        }
+        else {
+            $sql = array(
+                // check for access shared with circles
+                "SELECT `a`.`id` "
+                . "FROM `".MECCANO_TPREF."_core_share_files_accessibility` `a` "
+                . "JOIN `".MECCANO_TPREF."_core_share_buddy_list` `b` "
+                . "ON `a`.`cid`=`b`.`cid` "
+                . "WHERE `b`.`bid`=".$_SESSION[AUTH_USER_ID]." "
+                . "AND `a`.`fid`='$fileId' ;",
+                
+                // check for owner access
+                "SELECT `a`.`id` "
+                . "FROM `".MECCANO_TPREF."_core_share_files_accessibility` `a` "
+                . "JOIN `".MECCANO_TPREF."_core_share_circles` `c` "
+                . "ON `a`.`cid`=`c`.`id` "
+                . "WHERE `c`.`userid`=".$_SESSION[AUTH_USER_ID]." "
+                . "AND `a`.`fid`='$fileId';"
+            );
+            foreach ($sql as $value) {
+                $this->dbLink->query($value);
+                if ($this->dbLink->errno) {
+                    $this->setError(ERROR_NOT_EXECUTED, 'checkFileAccess: '.$this->dbLink->error);
+                    return FALSE;
+                }
+                elseif ($this->dbLink->affected_rows) {
+                    return TRUE;
+                }
+            }
+        }
+        return FALSE;
     }
     
     function createCircle($userId, $name) {
