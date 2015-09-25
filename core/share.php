@@ -601,7 +601,11 @@ class Share extends ServiceMethods implements intShare {
         return TRUE;
     }
     
-    public function getFile($fileId) {
+    public function getFile($fileId, $contDisp = 'inline') {
+        if (!in_array($contDisp, array('inline', 'attachment'))) {
+            $this->setError(ERROR_INCORRECT_DATA, 'getFile: incorrect content disposition value');
+            return FALSE;
+        }
         if ($this->checkFileAccess($fileId)) {
             $qFile = $this->dbLink->query(
                     "SELECT `name`, `stdir`, `mime`, `size` "
@@ -615,10 +619,27 @@ class Share extends ServiceMethods implements intShare {
             list($fileName, $storageDir, $mimeType, $fileSize) = $qFile->fetch_row();
             $fullPath = realpath(MECCANO_SHARED_FILES."/$storageDir/$fileId");
             if (is_file($fullPath) && is_readable($fullPath)) {
-                header("X-SendFile: $fullPath");
+                if (isset($_SERVER['SERVER_SOFTWARE'])) {
+                    if (preg_match('/.*Apache.*/', $_SERVER['SERVER_SOFTWARE'])) {
+                        // https://tn123.org/mod_xsendfile/
+                        header("X-SendFile: $fullPath");
+                    }
+                    elseif (preg_match('/.*nginx.*/', $_SERVER['SERVER_SOFTWARE'])) {
+                        // https://www.nginx.com/resources/wiki/start/topics/examples/xsendfile/
+                        header("X-Accel-Redirect: /".basename(MECCANO_SHARED_FILES)."/$storageDir/$fileId");
+                    }
+                    else {
+                        $this->setError(ERROR_NOT_EXECUTED, "getFile: unknown web server");
+                        return FALSE;
+                    }
+                }
+                else {
+                    $this->setError(ERROR_NOT_EXECUTED, "getFile: must be run with web server (Apache or nginx)");
+                    return FALSE;
+                }
                 header("Content-Type: $mimeType");
                 header("Content-Length: $fileSize");
-                header("Content-Disposition: attachment; filename=$fileName");
+                header("Content-Disposition: $contDisp; filename=$fileName");
                 exit;
             }
             else {
