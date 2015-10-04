@@ -41,6 +41,7 @@ interface intShare {
     public function stageFile($file, $filename, $userid, $title, $comment);
     public function shareFile($fileId, $userId, $circles);
     public function getFile($fileId);
+    public function attachFile($fileId, $msgId, $userId);
 }
 
 class Share extends ServiceMethods implements intShare {
@@ -655,5 +656,52 @@ class Share extends ServiceMethods implements intShare {
             $this->setError(ERROR_RESTRICTED_ACCESS, 'getFile: access denied');
             return FALSE;
         }
+    }
+    
+    public function attachFile($fileId, $msgId, $userId) {
+        $this->zeroizeError();
+        if (!pregGuid($fileId) || !pregGuid($msgId) || !is_integer($userId)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'attachFile: incorrect parameters');
+            return FALSE;
+        }
+        $this->dbLink->query(
+                "SELECT `name` "
+                . "FROM `".MECCANO_TPREF."_core_share_files` "
+                . "WHERE `id`='$fileId' "
+                . "AND `userid`=$userId ;"
+                );
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'attachFile: unable to check file -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        if (!$this->dbLink->affected_rows) {
+            $this->setError(ERROR_NOT_FOUND, 'attachFile: file not found');
+            return FALSE;
+        }
+        $this->dbLink->query(
+                "SELECT `title` "
+                . "FROM `".MECCANO_TPREF."_core_share_msgs` "
+                . "WHERE `id`='$msgId' "
+                . "AND `userid`=$userId ;"
+                );
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'attachFile: unable to check message -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        if (!$this->dbLink->affected_rows) {
+            $this->setError(ERROR_NOT_FOUND, 'attachFile: message not found');
+            return FALSE;
+        }
+        $id = guid();
+        $this->dbLink->query(
+                "INSERT INTO `".MECCANO_TPREF."_core_share_msgfile_relations` "
+                . "(`id`, `mid`, `fid`, `userid`) "
+                . "VALUES ('$id', '$msgId', '$fileId', $userId) ;"
+                );
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'attacheFile: unable to create relation -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        return $id;
     }
 }
