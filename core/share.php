@@ -42,6 +42,7 @@ interface intShare {
     public function shareFile($fileId, $userId, $circles);
     public function getFile($fileId);
     public function attachFile($fileId, $msgId, $userId);
+    public function unattachFile($fileId, $msgId, $userId);
 }
 
 class Share extends ServiceMethods implements intShare {
@@ -703,5 +704,28 @@ class Share extends ServiceMethods implements intShare {
             return FALSE;
         }
         return $id;
+    }
+    
+    public function unattachFile($fileId, $msgId, $userId) {
+        $this->zeroizeError();
+        if (!pregGuid($fileId) || !pregGuid($msgId) || !is_integer($userId)) {
+            $this->setError(ERROR_NOT_EXECUTED, 'unattachFile: incorrect parameters');
+            return FALSE;
+        }
+        $this->dbLink->query(
+                "DELETE FROM `".MECCANO_TPREF."_core_share_msgfile_relations` "
+                . "WHERE `fid`='$fileId' "
+                . "AND `mid`='$msgId' "
+                . "AND `userid`=$userId ;"
+                );
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'unattachFiles: unable to unattach file -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        if (!$this->dbLink->affected_rows) {
+            $this->setError(ERROR_NOT_FOUND, 'unattachFile: file not found');
+            return FALSE;
+        }
+        return TRUE;
     }
 }
