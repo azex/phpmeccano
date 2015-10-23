@@ -43,6 +43,7 @@ interface intShare {
     public function getFile($fileId);
     public function attachFile($fileId, $msgId, $userId);
     public function unattachFile($fileId, $msgId, $userId);
+    public function delFile($fileId, $userId);
 }
 
 class Share extends ServiceMethods implements intShare {
@@ -709,13 +710,13 @@ class Share extends ServiceMethods implements intShare {
     public function unattachFile($fileId, $msgId, $userId) {
         $this->zeroizeError();
         if (!pregGuid($fileId) || !pregGuid($msgId) || !is_integer($userId)) {
-            $this->setError(ERROR_NOT_EXECUTED, 'unattachFile: incorrect parameters');
+            $this->setError(ERROR_INCORRECT_DATA, 'unattachFile: incorrect parameters');
             return FALSE;
         }
         $this->dbLink->query(
                 "DELETE FROM `".MECCANO_TPREF."_core_share_msgfile_relations` "
-                . "WHERE `fid`='$fileId' "
-                . "AND `mid`='$msgId' "
+                . "WHERE (`fid`='$fileId' "
+                . "AND `mid`='$msgId') "
                 . "AND `userid`=$userId ;"
                 );
         if ($this->dbLink->errno) {
@@ -725,6 +726,73 @@ class Share extends ServiceMethods implements intShare {
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'unattachFile: file not found');
             return FALSE;
+        }
+        return TRUE;
+    }
+    
+    public function delFile($fileId, $userId, $force = FALSE) {
+        $this->zeroizeError();
+        if (!pregGuid($fileId) || !is_integer($userId)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'delFile: incorrect parameters');
+            return FALSE;
+        }
+        // whether file exists
+        $qFile = $this->dbLink->query(
+                "SELECT `stdir` "
+                . "FROM `".MECCANO_TPREF."_core_share_files` "
+                . "WHERE `id`='$fileId' "
+                . "AND `userid`=$userId ;"
+                );
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'delFile: unable to get file info -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        if (!$this->dbLink->affected_rows) {
+            $this->setError(ERROR_NOT_FOUND, 'delFile: file not found');
+            return FALSE;
+        }
+        // whether file is related
+        if (!$force) {
+            $this->dbLink->query(
+                    "SELECT `id` "
+                    . "FROM `".MECCANO_TPREF."_core_share_msgfile_relations` "
+                    . "WHERE `fid`='$fileId' ;"
+                    );
+            if ($this->dbLink->errno) {
+                $this->setError(ERROR_NOT_EXECUTED, 'delFile: unable to check file ralations -> '.$this->dbLink->error);
+                return FALSE;
+            }
+            if ($this->dbLink->affected_rows) {
+                $this->setError(ERROR_ALREADY_EXISTS, 'delFile: unable to delete file related with message(s)');
+                return FALSE;
+            }
+        }
+        // directory of the staged file
+        list($stdir) = $qFile->fetch_row();
+        Files::remove(MECCANO_SHARED_FILES."/$stdir/$fileId");
+        if (Files::errId()) {
+            $this->setError(Files::errId(), 'delFile -> '.Files::errExp());
+            return FALSE;
+        }
+        $sql = array(
+            "DELETE FROM `".MECCANO_TPREF."_core_share_files_accessibility` "
+            . "WHERE `fid`='$fileId' ;",
+            "DELETE FROM `".MECCANO_TPREF."_core_share_files` "
+            . "WHERE `id`='$fileId' ;"
+        );
+        if ($force) { 
+            array_unshift(
+                    $sql, 
+                    "DELETE FROM `".MECCANO_TPREF."_core_share_msgfile_relations` "
+                    . "WHERE `fid`='$fileId' ;"
+                    );
+        }
+        foreach ($sql as $value) {
+            $this->dbLink->query($value);
+            if ($this->dbLink->errno) {
+                $this->setError(ERROR_NOT_EXECUTED, 'delFile: unable to delete file from database -> '.$this->dbLink->error);
+                return FALSE;
+            }
         }
         return TRUE;
     }
