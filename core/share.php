@@ -44,6 +44,7 @@ interface intShare {
     public function attachFile($fileId, $msgId, $userId);
     public function unattachFile($fileId, $msgId, $userId);
     public function delFile($fileId, $userId);
+    public function getFileInfo($fileId, $output = 'json');
 }
 
 class Share extends ServiceMethods implements intShare {
@@ -795,5 +796,82 @@ class Share extends ServiceMethods implements intShare {
             }
         }
         return TRUE;
+    }
+    
+    public function getFileInfo($fileId, $output = 'json') {
+        $this->zeroizeError();
+        if (!pregGuid($fileId) || !in_array($output, array('xml', 'json'))) {
+            $this->setError(ERROR_INCORRECT_DATA, 'getFileInfo: incorrect parameters');
+            return FALSE;
+        }
+        if ($this->checkFileAccess($fileId)) {
+            $qFileInfo = $this->dbLink->query(
+                    "SELECT `f`.`id`, `u`.`username`, `i`.`fullname`, `f`.`title`, `f`.`name`, `f`.`comment`, `f`.`mime`, `f`.`size`, `f`.`filetime` "
+                    . "FROM `".MECCANO_TPREF."_core_share_files` `f` "
+                    . "JOIN `".MECCANO_TPREF."_core_userman_users` `u` "
+                    . "ON `u`.`id`=`f`.`userid` "
+                    . "JOIN `".MECCANO_TPREF."_core_userman_userinfo` `i` "
+                    . "ON `i`.`id`=`f`.`userid` "
+                    . "WHERE `f`.`id`='$fileId' ;"
+                    );
+            if ($this->dbLink->errno) {
+                $this->setError(ERROR_NOT_EXECUTED, 'getFileInfo: unable to get file info -> '.$this->dbLink->error);
+                return FALSE;
+            }
+            elseif (!$this->dbLink->affected_rows) {
+                $this->setError(ERROR_NOT_FOUND, "getFileInfo: file not found");
+            }
+            
+            $fileInfo = $qFileInfo->fetch_row();
+            if ($output == 'xml') {
+                $xml = new \DOMDocument('1.0', 'utf-8');
+                $fileInfoNode = $xml->createElement('fileinfo');
+                $xml->appendChild($fileInfoNode);
+                //
+                $fileIdAttribute = $xml->createAttribute('id');
+                $fileIdAttribute->value = $fileInfo[0];
+                $fileInfoNode->appendChild($fileIdAttribute);
+                //
+                $userNameNode = $xml->createElement('username', $fileInfo[1]);
+                $fileInfoNode->appendChild($userNameNode);
+                $fullNameNode = $xml->createElement('fullname', $fileInfo[2]);
+                $fileInfoNode->appendChild($fullNameNode);
+                $titleNode = $xml->createElement('title', htmlspecialchars($fileInfo[3]));
+                $fileInfoNode->appendChild($titleNode);
+                $fileNameNode = $xml->createElement('filename', htmlspecialchars($fileInfo[4]));
+                $fileInfoNode->appendChild($fileNameNode);
+                $commentNode = $xml->createElement('comment', htmlspecialchars($fileInfo[5]));
+                $fileInfoNode->appendChild($commentNode);
+                $mimeNode = $xml->createElement('mime', $fileInfo[6]);
+                $fileInfoNode->appendChild($mimeNode);
+                $sizeNode = $xml->createElement('size', $fileInfo[7]);
+                $fileInfoNode->appendChild($sizeNode);
+                $timeNode = $xml->createElement('time', $fileInfo[8]);
+                $fileInfoNode->appendChild($timeNode);
+                return $xml;
+            }
+            else {
+                $fileInfoNode = array();
+                //
+                $fileInfoNode['id'] = $fileInfo[0];
+                $fileInfoNode['username'] = $fileInfo[1];
+                $fileInfoNode['fullname'] = $fileInfo[2];
+                $fileInfoNode['title'] = htmlspecialchars($fileInfo[3]);
+                $fileInfoNode['filename'] = htmlspecialchars($fileInfo[4]);
+                $fileInfoNode['comment'] = htmlspecialchars($fileInfo[5]);
+                $fileInfoNode['mime'] = $fileInfo[6];
+                $fileInfoNode['size'] = $fileInfo[7];
+                $fileInfoNode['time'] = $fileInfo[8];
+                return json_encode($fileInfoNode);
+            }
+        }
+        elseif ($this->errid) {
+            $this->setError($this->errid, 'getFileInfo -> '.$this->errexp);
+            return FALSE;
+        }
+        else {
+            $this->setError(ERROR_RESTRICTED_ACCESS, 'getFileInfo: access denied');
+            return FALSE;
+        }
     }
 }
