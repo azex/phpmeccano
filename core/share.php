@@ -126,6 +126,73 @@ class Share extends ServiceMethods implements intShare {
         return FALSE;
     }
     
+    private function checkMsgAccess($msgId) {
+        $this->zeroizeError();
+        if (!pregGuid($msgId)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'checkMsgAccess: incorrect message identifier');
+            return FALSE;
+        }
+        //check whether message exists
+        $this->dbLink->query(
+                "SELECT `id` FROM `".MECCANO_TPREF."_core_share_msgs` "
+                . "WHERE `id`='$msgId' ;"
+                );
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'checkMsgAccess: '.$this->dbLink->error);
+            return FALSE;
+        }
+        elseif (!$this->dbLink->affected_rows) {
+            $this->setError(ERROR_NOT_FOUND, "checkMsgAccess: message [$msgId] not found in the database");
+            return FALSE;
+        }
+        // check for public access
+        $this->dbLink->query(
+                "SELECT `id` FROM `".MECCANO_TPREF."_core_share_msg_accessibility` "
+                . "WHERE `mid`='$msgId' "
+                . "AND `cid`='' ;"
+                );
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'checkMsgAccess: '.$this->dbLink->error);
+            return FALSE;
+        }
+        elseif ($this->dbLink->affected_rows) {
+            return TRUE;
+        }
+        elseif (!isset($_SESSION[AUTH_USER_ID])) {
+            return FALSE;
+        }
+        else {
+            $sql = array(
+                // check for access shared with circles
+                "SELECT `a`.`id` "
+                . "FROM `".MECCANO_TPREF."_core_share_msg_accessibility` `a` "
+                . "JOIN `".MECCANO_TPREF."_core_share_buddy_list` `b` "
+                . "ON `a`.`cid`=`b`.`cid` "
+                . "WHERE `b`.`bid`=".$_SESSION[AUTH_USER_ID]." "
+                . "AND `a`.`mid`='$msgId' ;",
+                
+                // check for owner access
+                "SELECT `a`.`id` "
+                . "FROM `".MECCANO_TPREF."_core_share_msg_accessibility` `a` "
+                . "JOIN `".MECCANO_TPREF."_core_share_circles` `c` "
+                . "ON `a`.`cid`=`c`.`id` "
+                . "WHERE `c`.`userid`=".$_SESSION[AUTH_USER_ID]." "
+                . "AND `a`.`mid`='$msgId';"
+            );
+            foreach ($sql as $value) {
+                $this->dbLink->query($value);
+                if ($this->dbLink->errno) {
+                    $this->setError(ERROR_NOT_EXECUTED, 'checkMsgAccess: '.$this->dbLink->error);
+                    return FALSE;
+                }
+                elseif ($this->dbLink->affected_rows) {
+                    return TRUE;
+                }
+            }
+        }
+        return FALSE;
+    }
+    
     function createCircle($userId, $name) {
         $this->zeroizeError();
         if (!is_integer($userId) || !is_string($name) || !strlen($name)) {
