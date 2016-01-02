@@ -40,12 +40,13 @@ interface intShare {
     public function createMsg($userId, $title, $text);
     public function stageFile($file, $filename, $userid, $title, $comment);
     public function shareFile($fileId, $userId, $circles);
-    public function getFile($fileId);
+    public function getFile($fileId, $contDisp = 'inline');
     public function attachFile($fileId, $msgId, $userId);
     public function unattachFile($fileId, $msgId, $userId);
-    public function delFile($fileId, $userId);
+    public function delFile($fileId, $userId, $force = FALSE);
     public function getFileInfo($fileId, $output = 'json');
     public function shareMsg($msgId, $userId, $circles);
+    public function getMsg($msgId, $output = 'json');
 }
 
 class Share extends ServiceMethods implements intShare {
@@ -674,6 +675,7 @@ class Share extends ServiceMethods implements intShare {
     }
     
     public function getFile($fileId, $contDisp = 'inline') {
+        $this->zeroizeError();
         if (!in_array($contDisp, array('inline', 'attachment'))) {
             $this->setError(ERROR_INCORRECT_DATA, 'getFile: incorrect content disposition value');
             return FALSE;
@@ -773,7 +775,7 @@ class Share extends ServiceMethods implements intShare {
             $this->setError(ERROR_NOT_EXECUTED, 'attacheFile: unable to create relation -> '.$this->dbLink->error);
             return FALSE;
         }
-        return $id;
+        return TRUE;
     }
     
     public function unattachFile($fileId, $msgId, $userId) {
@@ -1023,5 +1025,72 @@ class Share extends ServiceMethods implements intShare {
         $stmtInsert->close();
         $stmtDelete->close();
         return TRUE;
+    }
+    
+    public function getMsg($msgId, $output = 'json') {
+        $this->zeroizeError();
+        if (!in_array($output, array('xml', 'json'))) {
+            $this->setError(ERROR_INCORRECT_DATA, 'getMsg: incorrect parameter');
+            return FALSE;
+        }
+        if ($this->checkMsgAccess($msgId)) {
+            $qMsg = $this->dbLink->query(
+                    "SELECT `m`.`source`, `m`.`title`, `m`.`text`, `m`.`msgtime`, `u`.`username`, `i`.`fullname` "
+                    . "FROM `".MECCANO_TPREF."_core_share_msgs` `m` "
+                    . "JOIN `".MECCANO_TPREF."_core_userman_users` `u` "
+                    . "ON `u`.`id`=`m`.`userid` "
+                    . "JOIN `".MECCANO_TPREF."_core_userman_userinfo` `i` "
+                    . "ON `i`.`id`=`m`.`userid` "
+                    . "WHERE `m`.`id`='$msgId' ;"
+                    );
+            if ($this->dbLink->errno) {
+                $this->setError(ERROR_NOT_EXECUTED, 'getMsg: unable to get message');
+                return FALSE;
+            }
+            list($msgSource, $msgTitle, $msgText, $msgTime, $username, $fullName) = $qMsg->fetch_row();
+            if ($output == 'xml') {
+                $xml = new \DOMDocument('1.0', 'utf-8');
+                $msgNode = $xml->createElement('message');
+                $xml->appendChild($msgNode);
+                //
+                $msgIdAttribute = $xml->createAttribute('id');
+                $msgIdAttribute->value = $msgId;
+                $msgNode->appendChild($msgIdAttribute);
+                //
+                $sourceNode = $xml->createElement('source', $msgSource);
+                $msgNode->appendChild($sourceNode);
+                $titleNode = $xml->createElement('title', htmlentities($msgTitle));
+                $msgNode->appendChild($titleNode);
+                $textNode = $xml->createElement('text', $msgText);
+                $msgNode->appendChild($textNode);
+                $timeNode = $xml->createElement('time', $msgTime);
+                $msgNode->appendChild($timeNode);
+                $unNode = $xml->createElement('username', $username);
+                $msgNode->appendChild($unNode);
+                $fnNode = $xml->createElement('fullname', $fullName);
+                $msgNode->appendChild($fnNode);
+                return $xml;
+            }
+            else {
+                $msgNode = array();
+                //
+                $msgNode['id'] = $msgId;
+                $msgNode['source'] = $msgSource;
+                $msgNode['title'] = htmlspecialchars($msgTitle);
+                $msgNode['text'] = $msgText;
+                $msgNode['time'] = $msgTime;
+                $msgNode['username'] = $username;
+                $msgNode['fullname'] = $fullName;
+                return json_encode($msgNode);
+            }
+        }
+        elseif ($this->errid) {
+            $this->setError($this->errid, 'getMsg -> '.$this->errexp);
+            return FALSE;
+        }
+        else {
+            $this->setError(ERROR_RESTRICTED_ACCESS, 'getMsg: access denied');
+            return FALSE;
+        }
     }
 }
