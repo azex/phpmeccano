@@ -47,6 +47,7 @@ interface intShare {
     public function getFileInfo($fileId, $output = 'json');
     public function shareMsg($msgId, $userId, $circles);
     public function getMsg($msgId, $output = 'json');
+    public function msgFiles($msgId, $output = 'json');
 }
 
 class Share extends ServiceMethods implements intShare {
@@ -1044,7 +1045,7 @@ class Share extends ServiceMethods implements intShare {
                     . "WHERE `m`.`id`='$msgId' ;"
                     );
             if ($this->dbLink->errno) {
-                $this->setError(ERROR_NOT_EXECUTED, 'getMsg: unable to get message');
+                $this->setError(ERROR_NOT_EXECUTED, 'getMsg: unable to get message -> '.$this->dbLink->error);
                 return FALSE;
             }
             list($msgSource, $msgTitle, $msgText, $msgTime, $username, $fullName) = $qMsg->fetch_row();
@@ -1090,6 +1091,72 @@ class Share extends ServiceMethods implements intShare {
         }
         else {
             $this->setError(ERROR_RESTRICTED_ACCESS, 'getMsg: access denied');
+            return FALSE;
+        }
+    }
+    
+    public function msgFiles($msgId, $output = 'json') {
+        $this->zeroizeError();
+        if (!in_array($output, array('xml', 'json'))) {
+            $this->setError(ERROR_INCORRECT_DATA, 'msgFiles: incorrect parameter');
+            return FALSE;
+        }
+        if ($this->checkMsgAccess($msgId)) {
+            $qFiles = $this->dbLink->query(
+                    "SELECT `r`.`fid`, `f`.`title`, `f`.`name`, `f`.`mime` "
+                    . "FROM `".MECCANO_TPREF."_core_share_msgfile_relations` `r` "
+                    . "JOIN `".MECCANO_TPREF."_core_share_files` `f` "
+                    . "ON `f`.`id`=`r`.`fid` "
+                    . "WHERE `r`.`mid`='$msgId' ;"
+                    );
+            if ($this->dbLink->errno) {
+                $this->setError(ERROR_NOT_EXECUTED, 'msgFiles: unable to get message files -> '.$this->dbLink->error);
+                return FALSE;
+            }
+            if ($output == 'xml') {
+                $xml = new \DOMDocument('1.0', 'utf-8');
+                $filesNode = $xml->createElement('files');
+                $xml->appendChild($filesNode);
+                //
+                $msgIdAttribute = $xml->createAttribute('msgid');
+                $msgIdAttribute->value = $msgId;
+                $filesNode->appendChild($msgIdAttribute);
+                //
+                while ($fileInfo = $qFiles->fetch_row()) {
+                    $fileNode = $xml->createElement('file');
+                    $idNode = $xml->createElement('id', $fileInfo[0]);
+                    $fileNode->appendChild($idNode);
+                    $titleNode = $xml->createElement('title', htmlspecialchars($fileInfo[1]));
+                    $fileNode->appendChild($titleNode);
+                    $nameNode = $xml->createElement('filename', htmlspecialchars($fileInfo[2]));
+                    $fileNode->appendChild($nameNode);
+                    $mimeNode = $xml->createElement('mime', $fileInfo[3]);
+                    $fileNode->appendChild($mimeNode);
+                    $filesNode->appendChild($fileNode);
+                }
+                return $xml;
+            }
+            else {
+                $filesNode = array();
+                //
+                $filesNode['msgid'] = $msgId;
+                $filesNode['files'] = array();
+                while ($fileInfo = $qFiles->fetch_row()) {
+                    $filesNode['files'][$fileInfo[0]] = array(
+                        'title' => htmlspecialchars($fileInfo[1]),
+                        'filename' => htmlspecialchars($fileInfo[2]),
+                        'mime' => $fileInfo[3]
+                    );
+                }
+                return json_encode($filesNode);
+            }
+        }
+        elseif ($this->errid) {
+            $this->setError($this->errid, 'msgFiles -> '.$this->errexp);
+            return FALSE;
+        }
+        else {
+            $this->setError(ERROR_RESTRICTED_ACCESS, 'msgFiles: access denied');
             return FALSE;
         }
     }
