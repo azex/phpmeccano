@@ -48,6 +48,7 @@ interface intShare {
     public function shareMsg($msgId, $userId, $circles);
     public function getMsg($msgId, $output = 'json');
     public function msgFiles($msgId, $output = 'json');
+    public function getFileShares($fileId, $userId, $output = 'json');
 }
 
 class Share extends ServiceMethods implements intShare {
@@ -1142,7 +1143,8 @@ class Share extends ServiceMethods implements intShare {
                 $filesNode['msgid'] = $msgId;
                 $filesNode['files'] = array();
                 while ($fileInfo = $qFiles->fetch_row()) {
-                    $filesNode['files'][$fileInfo[0]] = array(
+                    $filesNode['files'][] = array(
+                        'id' => $fileInfo[0],
                         'title' => htmlspecialchars($fileInfo[1]),
                         'filename' => htmlspecialchars($fileInfo[2]),
                         'mime' => $fileInfo[3]
@@ -1158,6 +1160,97 @@ class Share extends ServiceMethods implements intShare {
         else {
             $this->setError(ERROR_RESTRICTED_ACCESS, 'msgFiles: access denied');
             return FALSE;
+        }
+    }
+    
+    public function getFileShares($fileId, $userId, $output = 'json') {
+        $this->zeroizeError();
+        if (!pregGuid($fileId) || !is_integer($userId) || !in_array($output, array('xml', 'json'))) {
+            $this->setError(ERROR_INCORRECT_DATA, 'getFileShares: incorrect parameters');
+            return FALSE;
+        }
+        // check whether the user owns the file
+        $this->dbLink->query("SELECT `filetime` "
+                . "FROM `".MECCANO_TPREF."_core_share_files` "
+                . "WHERE `id`='$fileId' "
+                . "AND `userid`=$userId ;");
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'getFileShares: unable to check whether the user owns the file -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        if (!$this->dbLink->affected_rows) {
+            $this->setError(ERROR_NOT_FOUND, 'getFileShares: file not found');
+            return FALSE;
+        }
+        // get file shares
+        $qShares = $this->dbLink->query("SELECT `a`.`cid`, `c`.`cname` "
+                . "FROM `".MECCANO_TPREF."_core_share_files_accessibility` `a` "
+                . "JOIN `".MECCANO_TPREF."_core_share_circles` `c` "
+                . "ON `a`.`cid`=`c`.`id` "
+                . "WHERE `a`.`fid`='$fileId' ;");
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'getFileShares: unable to get file shares -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        if ($output == 'xml') {
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $sharesNode = $xml->createElement('shares');
+            $xml->appendChild($sharesNode);
+            //
+            $fileIdAttribute = $xml->createAttribute('fileId');
+            $fileIdAttribute->value = $fileId;
+            $sharesNode->appendChild($fileIdAttribute);
+            // check for public access
+            $this->dbLink->query(
+                    "SELECT `id` FROM `".MECCANO_TPREF."_core_share_files_accessibility` "
+                    . "WHERE `fid`='$fileId' "
+                    . "AND `cid`='' ;"
+                    );
+            if ($this->dbLink->errno) {
+                $this->setError(ERROR_NOT_EXECUTED, 'getFileShares: '.$this->dbLink->error);
+                return FALSE;
+            }
+            if ($this->dbLink->affected_rows) {
+                $circleNode = $xml->createElement('circle');
+                $cIdNode = $xml->createElement('id', '');
+                $circleNode->appendChild($cIdNode);
+                $cNameNode = $xml->createElement('name', '');
+                $circleNode->appendChild($cNameNode);
+                $sharesNode->appendChild($circleNode);
+            }
+            // check access to other circles
+            while ($circleData = $qShares->fetch_row()) {
+                $circleNode = $xml->createElement('circle');
+                $cIdNode = $xml->createElement('id', $circleData[0]);
+                $circleNode->appendChild($cIdNode);
+                $cNameNode = $xml->createElement('name', htmlspecialchars($circleData[1]));
+                $circleNode->appendChild($cNameNode);
+                $sharesNode->appendChild($circleNode);
+            }
+            return $xml;
+        }
+        else {
+            $sharesNode = array();
+            $sharesNode['fileId'] = $fileId;
+            $sharesNode['circles'] = array();
+            // check for public access
+            $this->dbLink->query(
+                    "SELECT `id` FROM `".MECCANO_TPREF."_core_share_files_accessibility` "
+                    . "WHERE `fid`='$fileId' "
+                    . "AND `cid`='' ;"
+                    );
+            if ($this->dbLink->errno) {
+                $this->setError(ERROR_NOT_EXECUTED, 'getFileShares: '.$this->dbLink->error);
+                return FALSE;
+            }
+            if ($this->dbLink->affected_rows) {
+                $sharesNode['circles'][] = array('id' => '', 'name' => '');
+            }
+            // check access to other circles
+            while ($circleData = $qShares->fetch_row()) {
+                $sharesNode['circles'][] = array('id' => $circleData[0], 'name' => $circleData[1]);
+            }
+            return json_encode($sharesNode);
         }
     }
 }
