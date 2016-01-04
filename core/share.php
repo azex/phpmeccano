@@ -50,6 +50,7 @@ interface intShare {
     public function msgFiles($msgId, $output = 'json');
     public function getFileShares($fileId, $userId, $output = 'json');
     public function getMsgShares($msgId, $userId, $output = 'json');
+    public function updateFile($fileId, $userid, $title, $comment);
 }
 
 class Share extends ServiceMethods implements intShare {
@@ -1344,5 +1345,28 @@ class Share extends ServiceMethods implements intShare {
             }
             return json_encode($sharesNode);
         }
+    }
+    
+    public function updateFile($fileId, $userid, $title, $comment) {
+        $this->zeroizeError();
+        if (!pregGuid($fileId) || !is_integer($userid) || !is_string($title) || !is_string($comment)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'updateFile: incorrect parameters');
+            return FALSE;
+        }
+        $title = $this->dbLink->real_escape_string($title);
+        $comment = $this->dbLink->real_escape_string($comment);
+        $this->dbLink->query("UPDATE `".MECCANO_TPREF."_core_share_files` "
+                . "SET `title`='$title', `comment`='$comment' "
+                . "WHERE `id`='$fileId' "
+                . "AND `userid`=$userid ;");
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'updateFile: unable to change file description -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        if (!$this->dbLink->affected_rows) {
+            $this->setError(ERROR_NOT_FOUND, 'updateFile: file not found');
+            return FALSE;
+        }
+        return TRUE;
     }
 }
