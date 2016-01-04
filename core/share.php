@@ -49,6 +49,7 @@ interface intShare {
     public function getMsg($msgId, $output = 'json');
     public function msgFiles($msgId, $output = 'json');
     public function getFileShares($fileId, $userId, $output = 'json');
+    public function getMsgShares($msgId, $userId, $output = 'json');
 }
 
 class Share extends ServiceMethods implements intShare {
@@ -1207,7 +1208,7 @@ class Share extends ServiceMethods implements intShare {
                     . "AND `cid`='' ;"
                     );
             if ($this->dbLink->errno) {
-                $this->setError(ERROR_NOT_EXECUTED, 'getFileShares: '.$this->dbLink->error);
+                $this->setError(ERROR_NOT_EXECUTED, 'getFileShares: unable to check for public access -> '.$this->dbLink->error);
                 return FALSE;
             }
             if ($this->dbLink->affected_rows) {
@@ -1240,7 +1241,98 @@ class Share extends ServiceMethods implements intShare {
                     . "AND `cid`='' ;"
                     );
             if ($this->dbLink->errno) {
-                $this->setError(ERROR_NOT_EXECUTED, 'getFileShares: '.$this->dbLink->error);
+                $this->setError(ERROR_NOT_EXECUTED, 'getFileShares: unable to check for public access -> '.$this->dbLink->error);
+                return FALSE;
+            }
+            if ($this->dbLink->affected_rows) {
+                $sharesNode['circles'][] = array('id' => '', 'name' => '');
+            }
+            // check access to other circles
+            while ($circleData = $qShares->fetch_row()) {
+                $sharesNode['circles'][] = array('id' => $circleData[0], 'name' => $circleData[1]);
+            }
+            return json_encode($sharesNode);
+        }
+    }
+    
+    public function getMsgShares($msgId, $userId, $output = 'json') {
+        $this->zeroizeError();
+        if (!pregGuid($msgId) || !is_integer($userId) || !in_array($output, array('xml', 'json'))) {
+            $this->setError(ERROR_INCORRECT_DATA, 'getMsgShares: incorrect parameters');
+            return FALSE;
+        }
+        // check whether the user owns the message
+        $this->dbLink->query("SELECT `msgtime` "
+                . "FROM `".MECCANO_TPREF."_core_share_msgs` "
+                . "WHERE `id`='$msgId' "
+                . "AND `userid`=$userId ;");
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'getMsgShares: unable to check whether the user owns the message -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        if (!$this->dbLink->affected_rows) {
+            $this->setError(ERROR_NOT_FOUND, 'getMsgShares: message not found');
+            return FALSE;
+        }
+        // get message shares
+        $qShares = $this->dbLink->query("SELECT `a`.`cid`, `c`.`cname` "
+                . "FROM `".MECCANO_TPREF."_core_share_msg_accessibility` `a` "
+                . "JOIN `".MECCANO_TPREF."_core_share_circles` `c` "
+                . "ON `a`.`cid`=`c`.`id` "
+                . "WHERE `a`.`mid`='$msgId' ;");
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'getMsgShares: unable to get message shares -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        if ($output == 'xml') {
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $sharesNode = $xml->createElement('shares');
+            $xml->appendChild($sharesNode);
+            //
+            $msgIdAttribute = $xml->createAttribute('msgId');
+            $msgIdAttribute->value = $msgId;
+            $sharesNode->appendChild($msgIdAttribute);
+            // check for public access
+            $this->dbLink->query(
+                    "SELECT `id` FROM `".MECCANO_TPREF."_core_share_msg_accessibility` "
+                    . "WHERE `mid`='$msgId' "
+                    . "AND `cid`='' ;"
+                    );
+            if ($this->dbLink->errno) {
+                $this->setError(ERROR_NOT_EXECUTED, 'getMsgShares: unable to check for public access ->'.$this->dbLink->error);
+                return FALSE;
+            }
+            if ($this->dbLink->affected_rows) {
+                $circleNode = $xml->createElement('circle');
+                $cIdNode = $xml->createElement('id', '');
+                $circleNode->appendChild($cIdNode);
+                $cNameNode = $xml->createElement('name', '');
+                $circleNode->appendChild($cNameNode);
+                $sharesNode->appendChild($circleNode);
+            }
+            // check access to other circles
+            while ($circleData = $qShares->fetch_row()) {
+                $circleNode = $xml->createElement('circle');
+                $cIdNode = $xml->createElement('id', $circleData[0]);
+                $circleNode->appendChild($cIdNode);
+                $cNameNode = $xml->createElement('name', htmlspecialchars($circleData[1]));
+                $circleNode->appendChild($cNameNode);
+                $sharesNode->appendChild($circleNode);
+            }
+            return $xml;
+        }
+        else {
+            $sharesNode = array();
+            $sharesNode['msgId'] = $msgId;
+            $sharesNode['circles'] = array();
+            // check for public access
+            $this->dbLink->query(
+                    "SELECT `id` FROM `".MECCANO_TPREF."_core_share_msg_accessibility` "
+                    . "WHERE `mid`='$msgId' "
+                    . "AND `cid`='' ;"
+                    );
+            if ($this->dbLink->errno) {
+                $this->setError(ERROR_NOT_EXECUTED, 'getMsgShares: unable to check for public access -> '.$this->dbLink->error);
                 return FALSE;
             }
             if ($this->dbLink->affected_rows) {
