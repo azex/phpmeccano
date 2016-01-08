@@ -51,6 +51,7 @@ interface intShare {
     public function getFileShares($fileId, $userId, $output = 'json');
     public function getMsgShares($msgId, $userId, $output = 'json');
     public function updateFile($fileId, $userid, $title, $comment);
+    public function repostMsg($msgId, $userId, $hlink = TRUE);
 }
 
 class Share extends ServiceMethods implements intShare {
@@ -609,7 +610,7 @@ class Share extends ServiceMethods implements intShare {
                 . "WHERE `id`='$fileId' "
                 . "AND `userid`=$userId ;"
                 );
-        if ($stmt->errno) {
+        if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'shareFile: unable to check file -> '.$this->dbLink->error);
             return FALSE;
         }
@@ -957,12 +958,12 @@ class Share extends ServiceMethods implements intShare {
         }
         // check message
         $this->dbLink->query(
-                "SELECT `name` "
+                "SELECT `msgtime` "
                 . "FROM `".MECCANO_TPREF."_core_share_msgs` "
                 . "WHERE `id`='$msgId' "
                 . "AND `userid`=$userId ;"
                 );
-        if ($stmt->errno) {
+        if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'shareMsg: unable to check message -> '.$this->dbLink->error);
             return FALSE;
         }
@@ -1126,16 +1127,18 @@ class Share extends ServiceMethods implements intShare {
                 $filesNode->appendChild($msgIdAttribute);
                 //
                 while ($fileInfo = $qFiles->fetch_row()) {
-                    $fileNode = $xml->createElement('file');
-                    $idNode = $xml->createElement('id', $fileInfo[0]);
-                    $fileNode->appendChild($idNode);
-                    $titleNode = $xml->createElement('title', htmlspecialchars($fileInfo[1]));
-                    $fileNode->appendChild($titleNode);
-                    $nameNode = $xml->createElement('filename', htmlspecialchars($fileInfo[2]));
-                    $fileNode->appendChild($nameNode);
-                    $mimeNode = $xml->createElement('mime', $fileInfo[3]);
-                    $fileNode->appendChild($mimeNode);
-                    $filesNode->appendChild($fileNode);
+                    if ($this->checkFileAccess($fileInfo[0])) {
+                        $fileNode = $xml->createElement('file');
+                        $idNode = $xml->createElement('id', $fileInfo[0]);
+                        $fileNode->appendChild($idNode);
+                        $titleNode = $xml->createElement('title', htmlspecialchars($fileInfo[1]));
+                        $fileNode->appendChild($titleNode);
+                        $nameNode = $xml->createElement('filename', htmlspecialchars($fileInfo[2]));
+                        $fileNode->appendChild($nameNode);
+                        $mimeNode = $xml->createElement('mime', $fileInfo[3]);
+                        $fileNode->appendChild($mimeNode);
+                        $filesNode->appendChild($fileNode);
+                    }
                 }
                 return $xml;
             }
@@ -1145,12 +1148,14 @@ class Share extends ServiceMethods implements intShare {
                 $filesNode['msgid'] = $msgId;
                 $filesNode['files'] = array();
                 while ($fileInfo = $qFiles->fetch_row()) {
-                    $filesNode['files'][] = array(
-                        'id' => $fileInfo[0],
-                        'title' => htmlspecialchars($fileInfo[1]),
-                        'filename' => htmlspecialchars($fileInfo[2]),
-                        'mime' => $fileInfo[3]
-                    );
+                    if ($this->checkFileAccess($fileInfo[0])) {
+                        $filesNode['files'][] = array(
+                            'id' => $fileInfo[0],
+                            'title' => htmlspecialchars($fileInfo[1]),
+                            'filename' => htmlspecialchars($fileInfo[2]),
+                            'mime' => $fileInfo[3]
+                        );
+                    }
                 }
                 return json_encode($filesNode);
             }
@@ -1368,5 +1373,140 @@ class Share extends ServiceMethods implements intShare {
             return FALSE;
         }
         return TRUE;
+    }
+    
+    public function repostMsg($msgId, $userId, $hlink = TRUE) {
+        $this->zeroizeError();
+        if (!pregGuid($msgId) || !is_integer($userId)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'repostMsg: incorrect parameters');
+            return FALSE;
+        }
+        // check whether user exists
+        $this->dbLink->query(
+                "SELECT `username` "
+                . "FROM `".MECCANO_TPREF."_core_userman_users` "
+                . "WHERE `id`=$userId ;"
+                );
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'repostMsg: unable to check whether user exists -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        if (!$this->dbLink->affected_rows) {
+            $this->setError(ERROR_NOT_FOUND, 'repostMsg: user not found');
+            return FALSE;
+        }
+        if ($this->checkMsgAccess($msgId)) {
+            // file storage directory
+            $storageDir = MECCANO_SHARED_STDIR;
+            if (!is_dir(MECCANO_SHARED_FILES."/$storageDir")) {
+               if (!@mkdir(MECCANO_SHARED_FILES."/$storageDir")) {
+                   $this->setError(ERROR_NOT_EXECUTED, "repostMsg: unable to create storage directory");
+                   return FALSE;
+               }
+            }
+            // repost id
+            $newMsgId = guid();
+            // copy message title and text
+            $this->dbLink->query(
+                    "INSERT INTO `".MECCANO_TPREF."_core_share_msgs` "
+                    . "(`id`, `source`, `userid`, `title`, `text`) "
+                    . "SELECT '$newMsgId', `id`, $userId, `title`, `text` "
+                    . "FROM `".MECCANO_TPREF."_core_share_msgs` "
+                    . "WHERE `id`='$msgId' ;"
+                    );
+            if ($this->dbLink->errno) {
+                $this->setError(ERROR_NOT_EXECUTED, 'repostMsg: unable to repost message -> '.$this->dbLink->error);
+                return FALSE;
+            }
+            // get files related with message
+            $qFiles = $this->dbLink->query(
+                    "SELECT `r`.`fid`, `f`.`stdir` "
+                    . "FROM `".MECCANO_TPREF."_core_share_msgfile_relations` `r` "
+                    . "JOIN `".MECCANO_TPREF."_core_share_files` `f` "
+                    . "ON `f`.`id`=`r`.`fid` "
+                    . "WHERE `r`.`mid`='$msgId' ;"
+                    );
+            $relFiles = array();
+            $fileDirs = array();
+            if ($this->dbLink->errno) {
+                $this->setError(ERROR_NOT_EXECUTED, 'repostMsg: unable to get file identifiers -> '.$this->dbLink->error);
+                return FALSE;
+            }
+            // old ids => new ids
+            while ($fileData = $qFiles->fetch_row()) {
+                if ($this->checkFileAccess($fileData[0])) {
+                    $relFiles[$fileData[0]] = guid();
+                    $fileDirs[$fileData[0]] = $fileData[1];
+                }
+            }
+            // if message has related files
+            if ($relFiles) {
+                // copy records of related files
+                $stmtAdd = $this->dbLink->prepare(
+                        "INSERT INTO `".MECCANO_TPREF."_core_share_files` "
+                        . "(`id`, `userid`, `title`, `name`, `comment`, `stdir`, `mime`, `size`) "
+                        . "SELECT ?, $userId, `title`, `name`, `comment`, '$storageDir', `mime`, `size` "
+                        . "FROM `meccano_core_share_files` "
+                        . "WHERE `id`=?;"
+                        );
+                if (!$stmtAdd) {
+                    $this->setError(ERROR_NOT_EXECUTED, 'repostMsg: unable to copy file enty -> '.$this->dbLink->error);
+                    return FALSE;
+                }
+                // relate file to reposted message
+                $stmtRelate = $this->dbLink->prepare(
+                        "INSERT INTO `".MECCANO_TPREF."_core_share_msgfile_relations` "
+                        . "(`id`, `mid`, `fid`, `userid`) "
+                        . "VALUES(?, '$newMsgId', ?, $userId) ;"
+                        );
+                if (!$stmtRelate) {
+                    $this->setError(ERROR_NOT_EXECUTED, 'repostMsg: unable to relate copied file enty -> '.$this->dbLink->error);
+                    return FALSE;
+                }
+                foreach ($relFiles as $key => $value) {
+                    $stmtAdd->bind_param('ss', $newId, $oldId);
+                    $stmtRelate->bind_param('ss', $newRelId, $newId);
+                    $oldId = $key;
+                    $newRelId = guid();
+                    $newId = $value;
+                    $stmtAdd->execute();
+                    if ($stmtAdd->errno) {
+                        $this->setError(ERROR_NOT_EXECUTED, 'repostMsg: unable to execute copying of file enty -> '.$stmtAdd->error);
+                        return FALSE;
+                    }
+                    $stmtRelate->execute();
+                    if ($stmtRelate->errno) {
+                        $this->setError(ERROR_NOT_EXECUTED, 'repostMsg: unable to execute relating of copied file enty -> '.$stmtRelate->error);
+                        return FALSE;
+                    }
+                    if (
+                            !$hlink && 
+                            !Files::copy(MECCANO_SHARED_FILES."/".$fileDirs[$key]."/$key", MECCANO_SHARED_FILES."/$storageDir/$value")
+                            ) {
+                        $this->setError(Files::errId(), 'repostMsg -> '.Files::errExp());
+                        return FALSE;
+                    }
+                    elseif (
+                            $hlink && 
+                            !@link(MECCANO_SHARED_FILES."/".$fileDirs[$key]."/$key", MECCANO_SHARED_FILES."/$storageDir/$value") &&
+                            !Files::copy(MECCANO_SHARED_FILES."/".$fileDirs[$key]."/$key", MECCANO_SHARED_FILES."/$storageDir/$value")
+                            ) {
+                        $this->setError(Files::errId(), "repostMsg: unable to create hard link for $key -> ".Files::errExp());
+                        return FALSE;
+                    }
+                }
+                $stmtAdd->close();
+                $stmtRelate->close();
+            }
+            return array('message' => $newMsgId, 'files' => array_values($relFiles));
+        }
+        elseif ($this->errid) {
+            $this->setError($this->errid, 'repostMsg -> '.$this->errexp);
+            return FALSE;
+        }
+        else {
+            $this->setError(ERROR_RESTRICTED_ACCESS, 'repostMsg: access denied');
+            return FALSE;
+        }
     }
 }
