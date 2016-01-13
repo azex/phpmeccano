@@ -52,6 +52,7 @@ interface intShare {
     public function getMsgShares($msgId, $userId, $output = 'json');
     public function updateFile($fileId, $userid, $title, $comment);
     public function repostMsg($msgId, $userId, $hlink = TRUE);
+    public function delMsg($msgId, $userId, $keepFiles = TRUE);
 }
 
 class Share extends ServiceMethods implements intShare {
@@ -1396,14 +1397,6 @@ class Share extends ServiceMethods implements intShare {
             return FALSE;
         }
         if ($this->checkMsgAccess($msgId)) {
-            // file storage directory
-            $storageDir = MECCANO_SHARED_STDIR;
-            if (!is_dir(MECCANO_SHARED_FILES."/$storageDir")) {
-               if (!@mkdir(MECCANO_SHARED_FILES."/$storageDir")) {
-                   $this->setError(ERROR_NOT_EXECUTED, "repostMsg: unable to create storage directory");
-                   return FALSE;
-               }
-            }
             // repost id
             $newMsgId = guid();
             // copy message title and text
@@ -1441,6 +1434,14 @@ class Share extends ServiceMethods implements intShare {
             }
             // if message has related files
             if ($relFiles) {
+                // file storage directory
+                $storageDir = MECCANO_SHARED_STDIR;
+                if (!is_dir(MECCANO_SHARED_FILES."/$storageDir")) {
+                   if (!@mkdir(MECCANO_SHARED_FILES."/$storageDir")) {
+                       $this->setError(ERROR_NOT_EXECUTED, "repostMsg: unable to create storage directory");
+                       return FALSE;
+                   }
+                }
                 // copy records of related files
                 $stmtAdd = $this->dbLink->prepare(
                         "INSERT INTO `".MECCANO_TPREF."_core_share_files` "
@@ -1508,5 +1509,103 @@ class Share extends ServiceMethods implements intShare {
             $this->setError(ERROR_RESTRICTED_ACCESS, 'repostMsg: access denied');
             return FALSE;
         }
+    }
+    
+    public function delMsg($msgId, $userId, $keepFiles = TRUE) {
+        $this->zeroizeError();
+        if (!pregGuid($msgId) || !is_integer($userId)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'delMsg: incorrect parameters');
+            return FALSE;
+        }
+//        $this->dbLink = new \mysqli();
+        // check whether message exists
+        $this->dbLink->query("SELECT `msgtime` "
+                . "FROM `".MECCANO_TPREF."_core_share_msgs` "
+                . "WHERE `id`='$msgId' "
+                . "AND `userid`=$userId ;");
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'delMsg: unable to check message existence -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        if (!$this->dbLink->affected_rows) {
+            $this->setError(ERROR_NOT_FOUND, 'delMsg: message not found');
+            return FALSE;
+        }
+        if ($keepFiles) {
+            // delete relations
+            $this->dbLink->query("DELETE FROM `".MECCANO_TPREF."_core_share_msgfile_relations` "
+                    . "WHERE `mid`='$msgId' ;");
+            if ($this->dbLink->errno) {
+                $this->setError(ERROR_NOT_EXECUTED, 'delMsg: unable to unrelate files -> '.$this->dbLink->error);
+                return FALSE;
+            }
+        }
+        else {
+            // get related files
+            $qFiles = $this->dbLink->query("SELECT `r`.`fid`, `f`.`stdir` "
+                    . "FROM `".MECCANO_TPREF."_core_share_msgfile_relations` `r` "
+                    . "JOIN `".MECCANO_TPREF."_core_share_files` `f` "
+                    . "ON `f`.`id`=`r`.`fid` "
+                    . "WHERE `r`.`mid`='$msgId' ;");
+            if ($this->dbLink->errno) {
+                $this->setError(ERROR_NOT_EXECUTED, 'delMsg: unable to get related files -> '.$this->dbLink->error);
+                return FALSE;
+            }
+            if ($this->dbLink->affected_rows) {
+                // ids and storage dirs of related files
+                $relFiles = array();
+                while (list($fileId, $storageDir) = $qFiles->fetch_row()) {
+                    $relFiles[$fileId] = $storageDir;
+                }
+                // delete relations
+                $stmtDelRel = $this->dbLink->prepare("DELETE FROM `".MECCANO_TPREF."_core_share_msgfile_relations` "
+                        . "WHERE `fid`=? ;");
+                if ($this->dbLink->errno) {
+                    $this->setError(ERROR_NOT_EXECUTED, 'delMsg: unable to delete file relations -> '.$this->dbLink->error);
+                    return FALSE;
+                }
+                // delete file access rights
+                $stmtDelAccess = $this->dbLink->prepare("DELETE FROM `".MECCANO_TPREF."_core_share_files_accessibility` "
+                        . "WHERE `fid`=? ;");
+                if ($this->dbLink->errno) {
+                    $this->setError(ERROR_NOT_EXECUTED, 'delMsg: unable to delete file access rights -> '.$this->dbLink->error);
+                    return FALSE;
+                }
+                // delete file
+                $stmtDelFile = $this->dbLink->prepare("DELETE FROM `".MECCANO_TPREF."_core_share_files` "
+                        . "WHERE `id`=? ;");
+                if ($this->dbLink->errno) {
+                    $this->setError(ERROR_NOT_EXECUTED, 'delMsg: unable to delete file record -> '.$this->dbLink->error);
+                    return FALSE;
+                }
+                foreach ($relFiles as $fid => $storageDir) {
+                    $stmtDelRel->bind_param('s', $fid);
+                    $stmtDelAccess->bind_param('s', $fid);
+                    $stmtDelFile->bind_param('s', $fid);
+                    $stmtDelRel->execute();
+                    $stmtDelAccess->execute();
+                    $stmtDelFile->execute();
+                    if (!Files::remove(MECCANO_SHARED_FILES."/$storageDir/$fid")) {
+                        $this->setError(Files::errId(), 'delMsg -> '.Files::errExp());
+                        return FALSE;
+                    }
+                }
+            }
+        }
+        // delete message access rights
+        $this->dbLink->query("DELETE FROM `".MECCANO_TPREF."_core_share_msg_accessibility` "
+                . "WHERE `mid`='$msgId' ;");
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'delMsg: unable to delete message access rights -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        // delete message
+        $this->dbLink->query("DELETE FROM `".MECCANO_TPREF."_core_share_msgs` "
+                . "WHERE `id`='$msgId' ;");
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'delMsg: unable to delete message -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        return TRUE;
     }
 }
