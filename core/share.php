@@ -54,6 +54,7 @@ interface intShare {
     public function repostMsg($msgId, $userId, $hlink = TRUE);
     public function delMsg($msgId, $userId, $keepFiles = TRUE);
     public function repostFile($fileId, $userId, $hlink = TRUE);
+    public function sumUserMsgs($userId, $rpp = 20);
 }
 
 class Share extends ServiceMethods implements intShare {
@@ -1691,5 +1692,69 @@ class Share extends ServiceMethods implements intShare {
             $this->setError(ERROR_RESTRICTED_ACCESS, 'repostFile: access denied');
             return FALSE;
         }
+    }
+    
+    public function sumUserMsgs($userId, $rpp = 20) {
+        $this->zeroizeError();
+        if (!is_integer($userId) || !is_integer($rpp)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'sumUserMsgs: incorrect parameters');
+            return FALSE;
+        }
+        if ($rpp < 1) {
+            $rpp = 1;
+        }
+        // if message data is required by owner
+        if (isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) {
+            $qResult = $this->dbLink->query(
+                    "SELECT COUNT(`id`) "
+                    . "FROM `".MECCANO_TPREF."_core_share_msgs` "
+                    . "WHERE `userid`=$userId ;"
+                    );
+        }
+        // if message data is required by not owner
+        elseif (isset($_SESSION[AUTH_USER_ID])) {
+            $visiterId = $_SESSION[AUTH_USER_ID];
+            $qResult = $this->dbLink->query(
+                    "SELECT COUNT(`m`.`id`) "
+                    . "FROM `".MECCANO_TPREF."_core_share_msgs` `m` "
+                    . "JOIN `".MECCANO_TPREF."_core_share_msg_accessibility` `a` "
+                    . "ON `a`.`mid`=`m`.`id` "
+                    . "AND `m`.`userid`=$userId "
+                    . "LEFT OUTER JOIN `".MECCANO_TPREF."_core_share_circles` `c` "
+                    . "ON `c`.`id`=`a`.`cid` "
+                    . "LEFT OUTER JOIN `".MECCANO_TPREF."_core_share_buddy_list` `l` "
+                    . "ON `l`.`cid`=`c`.`id` "
+                    . "WHERE `a`.`cid`='' "
+                    . "OR `l`.`bid`=$visiterId ;"
+                    );
+        }
+        // if messages data is required by unauthenticated user
+        else {
+            $qResult = $this->dbLink->query(
+                    "SELECT COUNT(`m`.`id`) "
+                    . "FROM `".MECCANO_TPREF."_core_share_msgs` `m` "
+                    . "JOIN `".MECCANO_TPREF."_core_share_msg_accessibility` `a` "
+                    . "ON `a`.`mid`=`m`.`id` "
+                    . "AND `a`.`cid`='' "
+                    . "WHERE `m`.`userid`=$userId ;"
+                    );
+        }
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'sumUserMsgs: unable to counted total messages -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        list($totalRecs) = $qResult->fetch_row();
+        $totalPages = $totalRecs/$rpp;
+        $remainer = fmod($totalRecs, $rpp);
+        if ($totalPages<1 && $totalPages>0) {
+            $totalPages = 1;
+        }
+        elseif ($totalPages>1 && $remainer != 0) {
+            $totalPages += 1;
+        }
+        elseif ($totalPages == 0) {
+            $totalPages = 1;
+        }
+        return array('records' => (int) $totalRecs, 'pages' => (int) $totalPages);
     }
 }
