@@ -53,6 +53,7 @@ interface intShare {
     public function updateFile($fileId, $userid, $title, $comment);
     public function repostMsg($msgId, $userId, $hlink = TRUE);
     public function delMsg($msgId, $userId, $keepFiles = TRUE);
+    public function repostFile($fileId, $userId, $hlink = TRUE);
 }
 
 class Share extends ServiceMethods implements intShare {
@@ -1607,5 +1608,88 @@ class Share extends ServiceMethods implements intShare {
             return FALSE;
         }
         return TRUE;
+    }
+    
+    public function repostFile($fileId, $userId, $hlink = TRUE) {
+        $this->zeroizeError();
+        if (!pregGuid($fileId) || !is_integer($userId)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'repostFile: incorrect parameters');
+            return FALSE;
+        }
+        // check whether user exists
+        $this->dbLink->query(
+                "SELECT `username` "
+                . "FROM `".MECCANO_TPREF."_core_userman_users` "
+                . "WHERE `id`=$userId ;"
+                );
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'repostFile: unable to check whether user exists -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        if (!$this->dbLink->affected_rows) {
+            $this->setError(ERROR_NOT_FOUND, 'repostFile: user not found');
+            return FALSE;
+        }
+        if ($this->checkFileAccess($fileId)) {
+            // get file record
+            $qFile = $this->dbLink->query(
+                    "SELECT `title`, `name`, `comment`, `stdir`, `mime`, `size` "
+                    . "FROM `meccano_core_share_files` "
+                    . "WHERE `id`='$fileId' ;"
+                    );
+            if ($this->dbLink->errno) {
+                $this->setError(ERROR_NOT_EXECUTED, 'repostFile: unable to get file record -> '.$this->dbLink->error);
+                return FALSE;
+            }
+            if (!$this->dbLink->affected_rows) {
+                $this->setError(ERROR_NOT_FOUND, 'repostFile: file not found');
+                return FALSE;
+            }
+            list($title, $fileName, $comment, $stdir, $mimeType, $fileSize) = $qFile->fetch_row();
+            $newFileId = guid();
+            // file storage directory
+            $storageDir = MECCANO_SHARED_STDIR;
+            if (!is_dir(MECCANO_SHARED_FILES."/$storageDir")) {
+               if (!@mkdir(MECCANO_SHARED_FILES."/$storageDir")) {
+                   $this->setError(ERROR_NOT_EXECUTED, "repostFile: unable to create storage directory");
+                   return FALSE;
+               }
+            }
+            // replicate file data
+            $this->dbLink->query(
+                    "INSERT INTO `".MECCANO_TPREF."_core_share_files` "
+                    . "(`id`, `userid`, `title`, `name`, `comment`, `stdir`, `mime`, `size`) "
+                    . "VALUES('$newFileId', $userId, '$title', '$fileName', '$comment', '$storageDir', '$mimeType', '$fileSize') ;"
+                    );
+            if ($this->dbLink->errno) {
+                $this->setError(ERROR_NOT_EXECUTED, 'repostFile: file data not replicated -> '.$this->dbLink->error);
+                return FALSE;
+            }
+            // replicate file
+            if (
+                    !$hlink && 
+                    !Files::copy(MECCANO_SHARED_FILES."/".$stdir."/$fileId", MECCANO_SHARED_FILES."/$storageDir/$newFileId")
+                    ) {
+                $this->setError(Files::errId(), 'repostFile -> '.Files::errExp());
+                return FALSE;
+            }
+            elseif (
+                    $hlink && 
+                    !@link(MECCANO_SHARED_FILES."/".$stdir."/$fileId", MECCANO_SHARED_FILES."/$storageDir/$newFileId") &&
+                    !Files::copy(MECCANO_SHARED_FILES."/".$stdir."/$fileId", MECCANO_SHARED_FILES."/$storageDir/$newFileId")
+                    ) {
+                $this->setError(Files::errId(), "repostFile: unable to create hard link for $key -> ".Files::errExp());
+                return FALSE;
+            }
+            return $newFileId;
+        }
+        elseif ($this->errid) {
+            $this->setError($this->errid, 'repostFile -> '.$this->errexp);
+            return FALSE;
+        }
+        else {
+            $this->setError(ERROR_RESTRICTED_ACCESS, 'repostFile: access denied');
+            return FALSE;
+        }
     }
 }
