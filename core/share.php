@@ -56,6 +56,7 @@ interface intShare {
     public function repostFile($fileId, $userId, $hlink = TRUE);
     public function sumUserMsgs($userId, $rpp = 20);
     public function userMsgs($userId, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('time'), $ascent = FALSE, $output = 'json');
+    public function msgStripe($userId, $rpp = 20, $output = 'json');
 }
 
 class Share extends ServiceMethods implements intShare {
@@ -1822,7 +1823,8 @@ class Share extends ServiceMethods implements intShare {
             return FALSE;
         }
         if (!$this->dbLink->affected_rows) {
-            $this->setError(ERROR_NOT_FOUND, "user not found");
+            $this->setError(ERROR_NOT_FOUND, "userMsgs: user not found");
+            return FALSE;
         }
         //
         list($userName, $fullName) = $qUser->fetch_row();
@@ -1866,7 +1868,7 @@ class Share extends ServiceMethods implements intShare {
                     );
         }
         if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'sumUserMsgs: unable to counted total messages -> '.$this->dbLink->error);
+            $this->setError(ERROR_NOT_EXECUTED, 'userMsgs: unable to get messages -> '.$this->dbLink->error);
             return FALSE;
         }
         if ($output == 'xml') {
@@ -1876,6 +1878,9 @@ class Share extends ServiceMethods implements intShare {
             $unameAtt = $xml->createAttribute('username');
             $unameAtt->value = $userName;
             $msgsNode->appendChild($unameAtt);
+            $uidAtt = $xml->createAttribute('uid');
+            $uidAtt->value = $userId;
+            $msgsNode->appendChild($uidAtt);
             $fnameAtt = $xml->createAttribute('fullname');
             $fnameAtt->value = $fullName;
             $msgsNode->appendChild($fnameAtt);
@@ -1883,6 +1888,7 @@ class Share extends ServiceMethods implements intShare {
         else {
             $msgsNode = array();
             $msgsNode['username'] = $userName;
+            $msgsNode['uid'] = $userId;
             $msgsNode['fullname'] = $fullName;
             $msgsNode['messages'] = array();
         }
@@ -1904,6 +1910,125 @@ class Share extends ServiceMethods implements intShare {
                     'title' => htmlspecialchars($title),
                     'text' => $text,
                     'time' => $msgTime
+                );
+            }
+        }
+        if ($output == 'xml') {
+            return $xml;
+        }
+        else {
+            return json_encode($msgsNode);
+        }
+    }
+    
+    public function msgStripe($userId, $rpp = 20, $output = 'json') {
+        $this->zeroizeError();// validate parameters
+        if (!is_integer($userId) || !is_integer($rpp) || !in_array($output, array('xml', 'json'))) {
+            $this->setError(ERROR_INCORRECT_DATA, 'msgStripe: incorrect parameters');
+            return FALSE;
+        }
+        // get username and full name
+        $qUser = $this->dbLink->query(
+                "SELECT `u`.`username`, `i`.`fullname` "
+                . "FROM `".MECCANO_TPREF."_core_userman_users` `u` "
+                . "JOIN `".MECCANO_TPREF."_core_userman_userinfo` `i` "
+                . "ON `i`.`id`=`u`.`id` "
+                . "WHERE `u`.`id`=$userId ;"
+                );
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'msgStripe: unable to get username and full name -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        if (!$this->dbLink->affected_rows) {
+            $this ->setError(ERROR_NOT_FOUND, "msgStripe: user not found");
+            return FALSE;
+        }
+        //
+        list($userName, $fullName) = $qUser->fetch_row();
+        // if message data is required by owner
+        if (isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) {
+            $qResult = $this->dbLink->query(
+                    "SELECT `id`, `source`, `title`, IF(LENGTH(`text`)>512, CONCAT(SUBSTRING(`text`, 1, 512), '...'), `text`), `msgtime`, `microtime` `time` "
+                    . "FROM `".MECCANO_TPREF."_core_share_msgs` "
+                    . "WHERE `userid`=$userId "
+                    . "ORDER BY `time` DESC LIMIT $rpp ;"
+                    );
+        }
+        // if message data is required by not owner
+        elseif (isset($_SESSION[AUTH_USER_ID])) {
+            $visiterId = $_SESSION[AUTH_USER_ID];
+            $qResult = $this->dbLink->query(
+                    "SELECT `m`.`id`, `m`.`source`, `m`.`title` `title`, IF(LENGTH(`m`.`text`)>512, CONCAT(SUBSTRING(`m`.`text`, 1, 512), '...'), `m`.`text`), `m`.`msgtime`, `m`.`microtime` `time` "
+                    . "FROM `".MECCANO_TPREF."_core_share_msgs` `m` "
+                    . "JOIN `".MECCANO_TPREF."_core_share_msg_accessibility` `a` "
+                    . "ON `a`.`mid`=`m`.`id` "
+                    . "AND `m`.`userid`=$userId "
+                    . "LEFT OUTER JOIN `".MECCANO_TPREF."_core_share_circles` `c` "
+                    . "ON `c`.`id`=`a`.`cid` "
+                    . "LEFT OUTER JOIN `".MECCANO_TPREF."_core_share_buddy_list` `l` "
+                    . "ON `l`.`cid`=`c`.`id` "
+                    . "WHERE `a`.`cid`='' "
+                    . "OR `l`.`bid`=$visiterId "
+                    . "ORDER BY `time` DESC LIMIT $rpp ;"
+                    );
+        }
+        // if messages data is required by unauthenticated user
+        else {
+            $qResult = $this->dbLink->query(
+                    "SELECT `m`.`id`, `m`.`source`, `m`.`title` `title`, IF(LENGTH(`m`.`text`)>512, CONCAT(SUBSTRING(`m`.`text`, 1, 512), '...'), `m`.`text`), `m`.`msgtime`, `m`.`microtime` `time` "
+                    . "FROM `".MECCANO_TPREF."_core_share_msgs` `m` "
+                    . "JOIN `".MECCANO_TPREF."_core_share_msg_accessibility` `a` "
+                    . "ON `a`.`mid`=`m`.`id` "
+                    . "AND `a`.`cid`='' "
+                    . "WHERE `m`.`userid`=$userId "
+                    . "ORDER BY `time` DESC LIMIT $rpp ;"
+                    );
+        }
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'msgStripe: unable to counted total messages -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        if ($output == 'xml') {
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $msgsNode = $xml->createElement('messages');
+            $xml->appendChild($msgsNode);
+            $unameAtt = $xml->createAttribute('username');
+            $unameAtt->value = $userName;
+            $msgsNode->appendChild($unameAtt);
+            $uidAtt = $xml->createAttribute('uid');
+            $uidAtt->value = $userId;
+            $msgsNode->appendChild($uidAtt);
+            $fnameAtt = $xml->createAttribute('fullname');
+            $fnameAtt->value = $fullName;
+            $msgsNode->appendChild($fnameAtt);
+        }
+        else {
+            $msgsNode = array();
+            $msgsNode['username'] = $userName;
+            $msgsNode['uid'] = $userId;
+            $msgsNode['fullname'] = $fullName;
+            $msgsNode['messages'] = array();
+        }
+        while ($msgData = $qResult->fetch_row()) {
+            list($msgId, $source, $title, $text, $msgTime, $mtMark) = $msgData;
+            if ($output == 'xml') {
+                $msgNode = $xml->createElement('message');
+                $msgNode->appendChild($xml->createElement('id', $msgId));
+                $msgNode->appendChild($xml->createElement('source', $source));
+                $msgNode->appendChild($xml->createElement('title', htmlspecialchars($title)));
+                $msgNode->appendChild($xml->createElement('text', $text));
+                $msgNode->appendChild($xml->createElement('time', $msgTime));
+                $msgNode->appendChild($xml->createElement('mtmark', $mtMark));
+                $msgsNode->appendChild($msgNode);
+            }
+            else {
+                $msgsNode['messages'][] = array(
+                    'id' => $msgId,
+                    'source' => $source,
+                    'title' => htmlspecialchars($title),
+                    'text' => $text,
+                    'time' => $msgTime,
+                    'mtmark' => $mtMark
                 );
             }
         }
