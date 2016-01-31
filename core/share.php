@@ -38,7 +38,7 @@ interface intShare {
     public function rmFromCircle($userId, $circleId, $contactId);
     public function delCircle($userId, $circleId);
     public function createMsg($userId, $title, $text);
-    public function stageFile($file, $filename, $userid, $title, $comment);
+    public function stageFile($file, $filename, $userId, $title, $comment);
     public function shareFile($fileId, $userId, $circles);
     public function getFile($fileId, $contDisp = 'inline');
     public function attachFile($fileId, $msgId, $userId);
@@ -59,6 +59,7 @@ interface intShare {
     public function msgStripe($userId, $rpp = 20, $output = 'json');
     public function appendMsgStripe($userId, $mtmark, $rpp = 20, $output = 'json');
     public function updateMsgStripe($userId, $mtmark, $output = 'json');
+    public function sumUserFiles($userId, $rpp = 20);
 }
 
 class Share extends ServiceMethods implements intShare {
@@ -549,9 +550,9 @@ class Share extends ServiceMethods implements intShare {
         return $id;
     }
     
-    public function stageFile($file, $filename, $userid, $title = '', $comment = '') {
+    public function stageFile($file, $filename, $userId, $title = '', $comment = '') {
         $this->zeroizeError();
-        if (!is_string($file) || !is_string($filename) || !is_integer($userid) || !is_string($title) || !is_string($comment)) {
+        if (!is_string($file) || !is_string($filename) || !is_integer($userId) || !is_string($title) || !is_string($comment)) {
             $this->setError(ERROR_INCORRECT_DATA, 'stageFile: incorrect parameters');
             return FALSE;
         }
@@ -566,7 +567,7 @@ class Share extends ServiceMethods implements intShare {
         $this->dbLink->query(
                 "SELECT `username` "
                 . "FROM `".MECCANO_TPREF."_core_userman_users` "
-                . "WHERE `id`=$userid ;"
+                . "WHERE `id`=$userId ;"
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'stageFile: unable to check user -> '.$this->dbLink->error);
@@ -596,7 +597,7 @@ class Share extends ServiceMethods implements intShare {
         $this->dbLink->query(
                 "INSERT INTO `".MECCANO_TPREF."_core_share_files` "
                 . "(`id`, `userid`, `title`, `name`, `comment`, `stdir`, `mime`, `size`, `microtime`) "
-                . "VALUES('$id', $userid, '$title', '$filename', '$comment', '$storageDir', '$mimeType', '$fileSize', $mtMark) ;"
+                . "VALUES('$id', $userId, '$title', '$filename', '$comment', '$storageDir', '$mimeType', '$fileSize', $mtMark) ;"
                 );
         if ($this->dbLink->errno) {
             unlink(MECCANO_SHARED_FILES."/$id");
@@ -2284,5 +2285,69 @@ class Share extends ServiceMethods implements intShare {
         else {
             return json_encode($msgsNode);
         }
+    }
+    
+    public function sumUserFiles($userId, $rpp = 20) {
+        $this->zeroizeError();
+        if (!is_integer($userId) || !is_integer($rpp)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'sumUserFiles: incorrect parameters');
+            return FALSE;
+        }
+        if ($rpp < 1) {
+            $rpp = 1;
+        }
+        // if file data is required by owner
+        if (isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) {
+            $qResult = $this->dbLink->query(
+                    "SELECT COUNT(`id`) "
+                    . "FROM `".MECCANO_TPREF."_core_share_files` "
+                    . "WHERE `userid`=$userId ;"
+                    );
+        }
+        // if file data is required by not owner
+        elseif (isset($_SESSION[AUTH_USER_ID])) {
+            $visiterId = $_SESSION[AUTH_USER_ID];
+            $qResult = $this->dbLink->query(
+                    "SELECT COUNT(`f`.`id`) "
+                    . "FROM `".MECCANO_TPREF."_core_share_files` `f` "
+                    . "JOIN `".MECCANO_TPREF."_core_share_files_accessibility` `a` "
+                    . "ON `a`.`fid`=`f`.`id` "
+                    . "AND `f`.`userid`=$userId "
+                    . "LEFT OUTER JOIN `".MECCANO_TPREF."_core_share_circles` `c` "
+                    . "ON `c`.`id`=`a`.`cid` "
+                    . "LEFT OUTER JOIN `".MECCANO_TPREF."_core_share_buddy_list` `l` "
+                    . "ON `l`.`cid`=`c`.`id` "
+                    . "WHERE `a`.`cid`='' "
+                    . "OR `l`.`bid`=$visiterId ;"
+                    );
+        }
+        // if file data is required by unauthenticated user
+        else {
+            $qResult = $this->dbLink->query(
+                    "SELECT COUNT(`f`.`id`) "
+                    . "FROM `".MECCANO_TPREF."_core_share_files` `f` "
+                    . "JOIN `".MECCANO_TPREF."_core_share_files_accessibility` `a` "
+                    . "ON `a`.`fid`=`f`.`id` "
+                    . "AND `a`.`cid`='' "
+                    . "WHERE `f`.`userid`=$userId ;"
+                    );
+        }
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'sumUserFiles: unable to counted total files -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        list($totalRecs) = $qResult->fetch_row();
+        $totalPages = $totalRecs/$rpp;
+        $remainer = fmod($totalRecs, $rpp);
+        if ($totalPages<1 && $totalPages>0) {
+            $totalPages = 1;
+        }
+        elseif ($totalPages>1 && $remainer != 0) {
+            $totalPages += 1;
+        }
+        elseif ($totalPages == 0) {
+            $totalPages = 1;
+        }
+        return array('records' => (int) $totalRecs, 'pages' => (int) $totalPages);
     }
 }
