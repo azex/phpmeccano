@@ -61,6 +61,7 @@ interface intShare {
     public function updateMsgStripe($userId, $mtmark, $output = 'json');
     public function sumUserFiles($userId, $rpp = 20);
     public function userFiles($userId, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('time'), $ascent = FALSE, $output = 'json');
+    public function fileStripe($userId, $rpp = 20, $output = 'json');
 }
 
 class Share extends ServiceMethods implements intShare {
@@ -2500,6 +2501,130 @@ class Share extends ServiceMethods implements intShare {
                     'mime' => $mimeType,
                     'size' => $fileSize,
                     'time' => $fileTime
+                );
+            }
+        }
+        if ($output == 'xml') {
+            return $xml;
+        }
+        else {
+            return json_encode($filesNode);
+        }
+    }
+    
+    public function fileStripe($userId, $rpp = 20, $output = 'json') {
+        $this->zeroizeError();
+        // validate parameters
+        if (!is_integer($userId) || !is_integer($rpp) || !in_array($output, array('xml', 'json'))) {
+            $this->setError(ERROR_INCORRECT_DATA, 'fileStripe: incorrect parameters');
+            return FALSE;
+        }
+        // get username and full name
+        $qUser = $this->dbLink->query(
+                "SELECT `u`.`username`, `i`.`fullname` "
+                . "FROM `".MECCANO_TPREF."_core_userman_users` `u` "
+                . "JOIN `".MECCANO_TPREF."_core_userman_userinfo` `i` "
+                . "ON `i`.`id`=`u`.`id` "
+                . "WHERE `u`.`id`=$userId ;"
+                );
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'fileStripe: unable to get username and full name -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        if (!$this->dbLink->affected_rows) {
+            $this->setError(ERROR_NOT_FOUND, "fileStripe: user not found");
+            return FALSE;
+        }
+        //
+        list($userName, $fullName) = $qUser->fetch_row();
+        // if message data is required by owner
+        if (isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) {
+            $qResult = $this->dbLink->query(
+                    "SELECT `id`, `title`, `name`, IF(LENGTH(`comment`)>512, CONCAT(SUBSTRING(`comment`, 1, 512), '...'), `comment`), `mime`, `size`, `filetime`, `microtime` `time` "
+                    . "FROM `".MECCANO_TPREF."_core_share_files` "
+                    . "WHERE `userid`=$userId "
+                    . "ORDER BY `time` DESC LIMIT $rpp ;"
+                    );
+        }
+        // if message data is required by not owner
+        elseif (isset($_SESSION[AUTH_USER_ID])) {
+            $visiterId = $_SESSION[AUTH_USER_ID];
+            $qResult = $this->dbLink->query(
+                    "SELECT `f`.`id`, `f`.`title` `title`, `f`.`name`, IF(LENGTH(`f`.`comment`)>512, CONCAT(SUBSTRING(`f`.`comment`, 1, 512), '...'), `f`.`comment`), `f`.`mime`, `f`.`size`, `f`.`filetime`, `f`.`microtime` `time` "
+                    . "FROM `".MECCANO_TPREF."_core_share_files` `f` "
+                    . "JOIN `".MECCANO_TPREF."_core_share_files_accessibility` `a` "
+                    . "ON `a`.`fid`=`f`.`id` "
+                    . "AND `f`.`userid`=$userId "
+                    . "LEFT OUTER JOIN `".MECCANO_TPREF."_core_share_circles` `c` "
+                    . "ON `c`.`id`=`a`.`cid` "
+                    . "LEFT OUTER JOIN `".MECCANO_TPREF."_core_share_buddy_list` `l` "
+                    . "ON `l`.`cid`=`c`.`id` "
+                    . "WHERE `a`.`cid`='' "
+                    . "OR `l`.`bid`=$visiterId "
+                    . "ORDER BY `time` DESC LIMIT $rpp ;"
+                    );
+        }
+        // if messages data is required by unauthenticated user
+        else {
+            $qResult = $this->dbLink->query(
+                    "SELECT `f`.`id`, `f`.`title` `title`, `f`.`name`, IF(LENGTH(`f`.`comment`)>512, CONCAT(SUBSTRING(`f`.`comment`, 1, 512), '...'), `f`.`comment`), `f`.`mime`, `f`.`size`, `f`.`filetime`, `f`.`microtime` `time`  "
+                    . "FROM `".MECCANO_TPREF."_core_share_files` `f` "
+                    . "JOIN `".MECCANO_TPREF."_core_share_files_accessibility` `a` "
+                    . "ON `a`.`fid`=`f`.`id` "
+                    . "AND `a`.`cid`='' "
+                    . "WHERE `f`.`userid`=$userId "
+                    . "ORDER BY `time` DESC LIMIT $rpp ;"
+                    );
+        }
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'fileStripe: unable to get messages -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        if ($output == 'xml') {
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $filesNode = $xml->createElement('files');
+            $xml->appendChild($filesNode);
+            $unameAtt = $xml->createAttribute('username');
+            $unameAtt->value = $userName;
+            $filesNode->appendChild($unameAtt);
+            $uidAtt = $xml->createAttribute('uid');
+            $uidAtt->value = $userId;
+            $filesNode->appendChild($uidAtt);
+            $fnameAtt = $xml->createAttribute('fullname');
+            $fnameAtt->value = $fullName;
+            $filesNode->appendChild($fnameAtt);
+        }
+        else {
+            $filesNode = array();
+            $filesNode['username'] = $userName;
+            $filesNode['uid'] = $userId;
+            $filesNode['fullname'] = $fullName;
+            $filesNode['files'] = array();
+        }
+        while ($fileData = $qResult->fetch_row()) {
+            list($fileId, $title, $fileName, $comment, $mimeType, $fileSize, $fileTime, $mtMark) = $fileData;
+            if ($output == 'xml') {
+                $fileNode = $xml->createElement('file');
+                $fileNode->appendChild($xml->createElement('id', $fileId));
+                $fileNode->appendChild($xml->createElement('title', htmlspecialchars($title)));
+                $fileNode->appendChild($xml->createElement('filename', $fileName));
+                $fileNode->appendChild($xml->createElement('comment', htmlspecialchars($comment)));
+                $fileNode->appendChild($xml->createElement('mime', $mimeType));
+                $fileNode->appendChild($xml->createElement('size', $fileSize));
+                $fileNode->appendChild($xml->createElement('time', $fileTime));
+                $fileNode->appendChild($xml->createElement('mtmark', $mtMark));
+                $filesNode->appendChild($fileNode);
+            }
+            else {
+                $filesNode['files'][] = array(
+                    'id' => $fileId,
+                    'title' => htmlspecialchars($title),
+                    'filename' => $fileName,
+                    'comment' => htmlspecialchars($comment),
+                    'mime' => $mimeType,
+                    'size' => $fileSize,
+                    'time' => $fileTime,
+                    'mtmark' => $mtMark
                 );
             }
         }
