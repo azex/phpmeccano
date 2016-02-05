@@ -63,6 +63,7 @@ interface intShare {
     public function userFiles($userId, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('time'), $ascent = FALSE, $output = 'json');
     public function fileStripe($userId, $rpp = 20, $output = 'json');
     public function appendFileStripe($userId, $mtmark, $rpp = 20, $output = 'json');
+    public function updateFileStripe($userId, $mtmark, $output = 'json');
 }
 
 class Share extends ServiceMethods implements intShare {
@@ -1754,7 +1755,7 @@ class Share extends ServiceMethods implements intShare {
                     );
         }
         if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'sumUserMsgs: unable to counted total messages -> '.$this->dbLink->error);
+            $this->setError(ERROR_NOT_EXECUTED, 'sumUserMsgs: unable to count total messages -> '.$this->dbLink->error);
             return FALSE;
         }
         list($totalRecs) = $qResult->fetch_row();
@@ -1991,7 +1992,7 @@ class Share extends ServiceMethods implements intShare {
                     );
         }
         if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'msgStripe: unable to counted total messages -> '.$this->dbLink->error);
+            $this->setError(ERROR_NOT_EXECUTED, 'msgStripe: unable to get messages -> '.$this->dbLink->error);
             return FALSE;
         }
         if ($output == 'xml') {
@@ -2113,7 +2114,7 @@ class Share extends ServiceMethods implements intShare {
                     );
         }
         if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'appendMsgStripe: unable to counted total messages -> '.$this->dbLink->error);
+            $this->setError(ERROR_NOT_EXECUTED, 'appendMsgStripe: unable to get messages -> '.$this->dbLink->error);
             return FALSE;
         }
         if ($output == 'xml') {
@@ -2235,7 +2236,7 @@ class Share extends ServiceMethods implements intShare {
                     );
         }
         if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'updateMsgStripe: unable to counted total messages -> '.$this->dbLink->error);
+            $this->setError(ERROR_NOT_EXECUTED, 'updateMsgStripe: unable to get messages -> '.$this->dbLink->error);
             return FALSE;
         }
         if ($output == 'xml') {
@@ -2336,7 +2337,7 @@ class Share extends ServiceMethods implements intShare {
                     );
         }
         if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'sumUserFiles: unable to counted total files -> '.$this->dbLink->error);
+            $this->setError(ERROR_NOT_EXECUTED, 'sumUserFiles: unable to count total files -> '.$this->dbLink->error);
             return FALSE;
         }
         list($totalRecs) = $qResult->fetch_row();
@@ -2456,7 +2457,7 @@ class Share extends ServiceMethods implements intShare {
                     );
         }
         if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'userFiles: unable to get messages -> '.$this->dbLink->error);
+            $this->setError(ERROR_NOT_EXECUTED, 'userFiles: unable to get files -> '.$this->dbLink->error);
             return FALSE;
         }
         if ($output == 'xml') {
@@ -2578,7 +2579,7 @@ class Share extends ServiceMethods implements intShare {
                     );
         }
         if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'fileStripe: unable to get messages -> '.$this->dbLink->error);
+            $this->setError(ERROR_NOT_EXECUTED, 'fileStripe: unable to get files -> '.$this->dbLink->error);
             return FALSE;
         }
         if ($output == 'xml') {
@@ -2640,7 +2641,7 @@ class Share extends ServiceMethods implements intShare {
     public function appendFileStripe($userId, $mtmark, $rpp = 20, $output = 'json') {
         $this->zeroizeError();
         // validate parameters
-        if (!is_integer($userId) || !is_integer($rpp) || !in_array($output, array('xml', 'json'))) {
+        if (!is_integer($userId) || !is_integer($rpp) || !is_double($mtmark) || !in_array($output, array('xml', 'json'))) {
             $this->setError(ERROR_INCORRECT_DATA, 'appendFileStripe: incorrect parameters');
             return FALSE;
         }
@@ -2705,7 +2706,134 @@ class Share extends ServiceMethods implements intShare {
                     );
         }
         if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'appendFileStripe: unable to get messages -> '.$this->dbLink->error);
+            $this->setError(ERROR_NOT_EXECUTED, 'appendFileStripe: unable to get files -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        if ($output == 'xml') {
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $filesNode = $xml->createElement('files');
+            $xml->appendChild($filesNode);
+            $unameAtt = $xml->createAttribute('username');
+            $unameAtt->value = $userName;
+            $filesNode->appendChild($unameAtt);
+            $uidAtt = $xml->createAttribute('uid');
+            $uidAtt->value = $userId;
+            $filesNode->appendChild($uidAtt);
+            $fnameAtt = $xml->createAttribute('fullname');
+            $fnameAtt->value = $fullName;
+            $filesNode->appendChild($fnameAtt);
+        }
+        else {
+            $filesNode = array();
+            $filesNode['username'] = $userName;
+            $filesNode['uid'] = $userId;
+            $filesNode['fullname'] = $fullName;
+            $filesNode['files'] = array();
+        }
+        while ($fileData = $qResult->fetch_row()) {
+            list($fileId, $title, $fileName, $comment, $mimeType, $fileSize, $fileTime, $mtMark) = $fileData;
+            if ($output == 'xml') {
+                $fileNode = $xml->createElement('file');
+                $fileNode->appendChild($xml->createElement('id', $fileId));
+                $fileNode->appendChild($xml->createElement('title', htmlspecialchars($title)));
+                $fileNode->appendChild($xml->createElement('filename', $fileName));
+                $fileNode->appendChild($xml->createElement('comment', htmlspecialchars($comment)));
+                $fileNode->appendChild($xml->createElement('mime', $mimeType));
+                $fileNode->appendChild($xml->createElement('size', $fileSize));
+                $fileNode->appendChild($xml->createElement('time', $fileTime));
+                $fileNode->appendChild($xml->createElement('mtmark', $mtMark));
+                $filesNode->appendChild($fileNode);
+            }
+            else {
+                $filesNode['files'][] = array(
+                    'id' => $fileId,
+                    'title' => htmlspecialchars($title),
+                    'filename' => $fileName,
+                    'comment' => htmlspecialchars($comment),
+                    'mime' => $mimeType,
+                    'size' => $fileSize,
+                    'time' => $fileTime,
+                    'mtmark' => $mtMark
+                );
+            }
+        }
+        if ($output == 'xml') {
+            return $xml;
+        }
+        else {
+            return json_encode($filesNode);
+        }
+    }
+    
+    public function updateFileStripe($userId, $mtmark, $output = 'json') {
+        $this->zeroizeError();
+        // validate parameters
+        if (!is_integer($userId) || !is_double($mtmark) || !in_array($output, array('xml', 'json'))) {
+            $this->setError(ERROR_INCORRECT_DATA, 'updateFileStripe: incorrect parameters');
+            return FALSE;
+        }
+        // get username and full name
+        $qUser = $this->dbLink->query(
+                "SELECT `u`.`username`, `i`.`fullname` "
+                . "FROM `".MECCANO_TPREF."_core_userman_users` `u` "
+                . "JOIN `".MECCANO_TPREF."_core_userman_userinfo` `i` "
+                . "ON `i`.`id`=`u`.`id` "
+                . "WHERE `u`.`id`=$userId ;"
+                );
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'updateFileStripe: unable to get username and full name -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        if (!$this->dbLink->affected_rows) {
+            $this->setError(ERROR_NOT_FOUND, "updateFileStripe: user not found");
+            return FALSE;
+        }
+        //
+        list($userName, $fullName) = $qUser->fetch_row();
+        // if message data is required by owner
+        if (isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) {
+            $qResult = $this->dbLink->query(
+                    "SELECT `id`, `title`, `name`, IF(LENGTH(`comment`)>512, CONCAT(SUBSTRING(`comment`, 1, 512), '...'), `comment`), `mime`, `size`, `filetime`, `microtime` `time` "
+                    . "FROM `".MECCANO_TPREF."_core_share_files` "
+                    . "WHERE `userid`=$userId "
+                    . "AND `microtime`>$mtmark "
+                    . "ORDER BY `time` DESC ;"
+                    );
+        }
+        // if message data is required by not owner
+        elseif (isset($_SESSION[AUTH_USER_ID])) {
+            $visiterId = $_SESSION[AUTH_USER_ID];
+            $qResult = $this->dbLink->query(
+                    "SELECT `f`.`id`, `f`.`title` `title`, `f`.`name`, IF(LENGTH(`f`.`comment`)>512, CONCAT(SUBSTRING(`f`.`comment`, 1, 512), '...'), `f`.`comment`), `f`.`mime`, `f`.`size`, `f`.`filetime`, `f`.`microtime` `time` "
+                    . "FROM `".MECCANO_TPREF."_core_share_files` `f` "
+                    . "JOIN `".MECCANO_TPREF."_core_share_files_accessibility` `a` "
+                    . "ON `a`.`fid`=`f`.`id` "
+                    . "AND `f`.`userid`=$userId "
+                    . "AND `f`.`microtime`>$mtmark "
+                    . "LEFT OUTER JOIN `".MECCANO_TPREF."_core_share_circles` `c` "
+                    . "ON `c`.`id`=`a`.`cid` "
+                    . "LEFT OUTER JOIN `".MECCANO_TPREF."_core_share_buddy_list` `l` "
+                    . "ON `l`.`cid`=`c`.`id` "
+                    . "WHERE `a`.`cid`='' "
+                    . "OR `l`.`bid`=$visiterId "
+                    . "ORDER BY `time` DESC ;"
+                    );
+        }
+        // if messages data is required by unauthenticated user
+        else {
+            $qResult = $this->dbLink->query(
+                    "SELECT `f`.`id`, `f`.`title` `title`, `f`.`name`, IF(LENGTH(`f`.`comment`)>512, CONCAT(SUBSTRING(`f`.`comment`, 1, 512), '...'), `f`.`comment`), `f`.`mime`, `f`.`size`, `f`.`filetime`, `f`.`microtime` `time`  "
+                    . "FROM `".MECCANO_TPREF."_core_share_files` `f` "
+                    . "JOIN `".MECCANO_TPREF."_core_share_files_accessibility` `a` "
+                    . "ON `a`.`fid`=`f`.`id` "
+                    . "AND `a`.`cid`='' "
+                    . "AND `f`.`microtime`>$mtmark "
+                    . "WHERE `f`.`userid`=$userId "
+                    . "ORDER BY `time` DESC ;"
+                    );
+        }
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'updateFileStripe: unable to get files -> '.$this->dbLink->error);
             return FALSE;
         }
         if ($output == 'xml') {
