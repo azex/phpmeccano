@@ -64,6 +64,7 @@ interface intShare {
     public function fileStripe($userId, $rpp = 20, $output = 'json');
     public function appendFileStripe($userId, $mtmark, $rpp = 20, $output = 'json');
     public function updateFileStripe($userId, $mtmark, $output = 'json');
+    public function sumUserSubs($userId, $rpp = 20);
 }
 
 class Share extends ServiceMethods implements intShare {
@@ -2890,5 +2891,49 @@ class Share extends ServiceMethods implements intShare {
         else {
             return json_encode($filesNode);
         }
+    }
+    
+    public function sumUserSubs($userId, $rpp = 20) {
+        $this->zeroizeError();
+        if (!is_integer($userId) || !is_integer($rpp)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'sumUserSubs: incorrect parameters');
+            return FALSE;
+        }
+        if ($rpp < 1) {
+            $rpp = 1;
+        }
+        $qResult = $this->dbLink->query(
+                "SELECT COUNT(DISTINCT `m`.`id`) "
+                . "FROM `".MECCANO_TPREF."_core_share_msgs` `m` "
+                . "JOIN `".MECCANO_TPREF."_core_share_buddy_list` `b` "
+                . "ON `b`.`bid`=`m`.`userid` "
+                . "JOIN `".MECCANO_TPREF."_core_share_circles` `c` "
+                . "ON `c`.`id`=`b`.`cid` "
+                . "AND `c`.`userid`=$userId "
+                . "JOIN `".MECCANO_TPREF."_core_share_msg_accessibility` `a` "
+                . "ON `m`.`id`=`a`.`mid` "
+                . "AND NOT `m`.`userid`=$userId "
+                . "LEFT OUTER JOIN `".MECCANO_TPREF."_core_share_buddy_list` `l` "
+                . "ON `a`.`cid`=`l`.`cid` "
+                . "WHERE `l`.`bid`=$userId "
+                . "OR `a`.`cid`='' ;"
+                );
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'sumUserSubs: unable to count total messages -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        list($totalRecs) = $qResult->fetch_row();
+        $totalPages = $totalRecs/$rpp;
+        $remainer = fmod($totalRecs, $rpp);
+        if ($totalPages<1 && $totalPages>0) {
+            $totalPages = 1;
+        }
+        elseif ($totalPages>1 && $remainer != 0) {
+            $totalPages += 1;
+        }
+        elseif ($totalPages == 0) {
+            $totalPages = 1;
+        }
+        return array('records' => (int) $totalRecs, 'pages' => (int) $totalPages);
     }
 }
