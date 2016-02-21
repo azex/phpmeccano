@@ -65,6 +65,7 @@ interface intShare {
     public function appendFileStripe($userId, $mtmark, $rpp = 20, $output = 'json');
     public function updateFileStripe($userId, $mtmark, $output = 'json');
     public function sumUserSubs($userId, $rpp = 20);
+    public function userSubs($userId, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('time'), $ascent = FALSE, $output = 'json');
 }
 
 class Share extends ServiceMethods implements intShare {
@@ -2935,5 +2936,126 @@ class Share extends ServiceMethods implements intShare {
             $totalPages = 1;
         }
         return array('records' => (int) $totalRecs, 'pages' => (int) $totalPages);
+    }
+    
+    public function userSubs($userId, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('time'), $ascent = FALSE, $output = 'json') {
+        $this->zeroizeError();
+        // validate parameters
+        if (!is_integer($userId) || !is_integer($pageNumber) || !is_integer($totalPages) || !is_integer($rpp) || !in_array($output, array('xml', 'json'))) {
+            $this->setError(ERROR_INCORRECT_DATA, 'userSubs: incorrect parameters');
+            return FALSE;
+        }
+        $rightEntry = array('time', 'title');
+        if (is_array($orderBy)) {
+            $arrayLen = count($orderBy);
+            if ($arrayLen && count(array_intersect($orderBy, $rightEntry)) == $arrayLen) {
+                $orderList = '';
+                foreach ($orderBy as $value) {
+                    $orderList = $orderList.$value.'`, `';
+                }
+                $orderBy = substr($orderList, 0, -4);
+            }
+            else {
+                $orderBy = 'time';
+            }
+        }
+        else {
+            $this->setError(ERROR_INCORRECT_DATA, 'userSubs: check order parameters');
+            return FALSE;
+        }
+        if ($pageNumber < 1) {
+            $pageNumber = 1;
+        }
+        elseif ($pageNumber>$totalPages && $totalPages) {
+            $pageNumber = $totalPages;
+        }
+        if ($totalPages < 1) {
+            $totalPages = 1;
+        }
+        if ($rpp < 1) {
+            $rpp = 1;
+        }
+        if ($ascent == TRUE) {
+            $direct = '';
+        }
+        elseif ($ascent == FALSE) {
+            $direct = 'DESC';
+        }
+        $start = ($pageNumber - 1) * $rpp;
+        // get subscriptions
+        $qResult = $this->dbLink->query(
+                "SELECT DISTINCT `m`.`id`, `m`.`source`, `m`.`title` `title`, IF(LENGTH(`m`.`text`)>512, CONCAT(SUBSTRING(`m`.`text`, 1, 512), '...'), `m`.`text`), `m`.`msgtime`, `m`.`microtime` `time`, `u`.`id`, `u`.`username`, `i`.`fullname` "
+                . "FROM `".MECCANO_TPREF."_core_share_msgs` `m` "
+                . "JOIN `".MECCANO_TPREF."_core_userman_userinfo` `i` "
+                . "ON `i`.`id`=`m`.`userid` "
+                . "JOIN `".MECCANO_TPREF."_core_userman_users` `u` "
+                . "ON `u`.`id`=`m`.`userid` "
+                . "JOIN `".MECCANO_TPREF."_core_share_buddy_list` `b` "
+                . "ON `b`.`bid`=`m`.`userid` "
+                . "JOIN `".MECCANO_TPREF."_core_share_circles` `c` "
+                . "ON `c`.`id`=`b`.`cid` "
+                . "AND `c`.`userid`=$userId "
+                . "JOIN `".MECCANO_TPREF."_core_share_msg_accessibility` `a` "
+                . "ON `m`.`id`=`a`.`mid` "
+                . "AND NOT `m`.`userid`=$userId "
+                . "LEFT OUTER JOIN `".MECCANO_TPREF."_core_share_buddy_list` `l` "
+                . "ON `a`.`cid`=`l`.`cid` "
+                . "WHERE `l`.`bid`=$userId "
+                . "OR `a`.`cid`=''"
+                . "ORDER BY `$orderBy` $direct LIMIT $start, $rpp ;"
+                );
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'userSubs: unable to get messages -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        if ($output == 'xml') {
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $msgsNode = $xml->createElement('messages');
+            $xml->appendChild($msgsNode);
+        }
+        else {
+            $msgsNode = array();
+        }
+        while ($msgData = $qResult->fetch_row()) {
+            list($msgId, $source, $title, $text, $msgTime, $mtMark, $userId, $userName, $fullName) = $msgData;
+            if ($output == 'xml') {
+                $msgNode = $xml->createElement('message');
+                // user data
+                $uidAtt = $xml->createAttribute('uid');
+                $uidAtt->value = $userId;
+                $msgNode->appendChild($uidAtt);
+                $unameAtt = $xml->createAttribute('username');
+                $unameAtt->value = $userName;
+                $msgNode->appendChild($unameAtt);
+                $fnameAtt = $xml->createAttribute('fullname');
+                $fnameAtt->value = $fullName;
+                $msgNode->appendChild($fnameAtt);
+                // message data
+                $msgNode->appendChild($xml->createElement('id', $msgId));
+                $msgNode->appendChild($xml->createElement('source', $source));
+                $msgNode->appendChild($xml->createElement('title', htmlspecialchars($title)));
+                $msgNode->appendChild($xml->createElement('text', $text));
+                $msgNode->appendChild($xml->createElement('time', $msgTime));
+                $msgsNode->appendChild($msgNode);
+            }
+            else {
+                $msgsNode[] = array(
+                    'uid' => $userId,
+                    'username' => $userName,
+                    'fullname' => $fullName,
+                    'id' => $msgId,
+                    'source' => $source,
+                    'title' => htmlspecialchars($title),
+                    'text' => $text,
+                    'time' => $msgTime
+                );
+            }
+        }
+        if ($output == 'xml') {
+            return $xml;
+        }
+        else {
+            return json_encode($msgsNode);
+        }
     }
 }
