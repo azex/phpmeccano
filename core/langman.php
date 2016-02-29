@@ -25,7 +25,7 @@
 
 namespace core;
 
-require_once 'logman.php';
+require_once MECCANO_CORE_DIR.'/logman.php';
 
 interface intLangMan {
     public function __construct(LogMan $logObject);

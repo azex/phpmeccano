@@ -503,7 +503,90 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
                 KEY `event` (`eventid`),
                 KEY `time` (`time`),
                 KEY `user` (`user`)
-            ) ENGINE='.$sEngine.' DEFAULT CHARSET=utf8 COMMENT "Log records" AUTO_INCREMENT=1 ;'
+            ) ENGINE='.$sEngine.' DEFAULT CHARSET=utf8 COMMENT "Log records" AUTO_INCREMENT=1 ;',
+
+            // social circles
+            'CREATE TABLE `'.$tabPrefix.'_core_share_circles` (
+                `id` varchar(36) NOT NULL COMMENT \'Circle identifier\',
+                `userid` int(11) UNSIGNED NOT NULL COMMENT \'User identifier\',
+                `cname` varchar(50) NOT NULL COMMENT \'Circle name\',
+                FOREIGN KEY (`userid`) REFERENCES `'.$tabPrefix.'_core_userman_users` (`id`),
+                PRIMARY KEY (`id`),
+                UNIQUE KEY `ucircle` (`userid`, `cname`),
+                KEY `userid` (`userid`)
+            ) ENGINE='.$sEngine.' DEFAULT CHARSET=utf8 COMMENT \'User circles for sharing of records\' ;',
+            
+            // buddy lists of social circles
+            'CREATE TABLE `'.$tabPrefix.'_core_share_buddy_list` (
+                `id` varchar(36) NOT NULL,
+                `cid` varchar(36) NOT NULL COMMENT \'Circle identifiers\',
+                `bid` int(11) UNSIGNED COMMENT \'Buddy (other user) identifier\',
+                FOREIGN KEY (`cid`) REFERENCES `'.$tabPrefix.'_core_share_circles` (`id`),
+                FOREIGN KEY (`bid`) REFERENCES `'.$tabPrefix.'_core_userman_users` (`id`) ON DELETE SET NULL,
+                PRIMARY KEY (`id`),
+                UNIQUE KEY `cbuddy` (`cid`, `bid`),
+                KEY `cid` (`cid`)
+            ) ENGINE='.$sEngine.' DEFAULT CHARSET=utf8 COMMENT \'Buddy list which is associated with circles\' ;',
+            
+            // user messages
+            'CREATE TABLE `'.$tabPrefix.'_core_share_msgs` (
+                `id` varchar(36) NOT NULL COMMENT \'Message identifier\',
+                `source` varchar(36) NOT NULL COMMENT \'Source message identifier\',
+                `userid` int(11) UNSIGNED NOT NULL COMMENT \'User identifier\',
+                `title` varchar(250) NOT NULL COMMENT \'Title of the message\',
+                `text` text NOT NULL COMMENT \'Text (comment) of the message\',
+                `msgtime` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT \'Time of the message creation\',
+                FOREIGN KEY (`userid`) REFERENCES `'.$tabPrefix.'_core_userman_users` (`id`),
+                PRIMARY KEY (`id`),
+                KEY `userid` (`userid`)
+            ) ENGINE='.$sEngine.' DEFAULT CHARSET=utf8 COMMENT \'User messages\' ;',
+            
+            // user files
+            'CREATE TABLE `'.$tabPrefix.'_core_share_files` (
+                `id` varchar(36) NOT NULL,
+                `userid` int(11) UNSIGNED NOT NULL COMMENT \'User identifier\',
+                `title` varchar(255) NOT NULL COMMENT \'Title of the file\',
+                `name` varchar(255) NOT NULL COMMENT \'Name of the file\',
+                `comment` varchar(1024) NOT NULL COMMENT \'Comment of the file\',
+                `path` varchar(1024) NOT NULL COMMENT \'Local path to the file\',
+                `mime` varchar(50) NOT NULL DEFAULT \'file\' COMMENT \'Mime type of the file\',
+                `size` int(11) UNSIGNED NOT NULL COMMENT \'File size in bytes (up to 4 GB)\',
+                `filetime` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT \'Time of the file creation\',
+                FOREIGN KEY (`userid`) REFERENCES `'.$tabPrefix.'_core_userman_users` (`id`),
+                PRIMARY KEY (`id`),
+                KEY `userid` (`userid`)
+            ) ENGINE='.$sEngine.' DEFAULT CHARSET=utf8 COMMENT \'User files\' ;',
+            
+            // message-file relations
+            'CREATE TABLE `'.$tabPrefix.'_core_share_msgfile_relations` (
+                `id` varchar(36) NOT NULL,
+                `mid` varchar(36) NOT NULL COMMENT \'Message identifier\',
+                `fid` varchar(36) NOT NULL COMMENT \'File identifier\',
+                FOREIGN KEY (`mid`) REFERENCES `'.$tabPrefix.'_core_share_msgs` (`id`),
+                FOREIGN KEY (`fid`) REFERENCES `'.$tabPrefix.'_core_share_files` (`id`),
+                PRIMARY KEY (`id`),
+                KEY `mid` (`mid`)
+            ) ENGINE='.$sEngine.' DEFAULT CHARSET=utf8 COMMENT \'Relations between files and messages\' ;',
+            
+            // accessibility of messages
+            'CREATE TABLE `'.$tabPrefix.'_core_share_msg_accessibility` (
+                `id` varchar(36) NOT NULL,
+                `mid` varchar(36) NOT NULL COMMENT \'Message identifier\',
+                `cid` varchar(36) COMMENT \'Identifier of the circle which has access to the message. If NULL - public access\',
+                FOREIGN KEY (`mid`) REFERENCES `'.$tabPrefix.'_core_share_msgs` (`id`),
+                PRIMARY KEY (`id`),
+                UNIQUE KEY `access` (`mid`, `cid`)
+            ) ENGINE='.$sEngine.' DEFAULT CHARSET=utf8 COMMENT \'Accessibility of messages\' ;',
+            
+            // accessibility of files
+            'CREATE TABLE `'.$tabPrefix.'_core_share_files_accessibility` (
+                `id` varchar(36) NOT NULL,
+                `fid` varchar(36) NOT NULL COMMENT \'File identifier\',
+                `cid` varchar(36) COMMENT \'Identifier of the circle which has access to the message. If NULL - public access\',
+                FOREIGN KEY (`fid`) REFERENCES `'.$tabPrefix.'_core_share_files` (`id`),
+                PRIMARY KEY (`id`),
+                UNIQUE KEY `access` (`fid`, `cid`)
+            ) ENGINE='.$sEngine.' DEFAULT CHARSET=utf8 COMMENT \'Accessibility of the shared files\' ;'
         );
         foreach ($queries as $query) {
             $sql->query($query);

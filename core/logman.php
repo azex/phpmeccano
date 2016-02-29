@@ -25,7 +25,7 @@
 
 namespace core;
 
-require_once 'policy.php';
+require_once MECCANO_CORE_DIR.'/policy.php';
 
 interface intLogMan {
     function __construct(Policy $policyObject);

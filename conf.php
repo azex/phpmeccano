@@ -45,6 +45,10 @@ define('MECCANO_DOCUMENTS_DIR', MECCANO_ROOT_DIR.'/documents');
 define('MECCANO_UNPACKED_PLUGINS', MECCANO_ROOT_DIR.'/unpacked');
 define('MECCANO_UNINSTALL', MECCANO_ROOT_DIR.'/uninstall');
 
+// share parameters
+define('MECCANO_SHARED_FILES', MECCANO_ROOT_DIR.'/shfiles');
+define('MECCANO_SHARED_STDIR', date('Y-m-d'));
+
 // default language
 define('MECCANO_DEF_LANG', 'en-US');
 

@@ -25,8 +25,8 @@
 
 namespace core;
 
-require_once 'langman.php';
-require_once 'files.php';
+require_once MECCANO_CORE_DIR.'/langman.php';
+require_once MECCANO_CORE_DIR.'/files.php';
 
 interface intPlugins {
     public function __construct(LangMan $langmanObject);
