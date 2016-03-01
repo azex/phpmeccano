@@ -46,7 +46,7 @@ class Plugins extends ServiceMethods implements intPlugins {
     private $logObject; // log object
     private $policyObject; // policy object
     private $langmanObject; // policy object
-    
+
     public function __construct(LangMan $langmanObject) {
         $this->dbLink = $langmanObject->logObject->dbLink;
         $this->logObject = $langmanObject->logObject;
@@ -54,22 +54,27 @@ class Plugins extends ServiceMethods implements intPlugins {
         $this->langmanObject = $langmanObject;
     }
     
-    public function unpack($package) {
+    private function lockPlugins($methodName) {
         $this->zeroizeError();
-        // lock actions with plugins
         if (is_file(MECCANO_TMP_DIR."/core_plugins_lock")) {
-            $this->setError(ERROR_RESTRICTED_ACCESS, 'unpack: plugins are locked');
+            $this->setError(ERROR_RESTRICTED_ACCESS, "$methodName: plugins are locked");
             return FALSE;
         }
         elseif (is_writable(MECCANO_TMP_DIR) && !is_file(MECCANO_TMP_DIR."/core_plugins_lock") && !is_dir(MECCANO_TMP_DIR."/core_plugins_lock")) {
             $lock = fopen(MECCANO_TMP_DIR."/core_plugins_lock", 'wb');
             fclose($lock);
+            return TRUE;
         }
         else {
-            $this->setError(ERROR_RESTRICTED_ACCESS, 'unpack: unable to lock plugins');
+            $this->setError(ERROR_RESTRICTED_ACCESS, "$methodName: unable to lock plugins");
             return FALSE;
         }
-        //
+    }
+    
+    public function unpack($package) {
+        if (!$this->lockPlugins('unpack')) {
+            return FALSE;
+        }
         if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'plugins_install')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "unpack: restricted by the policy");
             unlink(MECCANO_TMP_DIR."/core_plugins_lock");
@@ -191,21 +196,9 @@ class Plugins extends ServiceMethods implements intPlugins {
     }
     
     public function delUnpacked($plugin) {
-        $this->zeroizeError();
-        // lock actions with plugins
-        if (is_file(MECCANO_TMP_DIR."/core_plugins_lock")) {
-            $this->setError(ERROR_RESTRICTED_ACCESS, 'delUnpacked: plugins are locked');
+        if (!$this->lockPlugins('delUnpacked')) {
             return FALSE;
         }
-        elseif (is_writable(MECCANO_TMP_DIR) && !is_file(MECCANO_TMP_DIR."/core_plugins_lock") && !is_dir(MECCANO_TMP_DIR."/core_plugins_lock")) {
-            $lock = fopen(MECCANO_TMP_DIR."/core_plugins_lock", 'wb');
-            fclose($lock);
-        }
-        else {
-            $this->setError(ERROR_RESTRICTED_ACCESS, 'delUnpacked: unable to lock plugins');
-            return FALSE;
-        }
-        //
         if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'plugins_install')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "delUnpacked: restricted by the policy");
             unlink(MECCANO_TMP_DIR."/core_plugins_lock");
@@ -364,21 +357,9 @@ class Plugins extends ServiceMethods implements intPlugins {
     }
     
     public function install($plugin, $reset = FALSE, $log = TRUE) {
-        $this->zeroizeError();
-        // lock actions with plugins
-        if (is_file(MECCANO_TMP_DIR."/core_plugins_lock")) {
-            $this->setError(ERROR_RESTRICTED_ACCESS, 'install: plugins are locked');
+        if (!$this->lockPlugins('install')) {
             return FALSE;
         }
-        elseif (is_writable(MECCANO_TMP_DIR) && !is_file(MECCANO_TMP_DIR."/core_plugins_lock") && !is_dir(MECCANO_TMP_DIR."/core_plugins_lock")) {
-            $lock = fopen(MECCANO_TMP_DIR."/core_plugins_lock", 'wb');
-            fclose($lock);
-        }
-        else {
-            $this->setError(ERROR_RESTRICTED_ACCESS, 'install: unable to lock plugins');
-            return FALSE;
-        }
-        //
         if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'plugins_install')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "install: restricted by the policy");
             unlink(MECCANO_TMP_DIR."/core_plugins_lock");
@@ -596,21 +577,9 @@ class Plugins extends ServiceMethods implements intPlugins {
     }
     
     public function delInstalled($plugin, $keepData = TRUE, $log = TRUE) {
-        $this->zeroizeError();
-        // lock actions with plugins
-        if (is_file(MECCANO_TMP_DIR."/core_plugins_lock")) {
-            $this->setError(ERROR_RESTRICTED_ACCESS, 'delInstalled: plugins are locked');
+        if (!$this->lockPlugins('delInstalled')) {
             return FALSE;
         }
-        elseif (is_writable(MECCANO_TMP_DIR) && !is_file(MECCANO_TMP_DIR."/core_plugins_lock") && !is_dir(MECCANO_TMP_DIR."/core_plugins_lock")) {
-            $lock = fopen(MECCANO_TMP_DIR."/core_plugins_lock", 'wb');
-            fclose($lock);
-        }
-        else {
-            $this->setError(ERROR_RESTRICTED_ACCESS, 'delInstalled: unable to lock plugins');
-            return FALSE;
-        }
-        //
         if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'plugins_del_installed')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "delInstalled: restricted by the policy");
             unlink(MECCANO_TMP_DIR."/core_plugins_lock");
