@@ -192,12 +192,28 @@ class Plugins extends ServiceMethods implements intPlugins {
     
     public function delUnpacked($plugin) {
         $this->zeroizeError();
+        // lock actions with plugins
+        if (is_file(MECCANO_TMP_DIR."/core_plugins_lock")) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, 'delUnpacked: plugins are locked');
+            return FALSE;
+        }
+        elseif (is_writable(MECCANO_TMP_DIR) && !is_file(MECCANO_TMP_DIR."/core_plugins_lock") && !is_dir(MECCANO_TMP_DIR."/core_plugins_lock")) {
+            $lock = fopen(MECCANO_TMP_DIR."/core_plugins_lock", 'wb');
+            fclose($lock);
+        }
+        else {
+            $this->setError(ERROR_RESTRICTED_ACCESS, 'delUnpacked: unable to lock plugins');
+            return FALSE;
+        }
+        //
         if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'plugins_install')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "delUnpacked: restricted by the policy");
+            unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
         }
         if (!pregPlugin($plugin)) {
             $this->setError(ERROR_INCORRECT_DATA, 'delUnpacked: incorrect plugin name');
+            unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
         }
         $qUnpacked = $this->dbLink->query("SELECT `dirname` "
@@ -205,23 +221,28 @@ class Plugins extends ServiceMethods implements intPlugins {
                 . "WHERE `short`='$plugin' ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'delUnpacked: '.$this->dbLink->error);
+            unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, "delUnpacked: cannot find defined plugin");
+            unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
         }
         list($dirName) = $qUnpacked->fetch_row();
         if (!Files::remove(MECCANO_UNPACKED_PLUGINS."/$dirName")) {
             $this->setError(Files::errId(), 'delUnpacked: -> '.Files::errExp());
+            unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
         }
         $this->dbLink->query("DELETE FROM `".MECCANO_TPREF."_core_plugins_unpacked` "
                 . "WHERE `short`='$plugin' ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'delUnpacked: unable to delete unpacked plugin ->'.$this->dbLink->error);
+            unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
         }
+        unlink(MECCANO_TMP_DIR."/core_plugins_lock");
         return TRUE;
     }
     
