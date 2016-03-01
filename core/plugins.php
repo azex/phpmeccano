@@ -46,7 +46,7 @@ class Plugins extends ServiceMethods implements intPlugins {
     private $logObject; // log object
     private $policyObject; // policy object
     private $langmanObject; // policy object
-    
+
     public function __construct(LangMan $langmanObject) {
         $this->dbLink = $langmanObject->logObject->dbLink;
         $this->logObject = $langmanObject->logObject;
@@ -54,10 +54,30 @@ class Plugins extends ServiceMethods implements intPlugins {
         $this->langmanObject = $langmanObject;
     }
     
-    public function unpack($package) {
+    private function lockPlugins($methodName) {
         $this->zeroizeError();
+        if (is_file(MECCANO_TMP_DIR."/core_plugins_lock")) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "$methodName: plugins are locked");
+            return FALSE;
+        }
+        elseif (is_writable(MECCANO_TMP_DIR) && !is_file(MECCANO_TMP_DIR."/core_plugins_lock") && !is_dir(MECCANO_TMP_DIR."/core_plugins_lock")) {
+            $lock = fopen(MECCANO_TMP_DIR."/core_plugins_lock", 'wb');
+            fclose($lock);
+            return TRUE;
+        }
+        else {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "$methodName: unable to lock plugins");
+            return FALSE;
+        }
+    }
+    
+    public function unpack($package) {
+        if (!$this->lockPlugins('unpack')) {
+            return FALSE;
+        }
         if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'plugins_install')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "unpack: restricted by the policy");
+            unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
         }
         $zip = new \ZipArchive();
@@ -68,6 +88,7 @@ class Plugins extends ServiceMethods implements intPlugins {
             $tmpPath = MECCANO_TMP_DIR."/$tmpName";
             if (!@$zip->extractTo($tmpPath)) {
                 $this->setError(ERROR_NOT_EXECUTED, "unpack: unable to extract package to $tmpPath");
+                unlink(MECCANO_TMP_DIR."/core_plugins_lock");
                 return FALSE;
             }
             $zip->close();
@@ -87,17 +108,20 @@ class Plugins extends ServiceMethods implements intPlugins {
                 if (!$xmlComponent) {
                     Files::remove($tmpPath);
                     $this->setError(ERROR_NOT_EXECUTED, "unpack: unable to read [$valComponent]");
+                    unlink(MECCANO_TMP_DIR."/core_plugins_lock");
                     return FALSE;
                 }
                 if (mime_content_type($tmpPath."/$valComponent") != "application/xml") {
                     Files::remove($tmpPath);
                     $this->setError(ERROR_NOT_EXECUTED, "unpack: [$valComponent] is not XML-structured");
+                    unlink(MECCANO_TMP_DIR."/core_plugins_lock");
                     return FALSE;
                 }
                 $serviceData->loadXML($xmlComponent);
                 if (!@$serviceData->relaxNGValidate(MECCANO_CORE_DIR."/validation-schemas/$valSchema")) {
                     Files::remove($tmpPath);
                     $this->setError(ERROR_INCORRECT_DATA, "unpack: invalid [$valComponent] structure");
+                    unlink(MECCANO_TMP_DIR."/core_plugins_lock");
                     return FALSE;
                 }
             }
@@ -106,6 +130,7 @@ class Plugins extends ServiceMethods implements intPlugins {
             if ($packVersion != '0.2') {
                 Files::remove($tmpPath);
                 $this->setError(ERROR_INCORRECT_DATA, "unpack: installer is incompatible with the package specification [$packVersion]");
+                unlink(MECCANO_TMP_DIR."/core_plugins_lock");
                 return FALSE;
             }
             $shortName = $serviceData->getElementsByTagName('shortname')->item(0)->nodeValue;
@@ -115,11 +140,13 @@ class Plugins extends ServiceMethods implements intPlugins {
             if ($this->dbLink->errno) {
                 Files::remove($tmpPath);
                 $this->setError(ERROR_NOT_EXECUTED, 'unpack: unable to check whether the plugin is unpacked -> '.$this->dbLink->error);
+                unlink(MECCANO_TMP_DIR."/core_plugins_lock");
                 return FALSE;
             }
             if ($this->dbLink->affected_rows) {
                 Files::remove($tmpPath);
                 $this->setError(ERROR_ALREADY_EXISTS, "unpack: plugin [$shortName] was already unpacked");
+                unlink(MECCANO_TMP_DIR."/core_plugins_lock");
                 return FALSE;
             }
             $fullName = $this->dbLink->real_escape_string(htmlspecialchars($serviceData->getElementsByTagName('fullname')->item(0)->nodeValue));
@@ -150,28 +177,36 @@ class Plugins extends ServiceMethods implements intPlugins {
             if ($this->dbLink->errno) {
                 Files::remove($tmpPath);
                 $this->setError(ERROR_NOT_EXECUTED, 'unpack: '.$this->dbLink->error);
+                unlink(MECCANO_TMP_DIR."/core_plugins_lock");
                 return FALSE;
             }
             if (!Files::move($tmpPath, $unpackPath)) {
                 $this->setError(Files::errId(), 'unpack: -> '.Files::errExp());
+                unlink(MECCANO_TMP_DIR."/core_plugins_lock");
                 return FALSE;
             }
         }
         else {
             $this->setError(ERROR_NOT_EXECUTED, "unpack: unable to open package. ZipArchive error: $zipOpen");
+            unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
         }
+        unlink(MECCANO_TMP_DIR."/core_plugins_lock");
         return $shortName;
     }
     
     public function delUnpacked($plugin) {
-        $this->zeroizeError();
+        if (!$this->lockPlugins('delUnpacked')) {
+            return FALSE;
+        }
         if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'plugins_install')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "delUnpacked: restricted by the policy");
+            unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
         }
         if (!pregPlugin($plugin)) {
             $this->setError(ERROR_INCORRECT_DATA, 'delUnpacked: incorrect plugin name');
+            unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
         }
         $qUnpacked = $this->dbLink->query("SELECT `dirname` "
@@ -179,23 +214,28 @@ class Plugins extends ServiceMethods implements intPlugins {
                 . "WHERE `short`='$plugin' ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'delUnpacked: '.$this->dbLink->error);
+            unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, "delUnpacked: cannot find defined plugin");
+            unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
         }
         list($dirName) = $qUnpacked->fetch_row();
         if (!Files::remove(MECCANO_UNPACKED_PLUGINS."/$dirName")) {
             $this->setError(Files::errId(), 'delUnpacked: -> '.Files::errExp());
+            unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
         }
         $this->dbLink->query("DELETE FROM `".MECCANO_TPREF."_core_plugins_unpacked` "
                 . "WHERE `short`='$plugin' ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'delUnpacked: unable to delete unpacked plugin ->'.$this->dbLink->error);
+            unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
         }
+        unlink(MECCANO_TMP_DIR."/core_plugins_lock");
         return TRUE;
     }
     
@@ -317,13 +357,17 @@ class Plugins extends ServiceMethods implements intPlugins {
     }
     
     public function install($plugin, $reset = FALSE, $log = TRUE) {
-        $this->zeroizeError();
+        if (!$this->lockPlugins('install')) {
+            return FALSE;
+        }
         if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'plugins_install')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "install: restricted by the policy");
+            unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
         }
         if (!pregPlugin($plugin) || !is_bool($reset)) {
             $this->setError(ERROR_INCORRECT_DATA, "install: incorrect argument(s)");
+            unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
         }
         $qPlugin = $this->dbLink->query("SELECT `short`, `full`, `version`, `spec`, `dirname`, `about`, `credits`, `url`, `email`, `license` "
@@ -331,15 +375,18 @@ class Plugins extends ServiceMethods implements intPlugins {
                 . "WHERE `short`='$plugin' ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, "install: ".$this->dbLink->error);
+            unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, "install: unpacked plugin [$plugin] not found");
+            unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
         }
         list($shortName, $fullName, $version, $packVersion, $plugDir, $about, $credits, $url, $email, $license) = $qPlugin->fetch_row();
         if ($packVersion != '0.2') {
                 $this->setError(ERROR_INCORRECT_DATA, "install: installer is incompatible with the package specification [$packVersion]");
+                unlink(MECCANO_TMP_DIR."/core_plugins_lock");
                 return FALSE;
             }
         // revalidate xml components
@@ -357,15 +404,18 @@ class Plugins extends ServiceMethods implements intPlugins {
             $xmlComponent = openRead($plugPath."/$valComponent");
             if (!$xmlComponent) {
                 $this->setError(ERROR_NOT_EXECUTED, "unpack: unable to read [$valComponent]");
+                unlink(MECCANO_TMP_DIR."/core_plugins_lock");
                 return FALSE;
             }
             if (mime_content_type($plugPath."/$valComponent") != "application/xml") {
                 $this->setError(ERROR_NOT_EXECUTED, "unpack: [$valComponent] is not XML-structured");
+                unlink(MECCANO_TMP_DIR."/core_plugins_lock");
                 return FALSE;
             }
             $serviceData->loadXML($xmlComponent);
             if (!@$serviceData->relaxNGValidate(MECCANO_CORE_DIR."/validation-schemas/$valSchema")) {
                 $this->setError(ERROR_INCORRECT_DATA, "unpack: invalid [$valComponent] structure");
+                unlink(MECCANO_TMP_DIR."/core_plugins_lock");
                 return FALSE;
             }
         }
@@ -378,6 +428,7 @@ class Plugins extends ServiceMethods implements intPlugins {
             $existDep = $this->pluginData($depPlugin);
             if (!$existDep || !compareVersions($existDep["version"], $depVersion, $operator)) {
                 $this->setError(ERROR_NOT_FOUND, "install: required $depPlugin ($operator $depVersion)");
+                unlink(MECCANO_TMP_DIR."/core_plugins_lock");
                 return FALSE;
             }
         }
@@ -386,6 +437,7 @@ class Plugins extends ServiceMethods implements intPlugins {
         foreach ($requiredFiles as $fileName) {
             if (!is_file($plugPath."/$fileName")) {
                 $this->setError(ERROR_NOT_FOUND, "install: file [$fileName] is required");
+                unlink(MECCANO_TMP_DIR."/core_plugins_lock");
                 return FALSE;
             }
         }
@@ -393,6 +445,7 @@ class Plugins extends ServiceMethods implements intPlugins {
         foreach ($requiredDirs as $dirName) {
             if (!is_dir($dirName)) {
                 $this->setError(ERROR_NOT_FOUND, "install: directory [$dirName] is required");
+                unlink(MECCANO_TMP_DIR."/core_plugins_lock");
                 return FALSE;
             }
         }
@@ -409,6 +462,7 @@ class Plugins extends ServiceMethods implements intPlugins {
                     );
             if ($this->dbLink->errno) {
                 $this->setError(ERROR_NOT_EXECUTED, "install: ".$this->dbLink->error);
+                unlink(MECCANO_TMP_DIR."/core_plugins_lock");
                 return FALSE;
             }
             $existId = (int) $this->dbLink->insert_id; // identifier if the being installed plugin
@@ -441,6 +495,7 @@ class Plugins extends ServiceMethods implements intPlugins {
             $this->dbLink->query($value);
             if ($this->dbLink->errno) {
                 $this->setError(ERROR_NOT_EXECUTED, "install: ".$this->dbLink->error);
+                unlink(MECCANO_TMP_DIR."/core_plugins_lock");
                 return FALSE;
             }
         }
@@ -449,36 +504,42 @@ class Plugins extends ServiceMethods implements intPlugins {
         $instObject = new Install($this->dbLink, $existId, $existVersion, $reset);
         if (!$instObject->preinst()) {
             $this->setError($instObject->errId(), "install -> ".$instObject->errExp());
+            unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
         }
         // install languages
         $serviceData->load($plugPath.'/languages.xml');
         if (!$this->langmanObject->installLang($serviceData, FALSE)) {
             $this->setError($this->langmanObject->errId(), "install -> ".$this->langmanObject->errExp());
+            unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
         }
         // install policy access rules
         $serviceData->load($plugPath.'/policy.xml');
         if (!$this->policyObject->install($serviceData, FALSE)) {
             $this->setError($this->policyObject->errId(), "install -> ".$this->policyObject->errExp());
+            unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
         }
         // install log events
         $serviceData->load($plugPath.'/log.xml');
         if (!$this->logObject->installEvents($serviceData, FALSE)) {
             $this->setError($this->logObject->errId(), "install -> ".$this->logObject->errExp());
+            unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
         }
         // install texts
         $serviceData->load($plugPath.'/texts.xml');
         if (!$this->langmanObject->installTexts($serviceData, FALSE)) {
             $this->setError($this->langmanObject->errId(), "install -> ".$this->langmanObject->errExp());
+            unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
         }
         // install titles
         $serviceData->load($plugPath.'/titles.xml');
         if (!$this->langmanObject->installTitles($serviceData, FALSE)) {
             $this->setError($this->langmanObject->errId(), "install -> ".$this->langmanObject->errExp());
+            unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
         }
         // copy files and directories to their destinations
@@ -497,29 +558,36 @@ class Plugins extends ServiceMethods implements intPlugins {
         foreach ($beingCopied as $source => $dest) {
             if (!Files::copy($plugPath."/$source", $dest, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, TRUE)) {
                 $this->setError(Files::errId(), "install -> ".Files::errExp());
+                unlink(MECCANO_TMP_DIR."/core_plugins_lock");
                 return FALSE;
             }
         }
         // run postinstallation
         if (!$instObject->postinst()) {
             $this->setError($instObject->errId(), "install -> ".$instObject->errExp());
+            unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
         }
         //
         if ($log && !$this->logObject->newRecord('core', 'plugins_install', "$shortName; v$version; ID: $existId")) {
             $this->setError(ERROR_NOT_CRITICAL, "install -> ".$this->logObject->errExp());
         }
+        unlink(MECCANO_TMP_DIR."/core_plugins_lock");
         return TRUE;
     }
     
     public function delInstalled($plugin, $keepData = TRUE, $log = TRUE) {
-        $this->zeroizeError();
+        if (!$this->lockPlugins('delInstalled')) {
+            return FALSE;
+        }
         if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'plugins_del_installed')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "delInstalled: restricted by the policy");
+            unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
         }
         if (!pregPlugin($plugin) || !is_bool($keepData)) {
             $this->setError(ERROR_INCORRECT_DATA, "delInstalled: incorrect argument(s)");
+            unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
         }
         // check whether the plugin installed
@@ -528,20 +596,24 @@ class Plugins extends ServiceMethods implements intPlugins {
                 . "WHERE `name`='$plugin' ;");
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, "delInstalled: plugin not found");
+            unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
         }
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, "delInstalled: ".$this->dbLink->error);
+            unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
         }
         list($id, $shortName, $version) = $qPlugin->fetch_row();
         if (strtolower($shortName) == "core") {
             $this->setError(ERROR_SYSTEM_INTERVENTION, "delInstalled: unable to remove [core]");
+            unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
         }
         // check whether the removement script exists
         if (!is_file(MECCANO_UNINSTALL."/$shortName.php")) {
             $this->setError(ERROR_NOT_FOUND, "delInstalled: removement script [".MECCANO_UNINSTALL."/$shortName.php] not found");
+            unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
         }
         //run preremovement
@@ -549,26 +621,31 @@ class Plugins extends ServiceMethods implements intPlugins {
         $rmObject = new Remove($this->dbLink, $id, $keepData);
         if (!$rmObject->prerm()) {
             $this->setError($rmObject->errId(), "delInstalled -> ".$rmObject->errExp());
+            unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
         }
         // remove policy access rules
         if (!$this->policyObject->delPolicy($shortName)) {
             $this->setError($this->policyObject->errId(), "delInstalled -> ".$this->policyObject->errExp());
+            unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
         }
         // remove log events
         if (!$this->logObject->delEvents($shortName)) {
             $this->setError($this->logObject->errId(), "delInstalled -> ".$this->logObject->errExp());
+            unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
         }
         // remove texts and titles
         if (!$this->langmanObject->delPlugin($shortName)) {
             $this->setError($this->langmanObject->errId(), "delInstalled -> ".$this->langmanObject->errExp());
+            unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
         }
         // run postremovement
         if (!$rmObject->postrm()) {
             $this->setError($rmObject->errId(), "delInstalled -> ".$rmObject->errExp());
+            unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
         }
         // remove files and directories of the plugin
@@ -583,6 +660,7 @@ class Plugins extends ServiceMethods implements intPlugins {
         foreach ($beingRemoved as $source) {
             if (!Files::remove($source)) {
                 $this->setError(Files::errId(), "delInstalled -> ".Files::errExp());
+                unlink(MECCANO_TMP_DIR."/core_plugins_lock");
                 return FALSE;
             }
         }
@@ -597,6 +675,7 @@ class Plugins extends ServiceMethods implements intPlugins {
             $this->dbLink->query($value);
             if ($this->dbLink->errno) {
                 $this->setError(ERROR_NOT_EXECUTED, "delInstalled: ".$this->dbLink->error);
+                unlink(MECCANO_TMP_DIR."/core_plugins_lock");
                 return FALSE;
             }
         }
@@ -604,6 +683,7 @@ class Plugins extends ServiceMethods implements intPlugins {
         if ($log && !$this->logObject->newRecord('core', 'plugins_del_installed', "$shortName; v$version; ID: $id")) {
             $this->setError(ERROR_NOT_CRITICAL, "install -> ".$this->logObject->errExp());
         }
+        unlink(MECCANO_TMP_DIR."/core_plugins_lock");
         return TRUE;
     }
     
