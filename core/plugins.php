@@ -56,8 +56,23 @@ class Plugins extends ServiceMethods implements intPlugins {
     
     public function unpack($package) {
         $this->zeroizeError();
+        // lock actions with plugins
+        if (is_file(MECCANO_TMP_DIR."/core_plugins_lock")) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, 'unpack: plugins are locked');
+            return FALSE;
+        }
+        elseif (is_writable(MECCANO_TMP_DIR) && !is_file(MECCANO_TMP_DIR."/core_plugins_lock") && !is_dir(MECCANO_TMP_DIR."/core_plugins_lock")) {
+            $lock = fopen(MECCANO_TMP_DIR."/core_plugins_lock", 'wb');
+            fclose($lock);
+        }
+        else {
+            $this->setError(ERROR_RESTRICTED_ACCESS, 'unpack: unable to lock plugins');
+            return FALSE;
+        }
+        //
         if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'plugins_install')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "unpack: restricted by the policy");
+            unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
         }
         $zip = new \ZipArchive();
@@ -68,6 +83,7 @@ class Plugins extends ServiceMethods implements intPlugins {
             $tmpPath = MECCANO_TMP_DIR."/$tmpName";
             if (!@$zip->extractTo($tmpPath)) {
                 $this->setError(ERROR_NOT_EXECUTED, "unpack: unable to extract package to $tmpPath");
+                unlink(MECCANO_TMP_DIR."/core_plugins_lock");
                 return FALSE;
             }
             $zip->close();
@@ -87,17 +103,20 @@ class Plugins extends ServiceMethods implements intPlugins {
                 if (!$xmlComponent) {
                     Files::remove($tmpPath);
                     $this->setError(ERROR_NOT_EXECUTED, "unpack: unable to read [$valComponent]");
+                    unlink(MECCANO_TMP_DIR."/core_plugins_lock");
                     return FALSE;
                 }
                 if (mime_content_type($tmpPath."/$valComponent") != "application/xml") {
                     Files::remove($tmpPath);
                     $this->setError(ERROR_NOT_EXECUTED, "unpack: [$valComponent] is not XML-structured");
+                    unlink(MECCANO_TMP_DIR."/core_plugins_lock");
                     return FALSE;
                 }
                 $serviceData->loadXML($xmlComponent);
                 if (!@$serviceData->relaxNGValidate(MECCANO_CORE_DIR."/validation-schemas/$valSchema")) {
                     Files::remove($tmpPath);
                     $this->setError(ERROR_INCORRECT_DATA, "unpack: invalid [$valComponent] structure");
+                    unlink(MECCANO_TMP_DIR."/core_plugins_lock");
                     return FALSE;
                 }
             }
@@ -106,6 +125,7 @@ class Plugins extends ServiceMethods implements intPlugins {
             if ($packVersion != '0.2') {
                 Files::remove($tmpPath);
                 $this->setError(ERROR_INCORRECT_DATA, "unpack: installer is incompatible with the package specification [$packVersion]");
+                unlink(MECCANO_TMP_DIR."/core_plugins_lock");
                 return FALSE;
             }
             $shortName = $serviceData->getElementsByTagName('shortname')->item(0)->nodeValue;
@@ -115,11 +135,13 @@ class Plugins extends ServiceMethods implements intPlugins {
             if ($this->dbLink->errno) {
                 Files::remove($tmpPath);
                 $this->setError(ERROR_NOT_EXECUTED, 'unpack: unable to check whether the plugin is unpacked -> '.$this->dbLink->error);
+                unlink(MECCANO_TMP_DIR."/core_plugins_lock");
                 return FALSE;
             }
             if ($this->dbLink->affected_rows) {
                 Files::remove($tmpPath);
                 $this->setError(ERROR_ALREADY_EXISTS, "unpack: plugin [$shortName] was already unpacked");
+                unlink(MECCANO_TMP_DIR."/core_plugins_lock");
                 return FALSE;
             }
             $fullName = $this->dbLink->real_escape_string(htmlspecialchars($serviceData->getElementsByTagName('fullname')->item(0)->nodeValue));
@@ -150,17 +172,21 @@ class Plugins extends ServiceMethods implements intPlugins {
             if ($this->dbLink->errno) {
                 Files::remove($tmpPath);
                 $this->setError(ERROR_NOT_EXECUTED, 'unpack: '.$this->dbLink->error);
+                unlink(MECCANO_TMP_DIR."/core_plugins_lock");
                 return FALSE;
             }
             if (!Files::move($tmpPath, $unpackPath)) {
                 $this->setError(Files::errId(), 'unpack: -> '.Files::errExp());
+                unlink(MECCANO_TMP_DIR."/core_plugins_lock");
                 return FALSE;
             }
         }
         else {
             $this->setError(ERROR_NOT_EXECUTED, "unpack: unable to open package. ZipArchive error: $zipOpen");
+            unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
         }
+        unlink(MECCANO_TMP_DIR."/core_plugins_lock");
         return $shortName;
     }
     
