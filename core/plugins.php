@@ -251,34 +251,68 @@ class Plugins extends ServiceMethods implements intPlugins {
             $this->setError(ERROR_NOT_EXECUTED, "listUnpacked: ".$this->dbLink->error);
             return FALSE;
         }
-        $xml = new \DOMDocument('1.0', 'utf-8');
-        $unpackedNode = $xml->createElement('unpacked');
-        $xml->appendChild($unpackedNode);
-        while ($row = $qUncpacked->fetch_row()) {
-            if ($curVersion = $this->pluginData($row[0])) {
-                $curSumVersion = calcSumVersion($curVersion["version"]);
-                $newSumVersion = calcSumVersion($row[2]);
-                if ($curSumVersion < $newSumVersion) {
-                    $action = "upgrade";
+        if ($this->outputType == 'json') {
+            $unpacked = array();
+            while ($row = $qUncpacked->fetch_row()) {
+                if ($curVersion = $this->pluginData($row[0])) {
+                    $curSumVersion = calcSumVersion($curVersion["version"]);
+                    $newSumVersion = calcSumVersion($row[2]);
+                    if ($curSumVersion < $newSumVersion) {
+                        $action = "upgrade";
+                    }
+                    elseif ($curSumVersion == $newSumVersion) {
+                        $action = "reinstall";
+                    }
+                    elseif ($curSumVersion > $newSumVersion) {
+                        $action = "downgrade";
+                    }
                 }
-                elseif ($curSumVersion == $newSumVersion) {
-                    $action = "reinstall";
+                else {
+                    $action = "install";
                 }
-                elseif ($curSumVersion > $newSumVersion) {
-                    $action = "downgrade";
-                }
+                $unpacked[] = array(
+                    'short' => $row[0],
+                    'full' => $row[1],
+                    'version' => $row[2],
+                    'action' => $action
+                );
             }
-            else {
-                $action = "install";
-            }
-            $pluginNode = $xml->createElement('plugin');
-            $unpackedNode->appendChild($pluginNode);
-            $pluginNode->appendChild($xml->createElement('short', $row[0]));
-            $pluginNode->appendChild($xml->createElement('full', $row[1]));
-            $pluginNode->appendChild($xml->createElement('version', $row[2]));
-            $pluginNode->appendChild($xml->createElement('action', $action));
         }
-        return $xml;
+        else {
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $unpackedNode = $xml->createElement('unpacked');
+            $xml->appendChild($unpackedNode);
+            while ($row = $qUncpacked->fetch_row()) {
+                if ($curVersion = $this->pluginData($row[0])) {
+                    $curSumVersion = calcSumVersion($curVersion["version"]);
+                    $newSumVersion = calcSumVersion($row[2]);
+                    if ($curSumVersion < $newSumVersion) {
+                        $action = "upgrade";
+                    }
+                    elseif ($curSumVersion == $newSumVersion) {
+                        $action = "reinstall";
+                    }
+                    elseif ($curSumVersion > $newSumVersion) {
+                        $action = "downgrade";
+                    }
+                }
+                else {
+                    $action = "install";
+                }
+                $pluginNode = $xml->createElement('plugin');
+                $unpackedNode->appendChild($pluginNode);
+                $pluginNode->appendChild($xml->createElement('short', $row[0]));
+                $pluginNode->appendChild($xml->createElement('full', $row[1]));
+                $pluginNode->appendChild($xml->createElement('version', $row[2]));
+                $pluginNode->appendChild($xml->createElement('action', $action));
+            }
+        }
+        if ($this->outputType == 'json') {
+            return json_encode($unpacked);
+        }
+        else {
+            return $xml;
+        }
     }
     
     public function aboutUnpacked($plugin) {
