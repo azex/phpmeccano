@@ -251,35 +251,7 @@ class Plugins extends ServiceMethods implements intPlugins {
             $this->setError(ERROR_NOT_EXECUTED, "listUnpacked: ".$this->dbLink->error);
             return FALSE;
         }
-        if ($this->outputType == 'json') {
-            $unpacked = array();
-            while ($row = $qUncpacked->fetch_row()) {
-                if ($curVersion = $this->pluginData($row[0])) {
-                    $curSumVersion = calcSumVersion($curVersion["version"]);
-                    $newSumVersion = calcSumVersion($row[2]);
-                    if ($curSumVersion < $newSumVersion) {
-                        $action = "upgrade";
-                    }
-                    elseif ($curSumVersion == $newSumVersion) {
-                        $action = "reinstall";
-                    }
-                    elseif ($curSumVersion > $newSumVersion) {
-                        $action = "downgrade";
-                    }
-                }
-                else {
-                    $action = "install";
-                }
-                $unpacked[] = array(
-                    'short' => $row[0],
-                    'full' => $row[1],
-                    'version' => $row[2],
-                    'action' => $action
-                );
-            }
-            return json_encode($unpacked);
-        }
-        else {
+        if ($this->outputType == 'xml') {
             $xml = new \DOMDocument('1.0', 'utf-8');
             $unpackedNode = $xml->createElement('unpacked');
             $xml->appendChild($unpackedNode);
@@ -308,6 +280,34 @@ class Plugins extends ServiceMethods implements intPlugins {
                 $pluginNode->appendChild($xml->createElement('action', $action));
             }
             return $xml;
+        }
+        else {
+            $unpacked = array();
+            while ($row = $qUncpacked->fetch_row()) {
+                if ($curVersion = $this->pluginData($row[0])) {
+                    $curSumVersion = calcSumVersion($curVersion["version"]);
+                    $newSumVersion = calcSumVersion($row[2]);
+                    if ($curSumVersion < $newSumVersion) {
+                        $action = "upgrade";
+                    }
+                    elseif ($curSumVersion == $newSumVersion) {
+                        $action = "reinstall";
+                    }
+                    elseif ($curSumVersion > $newSumVersion) {
+                        $action = "downgrade";
+                    }
+                }
+                else {
+                    $action = "install";
+                }
+                $unpacked[] = array(
+                    'short' => $row[0],
+                    'full' => $row[1],
+                    'version' => $row[2],
+                    'action' => $action
+                );
+            }
+            return json_encode($unpacked);
         }
     }
     
@@ -349,22 +349,7 @@ class Plugins extends ServiceMethods implements intPlugins {
         else {
             $action = "install";
         }
-        if ($this->outputType == 'json') {
-            $unpacked = array(
-                'short' => $shortName,
-                'full' => $fullName,
-                'version' =>$version,
-                'about' => $about,
-                'credits' => $credits,
-                'url' => $url,
-                'email' => $email,
-                'license' => $license,
-                'depends' => $depends,
-                'action' => $action
-            );
-            return json_encode($unpacked);
-        }
-        else {
+        if ($this->outputType == 'xml') {
             $xml = new \DOMDocument('1.0', 'utf-8');
             $unpackedNode = $xml->createElement('unpacked');
             $xml->appendChild($unpackedNode);
@@ -379,6 +364,21 @@ class Plugins extends ServiceMethods implements intPlugins {
             $unpackedNode->appendChild($xml->createElement('depends', $depends));
             $unpackedNode->appendChild($xml->createElement('action', $action));
             return $xml;
+        }
+        else {
+            $unpacked = array(
+                'short' => $shortName,
+                'full' => $fullName,
+                'version' =>$version,
+                'about' => $about,
+                'credits' => $credits,
+                'url' => $url,
+                'email' => $email,
+                'license' => $license,
+                'depends' => $depends,
+                'action' => $action
+            );
+            return json_encode($unpacked);
         }
     }
     
@@ -748,18 +748,32 @@ class Plugins extends ServiceMethods implements intPlugins {
             $this->setError(ERROR_NOT_EXECUTED, "listInstalled: ".$this->dbLink->error);
             return FALSE;
         }
-        $xml = new \DOMDocument('1.0', 'utf-8');
-        $installedNode = $xml->createElement("installed");
-        $xml->appendChild($installedNode);
-        while ($row = $qInstalled->fetch_row()) {
-            $pluginNode = $xml->createElement("plugin");
-            $installedNode->appendChild($pluginNode);
-            $pluginNode->appendChild($xml->createElement("short", $row[0]));
-            $pluginNode->appendChild($xml->createElement("full", $row[1]));
-            $pluginNode->appendChild($xml->createElement("version", $row[2]));
-            $pluginNode->appendChild($xml->createElement("time", $row[3]));
+        if ($this->outputType == 'xml') {
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $installedNode = $xml->createElement("installed");
+            $xml->appendChild($installedNode);
+            while ($row = $qInstalled->fetch_row()) {
+                $pluginNode = $xml->createElement("plugin");
+                $installedNode->appendChild($pluginNode);
+                $pluginNode->appendChild($xml->createElement("short", $row[0]));
+                $pluginNode->appendChild($xml->createElement("full", $row[1]));
+                $pluginNode->appendChild($xml->createElement("version", $row[2]));
+                $pluginNode->appendChild($xml->createElement("time", $row[3]));
+            }
+            return $xml;
         }
-        return $xml;
+        else {
+            $installed = array();
+            while ($row = $qInstalled->fetch_row()) {
+                $installed[] = array(
+                    "short" => $row[0],
+                    "full" => $row[1],
+                    "version" => $row[2],
+                    "time" => $row[3]
+                );
+            }
+            return json_encode($installed);
+        }
     }
     
     public function aboutInstalled($plugin) {
