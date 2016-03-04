@@ -277,6 +277,7 @@ class Plugins extends ServiceMethods implements intPlugins {
                     'action' => $action
                 );
             }
+            return json_encode($unpacked);
         }
         else {
             $xml = new \DOMDocument('1.0', 'utf-8');
@@ -306,11 +307,6 @@ class Plugins extends ServiceMethods implements intPlugins {
                 $pluginNode->appendChild($xml->createElement('version', $row[2]));
                 $pluginNode->appendChild($xml->createElement('action', $action));
             }
-        }
-        if ($this->outputType == 'json') {
-            return json_encode($unpacked);
-        }
-        else {
             return $xml;
         }
     }
@@ -353,20 +349,37 @@ class Plugins extends ServiceMethods implements intPlugins {
         else {
             $action = "install";
         }
-        $xml = new \DOMDocument('1.0', 'utf-8');
-        $unpackedNode = $xml->createElement('unpacked');
-        $xml->appendChild($unpackedNode);
-        $unpackedNode->appendChild($xml->createElement('short', $shortName));
-        $unpackedNode->appendChild($xml->createElement('full', $fullName));
-        $unpackedNode->appendChild($xml->createElement('version', $version));
-        $unpackedNode->appendChild($xml->createElement('about', $about));
-        $unpackedNode->appendChild($xml->createElement('credits', $credits));
-        $unpackedNode->appendChild($xml->createElement('url', $url));
-        $unpackedNode->appendChild($xml->createElement('email', $email));
-        $unpackedNode->appendChild($xml->createElement('license', $license));
-        $unpackedNode->appendChild($xml->createElement('depends', $depends));
-        $unpackedNode->appendChild($xml->createElement('action', $action));
-        return $xml;
+        if ($this->outputType == 'json') {
+            $unpacked = array(
+                'short' => $shortName,
+                'full' => $fullName,
+                'version' =>$version,
+                'about' => $about,
+                'credits' => $credits,
+                'url' => $url,
+                'email' => $email,
+                'license' => $license,
+                'depends' => $depends,
+                'action' => $action
+            );
+            return json_encode($unpacked);
+        }
+        else {
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $unpackedNode = $xml->createElement('unpacked');
+            $xml->appendChild($unpackedNode);
+            $unpackedNode->appendChild($xml->createElement('short', $shortName));
+            $unpackedNode->appendChild($xml->createElement('full', $fullName));
+            $unpackedNode->appendChild($xml->createElement('version', $version));
+            $unpackedNode->appendChild($xml->createElement('about', $about));
+            $unpackedNode->appendChild($xml->createElement('credits', $credits));
+            $unpackedNode->appendChild($xml->createElement('url', $url));
+            $unpackedNode->appendChild($xml->createElement('email', $email));
+            $unpackedNode->appendChild($xml->createElement('license', $license));
+            $unpackedNode->appendChild($xml->createElement('depends', $depends));
+            $unpackedNode->appendChild($xml->createElement('action', $action));
+            return $xml;
+        }
     }
     
     public function pluginData($plugin) {
