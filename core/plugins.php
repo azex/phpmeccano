@@ -800,18 +800,34 @@ class Plugins extends ServiceMethods implements intPlugins {
             return FALSE;
         }
         list($shortName, $fullName, $version, $instTime, $about, $credits, $url, $email, $license) = $qPlugin->fetch_row();
-        $xml = new \DOMDocument('1.0', 'utf-8');
-        $installedNode = $xml->createElement("installed");
-        $xml->appendChild($installedNode);
-        $installedNode->appendChild($xml->createElement("short", $shortName));
-        $installedNode->appendChild($xml->createElement("full", $fullName));
-        $installedNode->appendChild($xml->createElement("version", $version));
-        $installedNode->appendChild($xml->createElement("time", $instTime));
-        $installedNode->appendChild($xml->createElement("about", $about));
-        $installedNode->appendChild($xml->createElement("credits", $credits));
-        $installedNode->appendChild($xml->createElement("url", $url));
-        $installedNode->appendChild($xml->createElement("email", $email));
-        $installedNode->appendChild($xml->createElement("license", $license));
-        return $xml;
+        if ($this->outputType == 'xml') {
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $installedNode = $xml->createElement("installed");
+            $xml->appendChild($installedNode);
+            $installedNode->appendChild($xml->createElement("short", $shortName));
+            $installedNode->appendChild($xml->createElement("full", $fullName));
+            $installedNode->appendChild($xml->createElement("version", $version));
+            $installedNode->appendChild($xml->createElement("time", $instTime));
+            $installedNode->appendChild($xml->createElement("about", $about));
+            $installedNode->appendChild($xml->createElement("credits", $credits));
+            $installedNode->appendChild($xml->createElement("url", $url));
+            $installedNode->appendChild($xml->createElement("email", $email));
+            $installedNode->appendChild($xml->createElement("license", $license));
+            return $xml;
+        }
+        else {
+            $installed = array(
+                "short" => $shortName,
+                "full" => $fullName,
+                "version" => $version,
+                "time" => $instTime,
+                "about" =>$about,
+                "credits" => $credits,
+                "url" => $url,
+                "email" => $email,
+                "license" => $license
+            );
+            return json_encode($installed);
+        }
     }
 }

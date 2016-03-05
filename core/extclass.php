@@ -55,7 +55,7 @@ class ServiceMethods implements intServiceMethods {
         return $this->errexp;
     }
     
-    public function applyPolicy($flag) {
+    public function applyPolicy($flag = FALSE) {
         if ($flag) {
             $this->usePolicy = TRUE;
         }
