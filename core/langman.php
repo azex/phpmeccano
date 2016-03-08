@@ -317,18 +317,32 @@ class LangMan extends ServiceMethods implements intLangMan{
             $this->setError(ERROR_NOT_FOUND, 'langList: there was not found any language');
             return FALSE;
         }
-        $xml = new \DOMDocument('1.0', 'utf-8');
-        $languages = $xml->createElement('languages');
-        $xml->appendChild($languages);
-        while ($row = $qLang->fetch_row()) {
-            $lang = $xml->createElement('lang');
-            $languages->appendChild($lang);
-            $lang->appendChild($xml->createElement('id', $row[0]));
-            $lang->appendChild($xml->createElement('code', $row[1]));
-            $lang->appendChild($xml->createElement('name', $row[2]));
-            $lang->appendChild($xml->createElement('dir', $row[3]));
+        if ($this->outputType == 'xml') {
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $languages = $xml->createElement('languages');
+            $xml->appendChild($languages);
+            while ($row = $qLang->fetch_row()) {
+                $lang = $xml->createElement('lang');
+                $languages->appendChild($lang);
+                $lang->appendChild($xml->createElement('id', $row[0]));
+                $lang->appendChild($xml->createElement('code', $row[1]));
+                $lang->appendChild($xml->createElement('name', $row[2]));
+                $lang->appendChild($xml->createElement('dir', $row[3]));
+            }
+            return $xml;
         }
-        return $xml;
+        else {
+            $languages = array();
+            while ($row = $qLang->fetch_row()) {
+                $languages[] = array(
+                    'id' => $row[0],
+                    'code' => $row[1],
+                    'name' => $row[2],
+                    'dir' => $row[3]
+                );
+            }
+            return json_encode($languages);
+        }
     }
     
     public function installTitles(\DOMDocument $titles, $validate = TRUE) {
