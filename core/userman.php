@@ -508,7 +508,7 @@ class UserMan extends ServiceMethods implements intUserMan{
             }
         }
         else {
-            $this->setError(ERROR_INCORRECT_DATA, 'getGroups: value of $orderBy must be string or array');
+            $this->setError(ERROR_INCORRECT_DATA, 'getAllGroups: value of $orderBy must be string or array');
             return FALSE;
         }
         if ($ascent == TRUE) {
@@ -521,21 +521,35 @@ class UserMan extends ServiceMethods implements intUserMan{
                 . "FROM `".MECCANO_TPREF."_core_userman_groups` "
                 . "ORDER BY `$orderBy` $direct ;");
         if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'getGroups: group info page could not be gotten -> '.$this->dbLink->error);
+            $this->setError(ERROR_NOT_EXECUTED, 'getAllGroups: group info page could not be gotten -> '.$this->dbLink->error);
             return FALSE;
         }
-        $xml = new \DOMDocument('1.0', 'utf-8');
-        $groupsNode = $xml->createElement('groups');
-        $xml->appendChild($groupsNode);
-        while ($row = $qResult->fetch_row()) {
-            $groupNode = $xml->createElement('group');
-            $groupsNode->appendChild($groupNode);
-            $groupNode->appendChild($xml->createElement('id', $row[0]));
-            $groupNode->appendChild($xml->createElement('name', $row[1]));
-            $groupNode->appendChild($xml->createElement('time', $row[2]));
-            $groupNode->appendChild($xml->createElement('active', $row[3]));
+        if ($this->outputType == 'xml') {
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $groupsNode = $xml->createElement('groups');
+            $xml->appendChild($groupsNode);
+            while ($row = $qResult->fetch_row()) {
+                $groupNode = $xml->createElement('group');
+                $groupsNode->appendChild($groupNode);
+                $groupNode->appendChild($xml->createElement('id', $row[0]));
+                $groupNode->appendChild($xml->createElement('name', $row[1]));
+                $groupNode->appendChild($xml->createElement('time', $row[2]));
+                $groupNode->appendChild($xml->createElement('active', $row[3]));
+            }
+            return $xml;
         }
-        return $xml;
+        else {
+            $groupsNode = array();
+            while ($row = $qResult->fetch_row()) {
+                $groupsNode[] = array(
+                    'id' => $row[0],
+                    'name' => $row[1],
+                    'time' => $row[2],
+                    'active' => $row[3]
+                );
+            }
+            return json_encode($groupsNode);
+        }
     }
 
     //user methods
