@@ -891,17 +891,30 @@ class UserMan extends ServiceMethods implements intUserMan{
             $this->setError(ERROR_NOT_FOUND, 'userPasswords: user not found');
             return FALSE;
         }
-        $xml = new \DOMDocument('1.0', 'utf-8');
-        $securityNode = $xml->createElement('security');
-        $xml->appendChild($securityNode);
-        while ($row = $qPassw->fetch_row()) {
-            $passwNode = $xml->createElement('password');
-            $securityNode->appendChild($passwNode);
-            $passwNode->appendChild($xml->createElement('id', $row[0]));
-            $passwNode->appendChild($xml->createElement('description', $row[1]));
-            $passwNode->appendChild($xml->createElement('limited', $row[2]));
+        if ($this->outputType == 'xml') {
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $securityNode = $xml->createElement('security');
+            $xml->appendChild($securityNode);
+            while ($row = $qPassw->fetch_row()) {
+                $passwNode = $xml->createElement('password');
+                $securityNode->appendChild($passwNode);
+                $passwNode->appendChild($xml->createElement('id', $row[0]));
+                $passwNode->appendChild($xml->createElement('description', $row[1]));
+                $passwNode->appendChild($xml->createElement('limited', $row[2]));
+            }
+            return $xml;
         }
-        return $xml;
+        else {
+            $securityNode = array();
+            while ($row = $qPassw->fetch_row()) {
+                $securityNode[] = array(
+                    'id' => $row[0],
+                    'description' => $row[1],
+                    'limited' => $row[2]
+                );
+            }
+            return json_encode($securityNode);
+        }
     }
     
     public function createPassword($userId, $description, $length = 8, $underline = TRUE, $minus = FALSE, $special = FALSE, $log = TRUE) {
