@@ -1736,26 +1736,44 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "FROM `".MECCANO_TPREF."_core_langman_languages` "
                 . "WHERE `code`='$code';");
         list($direction) = $qDirection->fetch_row();
-        // create DOM
-        $xml = new \DOMDocument('1.0', 'utf-8');
-        $textsNode = $xml->createElement('texts');
-        $codeAttribute =  $xml->createAttribute('code');
-        $codeAttribute->value = $code;
-        $dirAttribute = $xml->createAttribute('dir');
-        $dirAttribute->value = $direction;
-        $textsNode->appendChild($codeAttribute);
-        $textsNode->appendChild($dirAttribute);
-        $xml->appendChild($textsNode);
-        while ($row = $qTexts->fetch_row()) {
-            $textNode = $xml->createElement('text');
-            $textsNode->appendChild($textNode);
-            $textNode->appendChild($xml->createElement('id', $row[0]));
-            $textNode->appendChild($xml->createElement('title', $row[1]));
-            $textNode->appendChild($xml->createElement('name', $row[2]));
-            $textNode->appendChild($xml->createElement('created', $row[3]));
-            $textNode->appendChild($xml->createElement('edited', $row[4]));
+        if ($this->outputType == 'xml') {
+            // create DOM
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $textsNode = $xml->createElement('texts');
+            $codeAttribute =  $xml->createAttribute('code');
+            $codeAttribute->value = $code;
+            $dirAttribute = $xml->createAttribute('dir');
+            $dirAttribute->value = $direction;
+            $textsNode->appendChild($codeAttribute);
+            $textsNode->appendChild($dirAttribute);
+            $xml->appendChild($textsNode);
+            while ($row = $qTexts->fetch_row()) {
+                $textNode = $xml->createElement('text');
+                $textsNode->appendChild($textNode);
+                $textNode->appendChild($xml->createElement('id', $row[0]));
+                $textNode->appendChild($xml->createElement('title', $row[1]));
+                $textNode->appendChild($xml->createElement('name', $row[2]));
+                $textNode->appendChild($xml->createElement('created', $row[3]));
+                $textNode->appendChild($xml->createElement('edited', $row[4]));
+            }
+            return $xml;
         }
-        return $xml;
+        else {
+            $textsNode = array();
+            $textsNode['code'] = $code;
+            $textsNode['dir'] = $direction;
+            $textsNode['texts'] = array();
+            while ($row = $qTexts->fetch_row()) {
+                $textsNode['texts'][] = array(
+                    'id' => $row[0],
+                    'title' => $row[1],
+                    'name' => $row[2],
+                    'created' => $row[3],
+                    'edited' => $row[4]
+                );
+            }
+            return json_encode($textsNode);
+        }
     }
     
     public function getTexts($section, $plugin, $code = MECCANO_DEF_LANG) {
