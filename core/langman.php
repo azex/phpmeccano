@@ -2535,27 +2535,48 @@ class LangMan extends ServiceMethods implements intLangMan{
             $this->setError(ERROR_NOT_FOUND, 'getTitleNamesXML: unable to find defined section');
             return FALSE;
         }
-        $xml = new \DOMDocument('1.0', 'utf-8');
-        $pageNode = $xml->createElement('page');
-        $attr_plugin = $xml->createAttribute('plugin');
-        $attr_plugin->value = $plugin;
-        $pageNode->appendChild($attr_plugin);
-        $attr_section = $xml->createAttribute('section');
-        $attr_section->value = $section;
-        $pageNode->appendChild($attr_section);
-        $xml->appendChild($pageNode);
-        while ($row = $qNames->fetch_row()) {
-            $titleNode = $xml->createElement('title');
-            $pageNode->appendChild($titleNode);
-            $titleNode->appendChild($xml->createElement('id', $row[0]));
-            $titleNode->appendChild($xml->createElement('name', $row[1]));
-            $languagesNode = $xml->createElement('languages');
-            $languagesArray = explode(";", $row[2]);
-            foreach ($languagesArray as $langCode) {
-                $languagesNode->appendChild($xml->createElement('code', $langCode));
+        if ($this->outputType == 'xml') {
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $pageNode = $xml->createElement('page');
+            $attr_plugin = $xml->createAttribute('plugin');
+            $attr_plugin->value = $plugin;
+            $pageNode->appendChild($attr_plugin);
+            $attr_section = $xml->createAttribute('section');
+            $attr_section->value = $section;
+            $pageNode->appendChild($attr_section);
+            $xml->appendChild($pageNode);
+            while ($row = $qNames->fetch_row()) {
+                $titleNode = $xml->createElement('title');
+                $pageNode->appendChild($titleNode);
+                $titleNode->appendChild($xml->createElement('id', $row[0]));
+                $titleNode->appendChild($xml->createElement('name', $row[1]));
+                $languagesNode = $xml->createElement('languages');
+                $languagesArray = explode(";", $row[2]);
+                foreach ($languagesArray as $langCode) {
+                    $languagesNode->appendChild($xml->createElement('code', $langCode));
+                }
+                $titleNode->appendChild($languagesNode);
             }
-            $titleNode->appendChild($languagesNode);
+            return $xml;
         }
-        return $xml;
+        else {
+            $pageNode = array();
+            $pageNode['plugin'] = $plugin;
+            $pageNode['section'] = $section;
+            $pageNode['titles'] = array();
+            while ($row = $qNames->fetch_row()) {
+                $languagesArray = explode(";", $row[2]);
+                $lCodes = array();
+                foreach ($languagesArray as $langCode) {
+                    $lCodes[] = $langCode;
+                }
+                $pageNode['titles'][] = array(
+                    'id' => $row[0],
+                    'name' => $row[1],
+                    'languages' => $lCodes
+                );
+            }
+            return json_encode($pageNode);
+        }
     }
 }
