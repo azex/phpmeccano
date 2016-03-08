@@ -2277,21 +2277,37 @@ class LangMan extends ServiceMethods implements intLangMan{
             $this->setError(ERROR_NOT_FOUND, 'getTitleSectionsXML: unable to find defined plugin');
             return FALSE;
         }
-        $xml = new \DOMDocument('1.0', 'utf-8');
-        $sectionsNode = $xml->createElement('sections');
-        $attr_plugin = $xml->createAttribute('plugin');
-        $attr_plugin->value = $plugin;
-        $sectionsNode->appendChild($attr_plugin);
-        $xml->appendChild($sectionsNode);
-        while ($row = $qSections->fetch_row()) {
-            $sectionNode = $xml->createElement('section');
-            $sectionsNode->appendChild($sectionNode);
-            $sectionNode->appendChild($xml->createElement('id', $row[0]));
-            $sectionNode->appendChild($xml->createElement('name', $row[1]));
-            $sectionNode->appendChild($xml->createElement('static', $row[2]));
-            $sectionNode->appendChild($xml->createElement('contains', $row[3]));
+        if ($this->outputType == 'xml') {
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $sectionsNode = $xml->createElement('sections');
+            $attr_plugin = $xml->createAttribute('plugin');
+            $attr_plugin->value = $plugin;
+            $sectionsNode->appendChild($attr_plugin);
+            $xml->appendChild($sectionsNode);
+            while ($row = $qSections->fetch_row()) {
+                $sectionNode = $xml->createElement('section');
+                $sectionsNode->appendChild($sectionNode);
+                $sectionNode->appendChild($xml->createElement('id', $row[0]));
+                $sectionNode->appendChild($xml->createElement('name', $row[1]));
+                $sectionNode->appendChild($xml->createElement('static', $row[2]));
+                $sectionNode->appendChild($xml->createElement('contains', $row[3]));
+            }
+            return $xml;
         }
-        return $xml;
+        else {
+            $sectionsNode = array();
+            $sectionsNode['plugin'] = $plugin;
+            $sectionsNode['sections'] = array();
+            while ($row = $qSections->fetch_row()) {
+                $sectionsNode['sections'][] = array(
+                    'id' => $row[0],
+                    'name' => $row[1],
+                    'static' => $row[2],
+                    'contains' => $row[3]
+                );
+            }
+            return json_encode($sectionsNode);;
+        }
     }
     
     public function sumTextNames($plugin, $section, $rpp = 20) {
