@@ -236,15 +236,28 @@ class UserMan extends ServiceMethods implements intUserMan{
                 . "WHERE `groupid`=$groupId ;");
         $about = $qAbout->fetch_row();
         $sum = $qSum->fetch_row();
-        $xml = new \DOMDocument('1.0', 'utf-8');
-        $aboutNode = $xml->createElement('group');
-        $xml->appendChild($aboutNode);
-        $aboutNode->appendChild($xml->createElement('name', $about[0]));
-        $aboutNode->appendChild($xml->createElement('description', $about[1]));
-        $aboutNode->appendChild($xml->createElement('time', $about[2]));
-        $aboutNode->appendChild($xml->createElement('active', $about[3]));
-        $aboutNode->appendChild($xml->createElement('usum', $sum[0]));
-        return $xml;
+        if ($this->outputType == 'xml') {
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $aboutNode = $xml->createElement('group');
+            $xml->appendChild($aboutNode);
+            $aboutNode->appendChild($xml->createElement('name', $about[0]));
+            $aboutNode->appendChild($xml->createElement('description', $about[1]));
+            $aboutNode->appendChild($xml->createElement('time', $about[2]));
+            $aboutNode->appendChild($xml->createElement('active', $about[3]));
+            $aboutNode->appendChild($xml->createElement('usum', $sum[0]));
+            return $xml;
+        }
+        else {
+            return json_encode(
+                    array(
+                        'name' => $about[0],
+                        'description' => $about[1],
+                        'time' => $about[2],
+                        'active' => $about[3],
+                        'usum' => $sum[0]
+                    )
+                    );
+        }
     }
     
     public function setGroupName($groupId, $groupName, $log = TRUE) {
