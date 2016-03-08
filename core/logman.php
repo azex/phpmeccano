@@ -322,7 +322,7 @@ class LogMan extends ServiceMethods implements intLogMan {
             return FALSE;
         }
         if (!pregLang($code) || !is_integer($pageNumber) || !is_integer($totalPages) || !is_integer($rpp)) {
-            $this->setError(ERROR_INCORRECT_DATA, 'getPage: check arguments');
+            $this->setError(ERROR_INCORRECT_DATA, 'getPageAllPlugins: check arguments');
             return FALSE;
         }
         $rightEntry = array('id', 'user', 'event', 'time');
@@ -340,7 +340,7 @@ class LogMan extends ServiceMethods implements intLogMan {
             }
         }
         else {
-            $this->setError(ERROR_INCORRECT_DATA, 'getPage: check order parameters');
+            $this->setError(ERROR_INCORRECT_DATA, 'getPageAllPlugins: check order parameters');
             return FALSE;
         }
         if ($pageNumber < 1) {
@@ -371,14 +371,14 @@ class LogMan extends ServiceMethods implements intLogMan {
                 . "WHERE `l`.`code` = '$code' "
                 . "ORDER BY `$orderBy` $direct LIMIT $start, $rpp;");
         if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'getPage: unable to get log page -> '.$this->dbLink->error);
+            $this->setError(ERROR_NOT_EXECUTED, 'getPageAllPlugins: unable to get log page -> '.$this->dbLink->error);
             return FALSE;
         }
         if ($this->outputType == 'xml') {
             $xml = new \DOMDocument('1.0', 'utf-8');
             $logNode = $xml->createElement('log');
             $xml->appendChild($logNode);
-            while ($row = $qResult->fetch_array(MYSQL_NUM)) {
+            while ($row = $qResult->fetch_row()) {
                 $recordNode = $xml->createElement('record');
                 $logNode->appendChild($recordNode);
                 $recordNode->appendChild($xml->createElement('id', $row[0]));
@@ -390,7 +390,7 @@ class LogMan extends ServiceMethods implements intLogMan {
         }
         else {
             $log = array();
-            while ($row = $qResult->fetch_array(MYSQL_NUM)) {
+            while ($row = $qResult->fetch_row()) {
                 $log[] = array(
                     'id' => $row[0],
                     'time' => $row[1],
@@ -444,7 +444,7 @@ class LogMan extends ServiceMethods implements intLogMan {
             return FALSE;
         }
         if (!pregPlugin($plugin) || !pregLang($code) || !is_integer($pageNumber) || !is_integer($totalPages) || !is_integer($rpp)) {
-            $this->setError(ERROR_INCORRECT_DATA, 'getPage: check arguments');
+            $this->setError(ERROR_INCORRECT_DATA, 'getPageByPlugin: check arguments');
             return FALSE;
         }
         $rightEntry = array('id', 'user', 'event', 'time');
@@ -462,7 +462,7 @@ class LogMan extends ServiceMethods implements intLogMan {
             }
         }
         else {
-            $this->setError(ERROR_INCORRECT_DATA, 'getPage: check order parameters');
+            $this->setError(ERROR_INCORRECT_DATA, 'getPageByPlugin: check order parameters');
             return FALSE;
         }
         if ($pageNumber < 1) {
@@ -498,24 +498,38 @@ class LogMan extends ServiceMethods implements intLogMan {
                 . "AND `p`.`name`='$plugin' "
                 . "ORDER BY `$orderBy` $direct LIMIT $start, $rpp;");
         if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'getPage: unable to get log page -> '.$this->dbLink->error);
+            $this->setError(ERROR_NOT_EXECUTED, 'getPageByPlugin: unable to get log page -> '.$this->dbLink->error);
             return FALSE;
         }
-        $xml = new \DOMDocument('1.0', 'utf-8');
-        $logNode = $xml->createElement('log');
-        $attr_plugin = $xml->createAttribute('plugin');
-        $attr_plugin->value = $plugin;
-        $logNode->appendChild($attr_plugin);
-        $xml->appendChild($logNode);
-        while ($row = $qResult->fetch_array(MYSQL_NUM)) {
-            $recordNode = $xml->createElement('record');
-            $logNode->appendChild($recordNode);
-            $recordNode->appendChild($xml->createElement('id', $row[0]));
-            $recordNode->appendChild($xml->createElement('time', $row[1]));
-            $recordNode->appendChild($xml->createElement('event', $row[2]));
-            $recordNode->appendChild($xml->createElement('user', $row[3]));
+        if ($this->outputType == 'xml') {
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $logNode = $xml->createElement('log');
+            $attr_plugin = $xml->createAttribute('plugin');
+            $attr_plugin->value = $plugin;
+            $logNode->appendChild($attr_plugin);
+            $xml->appendChild($logNode);
+            while ($row = $qResult->fetch_row()) {
+                $recordNode = $xml->createElement('record');
+                $logNode->appendChild($recordNode);
+                $recordNode->appendChild($xml->createElement('id', $row[0]));
+                $recordNode->appendChild($xml->createElement('time', $row[1]));
+                $recordNode->appendChild($xml->createElement('event', $row[2]));
+                $recordNode->appendChild($xml->createElement('user', $row[3]));
+            }
+            return $xml;
         }
-        return $xml;
+        else {
+            $log = array();
+            while ($row = $qResult->fetch_row()) {
+                $log[] = array(
+                    'id' => $row[0],
+                    'time' => $row[1],
+                    'event' => $row[2],
+                    'user' => $row[3]
+                );
+            }
+            return json_encode($log);
+        }
     }
     
     public function getLogAllPlugins($code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE) {
@@ -567,7 +581,7 @@ class LogMan extends ServiceMethods implements intLogMan {
         $xml = new \DOMDocument('1.0', 'utf-8');
         $logNode = $xml->createElement('log');
         $xml->appendChild($logNode);
-        while ($row = $qResult->fetch_array(MYSQL_NUM)) {
+        while ($row = $qResult->fetch_row()) {
             $recordNode = $xml->createElement('record');
             $logNode->appendChild($recordNode);
             $recordNode->appendChild($xml->createElement('id', $row[0]));
@@ -635,7 +649,7 @@ class LogMan extends ServiceMethods implements intLogMan {
         $attr_plugin->value = $plugin;
         $logNode->appendChild($attr_plugin);
         $xml->appendChild($logNode);
-        while ($row = $qResult->fetch_array(MYSQL_NUM)) {
+        while ($row = $qResult->fetch_row()) {
             $recordNode = $xml->createElement('record');
             $logNode->appendChild($recordNode);
             $recordNode->appendChild($xml->createElement('id', $row[0]));
