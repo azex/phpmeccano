@@ -1931,24 +1931,40 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "FROM `".MECCANO_TPREF."_core_langman_languages` "
                 . "WHERE `code`='$code';");
         list($direction) = $qDirection->fetch_row();
-        // create DOM
-        $xml = new \DOMDocument('1.0', 'utf-8');
-        $titlesNode = $xml->createElement('titles');
-        $codeAttribute =  $xml->createAttribute('code');
-        $codeAttribute->value = $code;
-        $dirAttribute = $xml->createAttribute('dir');
-        $dirAttribute->value = $direction;
-        $titlesNode->appendChild($codeAttribute);
-        $titlesNode->appendChild($dirAttribute);
-        $xml->appendChild($titlesNode);
-        while ($row = $qTitles->fetch_row()) {
-            $titleNode = $xml->createElement('title');
-            $titlesNode->appendChild($titleNode);
-            $titleNode->appendChild($xml->createElement('id', $row[0]));
-            $titleNode->appendChild($xml->createElement('title', $row[1]));
-            $titleNode->appendChild($xml->createElement('name', $row[2]));
+        if ($this->outputType == 'xml') {
+            // create DOM
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $titlesNode = $xml->createElement('titles');
+            $codeAttribute =  $xml->createAttribute('code');
+            $codeAttribute->value = $code;
+            $dirAttribute = $xml->createAttribute('dir');
+            $dirAttribute->value = $direction;
+            $titlesNode->appendChild($codeAttribute);
+            $titlesNode->appendChild($dirAttribute);
+            $xml->appendChild($titlesNode);
+            while ($row = $qTitles->fetch_row()) {
+                $titleNode = $xml->createElement('title');
+                $titlesNode->appendChild($titleNode);
+                $titleNode->appendChild($xml->createElement('id', $row[0]));
+                $titleNode->appendChild($xml->createElement('title', $row[1]));
+                $titleNode->appendChild($xml->createElement('name', $row[2]));
+            }
+            return $xml;
         }
-        return $xml;
+        else {
+            $titlesNode = array();
+            $titlesNode['code'] = $code;
+            $titlesNode['dir'] = $direction;
+            $titlesNode['titles'] = array();
+            while ($row = $qTitles->fetch_row()) {
+                $titlesNode['titles'][] = array(
+                    'id' => $row[0],
+                    'title' => $row[1],
+                    'name' => $row[2]
+                );
+            }
+            return json_decode($titlesNode);
+        }
     }
     
     public function getAllTitlesXML($section, $plugin, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE) {
