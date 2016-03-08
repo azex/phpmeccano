@@ -842,17 +842,32 @@ class UserMan extends ServiceMethods implements intUserMan{
             return FALSE;
         }
         $about = $qAbout->fetch_row();
-        $xml = new \DOMDocument('1.0', 'utf-8');
-        $aboutNode = $xml->createElement('user');
-        $xml->appendChild($aboutNode);
-        $aboutNode->appendChild($xml->createElement('username', $about[0]));
-        $aboutNode->appendChild($xml->createElement('fullname', $about[1]));
-        $aboutNode->appendChild($xml->createElement('email', $about[2]));
-        $aboutNode->appendChild($xml->createElement('time', $about[3]));
-        $aboutNode->appendChild($xml->createElement('active', $about[4]));
-        $aboutNode->appendChild($xml->createElement('gid', $about[5]));
-        $aboutNode->appendChild($xml->createElement('group', $about[6]));
-        return $xml;
+        if ($this->outputType == 'xml') {
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $aboutNode = $xml->createElement('user');
+            $xml->appendChild($aboutNode);
+            $aboutNode->appendChild($xml->createElement('username', $about[0]));
+            $aboutNode->appendChild($xml->createElement('fullname', $about[1]));
+            $aboutNode->appendChild($xml->createElement('email', $about[2]));
+            $aboutNode->appendChild($xml->createElement('time', $about[3]));
+            $aboutNode->appendChild($xml->createElement('active', $about[4]));
+            $aboutNode->appendChild($xml->createElement('gid', $about[5]));
+            $aboutNode->appendChild($xml->createElement('group', $about[6]));
+            return $xml;
+        }
+        else {
+            return json_encode(
+                    array(
+                        'username' => $about[0],
+                        'fullname' => $about[1],
+                        'email' => $about[2],
+                        'time' => $about[3],
+                        'active' => $about[4],
+                        'gid' => $about[5],
+                        'group' => $about[6]
+                    )
+                    );
+        }
     }
     
     public function userPasswords($userId) {
