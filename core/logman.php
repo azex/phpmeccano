@@ -657,21 +657,35 @@ class LogMan extends ServiceMethods implements intLogMan {
             $this->setError(ERROR_NOT_EXECUTED, 'getLogByPlugin: unable to get log -> '.$this->dbLink->error);
             return FALSE;
         }
-        $xml = new \DOMDocument('1.0', 'utf-8');
-        $logNode = $xml->createElement('log');
-        $attr_plugin = $xml->createAttribute('plugin');
-        $attr_plugin->value = $plugin;
-        $logNode->appendChild($attr_plugin);
-        $xml->appendChild($logNode);
-        while ($row = $qResult->fetch_row()) {
-            $recordNode = $xml->createElement('record');
-            $logNode->appendChild($recordNode);
-            $recordNode->appendChild($xml->createElement('id', $row[0]));
-            $recordNode->appendChild($xml->createElement('time', $row[1]));
-            $recordNode->appendChild($xml->createElement('event', $row[2]));
-            $recordNode->appendChild($xml->createElement('user', $row[3]));
+        if ($this->outputType == 'xml') {
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $logNode = $xml->createElement('log');
+            $attr_plugin = $xml->createAttribute('plugin');
+            $attr_plugin->value = $plugin;
+            $logNode->appendChild($attr_plugin);
+            $xml->appendChild($logNode);
+            while ($row = $qResult->fetch_row()) {
+                $recordNode = $xml->createElement('record');
+                $logNode->appendChild($recordNode);
+                $recordNode->appendChild($xml->createElement('id', $row[0]));
+                $recordNode->appendChild($xml->createElement('time', $row[1]));
+                $recordNode->appendChild($xml->createElement('event', $row[2]));
+                $recordNode->appendChild($xml->createElement('user', $row[3]));
+            }
+            return $xml;
         }
-        return $xml;
+        else {
+            $log = array();
+            while ($row = $qResult->fetch_row()) {
+                $log[] = array(
+                    'id' => $row[0],
+                    'time' => $row[1],
+                    'event' => $row[2],
+                    'user' => $row[3]
+                );
+            }
+            return json_encode($log);
+        }
     }
     
 }
