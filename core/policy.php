@@ -466,24 +466,41 @@ class Policy extends ServiceMethods implements intPolicy {
             $this->setError(ERROR_NOT_FOUND, 'groupPolicyList: not found');
             return FALSE;
         }
-        $xml = new \DOMDocument('1.0', 'utf-8');
-        $policyNode = $xml->createElement('policy');
-        $xml->appendChild($policyNode);
-        $attr_plugin = $xml->createAttribute('plugin');
-        $attr_plugin->value = $plugin;
-        $policyNode->appendChild($attr_plugin);
-        $attr_group = $xml->createAttribute('group');
-        $attr_group->value = $groupId;
-        $policyNode->appendChild($attr_group);
-        while ($row = $qList->fetch_row()) {
-            $funcNode = $xml->createElement('function');
-            $policyNode->appendChild($funcNode);
-            $funcNode->appendChild($xml->createElement('id', $row[0]));
-            $funcNode->appendChild($xml->createElement('short', $row[1]));
-            $funcNode->appendChild($xml->createElement('name', $row[2]));
-            $funcNode->appendChild($xml->createElement('access', $row[3]));
+        if ($this->outputType == 'xml') {
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $policyNode = $xml->createElement('policy');
+            $xml->appendChild($policyNode);
+            $attr_plugin = $xml->createAttribute('plugin');
+            $attr_plugin->value = $plugin;
+            $policyNode->appendChild($attr_plugin);
+            $attr_group = $xml->createAttribute('group');
+            $attr_group->value = $groupId;
+            $policyNode->appendChild($attr_group);
+            while ($row = $qList->fetch_row()) {
+                $funcNode = $xml->createElement('function');
+                $policyNode->appendChild($funcNode);
+                $funcNode->appendChild($xml->createElement('id', $row[0]));
+                $funcNode->appendChild($xml->createElement('short', $row[1]));
+                $funcNode->appendChild($xml->createElement('name', $row[2]));
+                $funcNode->appendChild($xml->createElement('access', $row[3]));
+            }
+            return $xml;
         }
-        return $xml;
+        else {
+            $policyNode = array();
+            $policyNode['plugin'] = $plugin;
+            $policyNode['group'] = $groupId;
+            $policyNode['functions'] = array();
+            while ($row = $qList->fetch_row()) {
+                $policyNode['functions'][] = array(
+                    'id' => $row[0],
+                    'short' => $row[1],
+                    'name' => $row[2],
+                    'access' => $row[3]
+                );
+            }
+            return json_encode($policyNode);
+        }
     }
     
     public function getPolicyDescById($id) {
