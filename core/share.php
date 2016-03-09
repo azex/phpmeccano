@@ -31,10 +31,10 @@ require_once MECCANO_CORE_DIR.'/files.php';
 interface intShare {
     public function __construct(LogMan $logObject);
     public function createCircle($userId, $name);
-    public function userCircles($userId, $output = 'json');
+    public function userCircles($userId);
     public function renameCircle($userId, $circleId, $newName);
     public function addToCircle($contactId, $circleId, $userId);
-    public function circleContacts($userId, $circleId, $output = 'json');
+    public function circleContacts($userId, $circleId);
     public function rmFromCircle($userId, $circleId, $contactId);
     public function delCircle($userId, $circleId);
     public function createMsg($userId, $title, $text);
@@ -44,31 +44,31 @@ interface intShare {
     public function attachFile($fileId, $msgId, $userId);
     public function unattachFile($fileId, $msgId, $userId);
     public function delFile($fileId, $userId, $force = FALSE);
-    public function getFileInfo($fileId, $output = 'json');
+    public function getFileInfo($fileId);
     public function shareMsg($msgId, $userId, $circles);
-    public function getMsg($msgId, $output = 'json');
-    public function msgFiles($msgId, $output = 'json');
-    public function getFileShares($fileId, $userId, $output = 'json');
-    public function getMsgShares($msgId, $userId, $output = 'json');
+    public function getMsg($msgId);
+    public function msgFiles($msgId);
+    public function getFileShares($fileId, $userId);
+    public function getMsgShares($msgId, $userId);
     public function updateFile($fileId, $userid, $title, $comment);
     public function repostMsg($msgId, $userId, $hlink = TRUE);
     public function delMsg($msgId, $userId, $keepFiles = TRUE);
     public function repostFile($fileId, $userId, $hlink = TRUE);
     public function sumUserMsgs($userId, $rpp = 20);
-    public function userMsgs($userId, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('time'), $ascent = FALSE, $output = 'json');
-    public function msgStripe($userId, $rpp = 20, $output = 'json');
-    public function appendMsgStripe($userId, $mtmark, $rpp = 20, $output = 'json');
-    public function updateMsgStripe($userId, $mtmark, $output = 'json');
+    public function userMsgs($userId, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('time'), $ascent = FALSE);
+    public function msgStripe($userId, $rpp = 20);
+    public function appendMsgStripe($userId, $mtmark, $rpp = 20);
+    public function updateMsgStripe($userId, $mtmark);
     public function sumUserFiles($userId, $rpp = 20);
-    public function userFiles($userId, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('time'), $ascent = FALSE, $output = 'json');
-    public function fileStripe($userId, $rpp = 20, $output = 'json');
-    public function appendFileStripe($userId, $mtmark, $rpp = 20, $output = 'json');
-    public function updateFileStripe($userId, $mtmark, $output = 'json');
+    public function userFiles($userId, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('time'), $ascent = FALSE);
+    public function fileStripe($userId, $rpp = 20);
+    public function appendFileStripe($userId, $mtmark, $rpp = 20);
+    public function updateFileStripe($userId, $mtmark);
     public function sumUserSubs($userId, $rpp = 20);
-    public function userSubs($userId, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('time'), $ascent = FALSE, $output = 'json');
-    public function subStripe($userId, $rpp = 20, $output = 'json');
-    public function appendSubStripe($userId, $mtmark, $rpp = 20, $output = 'json');
-    public function updateSubStripe($userId, $mtmark, $output = 'json');
+    public function userSubs($userId, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('time'), $ascent = FALSE);
+    public function subStripe($userId, $rpp = 20);
+    public function appendSubStripe($userId, $mtmark, $rpp = 20);
+    public function updateSubStripe($userId, $mtmark);
 }
 
 class Share extends ServiceMethods implements intShare {
@@ -249,9 +249,9 @@ class Share extends ServiceMethods implements intShare {
         return $id;
     }
     
-    public function userCircles($userId, $output = 'json') {
+    public function userCircles($userId) {
         $this->zeroizeError();
-        if (!is_integer($userId) || !in_array($output, array('xml', 'json'))) {
+        if (!is_integer($userId)) {
             $this->setError(ERROR_INCORRECT_DATA, 'userCircles: incorrect parameter');
             return FALSE;
         }
@@ -265,7 +265,7 @@ class Share extends ServiceMethods implements intShare {
             $this->setError(ERROR_NOT_EXECUTED, 'userCircles: '.$this->dbLink->error);
             return FALSE;
         }
-        if ($output == 'xml') {
+        if ($this->outputType == 'xml') {
             $xml = new \DOMDocument('1.0', 'utf-8');
             $circlesNode = $xml->createElement('circles');
             $xml->appendChild($circlesNode);
@@ -374,9 +374,9 @@ class Share extends ServiceMethods implements intShare {
         return TRUE;
     }
     
-    public function circleContacts($userId, $circleId, $output = 'json') {
+    public function circleContacts($userId, $circleId) {
         $this->zeroizeError();
-        if (!is_integer($userId) || !pregGuid($circleId) || !in_array($output, array('xml', 'json'))) {
+        if (!is_integer($userId) || !pregGuid($circleId)) {
             $this->setError(ERROR_INCORRECT_DATA, 'circleContacts: incorrect parameters');
             return FALSE;
         }
@@ -410,7 +410,7 @@ class Share extends ServiceMethods implements intShare {
             $this->setError(ERROR_NOT_EXECUTED, 'circleContacts: '.$this->dbLink->error);
             return FALSE;
         }
-        if ($output == 'xml') {
+        if ($this->outputType == 'xml') {
             $xml = new \DOMDocument('1.0', 'utf-8');
             $contactsNode = $xml->createElement('contacts');
             $xml->appendChild($contactsNode);
@@ -892,9 +892,9 @@ class Share extends ServiceMethods implements intShare {
         return TRUE;
     }
     
-    public function getFileInfo($fileId, $output = 'json') {
+    public function getFileInfo($fileId) {
         $this->zeroizeError();
-        if (!pregGuid($fileId) || !in_array($output, array('xml', 'json'))) {
+        if (!pregGuid($fileId)) {
             $this->setError(ERROR_INCORRECT_DATA, 'getFileInfo: incorrect parameters');
             return FALSE;
         }
@@ -917,7 +917,7 @@ class Share extends ServiceMethods implements intShare {
             }
             
             $fileInfo = $qFileInfo->fetch_row();
-            if ($output == 'xml') {
+            if ($this->outputType == 'xml') {
                 $xml = new \DOMDocument('1.0', 'utf-8');
                 $fileInfoNode = $xml->createElement('fileinfo');
                 $xml->appendChild($fileInfoNode);
@@ -1051,12 +1051,8 @@ class Share extends ServiceMethods implements intShare {
         return TRUE;
     }
     
-    public function getMsg($msgId, $output = 'json') {
+    public function getMsg($msgId) {
         $this->zeroizeError();
-        if (!in_array($output, array('xml', 'json'))) {
-            $this->setError(ERROR_INCORRECT_DATA, 'getMsg: incorrect parameter');
-            return FALSE;
-        }
         if ($this->checkMsgAccess($msgId)) {
             $qMsg = $this->dbLink->query(
                     "SELECT `m`.`source`, `m`.`title`, `m`.`text`, `m`.`msgtime`, `u`.`username`, `i`.`fullname` "
@@ -1072,7 +1068,7 @@ class Share extends ServiceMethods implements intShare {
                 return FALSE;
             }
             list($msgSource, $msgTitle, $msgText, $msgTime, $username, $fullName) = $qMsg->fetch_row();
-            if ($output == 'xml') {
+            if ($this->outputType == 'xml') {
                 $xml = new \DOMDocument('1.0', 'utf-8');
                 $msgNode = $xml->createElement('message');
                 $xml->appendChild($msgNode);
@@ -1118,12 +1114,8 @@ class Share extends ServiceMethods implements intShare {
         }
     }
     
-    public function msgFiles($msgId, $output = 'json') {
+    public function msgFiles($msgId) {
         $this->zeroizeError();
-        if (!in_array($output, array('xml', 'json'))) {
-            $this->setError(ERROR_INCORRECT_DATA, 'msgFiles: incorrect parameter');
-            return FALSE;
-        }
         if ($this->checkMsgAccess($msgId)) {
             $qFiles = $this->dbLink->query(
                     "SELECT `r`.`fid`, `f`.`title`, `f`.`name`, `f`.`mime` "
@@ -1136,7 +1128,7 @@ class Share extends ServiceMethods implements intShare {
                 $this->setError(ERROR_NOT_EXECUTED, 'msgFiles: unable to get message files -> '.$this->dbLink->error);
                 return FALSE;
             }
-            if ($output == 'xml') {
+            if ($this->outputType == 'xml') {
                 $xml = new \DOMDocument('1.0', 'utf-8');
                 $filesNode = $xml->createElement('files');
                 $xml->appendChild($filesNode);
@@ -1189,9 +1181,9 @@ class Share extends ServiceMethods implements intShare {
         }
     }
     
-    public function getFileShares($fileId, $userId, $output = 'json') {
+    public function getFileShares($fileId, $userId) {
         $this->zeroizeError();
-        if (!pregGuid($fileId) || !is_integer($userId) || !in_array($output, array('xml', 'json'))) {
+        if (!pregGuid($fileId) || !is_integer($userId)) {
             $this->setError(ERROR_INCORRECT_DATA, 'getFileShares: incorrect parameters');
             return FALSE;
         }
@@ -1218,7 +1210,7 @@ class Share extends ServiceMethods implements intShare {
             $this->setError(ERROR_NOT_EXECUTED, 'getFileShares: unable to get file shares -> '.$this->dbLink->error);
             return FALSE;
         }
-        if ($output == 'xml') {
+        if ($this->outputType == 'xml') {
             $xml = new \DOMDocument('1.0', 'utf-8');
             $sharesNode = $xml->createElement('shares');
             $xml->appendChild($sharesNode);
@@ -1280,9 +1272,9 @@ class Share extends ServiceMethods implements intShare {
         }
     }
     
-    public function getMsgShares($msgId, $userId, $output = 'json') {
+    public function getMsgShares($msgId, $userId) {
         $this->zeroizeError();
-        if (!pregGuid($msgId) || !is_integer($userId) || !in_array($output, array('xml', 'json'))) {
+        if (!pregGuid($msgId) || !is_integer($userId)) {
             $this->setError(ERROR_INCORRECT_DATA, 'getMsgShares: incorrect parameters');
             return FALSE;
         }
@@ -1309,7 +1301,7 @@ class Share extends ServiceMethods implements intShare {
             $this->setError(ERROR_NOT_EXECUTED, 'getMsgShares: unable to get message shares -> '.$this->dbLink->error);
             return FALSE;
         }
-        if ($output == 'xml') {
+        if ($this->outputType == 'xml') {
             $xml = new \DOMDocument('1.0', 'utf-8');
             $sharesNode = $xml->createElement('shares');
             $xml->appendChild($sharesNode);
@@ -1778,10 +1770,10 @@ class Share extends ServiceMethods implements intShare {
         return array('records' => (int) $totalRecs, 'pages' => (int) $totalPages);
     }
     
-    public function userMsgs($userId, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('time'), $ascent = FALSE, $output = 'json') {
+    public function userMsgs($userId, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('time'), $ascent = FALSE) {
         $this->zeroizeError();
         // validate parameters
-        if (!is_integer($userId) || !is_integer($pageNumber) || !is_integer($totalPages) || !is_integer($rpp) || !in_array($output, array('xml', 'json'))) {
+        if (!is_integer($userId) || !is_integer($pageNumber) || !is_integer($totalPages) || !is_integer($rpp)) {
             $this->setError(ERROR_INCORRECT_DATA, 'userMsgs: incorrect parameters');
             return FALSE;
         }
@@ -1883,7 +1875,7 @@ class Share extends ServiceMethods implements intShare {
             $this->setError(ERROR_NOT_EXECUTED, 'userMsgs: unable to get messages -> '.$this->dbLink->error);
             return FALSE;
         }
-        if ($output == 'xml') {
+        if ($this->outputType == 'xml') {
             $xml = new \DOMDocument('1.0', 'utf-8');
             $msgsNode = $xml->createElement('messages');
             $xml->appendChild($msgsNode);
@@ -1906,7 +1898,7 @@ class Share extends ServiceMethods implements intShare {
         }
         while ($msgData = $qResult->fetch_row()) {
             list($msgId, $source, $title, $text, $msgTime, $mtMark) = $msgData;
-            if ($output == 'xml') {
+            if ($this->outputType == 'xml') {
                 $msgNode = $xml->createElement('message');
                 $msgNode->appendChild($xml->createElement('id', $msgId));
                 $msgNode->appendChild($xml->createElement('source', $source));
@@ -1925,7 +1917,7 @@ class Share extends ServiceMethods implements intShare {
                 );
             }
         }
-        if ($output == 'xml') {
+        if ($this->outputType == 'xml') {
             return $xml;
         }
         else {
@@ -1933,9 +1925,9 @@ class Share extends ServiceMethods implements intShare {
         }
     }
     
-    public function msgStripe($userId, $rpp = 20, $output = 'json') {
+    public function msgStripe($userId, $rpp = 20) {
         $this->zeroizeError();// validate parameters
-        if (!is_integer($userId) || !is_integer($rpp) || !in_array($output, array('xml', 'json'))) {
+        if (!is_integer($userId) || !is_integer($rpp)) {
             $this->setError(ERROR_INCORRECT_DATA, 'msgStripe: incorrect parameters');
             return FALSE;
         }
@@ -2000,7 +1992,7 @@ class Share extends ServiceMethods implements intShare {
             $this->setError(ERROR_NOT_EXECUTED, 'msgStripe: unable to get messages -> '.$this->dbLink->error);
             return FALSE;
         }
-        if ($output == 'xml') {
+        if ($this->outputType == 'xml') {
             $xml = new \DOMDocument('1.0', 'utf-8');
             $msgsNode = $xml->createElement('messages');
             $xml->appendChild($msgsNode);
@@ -2023,7 +2015,7 @@ class Share extends ServiceMethods implements intShare {
         }
         while ($msgData = $qResult->fetch_row()) {
             list($msgId, $source, $title, $text, $msgTime, $mtMark) = $msgData;
-            if ($output == 'xml') {
+            if ($this->outputType == 'xml') {
                 $msgNode = $xml->createElement('message');
                 $msgNode->appendChild($xml->createElement('id', $msgId));
                 $msgNode->appendChild($xml->createElement('source', $source));
@@ -2044,7 +2036,7 @@ class Share extends ServiceMethods implements intShare {
                 );
             }
         }
-        if ($output == 'xml') {
+        if ($this->outputType == 'xml') {
             return $xml;
         }
         else {
@@ -2052,9 +2044,9 @@ class Share extends ServiceMethods implements intShare {
         }
     }
     
-    public function appendMsgStripe($userId, $mtmark, $rpp = 20, $output = 'json') {
+    public function appendMsgStripe($userId, $mtmark, $rpp = 20) {
         $this->zeroizeError();
-        if (!is_integer($userId) || !is_integer($rpp) || !is_double($mtmark) || !in_array($output, array('xml', 'json'))) {
+        if (!is_integer($userId) || !is_integer($rpp) || !is_double($mtmark)) {
             $this->setError(ERROR_INCORRECT_DATA, 'appendMsgStripe: incorrect parameters');
             return FALSE;
         }
@@ -2122,7 +2114,7 @@ class Share extends ServiceMethods implements intShare {
             $this->setError(ERROR_NOT_EXECUTED, 'appendMsgStripe: unable to get messages -> '.$this->dbLink->error);
             return FALSE;
         }
-        if ($output == 'xml') {
+        if ($this->outputType == 'xml') {
             $xml = new \DOMDocument('1.0', 'utf-8');
             $msgsNode = $xml->createElement('messages');
             $xml->appendChild($msgsNode);
@@ -2145,7 +2137,7 @@ class Share extends ServiceMethods implements intShare {
         }
         while ($msgData = $qResult->fetch_row()) {
             list($msgId, $source, $title, $text, $msgTime, $mtMark) = $msgData;
-            if ($output == 'xml') {
+            if ($this->outputType == 'xml') {
                 $msgNode = $xml->createElement('message');
                 $msgNode->appendChild($xml->createElement('id', $msgId));
                 $msgNode->appendChild($xml->createElement('source', $source));
@@ -2166,7 +2158,7 @@ class Share extends ServiceMethods implements intShare {
                 );
             }
         }
-        if ($output == 'xml') {
+        if ($this->outputType == 'xml') {
             return $xml;
         }
         else {
@@ -2174,9 +2166,9 @@ class Share extends ServiceMethods implements intShare {
         }
     }
     
-    public function updateMsgStripe($userId, $mtmark, $output = 'json') {
+    public function updateMsgStripe($userId, $mtmark) {
         $this->zeroizeError();
-        if (!is_integer($userId) || !is_double($mtmark) || !in_array($output, array('xml', 'json'))) {
+        if (!is_integer($userId) || !is_double($mtmark)) {
             $this->setError(ERROR_INCORRECT_DATA, 'updateMsgStripe: incorrect parameters');
             return FALSE;
         }
@@ -2244,7 +2236,7 @@ class Share extends ServiceMethods implements intShare {
             $this->setError(ERROR_NOT_EXECUTED, 'updateMsgStripe: unable to get messages -> '.$this->dbLink->error);
             return FALSE;
         }
-        if ($output == 'xml') {
+        if ($this->outputType == 'xml') {
             $xml = new \DOMDocument('1.0', 'utf-8');
             $msgsNode = $xml->createElement('messages');
             $xml->appendChild($msgsNode);
@@ -2267,7 +2259,7 @@ class Share extends ServiceMethods implements intShare {
         }
         while ($msgData = $qResult->fetch_row()) {
             list($msgId, $source, $title, $text, $msgTime, $mtMark) = $msgData;
-            if ($output == 'xml') {
+            if ($this->outputType == 'xml') {
                 $msgNode = $xml->createElement('message');
                 $msgNode->appendChild($xml->createElement('id', $msgId));
                 $msgNode->appendChild($xml->createElement('source', $source));
@@ -2288,7 +2280,7 @@ class Share extends ServiceMethods implements intShare {
                 );
             }
         }
-        if ($output == 'xml') {
+        if ($this->outputType == 'xml') {
             return $xml;
         }
         else {
@@ -2360,10 +2352,10 @@ class Share extends ServiceMethods implements intShare {
         return array('records' => (int) $totalRecs, 'pages' => (int) $totalPages);
     }
     
-    public function userFiles($userId, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('time'), $ascent = FALSE, $output = 'json') {
+    public function userFiles($userId, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('time'), $ascent = FALSE) {
         $this->zeroizeError();
         // validate parameters
-        if (!is_integer($userId) || !is_integer($pageNumber) || !is_integer($totalPages) || !is_integer($rpp) || !in_array($output, array('xml', 'json'))) {
+        if (!is_integer($userId) || !is_integer($pageNumber) || !is_integer($totalPages) || !is_integer($rpp)) {
             $this->setError(ERROR_INCORRECT_DATA, 'userFiles: incorrect parameters');
             return FALSE;
         }
@@ -2465,7 +2457,7 @@ class Share extends ServiceMethods implements intShare {
             $this->setError(ERROR_NOT_EXECUTED, 'userFiles: unable to get files -> '.$this->dbLink->error);
             return FALSE;
         }
-        if ($output == 'xml') {
+        if ($this->outputType == 'xml') {
             $xml = new \DOMDocument('1.0', 'utf-8');
             $filesNode = $xml->createElement('files');
             $xml->appendChild($filesNode);
@@ -2488,7 +2480,7 @@ class Share extends ServiceMethods implements intShare {
         }
         while ($fileData = $qResult->fetch_row()) {
             list($fileId, $title, $fileName, $comment, $mimeType, $fileSize, $fileTime, $mtMark) = $fileData;
-            if ($output == 'xml') {
+            if ($this->outputType == 'xml') {
                 $fileNode = $xml->createElement('file');
                 $fileNode->appendChild($xml->createElement('id', $fileId));
                 $fileNode->appendChild($xml->createElement('title', htmlspecialchars($title)));
@@ -2511,7 +2503,7 @@ class Share extends ServiceMethods implements intShare {
                 );
             }
         }
-        if ($output == 'xml') {
+        if ($this->outputType == 'xml') {
             return $xml;
         }
         else {
@@ -2519,10 +2511,10 @@ class Share extends ServiceMethods implements intShare {
         }
     }
     
-    public function fileStripe($userId, $rpp = 20, $output = 'json') {
+    public function fileStripe($userId, $rpp = 20) {
         $this->zeroizeError();
         // validate parameters
-        if (!is_integer($userId) || !is_integer($rpp) || !in_array($output, array('xml', 'json'))) {
+        if (!is_integer($userId) || !is_integer($rpp)) {
             $this->setError(ERROR_INCORRECT_DATA, 'fileStripe: incorrect parameters');
             return FALSE;
         }
@@ -2587,7 +2579,7 @@ class Share extends ServiceMethods implements intShare {
             $this->setError(ERROR_NOT_EXECUTED, 'fileStripe: unable to get files -> '.$this->dbLink->error);
             return FALSE;
         }
-        if ($output == 'xml') {
+        if ($this->outputType == 'xml') {
             $xml = new \DOMDocument('1.0', 'utf-8');
             $filesNode = $xml->createElement('files');
             $xml->appendChild($filesNode);
@@ -2610,7 +2602,7 @@ class Share extends ServiceMethods implements intShare {
         }
         while ($fileData = $qResult->fetch_row()) {
             list($fileId, $title, $fileName, $comment, $mimeType, $fileSize, $fileTime, $mtMark) = $fileData;
-            if ($output == 'xml') {
+            if ($this->outputType == 'xml') {
                 $fileNode = $xml->createElement('file');
                 $fileNode->appendChild($xml->createElement('id', $fileId));
                 $fileNode->appendChild($xml->createElement('title', htmlspecialchars($title)));
@@ -2635,7 +2627,7 @@ class Share extends ServiceMethods implements intShare {
                 );
             }
         }
-        if ($output == 'xml') {
+        if ($this->outputType == 'xml') {
             return $xml;
         }
         else {
@@ -2643,10 +2635,10 @@ class Share extends ServiceMethods implements intShare {
         }
     }
     
-    public function appendFileStripe($userId, $mtmark, $rpp = 20, $output = 'json') {
+    public function appendFileStripe($userId, $mtmark, $rpp = 20) {
         $this->zeroizeError();
         // validate parameters
-        if (!is_integer($userId) || !is_integer($rpp) || !is_double($mtmark) || !in_array($output, array('xml', 'json'))) {
+        if (!is_integer($userId) || !is_integer($rpp) || !is_double($mtmark)) {
             $this->setError(ERROR_INCORRECT_DATA, 'appendFileStripe: incorrect parameters');
             return FALSE;
         }
@@ -2714,7 +2706,7 @@ class Share extends ServiceMethods implements intShare {
             $this->setError(ERROR_NOT_EXECUTED, 'appendFileStripe: unable to get files -> '.$this->dbLink->error);
             return FALSE;
         }
-        if ($output == 'xml') {
+        if ($this->outputType == 'xml') {
             $xml = new \DOMDocument('1.0', 'utf-8');
             $filesNode = $xml->createElement('files');
             $xml->appendChild($filesNode);
@@ -2737,7 +2729,7 @@ class Share extends ServiceMethods implements intShare {
         }
         while ($fileData = $qResult->fetch_row()) {
             list($fileId, $title, $fileName, $comment, $mimeType, $fileSize, $fileTime, $mtMark) = $fileData;
-            if ($output == 'xml') {
+            if ($this->outputType == 'xml') {
                 $fileNode = $xml->createElement('file');
                 $fileNode->appendChild($xml->createElement('id', $fileId));
                 $fileNode->appendChild($xml->createElement('title', htmlspecialchars($title)));
@@ -2762,7 +2754,7 @@ class Share extends ServiceMethods implements intShare {
                 );
             }
         }
-        if ($output == 'xml') {
+        if ($this->outputType == 'xml') {
             return $xml;
         }
         else {
@@ -2770,10 +2762,10 @@ class Share extends ServiceMethods implements intShare {
         }
     }
     
-    public function updateFileStripe($userId, $mtmark, $output = 'json') {
+    public function updateFileStripe($userId, $mtmark) {
         $this->zeroizeError();
         // validate parameters
-        if (!is_integer($userId) || !is_double($mtmark) || !in_array($output, array('xml', 'json'))) {
+        if (!is_integer($userId) || !is_double($mtmark)) {
             $this->setError(ERROR_INCORRECT_DATA, 'updateFileStripe: incorrect parameters');
             return FALSE;
         }
@@ -2841,7 +2833,7 @@ class Share extends ServiceMethods implements intShare {
             $this->setError(ERROR_NOT_EXECUTED, 'updateFileStripe: unable to get files -> '.$this->dbLink->error);
             return FALSE;
         }
-        if ($output == 'xml') {
+        if ($this->outputType == 'xml') {
             $xml = new \DOMDocument('1.0', 'utf-8');
             $filesNode = $xml->createElement('files');
             $xml->appendChild($filesNode);
@@ -2864,7 +2856,7 @@ class Share extends ServiceMethods implements intShare {
         }
         while ($fileData = $qResult->fetch_row()) {
             list($fileId, $title, $fileName, $comment, $mimeType, $fileSize, $fileTime, $mtMark) = $fileData;
-            if ($output == 'xml') {
+            if ($this->outputType == 'xml') {
                 $fileNode = $xml->createElement('file');
                 $fileNode->appendChild($xml->createElement('id', $fileId));
                 $fileNode->appendChild($xml->createElement('title', htmlspecialchars($title)));
@@ -2889,7 +2881,7 @@ class Share extends ServiceMethods implements intShare {
                 );
             }
         }
-        if ($output == 'xml') {
+        if ($this->outputType == 'xml') {
             return $xml;
         }
         else {
@@ -2941,10 +2933,10 @@ class Share extends ServiceMethods implements intShare {
         return array('records' => (int) $totalRecs, 'pages' => (int) $totalPages);
     }
     
-    public function userSubs($userId, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('time'), $ascent = FALSE, $output = 'json') {
+    public function userSubs($userId, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('time'), $ascent = FALSE) {
         $this->zeroizeError();
         // validate parameters
-        if (!is_integer($userId) || !is_integer($pageNumber) || !is_integer($totalPages) || !is_integer($rpp) || !in_array($output, array('xml', 'json'))) {
+        if (!is_integer($userId) || !is_integer($pageNumber) || !is_integer($totalPages) || !is_integer($rpp)) {
             $this->setError(ERROR_INCORRECT_DATA, 'userSubs: incorrect parameters');
             return FALSE;
         }
@@ -3011,7 +3003,7 @@ class Share extends ServiceMethods implements intShare {
             $this->setError(ERROR_NOT_EXECUTED, 'userSubs: unable to get messages -> '.$this->dbLink->error);
             return FALSE;
         }
-        if ($output == 'xml') {
+        if ($this->outputType == 'xml') {
             $xml = new \DOMDocument('1.0', 'utf-8');
             $msgsNode = $xml->createElement('messages');
             $xml->appendChild($msgsNode);
@@ -3021,7 +3013,7 @@ class Share extends ServiceMethods implements intShare {
         }
         while ($msgData = $qResult->fetch_row()) {
             list($msgId, $source, $title, $text, $msgTime, $mtMark, $userId, $userName, $fullName) = $msgData;
-            if ($output == 'xml') {
+            if ($this->outputType == 'xml') {
                 $msgNode = $xml->createElement('message');
                 // user data
                 $uidAtt = $xml->createAttribute('uid');
@@ -3054,7 +3046,7 @@ class Share extends ServiceMethods implements intShare {
                 );
             }
         }
-        if ($output == 'xml') {
+        if ($this->outputType == 'xml') {
             return $xml;
         }
         else {
@@ -3062,10 +3054,10 @@ class Share extends ServiceMethods implements intShare {
         }
     }
     
-    public function subStripe($userId, $rpp = 20, $output = 'json') {
+    public function subStripe($userId, $rpp = 20) {
         $this->zeroizeError();
         // validate parameters
-        if (!is_integer($userId) || !is_integer($rpp) || !in_array($output, array('xml', 'json'))) {
+        if (!is_integer($userId) || !is_integer($rpp)) {
             $this->setError(ERROR_INCORRECT_DATA, 'subStripes: incorrect parameters');
             return FALSE;
         }
@@ -3095,7 +3087,7 @@ class Share extends ServiceMethods implements intShare {
             $this->setError(ERROR_NOT_EXECUTED, 'subStripes: unable to get messages -> '.$this->dbLink->error);
             return FALSE;
         }
-        if ($output == 'xml') {
+        if ($this->outputType == 'xml') {
             $xml = new \DOMDocument('1.0', 'utf-8');
             $msgsNode = $xml->createElement('messages');
             $xml->appendChild($msgsNode);
@@ -3105,7 +3097,7 @@ class Share extends ServiceMethods implements intShare {
         }
         while ($msgData = $qResult->fetch_row()) {
             list($msgId, $source, $title, $text, $msgTime, $mtMark, $userId, $userName, $fullName) = $msgData;
-            if ($output == 'xml') {
+            if ($this->outputType == 'xml') {
                 $msgNode = $xml->createElement('message');
                 // user data
                 $uidAtt = $xml->createAttribute('uid');
@@ -3140,7 +3132,7 @@ class Share extends ServiceMethods implements intShare {
                 );
             }
         }
-        if ($output == 'xml') {
+        if ($this->outputType == 'xml') {
             return $xml;
         }
         else {
@@ -3148,10 +3140,10 @@ class Share extends ServiceMethods implements intShare {
         }
     }
     
-    public function appendSubStripe($userId, $mtmark, $rpp = 20, $output = 'json') {
+    public function appendSubStripe($userId, $mtmark, $rpp = 20) {
         $this->zeroizeError();
         // validate parameters
-        if (!is_integer($userId) || !is_double($mtmark) || !is_integer($rpp) || !in_array($output, array('xml', 'json'))) {
+        if (!is_integer($userId) || !is_double($mtmark) || !is_integer($rpp)) {
             $this->setError(ERROR_INCORRECT_DATA, 'appendSubStripes: incorrect parameters');
             return FALSE;
         }
@@ -3182,7 +3174,7 @@ class Share extends ServiceMethods implements intShare {
             $this->setError(ERROR_NOT_EXECUTED, 'appendSubStripes: unable to get messages -> '.$this->dbLink->error);
             return FALSE;
         }
-        if ($output == 'xml') {
+        if ($this->outputType == 'xml') {
             $xml = new \DOMDocument('1.0', 'utf-8');
             $msgsNode = $xml->createElement('messages');
             $xml->appendChild($msgsNode);
@@ -3192,7 +3184,7 @@ class Share extends ServiceMethods implements intShare {
         }
         while ($msgData = $qResult->fetch_row()) {
             list($msgId, $source, $title, $text, $msgTime, $mtMark, $userId, $userName, $fullName) = $msgData;
-            if ($output == 'xml') {
+            if ($this->outputType == 'xml') {
                 $msgNode = $xml->createElement('message');
                 // user data
                 $uidAtt = $xml->createAttribute('uid');
@@ -3227,7 +3219,7 @@ class Share extends ServiceMethods implements intShare {
                 );
             }
         }
-        if ($output == 'xml') {
+        if ($this->outputType == 'xml') {
             return $xml;
         }
         else {
@@ -3235,10 +3227,10 @@ class Share extends ServiceMethods implements intShare {
         }
     }
     
-    public function updateSubStripe($userId, $mtmark, $output = 'json') {
+    public function updateSubStripe($userId, $mtmark) {
         $this->zeroizeError();
         // validate parameters
-        if (!is_integer($userId) || !is_double($mtmark) || !in_array($output, array('xml', 'json'))) {
+        if (!is_integer($userId) || !is_double($mtmark)) {
             $this->setError(ERROR_INCORRECT_DATA, 'updateSubStripes: incorrect parameters');
             return FALSE;
         }
@@ -3269,7 +3261,7 @@ class Share extends ServiceMethods implements intShare {
             $this->setError(ERROR_NOT_EXECUTED, 'updateSubStripes: unable to get messages -> '.$this->dbLink->error);
             return FALSE;
         }
-        if ($output == 'xml') {
+        if ($this->outputType == 'xml') {
             $xml = new \DOMDocument('1.0', 'utf-8');
             $msgsNode = $xml->createElement('messages');
             $xml->appendChild($msgsNode);
@@ -3279,7 +3271,7 @@ class Share extends ServiceMethods implements intShare {
         }
         while ($msgData = $qResult->fetch_row()) {
             list($msgId, $source, $title, $text, $msgTime, $mtMark, $userId, $userName, $fullName) = $msgData;
-            if ($output == 'xml') {
+            if ($this->outputType == 'xml') {
                 $msgNode = $xml->createElement('message');
                 // user data
                 $uidAtt = $xml->createAttribute('uid');
@@ -3314,7 +3306,7 @@ class Share extends ServiceMethods implements intShare {
                 );
             }
         }
-        if ($output == 'xml') {
+        if ($this->outputType == 'xml') {
             return $xml;
         }
         else {

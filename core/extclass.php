@@ -29,12 +29,14 @@ interface intServiceMethods {
     public function errId();
     public function errExp();
     public function applyPolicy($flag);
+    public function outputFormat($output = 'xml');
 }
 
 class ServiceMethods implements intServiceMethods {
     protected $errid = 0; // error's id
     protected $errexp = ''; // error's explanation
     protected $usePolicy = TRUE; // flag of the policy application
+    protected $outputType = 'json'; // format of the output data
     
     protected function setError($id, $exp) {
         $this->errid = $id;
@@ -53,7 +55,7 @@ class ServiceMethods implements intServiceMethods {
         return $this->errexp;
     }
     
-    public function applyPolicy($flag) {
+    public function applyPolicy($flag = FALSE) {
         if ($flag) {
             $this->usePolicy = TRUE;
         }
@@ -62,4 +64,15 @@ class ServiceMethods implements intServiceMethods {
         }
     }
     
+    public function outputFormat($output = 'xml') {
+        if ($output == 'xml') {
+            $this->outputType = 'xml';
+        }
+        elseif ($output == 'json') {
+            $this->outputType = 'json';
+        }
+        else {
+            $this->outputType = 'json';
+        }
+    }
 }

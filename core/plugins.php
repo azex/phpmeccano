@@ -251,34 +251,64 @@ class Plugins extends ServiceMethods implements intPlugins {
             $this->setError(ERROR_NOT_EXECUTED, "listUnpacked: ".$this->dbLink->error);
             return FALSE;
         }
-        $xml = new \DOMDocument('1.0', 'utf-8');
-        $unpackedNode = $xml->createElement('unpacked');
-        $xml->appendChild($unpackedNode);
-        while ($row = $qUncpacked->fetch_row()) {
-            if ($curVersion = $this->pluginData($row[0])) {
-                $curSumVersion = calcSumVersion($curVersion["version"]);
-                $newSumVersion = calcSumVersion($row[2]);
-                if ($curSumVersion < $newSumVersion) {
-                    $action = "upgrade";
+        if ($this->outputType == 'xml') {
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $unpackedNode = $xml->createElement('unpacked');
+            $xml->appendChild($unpackedNode);
+            while ($row = $qUncpacked->fetch_row()) {
+                if ($curVersion = $this->pluginData($row[0])) {
+                    $curSumVersion = calcSumVersion($curVersion["version"]);
+                    $newSumVersion = calcSumVersion($row[2]);
+                    if ($curSumVersion < $newSumVersion) {
+                        $action = "upgrade";
+                    }
+                    elseif ($curSumVersion == $newSumVersion) {
+                        $action = "reinstall";
+                    }
+                    elseif ($curSumVersion > $newSumVersion) {
+                        $action = "downgrade";
+                    }
                 }
-                elseif ($curSumVersion == $newSumVersion) {
-                    $action = "reinstall";
+                else {
+                    $action = "install";
                 }
-                elseif ($curSumVersion > $newSumVersion) {
-                    $action = "downgrade";
-                }
+                $pluginNode = $xml->createElement('plugin');
+                $unpackedNode->appendChild($pluginNode);
+                $pluginNode->appendChild($xml->createElement('short', $row[0]));
+                $pluginNode->appendChild($xml->createElement('full', $row[1]));
+                $pluginNode->appendChild($xml->createElement('version', $row[2]));
+                $pluginNode->appendChild($xml->createElement('action', $action));
             }
-            else {
-                $action = "install";
-            }
-            $pluginNode = $xml->createElement('plugin');
-            $unpackedNode->appendChild($pluginNode);
-            $pluginNode->appendChild($xml->createElement('short', $row[0]));
-            $pluginNode->appendChild($xml->createElement('full', $row[1]));
-            $pluginNode->appendChild($xml->createElement('version', $row[2]));
-            $pluginNode->appendChild($xml->createElement('action', $action));
+            return $xml;
         }
-        return $xml;
+        else {
+            $unpacked = array();
+            while ($row = $qUncpacked->fetch_row()) {
+                if ($curVersion = $this->pluginData($row[0])) {
+                    $curSumVersion = calcSumVersion($curVersion["version"]);
+                    $newSumVersion = calcSumVersion($row[2]);
+                    if ($curSumVersion < $newSumVersion) {
+                        $action = "upgrade";
+                    }
+                    elseif ($curSumVersion == $newSumVersion) {
+                        $action = "reinstall";
+                    }
+                    elseif ($curSumVersion > $newSumVersion) {
+                        $action = "downgrade";
+                    }
+                }
+                else {
+                    $action = "install";
+                }
+                $unpacked[] = array(
+                    'short' => $row[0],
+                    'full' => $row[1],
+                    'version' => $row[2],
+                    'action' => $action
+                );
+            }
+            return json_encode($unpacked);
+        }
     }
     
     public function aboutUnpacked($plugin) {
@@ -319,20 +349,37 @@ class Plugins extends ServiceMethods implements intPlugins {
         else {
             $action = "install";
         }
-        $xml = new \DOMDocument('1.0', 'utf-8');
-        $unpackedNode = $xml->createElement('unpacked');
-        $xml->appendChild($unpackedNode);
-        $unpackedNode->appendChild($xml->createElement('short', $shortName));
-        $unpackedNode->appendChild($xml->createElement('full', $fullName));
-        $unpackedNode->appendChild($xml->createElement('version', $version));
-        $unpackedNode->appendChild($xml->createElement('about', $about));
-        $unpackedNode->appendChild($xml->createElement('credits', $credits));
-        $unpackedNode->appendChild($xml->createElement('url', $url));
-        $unpackedNode->appendChild($xml->createElement('email', $email));
-        $unpackedNode->appendChild($xml->createElement('license', $license));
-        $unpackedNode->appendChild($xml->createElement('depends', $depends));
-        $unpackedNode->appendChild($xml->createElement('action', $action));
-        return $xml;
+        if ($this->outputType == 'xml') {
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $unpackedNode = $xml->createElement('unpacked');
+            $xml->appendChild($unpackedNode);
+            $unpackedNode->appendChild($xml->createElement('short', $shortName));
+            $unpackedNode->appendChild($xml->createElement('full', $fullName));
+            $unpackedNode->appendChild($xml->createElement('version', $version));
+            $unpackedNode->appendChild($xml->createElement('about', $about));
+            $unpackedNode->appendChild($xml->createElement('credits', $credits));
+            $unpackedNode->appendChild($xml->createElement('url', $url));
+            $unpackedNode->appendChild($xml->createElement('email', $email));
+            $unpackedNode->appendChild($xml->createElement('license', $license));
+            $unpackedNode->appendChild($xml->createElement('depends', $depends));
+            $unpackedNode->appendChild($xml->createElement('action', $action));
+            return $xml;
+        }
+        else {
+            $unpacked = array(
+                'short' => $shortName,
+                'full' => $fullName,
+                'version' =>$version,
+                'about' => $about,
+                'credits' => $credits,
+                'url' => $url,
+                'email' => $email,
+                'license' => $license,
+                'depends' => $depends,
+                'action' => $action
+            );
+            return json_encode($unpacked);
+        }
     }
     
     public function pluginData($plugin) {
@@ -701,18 +748,32 @@ class Plugins extends ServiceMethods implements intPlugins {
             $this->setError(ERROR_NOT_EXECUTED, "listInstalled: ".$this->dbLink->error);
             return FALSE;
         }
-        $xml = new \DOMDocument('1.0', 'utf-8');
-        $installedNode = $xml->createElement("installed");
-        $xml->appendChild($installedNode);
-        while ($row = $qInstalled->fetch_row()) {
-            $pluginNode = $xml->createElement("plugin");
-            $installedNode->appendChild($pluginNode);
-            $pluginNode->appendChild($xml->createElement("short", $row[0]));
-            $pluginNode->appendChild($xml->createElement("full", $row[1]));
-            $pluginNode->appendChild($xml->createElement("version", $row[2]));
-            $pluginNode->appendChild($xml->createElement("time", $row[3]));
+        if ($this->outputType == 'xml') {
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $installedNode = $xml->createElement("installed");
+            $xml->appendChild($installedNode);
+            while ($row = $qInstalled->fetch_row()) {
+                $pluginNode = $xml->createElement("plugin");
+                $installedNode->appendChild($pluginNode);
+                $pluginNode->appendChild($xml->createElement("short", $row[0]));
+                $pluginNode->appendChild($xml->createElement("full", $row[1]));
+                $pluginNode->appendChild($xml->createElement("version", $row[2]));
+                $pluginNode->appendChild($xml->createElement("time", $row[3]));
+            }
+            return $xml;
         }
-        return $xml;
+        else {
+            $installed = array();
+            while ($row = $qInstalled->fetch_row()) {
+                $installed[] = array(
+                    "short" => $row[0],
+                    "full" => $row[1],
+                    "version" => $row[2],
+                    "time" => $row[3]
+                );
+            }
+            return json_encode($installed);
+        }
     }
     
     public function aboutInstalled($plugin) {
@@ -739,18 +800,34 @@ class Plugins extends ServiceMethods implements intPlugins {
             return FALSE;
         }
         list($shortName, $fullName, $version, $instTime, $about, $credits, $url, $email, $license) = $qPlugin->fetch_row();
-        $xml = new \DOMDocument('1.0', 'utf-8');
-        $installedNode = $xml->createElement("installed");
-        $xml->appendChild($installedNode);
-        $installedNode->appendChild($xml->createElement("short", $shortName));
-        $installedNode->appendChild($xml->createElement("full", $fullName));
-        $installedNode->appendChild($xml->createElement("version", $version));
-        $installedNode->appendChild($xml->createElement("time", $instTime));
-        $installedNode->appendChild($xml->createElement("about", $about));
-        $installedNode->appendChild($xml->createElement("credits", $credits));
-        $installedNode->appendChild($xml->createElement("url", $url));
-        $installedNode->appendChild($xml->createElement("email", $email));
-        $installedNode->appendChild($xml->createElement("license", $license));
-        return $xml;
+        if ($this->outputType == 'xml') {
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $installedNode = $xml->createElement("installed");
+            $xml->appendChild($installedNode);
+            $installedNode->appendChild($xml->createElement("short", $shortName));
+            $installedNode->appendChild($xml->createElement("full", $fullName));
+            $installedNode->appendChild($xml->createElement("version", $version));
+            $installedNode->appendChild($xml->createElement("time", $instTime));
+            $installedNode->appendChild($xml->createElement("about", $about));
+            $installedNode->appendChild($xml->createElement("credits", $credits));
+            $installedNode->appendChild($xml->createElement("url", $url));
+            $installedNode->appendChild($xml->createElement("email", $email));
+            $installedNode->appendChild($xml->createElement("license", $license));
+            return $xml;
+        }
+        else {
+            $installed = array(
+                "short" => $shortName,
+                "full" => $fullName,
+                "version" => $version,
+                "time" => $instTime,
+                "about" =>$about,
+                "credits" => $credits,
+                "url" => $url,
+                "email" => $email,
+                "license" => $license
+            );
+            return json_encode($installed);
+        }
     }
 }

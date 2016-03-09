@@ -317,18 +317,32 @@ class LangMan extends ServiceMethods implements intLangMan{
             $this->setError(ERROR_NOT_FOUND, 'langList: there was not found any language');
             return FALSE;
         }
-        $xml = new \DOMDocument('1.0', 'utf-8');
-        $languages = $xml->createElement('languages');
-        $xml->appendChild($languages);
-        while ($row = $qLang->fetch_row()) {
-            $lang = $xml->createElement('lang');
-            $languages->appendChild($lang);
-            $lang->appendChild($xml->createElement('id', $row[0]));
-            $lang->appendChild($xml->createElement('code', $row[1]));
-            $lang->appendChild($xml->createElement('name', $row[2]));
-            $lang->appendChild($xml->createElement('dir', $row[3]));
+        if ($this->outputType == 'xml') {
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $languages = $xml->createElement('languages');
+            $xml->appendChild($languages);
+            while ($row = $qLang->fetch_row()) {
+                $lang = $xml->createElement('lang');
+                $languages->appendChild($lang);
+                $lang->appendChild($xml->createElement('id', $row[0]));
+                $lang->appendChild($xml->createElement('code', $row[1]));
+                $lang->appendChild($xml->createElement('name', $row[2]));
+                $lang->appendChild($xml->createElement('dir', $row[3]));
+            }
+            return $xml;
         }
-        return $xml;
+        else {
+            $languages = array();
+            while ($row = $qLang->fetch_row()) {
+                $languages[] = array(
+                    'id' => $row[0],
+                    'code' => $row[1],
+                    'name' => $row[2],
+                    'dir' => $row[3]
+                );
+            }
+            return json_encode($languages);
+        }
     }
     
     public function installTitles(\DOMDocument $titles, $validate = TRUE) {
@@ -1540,26 +1554,44 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "FROM `".MECCANO_TPREF."_core_langman_languages` "
                 . "WHERE `code`='$code';");
         list($direction) = $qDirection->fetch_row();
-        // create DOM
-        $xml = new \DOMDocument('1.0', 'utf-8');
-        $textsNode = $xml->createElement('texts');
-        $codeAttribute =  $xml->createAttribute('code');
-        $codeAttribute->value = $code;
-        $dirAttribute = $xml->createAttribute('dir');
-        $dirAttribute->value = $direction;
-        $textsNode->appendChild($codeAttribute);
-        $textsNode->appendChild($dirAttribute);
-        $xml->appendChild($textsNode);
-        while ($row = $qTexts->fetch_row()) {
-            $textNode = $xml->createElement('text');
-            $textsNode->appendChild($textNode);
-            $textNode->appendChild($xml->createElement('id', $row[0]));
-            $textNode->appendChild($xml->createElement('title', $row[1]));
-            $textNode->appendChild($xml->createElement('name', $row[2]));
-            $textNode->appendChild($xml->createElement('created', $row[3]));
-            $textNode->appendChild($xml->createElement('edited', $row[4]));
+        if ($this->outputType == 'xml') {
+            // create DOM
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $textsNode = $xml->createElement('texts');
+            $codeAttribute =  $xml->createAttribute('code');
+            $codeAttribute->value = $code;
+            $dirAttribute = $xml->createAttribute('dir');
+            $dirAttribute->value = $direction;
+            $textsNode->appendChild($codeAttribute);
+            $textsNode->appendChild($dirAttribute);
+            $xml->appendChild($textsNode);
+            while ($row = $qTexts->fetch_row()) {
+                $textNode = $xml->createElement('text');
+                $textsNode->appendChild($textNode);
+                $textNode->appendChild($xml->createElement('id', $row[0]));
+                $textNode->appendChild($xml->createElement('title', $row[1]));
+                $textNode->appendChild($xml->createElement('name', $row[2]));
+                $textNode->appendChild($xml->createElement('created', $row[3]));
+                $textNode->appendChild($xml->createElement('edited', $row[4]));
+            }
+            return $xml;
         }
-        return $xml;
+        else {
+            $textsNode = array();
+            $textsNode['code'] = $code;
+            $textsNode['dir'] = $direction;
+            $textsNode['texts'] = array();
+            while ($row = $qTexts->fetch_row()) {
+                $textsNode['texts'][] = array(
+                    'id' => $row[0],
+                    'title' => $row[1],
+                    'name' => $row[2],
+                    'created' => $row[3],
+                    'edited' => $row[4]
+                );
+            }
+            return json_encode($textsNode);
+        }
     }
     
     public function getTextById($id) {
@@ -1704,26 +1736,44 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "FROM `".MECCANO_TPREF."_core_langman_languages` "
                 . "WHERE `code`='$code';");
         list($direction) = $qDirection->fetch_row();
-        // create DOM
-        $xml = new \DOMDocument('1.0', 'utf-8');
-        $textsNode = $xml->createElement('texts');
-        $codeAttribute =  $xml->createAttribute('code');
-        $codeAttribute->value = $code;
-        $dirAttribute = $xml->createAttribute('dir');
-        $dirAttribute->value = $direction;
-        $textsNode->appendChild($codeAttribute);
-        $textsNode->appendChild($dirAttribute);
-        $xml->appendChild($textsNode);
-        while ($row = $qTexts->fetch_row()) {
-            $textNode = $xml->createElement('text');
-            $textsNode->appendChild($textNode);
-            $textNode->appendChild($xml->createElement('id', $row[0]));
-            $textNode->appendChild($xml->createElement('title', $row[1]));
-            $textNode->appendChild($xml->createElement('name', $row[2]));
-            $textNode->appendChild($xml->createElement('created', $row[3]));
-            $textNode->appendChild($xml->createElement('edited', $row[4]));
+        if ($this->outputType == 'xml') {
+            // create DOM
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $textsNode = $xml->createElement('texts');
+            $codeAttribute =  $xml->createAttribute('code');
+            $codeAttribute->value = $code;
+            $dirAttribute = $xml->createAttribute('dir');
+            $dirAttribute->value = $direction;
+            $textsNode->appendChild($codeAttribute);
+            $textsNode->appendChild($dirAttribute);
+            $xml->appendChild($textsNode);
+            while ($row = $qTexts->fetch_row()) {
+                $textNode = $xml->createElement('text');
+                $textsNode->appendChild($textNode);
+                $textNode->appendChild($xml->createElement('id', $row[0]));
+                $textNode->appendChild($xml->createElement('title', $row[1]));
+                $textNode->appendChild($xml->createElement('name', $row[2]));
+                $textNode->appendChild($xml->createElement('created', $row[3]));
+                $textNode->appendChild($xml->createElement('edited', $row[4]));
+            }
+            return $xml;
         }
-        return $xml;
+        else {
+            $textsNode = array();
+            $textsNode['code'] = $code;
+            $textsNode['dir'] = $direction;
+            $textsNode['texts'] = array();
+            while ($row = $qTexts->fetch_row()) {
+                $textsNode['texts'][] = array(
+                    'id' => $row[0],
+                    'title' => $row[1],
+                    'name' => $row[2],
+                    'created' => $row[3],
+                    'edited' => $row[4]
+                );
+            }
+            return json_encode($textsNode);
+        }
     }
     
     public function getTexts($section, $plugin, $code = MECCANO_DEF_LANG) {
@@ -1881,24 +1931,40 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "FROM `".MECCANO_TPREF."_core_langman_languages` "
                 . "WHERE `code`='$code';");
         list($direction) = $qDirection->fetch_row();
-        // create DOM
-        $xml = new \DOMDocument('1.0', 'utf-8');
-        $titlesNode = $xml->createElement('titles');
-        $codeAttribute =  $xml->createAttribute('code');
-        $codeAttribute->value = $code;
-        $dirAttribute = $xml->createAttribute('dir');
-        $dirAttribute->value = $direction;
-        $titlesNode->appendChild($codeAttribute);
-        $titlesNode->appendChild($dirAttribute);
-        $xml->appendChild($titlesNode);
-        while ($row = $qTitles->fetch_row()) {
-            $titleNode = $xml->createElement('title');
-            $titlesNode->appendChild($titleNode);
-            $titleNode->appendChild($xml->createElement('id', $row[0]));
-            $titleNode->appendChild($xml->createElement('title', $row[1]));
-            $titleNode->appendChild($xml->createElement('name', $row[2]));
+        if ($this->outputType == 'xml') {
+            // create DOM
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $titlesNode = $xml->createElement('titles');
+            $codeAttribute =  $xml->createAttribute('code');
+            $codeAttribute->value = $code;
+            $dirAttribute = $xml->createAttribute('dir');
+            $dirAttribute->value = $direction;
+            $titlesNode->appendChild($codeAttribute);
+            $titlesNode->appendChild($dirAttribute);
+            $xml->appendChild($titlesNode);
+            while ($row = $qTitles->fetch_row()) {
+                $titleNode = $xml->createElement('title');
+                $titlesNode->appendChild($titleNode);
+                $titleNode->appendChild($xml->createElement('id', $row[0]));
+                $titleNode->appendChild($xml->createElement('title', $row[1]));
+                $titleNode->appendChild($xml->createElement('name', $row[2]));
+            }
+            return $xml;
         }
-        return $xml;
+        else {
+            $titlesNode = array();
+            $titlesNode['code'] = $code;
+            $titlesNode['dir'] = $direction;
+            $titlesNode['titles'] = array();
+            while ($row = $qTitles->fetch_row()) {
+                $titlesNode['titles'][] = array(
+                    'id' => $row[0],
+                    'title' => $row[1],
+                    'name' => $row[2]
+                );
+            }
+            return json_decode($titlesNode);
+        }
     }
     
     public function getAllTitlesXML($section, $plugin, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE) {
@@ -1959,24 +2025,40 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "FROM `".MECCANO_TPREF."_core_langman_languages` "
                 . "WHERE `code`='$code';");
         list($direction) = $qDirection->fetch_row();
-        // create DOM
-        $xml = new \DOMDocument('1.0', 'utf-8');
-        $titlesNode = $xml->createElement('titles');
-        $codeAttribute =  $xml->createAttribute('code');
-        $codeAttribute->value = $code;
-        $dirAttribute = $xml->createAttribute('dir');
-        $dirAttribute->value = $direction;
-        $titlesNode->appendChild($codeAttribute);
-        $titlesNode->appendChild($dirAttribute);
-        $xml->appendChild($titlesNode);
-        while ($row = $qTitles->fetch_row()) {
-            $titleNode = $xml->createElement('title');
-            $titlesNode->appendChild($titleNode);
-            $titleNode->appendChild($xml->createElement('id', $row[0]));
-            $titleNode->appendChild($xml->createElement('title', $row[1]));
-            $titleNode->appendChild($xml->createElement('name', $row[2]));
+        if ($this->outputType == 'xml') {
+            // create DOM
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $titlesNode = $xml->createElement('titles');
+            $codeAttribute =  $xml->createAttribute('code');
+            $codeAttribute->value = $code;
+            $dirAttribute = $xml->createAttribute('dir');
+            $dirAttribute->value = $direction;
+            $titlesNode->appendChild($codeAttribute);
+            $titlesNode->appendChild($dirAttribute);
+            $xml->appendChild($titlesNode);
+            while ($row = $qTitles->fetch_row()) {
+                $titleNode = $xml->createElement('title');
+                $titlesNode->appendChild($titleNode);
+                $titleNode->appendChild($xml->createElement('id', $row[0]));
+                $titleNode->appendChild($xml->createElement('title', $row[1]));
+                $titleNode->appendChild($xml->createElement('name', $row[2]));
+            }
+            return $xml;
         }
-        return $xml;
+        else {
+            $titlesNode = array();
+            $titlesNode['code'] = $code;
+            $titlesNode['dir'] = $direction;
+            $titlesNode['titles'] = array();
+            while ($row = $qTitles->fetch_row()) {
+                $titlesNode['titles'][] = array(
+                    'id' => $row[0],
+                    'title' => $row[1],
+                    'name' => $row[2]
+                );
+            }
+            return json_decode($titlesNode);
+        }
     }
     
     public function getTitleById($id) {
@@ -2081,21 +2163,37 @@ class LangMan extends ServiceMethods implements intLangMan{
             $this->setError(ERROR_NOT_FOUND, 'getTextSectionsXML: unable to find defined plugin');
             return FALSE;
         }
-        $xml = new \DOMDocument('1.0', 'utf-8');
-        $sectionsNode = $xml->createElement('sections');
-        $attr_plugin = $xml->createAttribute('plugin');
-        $attr_plugin->value = $plugin;
-        $sectionsNode->appendChild($attr_plugin);
-        $xml->appendChild($sectionsNode);
-        while ($row = $qSections->fetch_row()) {
-            $sectionNode = $xml->createElement('section');
-            $sectionsNode->appendChild($sectionNode);
-            $sectionNode->appendChild($xml->createElement('id', $row[0]));
-            $sectionNode->appendChild($xml->createElement('name', $row[1]));
-            $sectionNode->appendChild($xml->createElement('static', $row[2]));
-            $sectionNode->appendChild($xml->createElement('contains', $row[3]));
+        if ($this->outputType == 'xml') {
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $sectionsNode = $xml->createElement('sections');
+            $attr_plugin = $xml->createAttribute('plugin');
+            $attr_plugin->value = $plugin;
+            $sectionsNode->appendChild($attr_plugin);
+            $xml->appendChild($sectionsNode);
+            while ($row = $qSections->fetch_row()) {
+                $sectionNode = $xml->createElement('section');
+                $sectionsNode->appendChild($sectionNode);
+                $sectionNode->appendChild($xml->createElement('id', $row[0]));
+                $sectionNode->appendChild($xml->createElement('name', $row[1]));
+                $sectionNode->appendChild($xml->createElement('static', $row[2]));
+                $sectionNode->appendChild($xml->createElement('contains', $row[3]));
+            }
+            return $xml;
         }
-        return $xml;
+        else {
+            $sectionsNode = array();
+            $sectionsNode['plugin'] = $olugin;
+            $sectionsNode['sections'] = array();
+            while ($row = $qSections->fetch_row()) {
+                $sectionsNode['sections'][] = array(
+                    'id' => $row[0],
+                    'name' => $row[1],
+                    'static' => $row[2],
+                    'contains' => $row[3]
+                );
+            }
+            return json_encode($sectionsNode);
+        }
     }
     
     public function sumTitleSections($plugin, $rpp = 20) {
@@ -2179,21 +2277,37 @@ class LangMan extends ServiceMethods implements intLangMan{
             $this->setError(ERROR_NOT_FOUND, 'getTitleSectionsXML: unable to find defined plugin');
             return FALSE;
         }
-        $xml = new \DOMDocument('1.0', 'utf-8');
-        $sectionsNode = $xml->createElement('sections');
-        $attr_plugin = $xml->createAttribute('plugin');
-        $attr_plugin->value = $plugin;
-        $sectionsNode->appendChild($attr_plugin);
-        $xml->appendChild($sectionsNode);
-        while ($row = $qSections->fetch_row()) {
-            $sectionNode = $xml->createElement('section');
-            $sectionsNode->appendChild($sectionNode);
-            $sectionNode->appendChild($xml->createElement('id', $row[0]));
-            $sectionNode->appendChild($xml->createElement('name', $row[1]));
-            $sectionNode->appendChild($xml->createElement('static', $row[2]));
-            $sectionNode->appendChild($xml->createElement('contains', $row[3]));
+        if ($this->outputType == 'xml') {
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $sectionsNode = $xml->createElement('sections');
+            $attr_plugin = $xml->createAttribute('plugin');
+            $attr_plugin->value = $plugin;
+            $sectionsNode->appendChild($attr_plugin);
+            $xml->appendChild($sectionsNode);
+            while ($row = $qSections->fetch_row()) {
+                $sectionNode = $xml->createElement('section');
+                $sectionsNode->appendChild($sectionNode);
+                $sectionNode->appendChild($xml->createElement('id', $row[0]));
+                $sectionNode->appendChild($xml->createElement('name', $row[1]));
+                $sectionNode->appendChild($xml->createElement('static', $row[2]));
+                $sectionNode->appendChild($xml->createElement('contains', $row[3]));
+            }
+            return $xml;
         }
-        return $xml;
+        else {
+            $sectionsNode = array();
+            $sectionsNode['plugin'] = $plugin;
+            $sectionsNode['sections'] = array();
+            while ($row = $qSections->fetch_row()) {
+                $sectionsNode['sections'][] = array(
+                    'id' => $row[0],
+                    'name' => $row[1],
+                    'static' => $row[2],
+                    'contains' => $row[3]
+                );
+            }
+            return json_encode($sectionsNode);;
+        }
     }
     
     public function sumTextNames($plugin, $section, $rpp = 20) {
@@ -2286,28 +2400,49 @@ class LangMan extends ServiceMethods implements intLangMan{
             $this->setError(ERROR_NOT_FOUND, 'getTextNamesXML: unable to find defined section');
             return FALSE;
         }
-        $xml = new \DOMDocument('1.0', 'utf-8');
-        $pageNode = $xml->createElement('page');
-        $attr_plugin = $xml->createAttribute('plugin');
-        $attr_plugin->value = $plugin;
-        $pageNode->appendChild($attr_plugin);
-        $attr_section = $xml->createAttribute('section');
-        $attr_section->value = $section;
-        $pageNode->appendChild($attr_section);
-        $xml->appendChild($pageNode);
-        while ($row = $qNames->fetch_row()) {
-            $textNode = $xml->createElement('text');
-            $pageNode->appendChild($textNode);
-            $textNode->appendChild($xml->createElement('id', $row[0]));
-            $textNode->appendChild($xml->createElement('name', $row[1]));
-            $languagesNode = $xml->createElement('languages');
-            $languagesArray = explode(";", $row[2]);
-            foreach ($languagesArray as $langCode) {
-                $languagesNode->appendChild($xml->createElement('code', $langCode));
+        if ($this->outputType == 'xml') {
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $pageNode = $xml->createElement('page');
+            $attr_plugin = $xml->createAttribute('plugin');
+            $attr_plugin->value = $plugin;
+            $pageNode->appendChild($attr_plugin);
+            $attr_section = $xml->createAttribute('section');
+            $attr_section->value = $section;
+            $pageNode->appendChild($attr_section);
+            $xml->appendChild($pageNode);
+            while ($row = $qNames->fetch_row()) {
+                $textNode = $xml->createElement('text');
+                $pageNode->appendChild($textNode);
+                $textNode->appendChild($xml->createElement('id', $row[0]));
+                $textNode->appendChild($xml->createElement('name', $row[1]));
+                $languagesNode = $xml->createElement('languages');
+                $languagesArray = explode(";", $row[2]);
+                foreach ($languagesArray as $langCode) {
+                    $languagesNode->appendChild($xml->createElement('code', $langCode));
+                }
+                $textNode->appendChild($languagesNode);
             }
-            $textNode->appendChild($languagesNode);
+            return $xml;
         }
-        return $xml;
+        else {
+            $pageNode = array();
+            $pageNode['plugin'] = $plugin;
+            $pageNode['section'] = $section;
+            $pageNode['texts'] = array();
+            while ($row = $qNames->fetch_row()) {
+                $languagesArray = explode(";", $row[2]);
+                $lCodes = array();
+                foreach ($languagesArray as $langCode) {
+                    $lCodes[] = $langCode;
+                }
+                $pageNode['texts'][] = array(
+                    'id' => $row[0],
+                    'name' => $row[1],
+                    'languages' => $lCodes
+                );
+            }
+            return json_encode($pageNode);
+        }
     }
     
     public function sumTitleNames($plugin, $section, $rpp = 20) {
@@ -2400,27 +2535,48 @@ class LangMan extends ServiceMethods implements intLangMan{
             $this->setError(ERROR_NOT_FOUND, 'getTitleNamesXML: unable to find defined section');
             return FALSE;
         }
-        $xml = new \DOMDocument('1.0', 'utf-8');
-        $pageNode = $xml->createElement('page');
-        $attr_plugin = $xml->createAttribute('plugin');
-        $attr_plugin->value = $plugin;
-        $pageNode->appendChild($attr_plugin);
-        $attr_section = $xml->createAttribute('section');
-        $attr_section->value = $section;
-        $pageNode->appendChild($attr_section);
-        $xml->appendChild($pageNode);
-        while ($row = $qNames->fetch_row()) {
-            $titleNode = $xml->createElement('title');
-            $pageNode->appendChild($titleNode);
-            $titleNode->appendChild($xml->createElement('id', $row[0]));
-            $titleNode->appendChild($xml->createElement('name', $row[1]));
-            $languagesNode = $xml->createElement('languages');
-            $languagesArray = explode(";", $row[2]);
-            foreach ($languagesArray as $langCode) {
-                $languagesNode->appendChild($xml->createElement('code', $langCode));
+        if ($this->outputType == 'xml') {
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $pageNode = $xml->createElement('page');
+            $attr_plugin = $xml->createAttribute('plugin');
+            $attr_plugin->value = $plugin;
+            $pageNode->appendChild($attr_plugin);
+            $attr_section = $xml->createAttribute('section');
+            $attr_section->value = $section;
+            $pageNode->appendChild($attr_section);
+            $xml->appendChild($pageNode);
+            while ($row = $qNames->fetch_row()) {
+                $titleNode = $xml->createElement('title');
+                $pageNode->appendChild($titleNode);
+                $titleNode->appendChild($xml->createElement('id', $row[0]));
+                $titleNode->appendChild($xml->createElement('name', $row[1]));
+                $languagesNode = $xml->createElement('languages');
+                $languagesArray = explode(";", $row[2]);
+                foreach ($languagesArray as $langCode) {
+                    $languagesNode->appendChild($xml->createElement('code', $langCode));
+                }
+                $titleNode->appendChild($languagesNode);
             }
-            $titleNode->appendChild($languagesNode);
+            return $xml;
         }
-        return $xml;
+        else {
+            $pageNode = array();
+            $pageNode['plugin'] = $plugin;
+            $pageNode['section'] = $section;
+            $pageNode['titles'] = array();
+            while ($row = $qNames->fetch_row()) {
+                $languagesArray = explode(";", $row[2]);
+                $lCodes = array();
+                foreach ($languagesArray as $langCode) {
+                    $lCodes[] = $langCode;
+                }
+                $pageNode['titles'][] = array(
+                    'id' => $row[0],
+                    'name' => $row[1],
+                    'languages' => $lCodes
+                );
+            }
+            return json_encode($pageNode);
+        }
     }
 }

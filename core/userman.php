@@ -236,15 +236,28 @@ class UserMan extends ServiceMethods implements intUserMan{
                 . "WHERE `groupid`=$groupId ;");
         $about = $qAbout->fetch_row();
         $sum = $qSum->fetch_row();
-        $xml = new \DOMDocument('1.0', 'utf-8');
-        $aboutNode = $xml->createElement('group');
-        $xml->appendChild($aboutNode);
-        $aboutNode->appendChild($xml->createElement('name', $about[0]));
-        $aboutNode->appendChild($xml->createElement('description', $about[1]));
-        $aboutNode->appendChild($xml->createElement('time', $about[2]));
-        $aboutNode->appendChild($xml->createElement('active', $about[3]));
-        $aboutNode->appendChild($xml->createElement('usum', $sum[0]));
-        return $xml;
+        if ($this->outputType == 'xml') {
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $aboutNode = $xml->createElement('group');
+            $xml->appendChild($aboutNode);
+            $aboutNode->appendChild($xml->createElement('name', $about[0]));
+            $aboutNode->appendChild($xml->createElement('description', $about[1]));
+            $aboutNode->appendChild($xml->createElement('time', $about[2]));
+            $aboutNode->appendChild($xml->createElement('active', $about[3]));
+            $aboutNode->appendChild($xml->createElement('usum', $sum[0]));
+            return $xml;
+        }
+        else {
+            return json_encode(
+                    array(
+                        'name' => $about[0],
+                        'description' => $about[1],
+                        'time' => $about[2],
+                        'active' => $about[3],
+                        'usum' => $sum[0]
+                    )
+                    );
+        }
     }
     
     public function setGroupName($groupId, $groupName, $log = TRUE) {
@@ -446,18 +459,32 @@ class UserMan extends ServiceMethods implements intUserMan{
             $this->setError(ERROR_NOT_EXECUTED, 'getGroups: group info page could not be gotten -> '.$this->dbLink->error);
             return FALSE;
         }
-        $xml = new \DOMDocument('1.0', 'utf-8');
-        $groupsNode = $xml->createElement('groups');
-        $xml->appendChild($groupsNode);
-        while ($row = $qResult->fetch_array(MYSQL_NUM)) {
-            $groupNode = $xml->createElement('group');
-            $groupsNode->appendChild($groupNode);
-            $groupNode->appendChild($xml->createElement('id', $row[0]));
-            $groupNode->appendChild($xml->createElement('name', $row[1]));
-            $groupNode->appendChild($xml->createElement('time', $row[2]));
-            $groupNode->appendChild($xml->createElement('active', $row[3]));
+        if ($this->outputType = 'xml') {
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $groupsNode = $xml->createElement('groups');
+            $xml->appendChild($groupsNode);
+            while ($row = $qResult->fetch_row()) {
+                $groupNode = $xml->createElement('group');
+                $groupsNode->appendChild($groupNode);
+                $groupNode->appendChild($xml->createElement('id', $row[0]));
+                $groupNode->appendChild($xml->createElement('name', $row[1]));
+                $groupNode->appendChild($xml->createElement('time', $row[2]));
+                $groupNode->appendChild($xml->createElement('active', $row[3]));
+            }
+            return $xml;
         }
-        return $xml;
+        else {
+            $groupsNode = array();
+            while ($row = $qResult->fetch_row()) {
+                $groupsNode[] = array(
+                    'id' => $row[0],
+                    'name' => $row[1],
+                    'time' => $row[2],
+                    'active' => $row[3]
+                );
+            }
+            return json_encode($groupsNode);
+        }
     }
     
     public function getAllGroups($orderBy = array('id'), $ascent = FALSE) {
@@ -481,7 +508,7 @@ class UserMan extends ServiceMethods implements intUserMan{
             }
         }
         else {
-            $this->setError(ERROR_INCORRECT_DATA, 'getGroups: value of $orderBy must be string or array');
+            $this->setError(ERROR_INCORRECT_DATA, 'getAllGroups: value of $orderBy must be string or array');
             return FALSE;
         }
         if ($ascent == TRUE) {
@@ -494,21 +521,35 @@ class UserMan extends ServiceMethods implements intUserMan{
                 . "FROM `".MECCANO_TPREF."_core_userman_groups` "
                 . "ORDER BY `$orderBy` $direct ;");
         if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'getGroups: group info page could not be gotten -> '.$this->dbLink->error);
+            $this->setError(ERROR_NOT_EXECUTED, 'getAllGroups: group info page could not be gotten -> '.$this->dbLink->error);
             return FALSE;
         }
-        $xml = new \DOMDocument('1.0', 'utf-8');
-        $groupsNode = $xml->createElement('groups');
-        $xml->appendChild($groupsNode);
-        while ($row = $qResult->fetch_array(MYSQL_NUM)) {
-            $groupNode = $xml->createElement('group');
-            $groupsNode->appendChild($groupNode);
-            $groupNode->appendChild($xml->createElement('id', $row[0]));
-            $groupNode->appendChild($xml->createElement('name', $row[1]));
-            $groupNode->appendChild($xml->createElement('time', $row[2]));
-            $groupNode->appendChild($xml->createElement('active', $row[3]));
+        if ($this->outputType == 'xml') {
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $groupsNode = $xml->createElement('groups');
+            $xml->appendChild($groupsNode);
+            while ($row = $qResult->fetch_row()) {
+                $groupNode = $xml->createElement('group');
+                $groupsNode->appendChild($groupNode);
+                $groupNode->appendChild($xml->createElement('id', $row[0]));
+                $groupNode->appendChild($xml->createElement('name', $row[1]));
+                $groupNode->appendChild($xml->createElement('time', $row[2]));
+                $groupNode->appendChild($xml->createElement('active', $row[3]));
+            }
+            return $xml;
         }
-        return $xml;
+        else {
+            $groupsNode = array();
+            while ($row = $qResult->fetch_row()) {
+                $groupsNode[] = array(
+                    'id' => $row[0],
+                    'name' => $row[1],
+                    'time' => $row[2],
+                    'active' => $row[3]
+                );
+            }
+            return json_encode($groupsNode);
+        }
     }
 
     //user methods
@@ -801,17 +842,32 @@ class UserMan extends ServiceMethods implements intUserMan{
             return FALSE;
         }
         $about = $qAbout->fetch_row();
-        $xml = new \DOMDocument('1.0', 'utf-8');
-        $aboutNode = $xml->createElement('user');
-        $xml->appendChild($aboutNode);
-        $aboutNode->appendChild($xml->createElement('username', $about[0]));
-        $aboutNode->appendChild($xml->createElement('fullname', $about[1]));
-        $aboutNode->appendChild($xml->createElement('email', $about[2]));
-        $aboutNode->appendChild($xml->createElement('time', $about[3]));
-        $aboutNode->appendChild($xml->createElement('active', $about[4]));
-        $aboutNode->appendChild($xml->createElement('gid', $about[5]));
-        $aboutNode->appendChild($xml->createElement('group', $about[6]));
-        return $xml;
+        if ($this->outputType == 'xml') {
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $aboutNode = $xml->createElement('user');
+            $xml->appendChild($aboutNode);
+            $aboutNode->appendChild($xml->createElement('username', $about[0]));
+            $aboutNode->appendChild($xml->createElement('fullname', $about[1]));
+            $aboutNode->appendChild($xml->createElement('email', $about[2]));
+            $aboutNode->appendChild($xml->createElement('time', $about[3]));
+            $aboutNode->appendChild($xml->createElement('active', $about[4]));
+            $aboutNode->appendChild($xml->createElement('gid', $about[5]));
+            $aboutNode->appendChild($xml->createElement('group', $about[6]));
+            return $xml;
+        }
+        else {
+            return json_encode(
+                    array(
+                        'username' => $about[0],
+                        'fullname' => $about[1],
+                        'email' => $about[2],
+                        'time' => $about[3],
+                        'active' => $about[4],
+                        'gid' => $about[5],
+                        'group' => $about[6]
+                    )
+                    );
+        }
     }
     
     public function userPasswords($userId) {
@@ -835,17 +891,30 @@ class UserMan extends ServiceMethods implements intUserMan{
             $this->setError(ERROR_NOT_FOUND, 'userPasswords: user not found');
             return FALSE;
         }
-        $xml = new \DOMDocument('1.0', 'utf-8');
-        $securityNode = $xml->createElement('security');
-        $xml->appendChild($securityNode);
-        while ($row = $qPassw->fetch_row()) {
-            $passwNode = $xml->createElement('password');
-            $securityNode->appendChild($passwNode);
-            $passwNode->appendChild($xml->createElement('id', $row[0]));
-            $passwNode->appendChild($xml->createElement('description', $row[1]));
-            $passwNode->appendChild($xml->createElement('limited', $row[2]));
+        if ($this->outputType == 'xml') {
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $securityNode = $xml->createElement('security');
+            $xml->appendChild($securityNode);
+            while ($row = $qPassw->fetch_row()) {
+                $passwNode = $xml->createElement('password');
+                $securityNode->appendChild($passwNode);
+                $passwNode->appendChild($xml->createElement('id', $row[0]));
+                $passwNode->appendChild($xml->createElement('description', $row[1]));
+                $passwNode->appendChild($xml->createElement('limited', $row[2]));
+            }
+            return $xml;
         }
-        return $xml;
+        else {
+            $securityNode = array();
+            while ($row = $qPassw->fetch_row()) {
+                $securityNode[] = array(
+                    'id' => $row[0],
+                    'description' => $row[1],
+                    'limited' => $row[2]
+                );
+            }
+            return json_encode($securityNode);
+        }
     }
     
     public function createPassword($userId, $description, $length = 8, $underline = TRUE, $minus = FALSE, $special = FALSE, $log = TRUE) {
@@ -1325,22 +1394,40 @@ class UserMan extends ServiceMethods implements intUserMan{
             $this->setError(ERROR_NOT_EXECUTED, 'getUsers: unable to get user info page -> '.$this->dbLink->error);
             return FALSE;
         }
-        $xml = new \DOMDocument('1.0', 'utf-8');
-        $usersNode = $xml->createElement('users');
-        $xml->appendChild($usersNode);
-        while ($row = $qResult->fetch_array(MYSQL_NUM)) {
-            $userNode = $xml->createElement('user');
-            $usersNode->appendChild($userNode);
-            $userNode->appendChild($xml->createElement('id', $row[0]));
-            $userNode->appendChild($xml->createElement('username', $row[1]));
-            $userNode->appendChild($xml->createElement('fullname', $row[2]));
-            $userNode->appendChild($xml->createElement('email', $row[3]));
-            $userNode->appendChild($xml->createElement('group', $row[4]));
-            $userNode->appendChild($xml->createElement('gid', $row[5]));
-            $userNode->appendChild($xml->createElement('time', $row[6]));
-            $userNode->appendChild($xml->createElement('active', $row[7]));
+        if ($this->outputType == 'xml') {
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $usersNode = $xml->createElement('users');
+            $xml->appendChild($usersNode);
+            while ($row = $qResult->fetch_row()) {
+                $userNode = $xml->createElement('user');
+                $usersNode->appendChild($userNode);
+                $userNode->appendChild($xml->createElement('id', $row[0]));
+                $userNode->appendChild($xml->createElement('username', $row[1]));
+                $userNode->appendChild($xml->createElement('fullname', $row[2]));
+                $userNode->appendChild($xml->createElement('email', $row[3]));
+                $userNode->appendChild($xml->createElement('group', $row[4]));
+                $userNode->appendChild($xml->createElement('gid', $row[5]));
+                $userNode->appendChild($xml->createElement('time', $row[6]));
+                $userNode->appendChild($xml->createElement('active', $row[7]));
+            }
+            return $xml;
         }
-        return $xml;
+        else {
+            $usersNode = array();
+            while ($row = $qResult->fetch_row()) {
+                $usersNode[] = array(
+                    'id' => $row[0],
+                    'username' => $row[1],
+                    'fullname' => $row[2],
+                    'email' => $row[3],
+                    'group' => $row[4],
+                    'gid' => $row[5],
+                    'time' => $row[6],
+                    'active' => $row[7]
+                );
+            }
+            return json_encode($usersNode);
+        }
     }
     
     public function getAllUsers($orderBy = array('id'), $ascent = FALSE) {
@@ -1384,22 +1471,40 @@ class UserMan extends ServiceMethods implements intUserMan{
             $this->setError(ERROR_NOT_EXECUTED, 'getAllUsers: unable to get user info page -> '.$this->dbLink->error);
             return FALSE;
         }
-        $xml = new \DOMDocument('1.0', 'utf-8');
-        $usersNode = $xml->createElement('users');
-        $xml->appendChild($usersNode);
-        while ($row = $qResult->fetch_array(MYSQL_NUM)) {
-            $userNode = $xml->createElement('user');
-            $usersNode->appendChild($userNode);
-            $userNode->appendChild($xml->createElement('id', $row[0]));
-            $userNode->appendChild($xml->createElement('username', $row[1]));
-            $userNode->appendChild($xml->createElement('fullname', $row[2]));
-            $userNode->appendChild($xml->createElement('email', $row[3]));
-            $userNode->appendChild($xml->createElement('group', $row[4]));
-            $userNode->appendChild($xml->createElement('gid', $row[5]));
-            $userNode->appendChild($xml->createElement('time', $row[6]));
-            $userNode->appendChild($xml->createElement('active', $row[7]));
+        if ($this->outputType == 'xml') {
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $usersNode = $xml->createElement('users');
+            $xml->appendChild($usersNode);
+            while ($row = $qResult->fetch_row()) {
+                $userNode = $xml->createElement('user');
+                $usersNode->appendChild($userNode);
+                $userNode->appendChild($xml->createElement('id', $row[0]));
+                $userNode->appendChild($xml->createElement('username', $row[1]));
+                $userNode->appendChild($xml->createElement('fullname', $row[2]));
+                $userNode->appendChild($xml->createElement('email', $row[3]));
+                $userNode->appendChild($xml->createElement('group', $row[4]));
+                $userNode->appendChild($xml->createElement('gid', $row[5]));
+                $userNode->appendChild($xml->createElement('time', $row[6]));
+                $userNode->appendChild($xml->createElement('active', $row[7]));
+            }
+            return $xml;
         }
-        return $xml;
+        else {
+            $usersNode = array();
+            while ($row = $qResult->fetch_row()) {
+                $usersNode[] = array(
+                    'id' => $row[0],
+                    'username' => $row[1],
+                    'fullname' => $row[2],
+                    'email' => $row[3],
+                    'group' => $row[4],
+                    'gid' => $row[5],
+                    'time' => $row[6],
+                    'active' => $row[7]
+                );
+            }
+            return json_encode($usersNode);
+        }
     }
     
     public function setUserLang($userId, $code = MECCANO_DEF_LANG) {
