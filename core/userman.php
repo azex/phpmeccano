@@ -1471,22 +1471,40 @@ class UserMan extends ServiceMethods implements intUserMan{
             $this->setError(ERROR_NOT_EXECUTED, 'getAllUsers: unable to get user info page -> '.$this->dbLink->error);
             return FALSE;
         }
-        $xml = new \DOMDocument('1.0', 'utf-8');
-        $usersNode = $xml->createElement('users');
-        $xml->appendChild($usersNode);
-        while ($row = $qResult->fetch_row()) {
-            $userNode = $xml->createElement('user');
-            $usersNode->appendChild($userNode);
-            $userNode->appendChild($xml->createElement('id', $row[0]));
-            $userNode->appendChild($xml->createElement('username', $row[1]));
-            $userNode->appendChild($xml->createElement('fullname', $row[2]));
-            $userNode->appendChild($xml->createElement('email', $row[3]));
-            $userNode->appendChild($xml->createElement('group', $row[4]));
-            $userNode->appendChild($xml->createElement('gid', $row[5]));
-            $userNode->appendChild($xml->createElement('time', $row[6]));
-            $userNode->appendChild($xml->createElement('active', $row[7]));
+        if ($this->outputType == 'xml') {
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $usersNode = $xml->createElement('users');
+            $xml->appendChild($usersNode);
+            while ($row = $qResult->fetch_row()) {
+                $userNode = $xml->createElement('user');
+                $usersNode->appendChild($userNode);
+                $userNode->appendChild($xml->createElement('id', $row[0]));
+                $userNode->appendChild($xml->createElement('username', $row[1]));
+                $userNode->appendChild($xml->createElement('fullname', $row[2]));
+                $userNode->appendChild($xml->createElement('email', $row[3]));
+                $userNode->appendChild($xml->createElement('group', $row[4]));
+                $userNode->appendChild($xml->createElement('gid', $row[5]));
+                $userNode->appendChild($xml->createElement('time', $row[6]));
+                $userNode->appendChild($xml->createElement('active', $row[7]));
+            }
+            return $xml;
         }
-        return $xml;
+        else {
+            $usersNode = array();
+            while ($row = $qResult->fetch_row()) {
+                $usersNode[] = array(
+                    'id' => $row[0],
+                    'username' => $row[1],
+                    'fullname' => $row[2],
+                    'email' => $row[3],
+                    'group' => $row[4],
+                    'gid' => $row[5],
+                    'time' => $row[6],
+                    'active' => $row[7]
+                );
+            }
+            return json_encode($usersNode);
+        }
     }
     
     public function setUserLang($userId, $code = MECCANO_DEF_LANG) {
