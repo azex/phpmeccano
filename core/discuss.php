@@ -30,6 +30,7 @@ require_once MECCANO_CORE_DIR.'/logman.php';
 interface intDiscuss {
     public function __construct(LogMan $logObject);
     public function createTopic($topic = '');
+    public function createComment($comment, $userId, $topicId, $parentId = '');
 }
 
 class Discuss extends ServiceMethods implements intDiscuss {
@@ -61,5 +62,59 @@ class Discuss extends ServiceMethods implements intDiscuss {
             return FALSE;
         }
         return $topicId;
+    }
+    
+    // in case of using MyISAM storage engine you should check correctness of userid argument before you call this method
+    public function createComment($comment, $userId, $topicId, $parentId = '') {
+        $this->zeroizeError();
+        if (!is_string($comment) || !strlen($comment) || !pregGuid($topicId) || (!pregGuid($parentId) && $parentId != '')) {
+            $this->setError(ERROR_INCORRECT_DATA, 'createComment: incorrect parameters');
+            return FALSE;
+        }
+        if (MECCANO_DBSTORAGE_ENGINE == 'MyISAM') {
+            // check whether topic exists
+            $this->dbLink->query(
+                    "SELECT `id` "
+                    . "FROM `".MECCANO_TPREF."_core_discuss_topics` "
+                    . "WHERE `id`='$topicId' ;"
+                    );
+            if ($this->dbLink->errno) {
+                $this->setError(ERROR_NOT_EXECUTED, 'createComment: unable to check whether topic exists -> '.$this->dbLink->error);
+                return FALSE;
+            }
+            if (!$this->dbLink->affected_rows) {
+                $this->setError(ERROR_NOT_FOUND, 'createComment: topic not found');
+                return FALSE;
+            }
+            if ($parentId) {
+                // check whether parent comment exists
+                $this->dbLink->query(
+                        "SELECT `id` "
+                        . "FROM `".MECCANO_TPREF."_core_discuss_comments` "
+                        . "WHERE `id`='$parentId' ;"
+                        );
+                if ($this->dbLink->errno) {
+                    $this->setError(ERROR_NOT_EXECUTED, 'createComment: unable to check whether parent comment exists -> '.$this->dbLink->error);
+                    return FALSE;
+                }
+                if (!$this->dbLink->affected_rows) {
+                    $this->setError(ERROR_NOT_FOUND, 'createComment: parent comment not found');
+                    return FALSE;
+                }
+            }
+        }
+        $commentId = guid();
+        $commentText = $this->dbLink->escape_string($comment);
+        $mtMark = microtime(TRUE);
+        $this->dbLink->query(
+                "INSERT INTO `".MECCANO_TPREF."_core_discuss_comments` "
+                . "(`id`, `tid`, `pcid`, `userid`, `comment`, `microtime`) "
+                . "VALUES('$commentId', '$topicId', '$parentId', $userId, '$commentText', $mtMark) ;"
+                );
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'createComment: unable to create comment -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        return $commentId;
     }
 }
