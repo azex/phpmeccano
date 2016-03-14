@@ -31,6 +31,7 @@ interface intDiscuss {
     public function __construct(LogMan $logObject);
     public function createTopic($topic = '');
     public function createComment($comment, $userId, $topicId, $parentId = '');
+    public function getComments($topicId, $rpp = 20);
 }
 
 class Discuss extends ServiceMethods implements intDiscuss {
@@ -116,5 +117,118 @@ class Discuss extends ServiceMethods implements intDiscuss {
             return FALSE;
         }
         return $commentId;
+    }
+    
+    public function getComments($topicId, $rpp = 20) {
+        $this->zeroizeError();
+        if (!pregGuid($topicId) || !is_integer($rpp)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'getComments: incorrect parameter');
+            return FALSE;
+        }
+        if ($rpp < 1) {
+            $rpp = 1;
+        }
+        // check whether topic exists
+        $qTopic = $this->dbLink->query(
+                "SELECT `topic` "
+                . "FROM `".MECCANO_TPREF."_core_discuss_topics` "
+                . "WHERE `id`='$topicId' ;"
+                );
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'getComments: unable to check whether topic exists -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        if (!$this->dbLink->affected_rows) {
+            $this->setError(ERROR_NOT_FOUND, 'getComments: topic not found -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        $topicRow = $qTopic->fetch_row();
+        $topic = $topicRow[0];
+        // get comments of topic
+        $qComments = $this->dbLink->query(
+                "SELECT `u`.`username`, `i`.`fullname`, `c`.`id`, `c`.`pcid`, `c`.`comment`, `c`.`time`, `c`.`microtime` "
+                . "FROM `".MECCANO_TPREF."_core_discuss_comments` `c` "
+                . "JOIN `".MECCANO_TPREF."_core_userman_users` `u` "
+                . "ON `u`.`id`=`c`.`userid` "
+                . "JOIN `".MECCANO_TPREF."_core_userman_userinfo` `i` "
+                . "ON `i`.`id`=`c`.`userid` "
+                . "WHERE `c`.`tid`='$topicId' "
+                . "ORDER BY `c`.`microtime` DESC LIMIT $rpp ;"
+                );
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'getComments: unable to get comments -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        if ($this->outputType == 'xml') {
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $comsNode = $xml->createElement('comments');
+            $xml->appendChild($comsNode);
+        }
+        else {
+            $comsNode['comments'] = array();
+        }
+        // defaul values of min and max microtime marks
+        $minMark = 0;
+        $maxMark = 0;
+        //
+        while ($comData= $qComments->fetch_row()) {
+            list($userName, $fullName, $comId, $parId, $text, $comTime, $mtMark) = $comData;
+            if (!$maxMark) {
+                $maxMark = $mtMark;
+            }
+            if ($this->outputType == 'xml') {
+                // create nodes
+                $comNode = $xml->createElement('comment');
+                $userNode = $xml->createElement('username', $userName);
+                $nameNode = $xml->createElement('fullname', $fullName);
+                $cidNode = $xml->createElement('cid', $comId);
+                $pcidNode = $xml->createElement('pcid', $parId);
+                $textNode = $xml->createElement('text', $text);
+                $timeNode = $xml->createElement('time', $comTime);
+                // insert nodes
+                $comsNode->appendChild($comNode);
+                $comNode->appendChild($userNode);
+                $comNode->appendChild($nameNode);
+                $comNode->appendChild($cidNode);
+                $comNode->appendChild($pcidNode);
+                $comNode->appendChild($textNode);
+                $comNode->appendChild($timeNode);
+            }
+            else {
+                $comsNode['comments'][] = array(
+                    'username' => $userName,
+                    'fullname' => $fullName,
+                    'cid' => $comId,
+                    'pcid' => $parId,
+                    'text' => $text,
+                    'time' => $comTime
+                );
+            }
+        }
+        if ($maxMark && !$minMark) {
+            $minMark = $mtMark;
+        }
+        if ($this->outputType == 'xml') {
+            $topicNode = $xml->createAttribute('topic');
+            $topicNode->value = $topic;
+            $tidNode = $xml->createAttribute('tid');
+            $tidNode->value = $topicId;
+            $minNode = $xml->createAttribute('minmark');
+            $minNode->value = $minMark;
+            $maxNode = $xml->createAttribute('maxmark');
+            $maxNode->value = $maxMark;
+            $comsNode->appendChild($topicNode);
+            $comsNode->appendChild($tidNode);
+            $comsNode->appendChild($minNode);
+            $comsNode->appendChild($maxNode);
+            return $xml;
+        }
+        else {
+            $comsNode['topic'] = $topic;
+            $comsNode['tid'] = $topicId;
+            $comsNode['minmark'] = (double) $minMark;
+            $comsNode['maxmark'] = (double) $maxMark;
+            return json_encode($comsNode);
+        }
     }
 }
