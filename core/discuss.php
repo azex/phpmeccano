@@ -32,6 +32,7 @@ interface intDiscuss {
     public function createTopic($topic = '');
     public function createComment($comment, $userId, $topicId, $parentId = '');
     public function getComments($topicId, $rpp = 20);
+    public function appendComments($topicId, $minMark, $rpp = 20);
 }
 
 class Discuss extends ServiceMethods implements intDiscuss {
@@ -228,6 +229,91 @@ class Discuss extends ServiceMethods implements intDiscuss {
             $comsNode['tid'] = $topicId;
             $comsNode['minmark'] = (double) $minMark;
             $comsNode['maxmark'] = (double) $maxMark;
+            return json_encode($comsNode);
+        }
+    }
+    
+    public function appendComments($topicId, $minMark, $rpp = 20) {
+        $this->zeroizeError();
+        if (!pregGuid($topicId) || !is_double($minMark) || !is_integer($rpp)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'appendComments: incorrect parameter');
+            return FALSE;
+        }
+        if ($rpp < 1) {
+            $rpp = 1;
+        }
+        // get comments of topic
+        $qComments = $this->dbLink->query(
+                "SELECT `u`.`username`, `i`.`fullname`, `c`.`id`, `c`.`pcid`, `c`.`comment`, `c`.`time`, `c`.`microtime` "
+                . "FROM `".MECCANO_TPREF."_core_discuss_comments` `c` "
+                . "JOIN `".MECCANO_TPREF."_core_userman_users` `u` "
+                . "ON `u`.`id`=`c`.`userid` "
+                . "JOIN `".MECCANO_TPREF."_core_userman_userinfo` `i` "
+                . "ON `i`.`id`=`c`.`userid` "
+                . "WHERE `c`.`tid`='$topicId' "
+                . "AND `c`.`microtime`<$minMark "
+                . "ORDER BY `c`.`microtime` DESC LIMIT $rpp ;"
+                );
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'appendComments: unable to get comments -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        if ($this->outputType == 'xml') {
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $comsNode = $xml->createElement('comments');
+            $xml->appendChild($comsNode);
+        }
+        else {
+            $comsNode['comments'] = array();
+        }
+        // defaul values of max microtime mark
+        $maxMark = 0;
+        //
+        while ($comData= $qComments->fetch_row()) {
+            list($userName, $fullName, $comId, $parId, $text, $comTime, $mtMark) = $comData;
+            if (!$maxMark) {
+                $maxMark = $mtMark;
+            }
+            if ($this->outputType == 'xml') {
+                // create nodes
+                $comNode = $xml->createElement('comment');
+                $userNode = $xml->createElement('username', $userName);
+                $nameNode = $xml->createElement('fullname', $fullName);
+                $cidNode = $xml->createElement('cid', $comId);
+                $pcidNode = $xml->createElement('pcid', $parId);
+                $textNode = $xml->createElement('text', $text);
+                $timeNode = $xml->createElement('time', $comTime);
+                // insert nodes
+                $comsNode->appendChild($comNode);
+                $comNode->appendChild($userNode);
+                $comNode->appendChild($nameNode);
+                $comNode->appendChild($cidNode);
+                $comNode->appendChild($pcidNode);
+                $comNode->appendChild($textNode);
+                $comNode->appendChild($timeNode);
+            }
+            else {
+                $comsNode['comments'][] = array(
+                    'username' => $userName,
+                    'fullname' => $fullName,
+                    'cid' => $comId,
+                    'pcid' => $parId,
+                    'text' => $text,
+                    'time' => $comTime
+                );
+            }
+        }
+        if ($maxMark) {
+            $minMark = $mtMark;
+        }
+        if ($this->outputType == 'xml') {
+            $minNode = $xml->createAttribute('minmark');
+            $minNode->value = $minMark;
+            $comsNode->appendChild($minNode);
+            return $xml;
+        }
+        else {
+            $comsNode['minmark'] = (double) $minMark;
             return json_encode($comsNode);
         }
     }
