@@ -34,6 +34,7 @@ interface intDiscuss {
     public function getComments($topicId, $rpp = 20);
     public function appendComments($topicId, $minMark, $rpp = 20);
     public function updateComments($topicId, $maxMark);
+    public function editComment($comment, $commentId, $userId);
 }
 
 class Discuss extends ServiceMethods implements intDiscuss {
@@ -402,5 +403,41 @@ class Discuss extends ServiceMethods implements intDiscuss {
             $comsNode['maxmark'] = (double) $maxMark;
             return json_encode($comsNode);
         }
+    }
+    
+    public function editComment($comment, $commentId, $userId) {
+        $this->zeroizeError();
+        if (!is_string($comment) || !pregGuid($commentId) || !is_integer($userId)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'editComment: incorrect parameters');
+            return FALSE;
+        }
+        if (MECCANO_DBSTORAGE_ENGINE == 'MyISAM') {
+            $this->dbLink->query(
+                    "SELECT `username` "
+                    . "FROM `".MECCANO_TPREF."_core_userman_users` "
+                    . "WHERE `id`=$userId ;"
+                    );
+            if ($this->dbLink->errno) {
+                $this->setError(ERROR_NOT_EXECUTED, 'editComment: unable to find user -> '.$this->dbLink->error);
+                return FALSE;
+            }
+            if (!$this->dbLink->affected_rows) {
+                $this->setError(ERROR_NOT_FOUND, 'editComment: user not found');
+                return FALSE;
+            }
+        }
+        $mtMark = microtime(TRUE);
+        $text = $this->dbLink->escape_string($comment);
+        $this->dbLink->query(
+                "UPDATE `".MECCANO_TPREF."_core_discuss_comments` "
+                . "SET `comment`='$text', `microtime`=$mtMark "
+                . "WHERE `id`='$commentId' "
+                . "AND `userid`=$userId ;"
+                );
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'editComment: unable to edit comment -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        return TRUE;
     }
 }
