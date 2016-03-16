@@ -33,6 +33,7 @@ interface intDiscuss {
     public function createComment($comment, $userId, $topicId, $parentId = '');
     public function getComments($topicId, $rpp = 20);
     public function appendComments($topicId, $minMark, $rpp = 20);
+    public function updateComments($topicId, $maxMark);
 }
 
 class Discuss extends ServiceMethods implements intDiscuss {
@@ -108,11 +109,17 @@ class Discuss extends ServiceMethods implements intDiscuss {
         $commentId = guid();
         $commentText = $this->dbLink->escape_string($comment);
         $mtMark = microtime(TRUE);
-        $this->dbLink->query(
-                "INSERT INTO `".MECCANO_TPREF."_core_discuss_comments` "
+        if ($parentId) {
+            $query = "INSERT INTO `".MECCANO_TPREF."_core_discuss_comments` "
                 . "(`id`, `tid`, `pcid`, `userid`, `comment`, `microtime`) "
-                . "VALUES('$commentId', '$topicId', '$parentId', $userId, '$commentText', $mtMark) ;"
-                );
+                . "VALUES('$commentId', '$topicId', '$parentId', $userId, '$commentText', $mtMark) ;";
+        }
+        else {
+            $query = "INSERT INTO `".MECCANO_TPREF."_core_discuss_comments` "
+                . "(`id`, `tid`, `userid`, `comment`, `microtime`) "
+                . "VALUES('$commentId', '$topicId', $userId, '$commentText', $mtMark) ;";
+        }
+        $this->dbLink->query($query);
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'createComment: unable to create comment -> '.$this->dbLink->error);
             return FALSE;
@@ -314,6 +321,85 @@ class Discuss extends ServiceMethods implements intDiscuss {
         }
         else {
             $comsNode['minmark'] = (double) $minMark;
+            return json_encode($comsNode);
+        }
+    }
+    
+    public function updateComments($topicId, $maxMark) {
+        $this->zeroizeError();
+        if (!pregGuid($topicId) || !is_double($maxMark)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'updateComments: incorrect parameter');
+            return FALSE;
+        }
+        // get comments of topic
+        $qComments = $this->dbLink->query(
+                "SELECT `u`.`username`, `i`.`fullname`, `c`.`id`, `c`.`pcid`, `c`.`comment`, `c`.`time`, `c`.`microtime` "
+                . "FROM `".MECCANO_TPREF."_core_discuss_comments` `c` "
+                . "JOIN `".MECCANO_TPREF."_core_userman_users` `u` "
+                . "ON `u`.`id`=`c`.`userid` "
+                . "JOIN `".MECCANO_TPREF."_core_userman_userinfo` `i` "
+                . "ON `i`.`id`=`c`.`userid` "
+                . "WHERE `c`.`tid`='$topicId' "
+                . "AND `c`.`microtime`>$maxMark "
+                . "ORDER BY `c`.`microtime` DESC ;"
+                );
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'updateComments: unable to get comments -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        if ($this->outputType == 'xml') {
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $comsNode = $xml->createElement('comments');
+            $xml->appendChild($comsNode);
+        }
+        else {
+            $comsNode['comments'] = array();
+        }
+        // defaul values of min and max microtime marks
+        $maxMark = 0;
+        //
+        while ($comData= $qComments->fetch_row()) {
+            list($userName, $fullName, $comId, $parId, $text, $comTime, $mtMark) = $comData;
+            if (!$maxMark) {
+                $maxMark = $mtMark;
+            }
+            if ($this->outputType == 'xml') {
+                // create nodes
+                $comNode = $xml->createElement('comment');
+                $userNode = $xml->createElement('username', $userName);
+                $nameNode = $xml->createElement('fullname', $fullName);
+                $cidNode = $xml->createElement('cid', $comId);
+                $pcidNode = $xml->createElement('pcid', $parId);
+                $textNode = $xml->createElement('text', $text);
+                $timeNode = $xml->createElement('time', $comTime);
+                // insert nodes
+                $comsNode->appendChild($comNode);
+                $comNode->appendChild($userNode);
+                $comNode->appendChild($nameNode);
+                $comNode->appendChild($cidNode);
+                $comNode->appendChild($pcidNode);
+                $comNode->appendChild($textNode);
+                $comNode->appendChild($timeNode);
+            }
+            else {
+                $comsNode['comments'][] = array(
+                    'username' => $userName,
+                    'fullname' => $fullName,
+                    'cid' => $comId,
+                    'pcid' => $parId,
+                    'text' => $text,
+                    'time' => $comTime
+                );
+            }
+        }
+        if ($this->outputType == 'xml') {
+            $maxNode = $xml->createAttribute('maxmark');
+            $maxNode->value = $maxMark;
+            $comsNode->appendChild($maxNode);
+            return $xml;
+        }
+        else {
+            $comsNode['maxmark'] = (double) $maxMark;
             return json_encode($comsNode);
         }
     }
