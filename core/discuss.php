@@ -35,6 +35,8 @@ interface intDiscuss {
     public function appendComments($topicId, $minMark, $rpp = 20);
     public function updateComments($topicId, $maxMark);
     public function editComment($comment, $commentId, $userId);
+    public function getComment($commentId, $userId);
+    public function eraseComment($commentId, $userId);
 }
 
 class Discuss extends ServiceMethods implements intDiscuss {
@@ -411,31 +413,97 @@ class Discuss extends ServiceMethods implements intDiscuss {
             $this->setError(ERROR_INCORRECT_DATA, 'editComment: incorrect parameters');
             return FALSE;
         }
-        if (MECCANO_DBSTORAGE_ENGINE == 'MyISAM') {
-            $this->dbLink->query(
-                    "SELECT `username` "
-                    . "FROM `".MECCANO_TPREF."_core_userman_users` "
-                    . "WHERE `id`=$userId ;"
-                    );
-            if ($this->dbLink->errno) {
-                $this->setError(ERROR_NOT_EXECUTED, 'editComment: unable to find user -> '.$this->dbLink->error);
-                return FALSE;
-            }
-            if (!$this->dbLink->affected_rows) {
-                $this->setError(ERROR_NOT_FOUND, 'editComment: user not found');
-                return FALSE;
-            }
-        }
-        $mtMark = microtime(TRUE);
         $text = $this->dbLink->escape_string($comment);
         $this->dbLink->query(
                 "UPDATE `".MECCANO_TPREF."_core_discuss_comments` "
-                . "SET `comment`='$text', `microtime`=$mtMark "
+                . "SET `comment`='$text' "
+                . "WHERE `id`='$commentId' "
+                . "AND `userid`=$userId "
+                . "AND `comment` IS NOT NULL ;"
+                );
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'editComment: unable to edit comment -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        if (!$this->dbLink->affected_rows) {
+            $this->setError(ERROR_NOT_FOUND, 'editComment: comment not found');
+            return FALSE;
+        }
+        return TRUE;
+    }
+    
+    public function getComment($commentId, $userId) {
+        $this->zeroizeError();
+        if (!pregGuid($commentId) || !is_integer($userId)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'getComment: incorrect parameters');
+            return FALSE;
+        }
+        $qComment = $this->dbLink->query(
+                "SELECT `u`.`username`, `i`.`fullname`, `c`.`comment` "
+                . "FROM `".MECCANO_TPREF."_core_discuss_comments` `c` "
+                . "JOIN `".MECCANO_TPREF."_core_userman_users` `u` "
+                . "ON `c`.`userid`=`u`.`id` "
+                . "JOIN `".MECCANO_TPREF."_core_userman_userinfo` `i` "
+                . "ON `c`.`userid` = `i`.`id` "
+                . "WHERE `c`.`id`='$commentId' "
+                . "AND `c`.`userid`=$userId ;"
+                );
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'getComment: unable to get comment -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        if (!$this->dbLink->affected_rows) {
+            $this->setError(ERROR_NOT_FOUND, 'getComment: comment not found');
+            return FALSE;
+        }
+        list($userName, $fullName, $text) = $qComment->fetch_row();
+        if ($this->outputType == 'xml') {
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $commentNode = $xml->createElement('comment');
+            $xml->appendChild($commentNode);
+            $uidNode = $xml->createElement('uid', $userId);
+            $userNode = $xml->createElement('username', $userName);
+            $fullNode = $xml->createElement('fullname', $fullName);
+            $cidNode = $xml->createElement('cid', $commentId);
+            $textNode = $xml->createElement('text', $text);
+            $commentNode->appendChild($uidNode);
+            $commentNode->appendChild($userNode);
+            $commentNode->appendChild($fullNode);
+            $commentNode->appendChild($cidNode);
+            $commentNode->appendChild($textNode);
+            return $xml;
+        }
+        else {
+            return json_encode(
+                    array(
+                        'uid' => $userId,
+                        'username' => $userName,
+                        'fullname' => $fullName,
+                        'cid' => $commentId,
+                        'text' => $text
+                    )
+                    );
+        }
+    }
+    
+    public function eraseComment($commentId, $userId) {
+        $this->zeroizeError();
+        if (!pregGuid($commentId) || !is_integer($userId)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'eraseComment: incorrect parameters');
+            return FALSE;
+        }
+        $this->dbLink->query(
+                "UPDATE `".MECCANO_TPREF."_core_discuss_comments` "
+                . "SET `comment`=NULL "
                 . "WHERE `id`='$commentId' "
                 . "AND `userid`=$userId ;"
                 );
         if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'editComment: unable to edit comment -> '.$this->dbLink->error);
+            $this->setError(ERROR_NOT_EXECUTED, 'eraseComment: unable to erase comment -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        if (!$this->dbLink->affected_rows) {
+            $this->setError(ERROR_NOT_FOUND, 'eraseComment: comment not found');
             return FALSE;
         }
         return TRUE;
