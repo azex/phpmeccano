@@ -28,7 +28,6 @@ namespace core;
 require_once MECCANO_CORE_DIR.'/logman.php';
 
 interface intDiscuss {
-    public function __construct(LogMan $logObject);
     public function createTopic($topic = '');
     public function createComment($comment, $userId, $topicId, $parentId = '');
     public function getComments($topicId, $rpp = 20);
@@ -40,15 +39,7 @@ interface intDiscuss {
 }
 
 class Discuss extends ServiceMethods implements intDiscuss {
-    private $dbLink; // database link
-    private $logObject; // log object
-    private $policyObject; // policy object
-    
-    public function __construct(LogMan $logObject) {
-        $this->dbLink = $logObject->dbLink;
-        $this->logObject = $logObject;
-        $this->policyObject = $logObject->policyObject;
-    }
+    protected $dbLink;
     
     public function createTopic($topic = '') {
         $this->zeroizeError();
