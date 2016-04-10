@@ -27,6 +27,7 @@ namespace core;
 
 require_once MECCANO_CORE_DIR.'/logman.php';
 require_once MECCANO_CORE_DIR.'/files.php';
+require_once MECCANO_CORE_DIR.'/discuss.php';
 
 interface intShare {
     public function __construct(LogMan $logObject);
@@ -71,8 +72,7 @@ interface intShare {
     public function updateSubStripe($userId, $mtmark);
 }
 
-class Share extends ServiceMethods implements intShare {
-    private $dbLink; // database link
+class Share extends Discuss implements intShare {
     private $logObject; // log object
     private $policyObject; // policy object
     
@@ -547,6 +547,7 @@ class Share extends ServiceMethods implements intShare {
         $text = $this->dbLink->real_escape_string($text);
         $id = guid();
         $mtMark = microtime(TRUE);
+        // create message
         $this->dbLink->query(
                 "INSERT INTO `".MECCANO_TPREF."_core_share_msgs` "
                 . "(`id`, `userid`, `title`, `text`, `microtime`) "
@@ -554,6 +555,20 @@ class Share extends ServiceMethods implements intShare {
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'createMsg: unable to create message -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        // create topic
+        if (!$topicId = $this->createTopic()) {
+            return FALSE;
+        }
+        // relate message and topic
+        $this->dbLink->query(
+                "INSERT INTO `".MECCANO_TPREF."_core_share_comments` "
+                . "(`id`, `tid`) "
+                . "VALUES ('$id', '$topicId') ;"
+                );
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'createMsg: unable to relate message and topic -> '.$this->dbLink->error);
             return FALSE;
         }
         return $id;
@@ -1421,6 +1436,20 @@ class Share extends ServiceMethods implements intShare {
                     );
             if ($this->dbLink->errno) {
                 $this->setError(ERROR_NOT_EXECUTED, 'repostMsg: unable to repost message -> '.$this->dbLink->error);
+                return FALSE;
+            }
+            // create topic
+            if (!$topicId = $this->createTopic()) {
+                return FALSE;
+            }
+            // relate message and topic
+            $this->dbLink->query(
+                    "INSERT INTO `".MECCANO_TPREF."_core_share_comments` "
+                    . "(`id`, `tid`) "
+                    . "VALUES ('$newMsgId', '$topicId') ;"
+                    );
+            if ($this->dbLink->errno) {
+                $this->setError(ERROR_NOT_EXECUTED, 'repostMsg: unable to relate message and topic -> '.$this->dbLink->error);
                 return FALSE;
             }
             // get files related with message
