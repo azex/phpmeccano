@@ -70,6 +70,7 @@ interface intShare {
     public function subStripe($userId, $rpp = 20);
     public function appendSubStripe($userId, $mtmark, $rpp = 20);
     public function updateSubStripe($userId, $mtmark);
+    public function createMsgComment($msgId, $userId, $comment, $parentId = '');
 }
 
 class Share extends Discuss implements intShare {
@@ -124,16 +125,14 @@ class Share extends Discuss implements intShare {
                 . "FROM `".MECCANO_TPREF."_core_share_files_accessibility` `a` "
                 . "JOIN `".MECCANO_TPREF."_core_share_buddy_list` `b` "
                 . "ON `a`.`cid`=`b`.`cid` "
-                . "WHERE `b`.`bid`=".$_SESSION[AUTH_USER_ID]." "
+                . "WHERE `b`.`bid`={$_SESSION[AUTH_USER_ID]} "
                 . "AND `a`.`fid`='$fileId' ;",
                 
                 // check for owner access
-                "SELECT `a`.`id` "
-                . "FROM `".MECCANO_TPREF."_core_share_files_accessibility` `a` "
-                . "JOIN `".MECCANO_TPREF."_core_share_circles` `c` "
-                . "ON `a`.`cid`=`c`.`id` "
-                . "WHERE `c`.`userid`=".$_SESSION[AUTH_USER_ID]." "
-                . "AND `a`.`fid`='$fileId';"
+                "SELECT `id` "
+                . "FROM `".MECCANO_TPREF."_core_share_files` "
+                . "WHERE `id`='$fileId' "
+                . "AND `userid`={$_SESSION[AUTH_USER_ID]} ;"
             );
             foreach ($sql as $value) {
                 $this->dbLink->query($value);
@@ -191,16 +190,14 @@ class Share extends Discuss implements intShare {
                 . "FROM `".MECCANO_TPREF."_core_share_msg_accessibility` `a` "
                 . "JOIN `".MECCANO_TPREF."_core_share_buddy_list` `b` "
                 . "ON `a`.`cid`=`b`.`cid` "
-                . "WHERE `b`.`bid`=".$_SESSION[AUTH_USER_ID]." "
+                . "WHERE `b`.`bid`={$_SESSION[AUTH_USER_ID]} "
                 . "AND `a`.`mid`='$msgId' ;",
                 
                 // check for owner access
-                "SELECT `a`.`id` "
-                . "FROM `".MECCANO_TPREF."_core_share_msg_accessibility` `a` "
-                . "JOIN `".MECCANO_TPREF."_core_share_circles` `c` "
-                . "ON `a`.`cid`=`c`.`id` "
-                . "WHERE `c`.`userid`=".$_SESSION[AUTH_USER_ID]." "
-                . "AND `a`.`mid`='$msgId';"
+                "SELECT `id` "
+                . "FROM `".MECCANO_TPREF."_core_share_msgs` "
+                . "WHERE `id`='$msgId' "
+                . "AND `userid`={$_SESSION[AUTH_USER_ID]} ;"
             );
             foreach ($sql as $value) {
                 $this->dbLink->query($value);
@@ -563,7 +560,7 @@ class Share extends Discuss implements intShare {
         }
         // relate message and topic
         $this->dbLink->query(
-                "INSERT INTO `".MECCANO_TPREF."_core_share_comments` "
+                "INSERT INTO `".MECCANO_TPREF."_core_share_msg_topic_rel` "
                 . "(`id`, `tid`) "
                 . "VALUES ('$id', '$topicId') ;"
                 );
@@ -1444,7 +1441,7 @@ class Share extends Discuss implements intShare {
             }
             // relate message and topic
             $this->dbLink->query(
-                    "INSERT INTO `".MECCANO_TPREF."_core_share_comments` "
+                    "INSERT INTO `".MECCANO_TPREF."_core_share_msg_topic_rel` "
                     . "(`id`, `tid`) "
                     . "VALUES ('$newMsgId', '$topicId') ;"
                     );
@@ -3340,6 +3337,55 @@ class Share extends Discuss implements intShare {
         }
         else {
             return json_encode($msgsNode);
+        }
+    }
+    
+    public function createMsgComment($msgId, $userId, $comment, $parentId = '') {
+        $this->zeroizeError();
+        if (!pregGuid($msgId) || !is_integer($userId)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'createMsgComment: incorrect parameters');
+            return FALSE;
+        }
+        $this->dbLink->query(
+                "SELECT `username` "
+                . "FROM `".MECCANO_TPREF."_core_userman_users` "
+                . "WHERE `id`=$userId ;"
+                );
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'createMsgComment: unable to find user -> '.$this->dbLink->error);
+            return;
+        }
+        if (!$this->dbLink->affected_rows) {
+            $this->setError(ERROR_NOT_FOUND, 'createMsgComment: user not found');
+            return FALSE;
+        }
+        if (isset($_SESSION[AUTH_USER_ID]) && $this->checkMsgAccess($msgId)) {
+            $qTopicId = $this->dbLink->query(
+                    "SELECT `tid` "
+                    . "FROM `".MECCANO_TPREF."_core_share_msg_topic_rel` "
+                    . "WHERE `id`='$msgId' ;"
+                    );
+            if ($this->dbLink->errno) {
+                $this->setError(ERROR_NOT_EXECUTED, 'createMsgComment: unable to get topic id -> '.$this->dbLink->error);
+                return FALSE;
+            }
+            if (!$this->dbLink->affected_rows) {
+                $this->setError(ERROR_NOT_FOUND, 'createMsgComment: topic of message not found');
+                return FALSE;
+            }
+            list($topicId) = $qTopicId->fetch_row();
+            if ($commentId = $this->createComment($comment, $userId, $topicId, $parentId)) {
+                return $commentId;
+            }
+            return FALSE;
+        }
+        elseif ($this->errid) {
+            $this->setError($this->errid, 'createMsgComment -> '.$this->errexp);
+            return FALSE;
+        }
+        else {
+            $this->setError(ERROR_RESTRICTED_ACCESS, 'createMsgComment: access denied');
+            return FALSE;
         }
     }
 }
