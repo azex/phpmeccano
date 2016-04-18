@@ -73,6 +73,7 @@ interface intShare {
     public function createMsgComment($msgId, $userId, $comment, $parentId = '');
     public function editMsgComment($comment, $commentId, $userId);
     public function getMsgComment($commentId, $userId);
+    public function eraseMsgComment($commentId, $userId);
 }
 
 class Share extends Discuss implements intShare {
@@ -3467,6 +3468,46 @@ class Share extends Discuss implements intShare {
         }
         else {
             $this->setError(ERROR_RESTRICTED_ACCESS, 'getMsgComment: access denied');
+            return FALSE;
+        }
+    }
+    
+    public function eraseMsgComment($commentId, $userId) {
+        $this->zeroizeError();
+        if(!pregGuid($commentId)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'eraseMsgComment: incorrect parameters');
+            return FALSE;
+        }
+        $qTopic = $this->dbLink->query(
+                "SELECT `r`.`id` "
+                . "FROM `".MECCANO_TPREF."_core_share_msg_topic_rel` `r` "
+                . "JOIN `".MECCANO_TPREF."_core_discuss_comments` `c` "
+                . "ON `c`.`tid`=`r`.`tid` "
+                . "AND `c`.`id`='$commentId' ;"
+                );
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'eraseMsgComment: unable to get message identifies -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        if (!$this->dbLink->affected_rows) {
+            $this->setError(ERROR_NOT_FOUND, 'eraseMsgComment: message not found');
+            return FALSE;
+        }
+        list($msgId) = $qTopic->fetch_row();
+        if (isset($_SESSION[AUTH_USER_ID]) && $this->checkMsgAccess($msgId)) {
+            if ($this->eraseComment($commentId, $userId)) {
+                return TRUE;
+            }
+            else {
+                FALSE;
+            }
+        }
+        elseif ($this->errid) {
+            $this->setError($this->errid, 'eraseMsgComment -> '.$this->errexp);
+            return FALSE;
+        }
+        else {
+            $this->setError(ERROR_RESTRICTED_ACCESS, 'eraseMsgComment: access denied');
             return FALSE;
         }
     }
