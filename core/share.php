@@ -27,6 +27,7 @@ namespace core;
 
 require_once MECCANO_CORE_DIR.'/logman.php';
 require_once MECCANO_CORE_DIR.'/files.php';
+require_once MECCANO_CORE_DIR.'/discuss.php';
 
 interface intShare {
     public function __construct(LogMan $logObject);
@@ -69,10 +70,16 @@ interface intShare {
     public function subStripe($userId, $rpp = 20);
     public function appendSubStripe($userId, $mtmark, $rpp = 20);
     public function updateSubStripe($userId, $mtmark);
+    public function createMsgComment($msgId, $userId, $comment, $parentId = '');
+    public function editMsgComment($comment, $commentId, $userId);
+    public function getMsgComment($commentId, $userId);
+    public function eraseMsgComment($commentId, $userId);
+    public function getMsgComments($msgId, $rpp = 20);
+    public function appendMsgComments($msgId, $minMark, $rpp = 20);
+    public function updateMsgComments($msgId, $maxMark);
 }
 
-class Share extends ServiceMethods implements intShare {
-    private $dbLink; // database link
+class Share extends Discuss implements intShare {
     private $logObject; // log object
     private $policyObject; // policy object
     
@@ -124,16 +131,14 @@ class Share extends ServiceMethods implements intShare {
                 . "FROM `".MECCANO_TPREF."_core_share_files_accessibility` `a` "
                 . "JOIN `".MECCANO_TPREF."_core_share_buddy_list` `b` "
                 . "ON `a`.`cid`=`b`.`cid` "
-                . "WHERE `b`.`bid`=".$_SESSION[AUTH_USER_ID]." "
+                . "WHERE `b`.`bid`={$_SESSION[AUTH_USER_ID]} "
                 . "AND `a`.`fid`='$fileId' ;",
                 
                 // check for owner access
-                "SELECT `a`.`id` "
-                . "FROM `".MECCANO_TPREF."_core_share_files_accessibility` `a` "
-                . "JOIN `".MECCANO_TPREF."_core_share_circles` `c` "
-                . "ON `a`.`cid`=`c`.`id` "
-                . "WHERE `c`.`userid`=".$_SESSION[AUTH_USER_ID]." "
-                . "AND `a`.`fid`='$fileId';"
+                "SELECT `id` "
+                . "FROM `".MECCANO_TPREF."_core_share_files` "
+                . "WHERE `id`='$fileId' "
+                . "AND `userid`={$_SESSION[AUTH_USER_ID]} ;"
             );
             foreach ($sql as $value) {
                 $this->dbLink->query($value);
@@ -191,16 +196,14 @@ class Share extends ServiceMethods implements intShare {
                 . "FROM `".MECCANO_TPREF."_core_share_msg_accessibility` `a` "
                 . "JOIN `".MECCANO_TPREF."_core_share_buddy_list` `b` "
                 . "ON `a`.`cid`=`b`.`cid` "
-                . "WHERE `b`.`bid`=".$_SESSION[AUTH_USER_ID]." "
+                . "WHERE `b`.`bid`={$_SESSION[AUTH_USER_ID]} "
                 . "AND `a`.`mid`='$msgId' ;",
                 
                 // check for owner access
-                "SELECT `a`.`id` "
-                . "FROM `".MECCANO_TPREF."_core_share_msg_accessibility` `a` "
-                . "JOIN `".MECCANO_TPREF."_core_share_circles` `c` "
-                . "ON `a`.`cid`=`c`.`id` "
-                . "WHERE `c`.`userid`=".$_SESSION[AUTH_USER_ID]." "
-                . "AND `a`.`mid`='$msgId';"
+                "SELECT `id` "
+                . "FROM `".MECCANO_TPREF."_core_share_msgs` "
+                . "WHERE `id`='$msgId' "
+                . "AND `userid`={$_SESSION[AUTH_USER_ID]} ;"
             );
             foreach ($sql as $value) {
                 $this->dbLink->query($value);
@@ -547,6 +550,7 @@ class Share extends ServiceMethods implements intShare {
         $text = $this->dbLink->real_escape_string($text);
         $id = guid();
         $mtMark = microtime(TRUE);
+        // create message
         $this->dbLink->query(
                 "INSERT INTO `".MECCANO_TPREF."_core_share_msgs` "
                 . "(`id`, `userid`, `title`, `text`, `microtime`) "
@@ -554,6 +558,20 @@ class Share extends ServiceMethods implements intShare {
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'createMsg: unable to create message -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        // create topic
+        if (!$topicId = $this->createTopic()) {
+            return FALSE;
+        }
+        // relate message and topic
+        $this->dbLink->query(
+                "INSERT INTO `".MECCANO_TPREF."_core_share_msg_topic_rel` "
+                . "(`id`, `tid`) "
+                . "VALUES ('$id', '$topicId') ;"
+                );
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'createMsg: unable to relate message and topic -> '.$this->dbLink->error);
             return FALSE;
         }
         return $id;
@@ -1421,6 +1439,20 @@ class Share extends ServiceMethods implements intShare {
                     );
             if ($this->dbLink->errno) {
                 $this->setError(ERROR_NOT_EXECUTED, 'repostMsg: unable to repost message -> '.$this->dbLink->error);
+                return FALSE;
+            }
+            // create topic
+            if (!$topicId = $this->createTopic()) {
+                return FALSE;
+            }
+            // relate message and topic
+            $this->dbLink->query(
+                    "INSERT INTO `".MECCANO_TPREF."_core_share_msg_topic_rel` "
+                    . "(`id`, `tid`) "
+                    . "VALUES ('$newMsgId', '$topicId') ;"
+                    );
+            if ($this->dbLink->errno) {
+                $this->setError(ERROR_NOT_EXECUTED, 'repostMsg: unable to relate message and topic -> '.$this->dbLink->error);
                 return FALSE;
             }
             // get files related with message
@@ -3311,6 +3343,283 @@ class Share extends ServiceMethods implements intShare {
         }
         else {
             return json_encode($msgsNode);
+        }
+    }
+    
+    public function createMsgComment($msgId, $userId, $comment, $parentId = '') {
+        $this->zeroizeError();
+        if (!pregGuid($msgId) || !is_integer($userId)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'createMsgComment: incorrect parameters');
+            return FALSE;
+        }
+        $this->dbLink->query(
+                "SELECT `username` "
+                . "FROM `".MECCANO_TPREF."_core_userman_users` "
+                . "WHERE `id`=$userId ;"
+                );
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'createMsgComment: unable to find user -> '.$this->dbLink->error);
+            return;
+        }
+        if (!$this->dbLink->affected_rows) {
+            $this->setError(ERROR_NOT_FOUND, 'createMsgComment: user not found');
+            return FALSE;
+        }
+        if (isset($_SESSION[AUTH_USER_ID]) && $this->checkMsgAccess($msgId)) {
+            $qTopicId = $this->dbLink->query(
+                    "SELECT `tid` "
+                    . "FROM `".MECCANO_TPREF."_core_share_msg_topic_rel` "
+                    . "WHERE `id`='$msgId' ;"
+                    );
+            if ($this->dbLink->errno) {
+                $this->setError(ERROR_NOT_EXECUTED, 'createMsgComment: unable to get topic id -> '.$this->dbLink->error);
+                return FALSE;
+            }
+            if (!$this->dbLink->affected_rows) {
+                $this->setError(ERROR_NOT_FOUND, 'createMsgComment: topic of message not found');
+                return FALSE;
+            }
+            list($topicId) = $qTopicId->fetch_row();
+            if ($commentId = $this->createComment($comment, $userId, $topicId, $parentId)) {
+                return $commentId;
+            }
+            return FALSE;
+        }
+        elseif ($this->errid) {
+            $this->setError($this->errid, 'createMsgComment -> '.$this->errexp);
+            return FALSE;
+        }
+        else {
+            $this->setError(ERROR_RESTRICTED_ACCESS, 'createMsgComment: access denied');
+            return FALSE;
+        }
+    }
+    
+    public function editMsgComment($comment, $commentId, $userId) {
+        $this->zeroizeError();
+        if(!pregGuid($commentId)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'editMsgComment: incorrect parameters');
+            return FALSE;
+        }
+        $qTopic = $this->dbLink->query(
+                "SELECT `r`.`id` "
+                . "FROM `".MECCANO_TPREF."_core_share_msg_topic_rel` `r` "
+                . "JOIN `".MECCANO_TPREF."_core_discuss_comments` `c` "
+                . "ON `c`.`tid`=`r`.`tid` "
+                . "AND `c`.`id`='$commentId' ;"
+                );
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'editMsgComment: unable to get message identifies -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        if (!$this->dbLink->affected_rows) {
+            $this->setError(ERROR_NOT_FOUND, 'editMsgComment: message not found');
+            return FALSE;
+        }
+        list($msgId) = $qTopic->fetch_row();
+        if (isset($_SESSION[AUTH_USER_ID]) && $this->checkMsgAccess($msgId)) {
+            if ($this->editComment($comment, $commentId, $userId)) {
+                return TRUE;
+            }
+            else {
+                FALSE;
+            }
+        }
+        elseif ($this->errid) {
+            $this->setError($this->errid, 'editMsgComment -> '.$this->errexp);
+            return FALSE;
+        }
+        else {
+            $this->setError(ERROR_RESTRICTED_ACCESS, 'editMsgComment: access denied');
+            return FALSE;
+        }
+    }
+    
+    public function getMsgComment($commentId, $userId) {
+        $this->zeroizeError();
+        if(!pregGuid($commentId)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'getMsgComment: incorrect parameters');
+            return FALSE;
+        }
+        $qTopic = $this->dbLink->query(
+                "SELECT `r`.`id` "
+                . "FROM `".MECCANO_TPREF."_core_share_msg_topic_rel` `r` "
+                . "JOIN `".MECCANO_TPREF."_core_discuss_comments` `c` "
+                . "ON `c`.`tid`=`r`.`tid` "
+                . "AND `c`.`id`='$commentId' ;"
+                );
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'getMsgComment: unable to get message identifies -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        if (!$this->dbLink->affected_rows) {
+            $this->setError(ERROR_NOT_FOUND, 'getMsgComment: message not found');
+            return FALSE;
+        }
+        list($msgId) = $qTopic->fetch_row();
+        if (isset($_SESSION[AUTH_USER_ID]) && $this->checkMsgAccess($msgId)) {
+            if ($comment = $this->getComment($commentId, $userId)) {
+                return $comment;
+            }
+            else {
+                FALSE;
+            }
+        }
+        elseif ($this->errid) {
+            $this->setError($this->errid, 'getMsgComment -> '.$this->errexp);
+            return FALSE;
+        }
+        else {
+            $this->setError(ERROR_RESTRICTED_ACCESS, 'getMsgComment: access denied');
+            return FALSE;
+        }
+    }
+    
+    public function eraseMsgComment($commentId, $userId) {
+        $this->zeroizeError();
+        if(!pregGuid($commentId)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'eraseMsgComment: incorrect parameters');
+            return FALSE;
+        }
+        $qTopic = $this->dbLink->query(
+                "SELECT `r`.`id` "
+                . "FROM `".MECCANO_TPREF."_core_share_msg_topic_rel` `r` "
+                . "JOIN `".MECCANO_TPREF."_core_discuss_comments` `c` "
+                . "ON `c`.`tid`=`r`.`tid` "
+                . "AND `c`.`id`='$commentId' ;"
+                );
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'eraseMsgComment: unable to get message identifies -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        if (!$this->dbLink->affected_rows) {
+            $this->setError(ERROR_NOT_FOUND, 'eraseMsgComment: message not found');
+            return FALSE;
+        }
+        list($msgId) = $qTopic->fetch_row();
+        if (isset($_SESSION[AUTH_USER_ID]) && $this->checkMsgAccess($msgId)) {
+            if ($this->eraseComment($commentId, $userId)) {
+                return TRUE;
+            }
+            else {
+                FALSE;
+            }
+        }
+        elseif ($this->errid) {
+            $this->setError($this->errid, 'eraseMsgComment -> '.$this->errexp);
+            return FALSE;
+        }
+        else {
+            $this->setError(ERROR_RESTRICTED_ACCESS, 'eraseMsgComment: access denied');
+            return FALSE;
+        }
+    }
+    
+    public function getMsgComments($msgId, $rpp = 20) {
+        $this->zeroizeError();
+        if (!pregGuid($msgId)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'getMsgComments: incorrect parameters');
+            return FALSE;
+        }
+        if (isset($_SESSION[AUTH_USER_ID]) && $this->checkMsgAccess($msgId)) {
+            $qTopicId = $this->dbLink->query(
+                    "SELECT `tid` "
+                    . "FROM `".MECCANO_TPREF."_core_share_msg_topic_rel` "
+                    . "WHERE `id`='$msgId' ;"
+                    );
+            if ($this->dbLink->errno) {
+                $this->setError(ERROR_NOT_EXECUTED, 'getMsgComments: unable to get topic id -> '.$this->dbLink->error);
+                return FALSE;
+            }
+            if (!$this->dbLink->affected_rows) {
+                $this->setError(ERROR_NOT_FOUND, 'getMsgComments: topic of message not found');
+                return FALSE;
+            }
+            list($topicId) = $qTopicId->fetch_row();
+            if ($comments = $this->getComments($topicId, $rpp)) {
+                return $comments;
+            }
+            return FALSE;
+        }
+        elseif ($this->errid) {
+            $this->setError($this->errid, 'getMsgComments -> '.$this->errexp);
+            return FALSE;
+        }
+        else {
+            $this->setError(ERROR_RESTRICTED_ACCESS, 'getMsgComments: access denied');
+            return FALSE;
+        }
+    }
+    
+    public function appendMsgComments($msgId, $minMark, $rpp = 20) {
+        $this->zeroizeError();
+        if (!pregGuid($msgId)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'appendMsgComments: incorrect parameters');
+            return FALSE;
+        }
+        if (isset($_SESSION[AUTH_USER_ID]) && $this->checkMsgAccess($msgId)) {
+            $qTopicId = $this->dbLink->query(
+                    "SELECT `tid` "
+                    . "FROM `".MECCANO_TPREF."_core_share_msg_topic_rel` "
+                    . "WHERE `id`='$msgId' ;"
+                    );
+            if ($this->dbLink->errno) {
+                $this->setError(ERROR_NOT_EXECUTED, 'appendMsgComments: unable to get topic id -> '.$this->dbLink->error);
+                return FALSE;
+            }
+            if (!$this->dbLink->affected_rows) {
+                $this->setError(ERROR_NOT_FOUND, 'appendMsgComments: topic of message not found');
+                return FALSE;
+            }
+            list($topicId) = $qTopicId->fetch_row();
+            if ($comments = $this->appendComments($topicId, $minMark, $rpp)) {
+                return $comments;
+            }
+            return FALSE;
+        }
+        elseif ($this->errid) {
+            $this->setError($this->errid, 'appendMsgComments -> '.$this->errexp);
+            return FALSE;
+        }
+        else {
+            $this->setError(ERROR_RESTRICTED_ACCESS, 'appendMsgComments: access denied');
+            return FALSE;
+        }
+    }
+    
+    public function updateMsgComments($msgId, $maxMark) {
+        $this->zeroizeError();
+        if (!pregGuid($msgId)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'updateMsgComments: incorrect parameters');
+            return FALSE;
+        }
+        if (isset($_SESSION[AUTH_USER_ID]) && $this->checkMsgAccess($msgId)) {
+            $qTopicId = $this->dbLink->query(
+                    "SELECT `tid` "
+                    . "FROM `".MECCANO_TPREF."_core_share_msg_topic_rel` "
+                    . "WHERE `id`='$msgId' ;"
+                    );
+            if ($this->dbLink->errno) {
+                $this->setError(ERROR_NOT_EXECUTED, 'updateMsgComments: unable to get topic id -> '.$this->dbLink->error);
+                return FALSE;
+            }
+            if (!$this->dbLink->affected_rows) {
+                $this->setError(ERROR_NOT_FOUND, 'updateMsgComments: topic of message not found');
+                return FALSE;
+            }
+            list($topicId) = $qTopicId->fetch_row();
+            if ($comments = $this->updateComments($topicId, $maxMark)) {
+                return $comments;
+            }
+            return FALSE;
+        }
+        elseif ($this->errid) {
+            $this->setError($this->errid, 'updateMsgComments -> '.$this->errexp);
+            return FALSE;
+        }
+        else {
+            $this->setError(ERROR_RESTRICTED_ACCESS, 'updateMsgComments: access denied');
+            return FALSE;
         }
     }
 }
