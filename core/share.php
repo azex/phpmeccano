@@ -2229,9 +2229,9 @@ class Share extends Discuss implements intShare {
         }
     }
     
-    public function updateMsgStripe($userId, $mtmark) {
+    public function updateMsgStripe($userId, $maxMark) {
         $this->zeroizeError();
-        if (!is_integer($userId) || !is_double($mtmark)) {
+        if (!is_integer($userId) || !is_double($maxMark)) {
             $this->setError(ERROR_INCORRECT_DATA, 'updateMsgStripe: incorrect parameters');
             return FALSE;
         }
@@ -2259,7 +2259,7 @@ class Share extends Discuss implements intShare {
                     "SELECT `id`, `source`, `title`, IF(LENGTH(`text`)>512, CONCAT(SUBSTRING(`text`, 1, 512), '...'), `text`), `msgtime`, `microtime` `time` "
                     . "FROM `".MECCANO_TPREF."_core_share_msgs` "
                     . "WHERE `userid`=$userId "
-                    . "AND `microtime`>$mtmark "
+                    . "AND `microtime`>$maxMark "
                     . "ORDER BY `time` DESC ;"
                     );
         }
@@ -2272,7 +2272,7 @@ class Share extends Discuss implements intShare {
                     . "JOIN `".MECCANO_TPREF."_core_share_msg_accessibility` `a` "
                     . "ON `a`.`mid`=`m`.`id` "
                     . "AND `m`.`userid`=$userId "
-                    . "AND `m`.`microtime`>$mtmark "
+                    . "AND `m`.`microtime`>$maxMark "
                     . "LEFT OUTER JOIN `".MECCANO_TPREF."_core_share_circles` `c` "
                     . "ON `c`.`id`=`a`.`cid` "
                     . "LEFT OUTER JOIN `".MECCANO_TPREF."_core_share_buddy_list` `l` "
@@ -2290,7 +2290,7 @@ class Share extends Discuss implements intShare {
                     . "JOIN `".MECCANO_TPREF."_core_share_msg_accessibility` `a` "
                     . "ON `a`.`mid`=`m`.`id` "
                     . "AND `a`.`cid`='' "
-                    . "AND `m`.`microtime`>$mtmark "
+                    . "AND `m`.`microtime`>$maxMark "
                     . "WHERE `m`.`userid`=$userId "
                     . "ORDER BY `time` DESC ;"
                     );
@@ -2320,8 +2320,15 @@ class Share extends Discuss implements intShare {
             $msgsNode['fullname'] = $fullName;
             $msgsNode['messages'] = array();
         }
+        // default value of max microtime mark
+        $maxMarkBak = $maxMark;
+        $maxMark = 0;
+        //
         while ($msgData = $qResult->fetch_row()) {
             list($msgId, $source, $title, $text, $msgTime, $mtMark) = $msgData;
+            if (!$maxMark) {
+                $maxMark = $mtMark;
+            }
             if ($this->outputType == 'xml') {
                 $msgNode = $xml->createElement('message');
                 $msgNode->appendChild($xml->createElement('id', $msgId));
@@ -2343,10 +2350,18 @@ class Share extends Discuss implements intShare {
                 );
             }
         }
+        // if there is not any new message
+        if (!$maxMark) {
+            $maxMark = $maxMarkBak;
+        }
         if ($this->outputType == 'xml') {
+            $maxNode = $xml->createAttribute('maxmark');
+            $maxNode->value = $maxMark;
+            $msgsNode->appendChild($maxNode);
             return $xml;
         }
         else {
+            $msgsNode['maxmark'] = (double) $maxMark;
             return json_encode($msgsNode);
         }
     }
