@@ -3182,7 +3182,7 @@ class Share extends Discuss implements intShare {
         $this->zeroizeError();
         // validate parameters
         if (!is_integer($userId) || !is_integer($rpp)) {
-            $this->setError(ERROR_INCORRECT_DATA, 'subStripes: incorrect parameters');
+            $this->setError(ERROR_INCORRECT_DATA, 'subStripe: incorrect parameters');
             return FALSE;
         }
         // get subscriptions
@@ -3208,7 +3208,7 @@ class Share extends Discuss implements intShare {
                 . "ORDER BY `time` DESC LIMIT $rpp ;"
                 );
         if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'subStripes: unable to get messages -> '.$this->dbLink->error);
+            $this->setError(ERROR_NOT_EXECUTED, 'subStripe: unable to get messages -> '.$this->dbLink->error);
             return FALSE;
         }
         if ($this->outputType == 'xml') {
@@ -3219,8 +3219,15 @@ class Share extends Discuss implements intShare {
         else {
             $msgsNode = array();
         }
+        // default values of min and max microtime marks
+        $minMark = 0;
+        $maxMark = 0;
+        //
         while ($msgData = $qResult->fetch_row()) {
             list($msgId, $source, $title, $text, $msgTime, $mtMark, $userId, $userName, $fullName) = $msgData;
+            if (!$maxMark) {
+                $maxMark = $mtMark;
+            }
             if ($this->outputType == 'xml') {
                 $msgNode = $xml->createElement('message');
                 // user data
@@ -3256,10 +3263,21 @@ class Share extends Discuss implements intShare {
                 );
             }
         }
+        if ($maxMark && !$minMark) {
+            $minMark = $mtMark;
+        }
         if ($this->outputType == 'xml') {
+            $minNode = $xml->createAttribute('minmark');
+            $minNode->value = $minMark;
+            $maxNode = $xml->createAttribute('maxmark');
+            $maxNode->value = $maxMark;
+            $msgsNode->appendChild($minNode);
+            $msgsNode->appendChild($maxNode);
             return $xml;
         }
         else {
+            $msgsNode['minmark'] = (double) $minMark;
+            $msgsNode['maxmark'] = (double) $maxMark;
             return json_encode($msgsNode);
         }
     }
