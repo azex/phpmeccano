@@ -2678,8 +2678,15 @@ class Share extends Discuss implements intShare {
             $filesNode['fullname'] = $fullName;
             $filesNode['files'] = array();
         }
+        // default values of min and max microtime marks
+        $minMark = 0;
+        $maxMark = 0;
+        //
         while ($fileData = $qResult->fetch_row()) {
             list($fileId, $title, $fileName, $comment, $mimeType, $fileSize, $fileTime, $mtMark) = $fileData;
+            if (!$maxMark) {
+                $maxMark = $mtMark;
+            }
             if ($this->outputType == 'xml') {
                 $fileNode = $xml->createElement('file');
                 $fileNode->appendChild($xml->createElement('id', $fileId));
@@ -2705,10 +2712,21 @@ class Share extends Discuss implements intShare {
                 );
             }
         }
+        if ($maxMark && !$minMark) {
+            $minMark = $mtMark;
+        }
         if ($this->outputType == 'xml') {
+            $minNode = $xml->createAttribute('minmark');
+            $minNode->value = $minMark;
+            $maxNode = $xml->createAttribute('maxmark');
+            $maxNode->value = $maxMark;
+            $filesNode->appendChild($minNode);
+            $filesNode->appendChild($maxNode);
             return $xml;
         }
         else {
+            $filesNode['minmark'] = (double) $minMark;
+            $filesNode['maxmark'] = (double) $maxMark;
             return json_encode($filesNode);
         }
     }
