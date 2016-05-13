@@ -2871,10 +2871,10 @@ class Share extends Discuss implements intShare {
         }
     }
     
-    public function updateFileStripe($userId, $mtmark) {
+    public function updateFileStripe($userId, $maxMark) {
         $this->zeroizeError();
         // validate parameters
-        if (!is_integer($userId) || !is_double($mtmark)) {
+        if (!is_integer($userId) || !is_double($maxMark)) {
             $this->setError(ERROR_INCORRECT_DATA, 'updateFileStripe: incorrect parameters');
             return FALSE;
         }
@@ -2902,7 +2902,7 @@ class Share extends Discuss implements intShare {
                     "SELECT `id`, `title`, `name`, IF(LENGTH(`comment`)>512, CONCAT(SUBSTRING(`comment`, 1, 512), '...'), `comment`), `mime`, `size`, `filetime`, `microtime` `time` "
                     . "FROM `".MECCANO_TPREF."_core_share_files` "
                     . "WHERE `userid`=$userId "
-                    . "AND `microtime`>$mtmark "
+                    . "AND `microtime`>$maxMark "
                     . "ORDER BY `time` DESC ;"
                     );
         }
@@ -2915,7 +2915,7 @@ class Share extends Discuss implements intShare {
                     . "JOIN `".MECCANO_TPREF."_core_share_files_accessibility` `a` "
                     . "ON `a`.`fid`=`f`.`id` "
                     . "AND `f`.`userid`=$userId "
-                    . "AND `f`.`microtime`>$mtmark "
+                    . "AND `f`.`microtime`>$maxMark "
                     . "LEFT OUTER JOIN `".MECCANO_TPREF."_core_share_circles` `c` "
                     . "ON `c`.`id`=`a`.`cid` "
                     . "LEFT OUTER JOIN `".MECCANO_TPREF."_core_share_buddy_list` `l` "
@@ -2933,7 +2933,7 @@ class Share extends Discuss implements intShare {
                     . "JOIN `".MECCANO_TPREF."_core_share_files_accessibility` `a` "
                     . "ON `a`.`fid`=`f`.`id` "
                     . "AND `a`.`cid`='' "
-                    . "AND `f`.`microtime`>$mtmark "
+                    . "AND `f`.`microtime`>$maxMark "
                     . "WHERE `f`.`userid`=$userId "
                     . "ORDER BY `time` DESC ;"
                     );
@@ -2963,8 +2963,15 @@ class Share extends Discuss implements intShare {
             $filesNode['fullname'] = $fullName;
             $filesNode['files'] = array();
         }
+        // default value of max microtime mark
+        $maxMarkBak = $maxMark;
+        $maxMark = 0;
+        //
         while ($fileData = $qResult->fetch_row()) {
             list($fileId, $title, $fileName, $comment, $mimeType, $fileSize, $fileTime, $mtMark) = $fileData;
+            if (!$maxMark) {
+                $maxMark = $mtMark;
+            }
             if ($this->outputType == 'xml') {
                 $fileNode = $xml->createElement('file');
                 $fileNode->appendChild($xml->createElement('id', $fileId));
@@ -2990,10 +2997,18 @@ class Share extends Discuss implements intShare {
                 );
             }
         }
+        // if there is not any new file
+        if (!$maxMark) {
+            $maxMark = $maxMarkBak;
+        }
         if ($this->outputType == 'xml') {
+            $maxNode = $xml->createAttribute('maxmark');
+            $maxNode->value = $maxMark;
+            $filesNode->appendChild($maxNode);
             return $xml;
         }
         else {
+            $filesNode['maxmark'] = (double) $maxMark;
             return json_encode($filesNode);
         }
     }
