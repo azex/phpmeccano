@@ -169,7 +169,7 @@ class Discuss extends ServiceMethods implements intDiscuss {
         else {
             $comsNode['comments'] = array();
         }
-        // defaul values of min and max microtime marks
+        // default values of min and max microtime marks
         $minMark = 0;
         $maxMark = 0;
         //
@@ -267,7 +267,7 @@ class Discuss extends ServiceMethods implements intDiscuss {
         else {
             $comsNode['comments'] = array();
         }
-        // defaul values of max microtime mark
+        // default values of max microtime mark
         $maxMark = 0;
         //
         while ($comData= $qComments->fetch_row()) {
@@ -349,7 +349,8 @@ class Discuss extends ServiceMethods implements intDiscuss {
         else {
             $comsNode['comments'] = array();
         }
-        // defaul values of min and max microtime marks
+        // default value of max microtime mark
+        $maxMarkBak = $maxMark;
         $maxMark = 0;
         //
         while ($comData= $qComments->fetch_row()) {
@@ -385,6 +386,10 @@ class Discuss extends ServiceMethods implements intDiscuss {
                     'time' => $comTime
                 );
             }
+        }
+        // if there is not any new comment
+        if (!$maxMark) {
+            $maxMark = $maxMarkBak;
         }
         if ($this->outputType == 'xml') {
             $maxNode = $xml->createAttribute('maxmark');

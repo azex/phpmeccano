@@ -2045,8 +2045,15 @@ class Share extends Discuss implements intShare {
             $msgsNode['fullname'] = $fullName;
             $msgsNode['messages'] = array();
         }
+        // default values of min and max microtime marks
+        $minMark = 0;
+        $maxMark = 0;
+        //
         while ($msgData = $qResult->fetch_row()) {
             list($msgId, $source, $title, $text, $msgTime, $mtMark) = $msgData;
+            if (!$maxMark) {
+                $maxMark = $mtMark;
+            }
             if ($this->outputType == 'xml') {
                 $msgNode = $xml->createElement('message');
                 $msgNode->appendChild($xml->createElement('id', $msgId));
@@ -2054,7 +2061,6 @@ class Share extends Discuss implements intShare {
                 $msgNode->appendChild($xml->createElement('title', htmlspecialchars($title)));
                 $msgNode->appendChild($xml->createElement('text', $text));
                 $msgNode->appendChild($xml->createElement('time', $msgTime));
-                $msgNode->appendChild($xml->createElement('mtmark', $mtMark));
                 $msgsNode->appendChild($msgNode);
             }
             else {
@@ -2063,22 +2069,32 @@ class Share extends Discuss implements intShare {
                     'source' => $source,
                     'title' => htmlspecialchars($title),
                     'text' => $text,
-                    'time' => $msgTime,
-                    'mtmark' => $mtMark
+                    'time' => $msgTime
                 );
             }
         }
+        if ($maxMark && !$minMark) {
+            $minMark = $mtMark;
+        }
         if ($this->outputType == 'xml') {
+            $minNode = $xml->createAttribute('minmark');
+            $minNode->value = $minMark;
+            $maxNode = $xml->createAttribute('maxmark');
+            $maxNode->value = $maxMark;
+            $msgsNode->appendChild($minNode);
+            $msgsNode->appendChild($maxNode);
             return $xml;
         }
         else {
+            $msgsNode['minmark'] = (double) $minMark;
+            $msgsNode['maxmark'] = (double) $maxMark;
             return json_encode($msgsNode);
         }
     }
     
-    public function appendMsgStripe($userId, $mtmark, $rpp = 20) {
+    public function appendMsgStripe($userId, $minMark, $rpp = 20) {
         $this->zeroizeError();
-        if (!is_integer($userId) || !is_integer($rpp) || !is_double($mtmark)) {
+        if (!is_integer($userId) || !is_integer($rpp) || !is_double($minMark)) {
             $this->setError(ERROR_INCORRECT_DATA, 'appendMsgStripe: incorrect parameters');
             return FALSE;
         }
@@ -2106,7 +2122,7 @@ class Share extends Discuss implements intShare {
                     "SELECT `id`, `source`, `title`, IF(LENGTH(`text`)>512, CONCAT(SUBSTRING(`text`, 1, 512), '...'), `text`), `msgtime`, `microtime` `time` "
                     . "FROM `".MECCANO_TPREF."_core_share_msgs` "
                     . "WHERE `userid`=$userId "
-                    . "AND `microtime`<$mtmark "
+                    . "AND `microtime`<$minMark "
                     . "ORDER BY `time` DESC LIMIT $rpp ;"
                     );
         }
@@ -2119,7 +2135,7 @@ class Share extends Discuss implements intShare {
                     . "JOIN `".MECCANO_TPREF."_core_share_msg_accessibility` `a` "
                     . "ON `a`.`mid`=`m`.`id` "
                     . "AND `m`.`userid`=$userId "
-                    . "AND `m`.`microtime`<$mtmark "
+                    . "AND `m`.`microtime`<$minMark "
                     . "LEFT OUTER JOIN `".MECCANO_TPREF."_core_share_circles` `c` "
                     . "ON `c`.`id`=`a`.`cid` "
                     . "LEFT OUTER JOIN `".MECCANO_TPREF."_core_share_buddy_list` `l` "
@@ -2137,7 +2153,7 @@ class Share extends Discuss implements intShare {
                     . "JOIN `".MECCANO_TPREF."_core_share_msg_accessibility` `a` "
                     . "ON `a`.`mid`=`m`.`id` "
                     . "AND `a`.`cid`='' "
-                    . "AND `m`.`microtime`<$mtmark "
+                    . "AND `m`.`microtime`<$minMark "
                     . "WHERE `m`.`userid`=$userId "
                     . "ORDER BY `time` DESC LIMIT $rpp ;"
                     );
@@ -2167,8 +2183,14 @@ class Share extends Discuss implements intShare {
             $msgsNode['fullname'] = $fullName;
             $msgsNode['messages'] = array();
         }
+        // default value max microtime mark
+        $maxMark = 0;
+        //
         while ($msgData = $qResult->fetch_row()) {
             list($msgId, $source, $title, $text, $msgTime, $mtMark) = $msgData;
+            if (!$maxMark) {
+                $maxMark = $mtMark;
+            }
             if ($this->outputType == 'xml') {
                 $msgNode = $xml->createElement('message');
                 $msgNode->appendChild($xml->createElement('id', $msgId));
@@ -2176,7 +2198,6 @@ class Share extends Discuss implements intShare {
                 $msgNode->appendChild($xml->createElement('title', htmlspecialchars($title)));
                 $msgNode->appendChild($xml->createElement('text', $text));
                 $msgNode->appendChild($xml->createElement('time', $msgTime));
-                $msgNode->appendChild($xml->createElement('mtmark', $mtMark));
                 $msgsNode->appendChild($msgNode);
             }
             else {
@@ -2185,22 +2206,28 @@ class Share extends Discuss implements intShare {
                     'source' => $source,
                     'title' => htmlspecialchars($title),
                     'text' => $text,
-                    'time' => $msgTime,
-                    'mtmark' => $mtMark
+                    'time' => $msgTime
                 );
             }
         }
+        if ($maxMark) {
+            $minMark = $mtMark;
+        }
         if ($this->outputType == 'xml') {
+            $minNode = $xml->createAttribute('minmark');
+            $minNode->value = $minMark;
+            $msgsNode->appendChild($minNode);
             return $xml;
         }
         else {
+            $msgsNode['minmark'] = (double) $minMark;
             return json_encode($msgsNode);
         }
     }
     
-    public function updateMsgStripe($userId, $mtmark) {
+    public function updateMsgStripe($userId, $maxMark) {
         $this->zeroizeError();
-        if (!is_integer($userId) || !is_double($mtmark)) {
+        if (!is_integer($userId) || !is_double($maxMark)) {
             $this->setError(ERROR_INCORRECT_DATA, 'updateMsgStripe: incorrect parameters');
             return FALSE;
         }
@@ -2228,7 +2255,7 @@ class Share extends Discuss implements intShare {
                     "SELECT `id`, `source`, `title`, IF(LENGTH(`text`)>512, CONCAT(SUBSTRING(`text`, 1, 512), '...'), `text`), `msgtime`, `microtime` `time` "
                     . "FROM `".MECCANO_TPREF."_core_share_msgs` "
                     . "WHERE `userid`=$userId "
-                    . "AND `microtime`>$mtmark "
+                    . "AND `microtime`>$maxMark "
                     . "ORDER BY `time` DESC ;"
                     );
         }
@@ -2241,7 +2268,7 @@ class Share extends Discuss implements intShare {
                     . "JOIN `".MECCANO_TPREF."_core_share_msg_accessibility` `a` "
                     . "ON `a`.`mid`=`m`.`id` "
                     . "AND `m`.`userid`=$userId "
-                    . "AND `m`.`microtime`>$mtmark "
+                    . "AND `m`.`microtime`>$maxMark "
                     . "LEFT OUTER JOIN `".MECCANO_TPREF."_core_share_circles` `c` "
                     . "ON `c`.`id`=`a`.`cid` "
                     . "LEFT OUTER JOIN `".MECCANO_TPREF."_core_share_buddy_list` `l` "
@@ -2259,7 +2286,7 @@ class Share extends Discuss implements intShare {
                     . "JOIN `".MECCANO_TPREF."_core_share_msg_accessibility` `a` "
                     . "ON `a`.`mid`=`m`.`id` "
                     . "AND `a`.`cid`='' "
-                    . "AND `m`.`microtime`>$mtmark "
+                    . "AND `m`.`microtime`>$maxMark "
                     . "WHERE `m`.`userid`=$userId "
                     . "ORDER BY `time` DESC ;"
                     );
@@ -2289,8 +2316,15 @@ class Share extends Discuss implements intShare {
             $msgsNode['fullname'] = $fullName;
             $msgsNode['messages'] = array();
         }
+        // default value of max microtime mark
+        $maxMarkBak = $maxMark;
+        $maxMark = 0;
+        //
         while ($msgData = $qResult->fetch_row()) {
             list($msgId, $source, $title, $text, $msgTime, $mtMark) = $msgData;
+            if (!$maxMark) {
+                $maxMark = $mtMark;
+            }
             if ($this->outputType == 'xml') {
                 $msgNode = $xml->createElement('message');
                 $msgNode->appendChild($xml->createElement('id', $msgId));
@@ -2298,7 +2332,6 @@ class Share extends Discuss implements intShare {
                 $msgNode->appendChild($xml->createElement('title', htmlspecialchars($title)));
                 $msgNode->appendChild($xml->createElement('text', $text));
                 $msgNode->appendChild($xml->createElement('time', $msgTime));
-                $msgNode->appendChild($xml->createElement('mtmark', $mtMark));
                 $msgsNode->appendChild($msgNode);
             }
             else {
@@ -2307,15 +2340,22 @@ class Share extends Discuss implements intShare {
                     'source' => $source,
                     'title' => htmlspecialchars($title),
                     'text' => $text,
-                    'time' => $msgTime,
-                    'mtmark' => $mtMark
+                    'time' => $msgTime
                 );
             }
         }
+        // if there is not any new message
+        if (!$maxMark) {
+            $maxMark = $maxMarkBak;
+        }
         if ($this->outputType == 'xml') {
+            $maxNode = $xml->createAttribute('maxmark');
+            $maxNode->value = $maxMark;
+            $msgsNode->appendChild($maxNode);
             return $xml;
         }
         else {
+            $msgsNode['maxmark'] = (double) $maxMark;
             return json_encode($msgsNode);
         }
     }
@@ -2632,8 +2672,15 @@ class Share extends Discuss implements intShare {
             $filesNode['fullname'] = $fullName;
             $filesNode['files'] = array();
         }
+        // default values of min and max microtime marks
+        $minMark = 0;
+        $maxMark = 0;
+        //
         while ($fileData = $qResult->fetch_row()) {
             list($fileId, $title, $fileName, $comment, $mimeType, $fileSize, $fileTime, $mtMark) = $fileData;
+            if (!$maxMark) {
+                $maxMark = $mtMark;
+            }
             if ($this->outputType == 'xml') {
                 $fileNode = $xml->createElement('file');
                 $fileNode->appendChild($xml->createElement('id', $fileId));
@@ -2643,7 +2690,6 @@ class Share extends Discuss implements intShare {
                 $fileNode->appendChild($xml->createElement('mime', $mimeType));
                 $fileNode->appendChild($xml->createElement('size', $fileSize));
                 $fileNode->appendChild($xml->createElement('time', $fileTime));
-                $fileNode->appendChild($xml->createElement('mtmark', $mtMark));
                 $filesNode->appendChild($fileNode);
             }
             else {
@@ -2654,23 +2700,33 @@ class Share extends Discuss implements intShare {
                     'comment' => htmlspecialchars($comment),
                     'mime' => $mimeType,
                     'size' => $fileSize,
-                    'time' => $fileTime,
-                    'mtmark' => $mtMark
+                    'time' => $fileTime
                 );
             }
         }
+        if ($maxMark && !$minMark) {
+            $minMark = $mtMark;
+        }
         if ($this->outputType == 'xml') {
+            $minNode = $xml->createAttribute('minmark');
+            $minNode->value = $minMark;
+            $maxNode = $xml->createAttribute('maxmark');
+            $maxNode->value = $maxMark;
+            $filesNode->appendChild($minNode);
+            $filesNode->appendChild($maxNode);
             return $xml;
         }
         else {
+            $filesNode['minmark'] = (double) $minMark;
+            $filesNode['maxmark'] = (double) $maxMark;
             return json_encode($filesNode);
         }
     }
     
-    public function appendFileStripe($userId, $mtmark, $rpp = 20) {
+    public function appendFileStripe($userId, $minMark, $rpp = 20) {
         $this->zeroizeError();
         // validate parameters
-        if (!is_integer($userId) || !is_integer($rpp) || !is_double($mtmark)) {
+        if (!is_integer($userId) || !is_integer($rpp) || !is_double($minMark)) {
             $this->setError(ERROR_INCORRECT_DATA, 'appendFileStripe: incorrect parameters');
             return FALSE;
         }
@@ -2698,7 +2754,7 @@ class Share extends Discuss implements intShare {
                     "SELECT `id`, `title`, `name`, IF(LENGTH(`comment`)>512, CONCAT(SUBSTRING(`comment`, 1, 512), '...'), `comment`), `mime`, `size`, `filetime`, `microtime` `time` "
                     . "FROM `".MECCANO_TPREF."_core_share_files` "
                     . "WHERE `userid`=$userId "
-                    . "AND `microtime`<$mtmark "
+                    . "AND `microtime`<$minMark "
                     . "ORDER BY `time` DESC LIMIT $rpp ;"
                     );
         }
@@ -2711,7 +2767,7 @@ class Share extends Discuss implements intShare {
                     . "JOIN `".MECCANO_TPREF."_core_share_files_accessibility` `a` "
                     . "ON `a`.`fid`=`f`.`id` "
                     . "AND `f`.`userid`=$userId "
-                    . "AND `f`.`microtime`<$mtmark "
+                    . "AND `f`.`microtime`<$minMark "
                     . "LEFT OUTER JOIN `".MECCANO_TPREF."_core_share_circles` `c` "
                     . "ON `c`.`id`=`a`.`cid` "
                     . "LEFT OUTER JOIN `".MECCANO_TPREF."_core_share_buddy_list` `l` "
@@ -2729,7 +2785,7 @@ class Share extends Discuss implements intShare {
                     . "JOIN `".MECCANO_TPREF."_core_share_files_accessibility` `a` "
                     . "ON `a`.`fid`=`f`.`id` "
                     . "AND `a`.`cid`='' "
-                    . "AND `f`.`microtime`<$mtmark "
+                    . "AND `f`.`microtime`<$minMark "
                     . "WHERE `f`.`userid`=$userId "
                     . "ORDER BY `time` DESC LIMIT $rpp ;"
                     );
@@ -2759,8 +2815,14 @@ class Share extends Discuss implements intShare {
             $filesNode['fullname'] = $fullName;
             $filesNode['files'] = array();
         }
+        // default value max microtime mark
+        $maxMark = 0;
+        //
         while ($fileData = $qResult->fetch_row()) {
             list($fileId, $title, $fileName, $comment, $mimeType, $fileSize, $fileTime, $mtMark) = $fileData;
+            if (!$maxMark) {
+                $maxMark = $mtMark;
+            }
             if ($this->outputType == 'xml') {
                 $fileNode = $xml->createElement('file');
                 $fileNode->appendChild($xml->createElement('id', $fileId));
@@ -2770,7 +2832,6 @@ class Share extends Discuss implements intShare {
                 $fileNode->appendChild($xml->createElement('mime', $mimeType));
                 $fileNode->appendChild($xml->createElement('size', $fileSize));
                 $fileNode->appendChild($xml->createElement('time', $fileTime));
-                $fileNode->appendChild($xml->createElement('mtmark', $mtMark));
                 $filesNode->appendChild($fileNode);
             }
             else {
@@ -2781,23 +2842,29 @@ class Share extends Discuss implements intShare {
                     'comment' => htmlspecialchars($comment),
                     'mime' => $mimeType,
                     'size' => $fileSize,
-                    'time' => $fileTime,
-                    'mtmark' => $mtMark
+                    'time' => $fileTime
                 );
             }
         }
+        if ($maxMark) {
+            $minMark = $mtMark;
+        }
         if ($this->outputType == 'xml') {
+            $minNode = $xml->createAttribute('minmark');
+            $minNode->value = $minMark;
+            $filesNode->appendChild($minNode);
             return $xml;
         }
         else {
+            $filesNode['minmark'] = (double) $minMark;
             return json_encode($filesNode);
         }
     }
     
-    public function updateFileStripe($userId, $mtmark) {
+    public function updateFileStripe($userId, $maxMark) {
         $this->zeroizeError();
         // validate parameters
-        if (!is_integer($userId) || !is_double($mtmark)) {
+        if (!is_integer($userId) || !is_double($maxMark)) {
             $this->setError(ERROR_INCORRECT_DATA, 'updateFileStripe: incorrect parameters');
             return FALSE;
         }
@@ -2825,7 +2892,7 @@ class Share extends Discuss implements intShare {
                     "SELECT `id`, `title`, `name`, IF(LENGTH(`comment`)>512, CONCAT(SUBSTRING(`comment`, 1, 512), '...'), `comment`), `mime`, `size`, `filetime`, `microtime` `time` "
                     . "FROM `".MECCANO_TPREF."_core_share_files` "
                     . "WHERE `userid`=$userId "
-                    . "AND `microtime`>$mtmark "
+                    . "AND `microtime`>$maxMark "
                     . "ORDER BY `time` DESC ;"
                     );
         }
@@ -2838,7 +2905,7 @@ class Share extends Discuss implements intShare {
                     . "JOIN `".MECCANO_TPREF."_core_share_files_accessibility` `a` "
                     . "ON `a`.`fid`=`f`.`id` "
                     . "AND `f`.`userid`=$userId "
-                    . "AND `f`.`microtime`>$mtmark "
+                    . "AND `f`.`microtime`>$maxMark "
                     . "LEFT OUTER JOIN `".MECCANO_TPREF."_core_share_circles` `c` "
                     . "ON `c`.`id`=`a`.`cid` "
                     . "LEFT OUTER JOIN `".MECCANO_TPREF."_core_share_buddy_list` `l` "
@@ -2856,7 +2923,7 @@ class Share extends Discuss implements intShare {
                     . "JOIN `".MECCANO_TPREF."_core_share_files_accessibility` `a` "
                     . "ON `a`.`fid`=`f`.`id` "
                     . "AND `a`.`cid`='' "
-                    . "AND `f`.`microtime`>$mtmark "
+                    . "AND `f`.`microtime`>$maxMark "
                     . "WHERE `f`.`userid`=$userId "
                     . "ORDER BY `time` DESC ;"
                     );
@@ -2886,8 +2953,15 @@ class Share extends Discuss implements intShare {
             $filesNode['fullname'] = $fullName;
             $filesNode['files'] = array();
         }
+        // default value of max microtime mark
+        $maxMarkBak = $maxMark;
+        $maxMark = 0;
+        //
         while ($fileData = $qResult->fetch_row()) {
             list($fileId, $title, $fileName, $comment, $mimeType, $fileSize, $fileTime, $mtMark) = $fileData;
+            if (!$maxMark) {
+                $maxMark = $mtMark;
+            }
             if ($this->outputType == 'xml') {
                 $fileNode = $xml->createElement('file');
                 $fileNode->appendChild($xml->createElement('id', $fileId));
@@ -2897,7 +2971,6 @@ class Share extends Discuss implements intShare {
                 $fileNode->appendChild($xml->createElement('mime', $mimeType));
                 $fileNode->appendChild($xml->createElement('size', $fileSize));
                 $fileNode->appendChild($xml->createElement('time', $fileTime));
-                $fileNode->appendChild($xml->createElement('mtmark', $mtMark));
                 $filesNode->appendChild($fileNode);
             }
             else {
@@ -2908,15 +2981,22 @@ class Share extends Discuss implements intShare {
                     'comment' => htmlspecialchars($comment),
                     'mime' => $mimeType,
                     'size' => $fileSize,
-                    'time' => $fileTime,
-                    'mtmark' => $mtMark
+                    'time' => $fileTime
                 );
             }
         }
+        // if there is not any new file
+        if (!$maxMark) {
+            $maxMark = $maxMarkBak;
+        }
         if ($this->outputType == 'xml') {
+            $maxNode = $xml->createAttribute('maxmark');
+            $maxNode->value = $maxMark;
+            $filesNode->appendChild($maxNode);
             return $xml;
         }
         else {
+            $filesNode['maxmark'] = (double) $maxMark;
             return json_encode($filesNode);
         }
     }
@@ -3090,7 +3170,7 @@ class Share extends Discuss implements intShare {
         $this->zeroizeError();
         // validate parameters
         if (!is_integer($userId) || !is_integer($rpp)) {
-            $this->setError(ERROR_INCORRECT_DATA, 'subStripes: incorrect parameters');
+            $this->setError(ERROR_INCORRECT_DATA, 'subStripe: incorrect parameters');
             return FALSE;
         }
         // get subscriptions
@@ -3116,7 +3196,7 @@ class Share extends Discuss implements intShare {
                 . "ORDER BY `time` DESC LIMIT $rpp ;"
                 );
         if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'subStripes: unable to get messages -> '.$this->dbLink->error);
+            $this->setError(ERROR_NOT_EXECUTED, 'subStripe: unable to get messages -> '.$this->dbLink->error);
             return FALSE;
         }
         if ($this->outputType == 'xml') {
@@ -3127,8 +3207,15 @@ class Share extends Discuss implements intShare {
         else {
             $msgsNode = array();
         }
+        // default values of min and max microtime marks
+        $minMark = 0;
+        $maxMark = 0;
+        //
         while ($msgData = $qResult->fetch_row()) {
             list($msgId, $source, $title, $text, $msgTime, $mtMark, $userId, $userName, $fullName) = $msgData;
+            if (!$maxMark) {
+                $maxMark = $mtMark;
+            }
             if ($this->outputType == 'xml') {
                 $msgNode = $xml->createElement('message');
                 // user data
@@ -3147,7 +3234,6 @@ class Share extends Discuss implements intShare {
                 $msgNode->appendChild($xml->createElement('title', htmlspecialchars($title)));
                 $msgNode->appendChild($xml->createElement('text', $text));
                 $msgNode->appendChild($xml->createElement('time', $msgTime));
-                $msgNode->appendChild($xml->createElement('mtmark', $mtMark));
                 $msgsNode->appendChild($msgNode);
             }
             else {
@@ -3159,24 +3245,34 @@ class Share extends Discuss implements intShare {
                     'source' => $source,
                     'title' => htmlspecialchars($title),
                     'text' => $text,
-                    'time' => $msgTime,
-                    'mtmark' => $mtMark
+                    'time' => $msgTime
                 );
             }
         }
+        if ($maxMark && !$minMark) {
+            $minMark = $mtMark;
+        }
         if ($this->outputType == 'xml') {
+            $minNode = $xml->createAttribute('minmark');
+            $minNode->value = $minMark;
+            $maxNode = $xml->createAttribute('maxmark');
+            $maxNode->value = $maxMark;
+            $msgsNode->appendChild($minNode);
+            $msgsNode->appendChild($maxNode);
             return $xml;
         }
         else {
+            $msgsNode['minmark'] = (double) $minMark;
+            $msgsNode['maxmark'] = (double) $maxMark;
             return json_encode($msgsNode);
         }
     }
     
-    public function appendSubStripe($userId, $mtmark, $rpp = 20) {
+    public function appendSubStripe($userId, $minMark, $rpp = 20) {
         $this->zeroizeError();
         // validate parameters
-        if (!is_integer($userId) || !is_double($mtmark) || !is_integer($rpp)) {
-            $this->setError(ERROR_INCORRECT_DATA, 'appendSubStripes: incorrect parameters');
+        if (!is_integer($userId) || !is_double($minMark) || !is_integer($rpp)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'appendSubStripe: incorrect parameters');
             return FALSE;
         }
         // get subscriptions
@@ -3185,7 +3281,7 @@ class Share extends Discuss implements intShare {
                 . "FROM `".MECCANO_TPREF."_core_share_msgs` `m` "
                 . "JOIN `".MECCANO_TPREF."_core_userman_userinfo` `i` "
                 . "ON `i`.`id`=`m`.`userid` "
-                . "AND `m`.`microtime`<$mtmark "
+                . "AND `m`.`microtime`<$minMark "
                 . "JOIN `".MECCANO_TPREF."_core_userman_users` `u` "
                 . "ON `u`.`id`=`m`.`userid` "
                 . "JOIN `".MECCANO_TPREF."_core_share_buddy_list` `b` "
@@ -3203,7 +3299,7 @@ class Share extends Discuss implements intShare {
                 . "ORDER BY `time` DESC LIMIT $rpp ;"
                 );
         if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'appendSubStripes: unable to get messages -> '.$this->dbLink->error);
+            $this->setError(ERROR_NOT_EXECUTED, 'appendSubStripe: unable to get messages -> '.$this->dbLink->error);
             return FALSE;
         }
         if ($this->outputType == 'xml') {
@@ -3214,8 +3310,14 @@ class Share extends Discuss implements intShare {
         else {
             $msgsNode = array();
         }
+        // default value max microtime mark
+        $maxMark = 0;
+        //
         while ($msgData = $qResult->fetch_row()) {
             list($msgId, $source, $title, $text, $msgTime, $mtMark, $userId, $userName, $fullName) = $msgData;
+            if (!$maxMark) {
+                $maxMark = $mtMark;
+            }
             if ($this->outputType == 'xml') {
                 $msgNode = $xml->createElement('message');
                 // user data
@@ -3234,7 +3336,6 @@ class Share extends Discuss implements intShare {
                 $msgNode->appendChild($xml->createElement('title', htmlspecialchars($title)));
                 $msgNode->appendChild($xml->createElement('text', $text));
                 $msgNode->appendChild($xml->createElement('time', $msgTime));
-                $msgNode->appendChild($xml->createElement('mtmark', $mtMark));
                 $msgsNode->appendChild($msgNode);
             }
             else {
@@ -3246,24 +3347,30 @@ class Share extends Discuss implements intShare {
                     'source' => $source,
                     'title' => htmlspecialchars($title),
                     'text' => $text,
-                    'time' => $msgTime,
-                    'mtmark' => $mtMark
+                    'time' => $msgTime
                 );
             }
         }
+        if ($maxMark) {
+            $minMark = $mtMark;
+        }
         if ($this->outputType == 'xml') {
+            $minNode = $xml->createAttribute('minmark');
+            $minNode->value = $minMark;
+            $msgsNode->appendChild($minNode);
             return $xml;
         }
         else {
+            $msgsNode['minmark'] = (double) $minMark;
             return json_encode($msgsNode);
         }
     }
     
-    public function updateSubStripe($userId, $mtmark) {
+    public function updateSubStripe($userId, $maxMark) {
         $this->zeroizeError();
         // validate parameters
-        if (!is_integer($userId) || !is_double($mtmark)) {
-            $this->setError(ERROR_INCORRECT_DATA, 'updateSubStripes: incorrect parameters');
+        if (!is_integer($userId) || !is_double($maxMark)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'updateSubStripe: incorrect parameters');
             return FALSE;
         }
         // get subscriptions
@@ -3272,7 +3379,7 @@ class Share extends Discuss implements intShare {
                 . "FROM `".MECCANO_TPREF."_core_share_msgs` `m` "
                 . "JOIN `".MECCANO_TPREF."_core_userman_userinfo` `i` "
                 . "ON `i`.`id`=`m`.`userid` "
-                . "AND `m`.`microtime`>$mtmark "
+                . "AND `m`.`microtime`>$maxMark "
                 . "JOIN `".MECCANO_TPREF."_core_userman_users` `u` "
                 . "ON `u`.`id`=`m`.`userid` "
                 . "JOIN `".MECCANO_TPREF."_core_share_buddy_list` `b` "
@@ -3290,7 +3397,7 @@ class Share extends Discuss implements intShare {
                 . "ORDER BY `time` DESC ;"
                 );
         if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'updateSubStripes: unable to get messages -> '.$this->dbLink->error);
+            $this->setError(ERROR_NOT_EXECUTED, 'updateSubStripe: unable to get messages -> '.$this->dbLink->error);
             return FALSE;
         }
         if ($this->outputType == 'xml') {
@@ -3301,8 +3408,15 @@ class Share extends Discuss implements intShare {
         else {
             $msgsNode = array();
         }
+        // default value of max microtime mark
+        $maxMarkBak = $maxMark;
+        $maxMark = 0;
+        //
         while ($msgData = $qResult->fetch_row()) {
             list($msgId, $source, $title, $text, $msgTime, $mtMark, $userId, $userName, $fullName) = $msgData;
+            if (!$maxMark) {
+                $maxMark = $mtMark;
+            }
             if ($this->outputType == 'xml') {
                 $msgNode = $xml->createElement('message');
                 // user data
@@ -3321,7 +3435,6 @@ class Share extends Discuss implements intShare {
                 $msgNode->appendChild($xml->createElement('title', htmlspecialchars($title)));
                 $msgNode->appendChild($xml->createElement('text', $text));
                 $msgNode->appendChild($xml->createElement('time', $msgTime));
-                $msgNode->appendChild($xml->createElement('mtmark', $mtMark));
                 $msgsNode->appendChild($msgNode);
             }
             else {
@@ -3333,15 +3446,22 @@ class Share extends Discuss implements intShare {
                     'source' => $source,
                     'title' => htmlspecialchars($title),
                     'text' => $text,
-                    'time' => $msgTime,
-                    'mtmark' => $mtMark
+                    'time' => $msgTime
                 );
             }
         }
+        // if there is not any new message
+        if (!$maxMark) {
+            $maxMark = $maxMarkBak;
+        }
         if ($this->outputType == 'xml') {
+            $maxNode = $xml->createAttribute('maxmark');
+            $maxNode->value = $maxMark;
+            $msgsNode->appendChild($maxNode);
             return $xml;
         }
         else {
+            $msgsNode['maxmark'] = (double) $maxMark;
             return json_encode($msgsNode);
         }
     }
