@@ -2832,7 +2832,6 @@ class Share extends Discuss implements intShare {
                 $fileNode->appendChild($xml->createElement('mime', $mimeType));
                 $fileNode->appendChild($xml->createElement('size', $fileSize));
                 $fileNode->appendChild($xml->createElement('time', $fileTime));
-                $fileNode->appendChild($xml->createElement('mtmark', $mtMark));
                 $filesNode->appendChild($fileNode);
             }
             else {
@@ -2843,8 +2842,7 @@ class Share extends Discuss implements intShare {
                     'comment' => htmlspecialchars($comment),
                     'mime' => $mimeType,
                     'size' => $fileSize,
-                    'time' => $fileTime,
-                    'mtmark' => $mtMark
+                    'time' => $fileTime
                 );
             }
         }
