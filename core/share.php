@@ -3435,7 +3435,6 @@ class Share extends Discuss implements intShare {
                 $msgNode->appendChild($xml->createElement('title', htmlspecialchars($title)));
                 $msgNode->appendChild($xml->createElement('text', $text));
                 $msgNode->appendChild($xml->createElement('time', $msgTime));
-                $msgNode->appendChild($xml->createElement('mtmark', $mtMark));
                 $msgsNode->appendChild($msgNode);
             }
             else {
@@ -3447,8 +3446,7 @@ class Share extends Discuss implements intShare {
                     'source' => $source,
                     'title' => htmlspecialchars($title),
                     'text' => $text,
-                    'time' => $msgTime,
-                    'mtmark' => $mtMark
+                    'time' => $msgTime
                 );
             }
         }
