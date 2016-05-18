@@ -29,7 +29,7 @@ require_once MECCANO_CORE_DIR.'/langman.php';
 require_once MECCANO_CORE_DIR.'/files.php';
 
 interface intPlugins {
-    public function __construct(LangMan $langmanObject);
+    public function __construct(\mysqli $dbLink);
     public function unpack($package);
     public function delUnpacked($plugin);
     public function listUnpacked();
@@ -41,17 +41,10 @@ interface intPlugins {
     public function aboutInstalled($plugin);
 }
 
-class Plugins extends ServiceMethods implements intPlugins {
-    private $dbLink; // database link
-    private $logObject; // log object
-    private $policyObject; // policy object
-    private $langmanObject; // policy object
+class Plugins extends LangMan implements intPlugins {
 
-    public function __construct(LangMan $langmanObject) {
-        $this->dbLink = $langmanObject->logObject->dbLink;
-        $this->logObject = $langmanObject->logObject;
-        $this->policyObject = $langmanObject->logObject->policyObject;
-        $this->langmanObject = $langmanObject;
+    public function __construct(\mysqli $dbLink) {
+        $this->dbLink = $dbLink;
     }
     
     private function lockPlugins($methodName) {
@@ -75,7 +68,7 @@ class Plugins extends ServiceMethods implements intPlugins {
         if (!$this->lockPlugins('unpack')) {
             return FALSE;
         }
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'plugins_install')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'plugins_install')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "unpack: restricted by the policy");
             unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
@@ -199,7 +192,7 @@ class Plugins extends ServiceMethods implements intPlugins {
         if (!$this->lockPlugins('delUnpacked')) {
             return FALSE;
         }
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'plugins_install')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'plugins_install')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "delUnpacked: restricted by the policy");
             unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
@@ -241,7 +234,7 @@ class Plugins extends ServiceMethods implements intPlugins {
     
     public function listUnpacked() {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'plugins_install')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'plugins_install')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "listUnpacked: restricted by the policy");
             return FALSE;
         }
@@ -313,7 +306,7 @@ class Plugins extends ServiceMethods implements intPlugins {
     
     public function aboutUnpacked($plugin) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'plugins_install')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'plugins_install')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "aboutUnpacked: restricted by the policy");
             return FALSE;
         }
@@ -407,7 +400,7 @@ class Plugins extends ServiceMethods implements intPlugins {
         if (!$this->lockPlugins('install')) {
             return FALSE;
         }
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'plugins_install')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'plugins_install')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "install: restricted by the policy");
             unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
@@ -556,36 +549,36 @@ class Plugins extends ServiceMethods implements intPlugins {
         }
         // install languages
         $serviceData->load($plugPath.'/languages.xml');
-        if (!$this->langmanObject->installLang($serviceData, FALSE)) {
-            $this->setError($this->langmanObject->errId(), "install -> ".$this->langmanObject->errExp());
+        if (!$this->installLang($serviceData, FALSE)) {
+            $this->setError($this->errId(), "install -> ".$this->errExp());
             unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
         }
         // install policy access rules
         $serviceData->load($plugPath.'/policy.xml');
-        if (!$this->policyObject->install($serviceData, FALSE)) {
-            $this->setError($this->policyObject->errId(), "install -> ".$this->policyObject->errExp());
+        if (!$this->installPolicy($serviceData, FALSE)) {
+            $this->setError($this->errId(), "install -> ".$this->errExp());
             unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
         }
         // install log events
         $serviceData->load($plugPath.'/log.xml');
-        if (!$this->logObject->installEvents($serviceData, FALSE)) {
-            $this->setError($this->logObject->errId(), "install -> ".$this->logObject->errExp());
+        if (!$this->installEvents($serviceData, FALSE)) {
+            $this->setError($this->errId(), "install -> ".$this->errExp());
             unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
         }
         // install texts
         $serviceData->load($plugPath.'/texts.xml');
-        if (!$this->langmanObject->installTexts($serviceData, FALSE)) {
-            $this->setError($this->langmanObject->errId(), "install -> ".$this->langmanObject->errExp());
+        if (!$this->installTexts($serviceData, FALSE)) {
+            $this->setError($this->errId(), "install -> ".$this->errExp());
             unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
         }
         // install titles
         $serviceData->load($plugPath.'/titles.xml');
-        if (!$this->langmanObject->installTitles($serviceData, FALSE)) {
-            $this->setError($this->langmanObject->errId(), "install -> ".$this->langmanObject->errExp());
+        if (!$this->installTitles($serviceData, FALSE)) {
+            $this->setError($this->errId(), "install -> ".$this->errExp());
             unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
         }
@@ -616,8 +609,8 @@ class Plugins extends ServiceMethods implements intPlugins {
             return FALSE;
         }
         //
-        if ($log && !$this->logObject->newRecord('core', 'plugins_install', "$shortName; v$version; ID: $existId")) {
-            $this->setError(ERROR_NOT_CRITICAL, "install -> ".$this->logObject->errExp());
+        if ($log && !$this->newLogRecord('core', 'plugins_install', "$shortName; v$version; ID: $existId")) {
+            $this->setError(ERROR_NOT_CRITICAL, "install -> ".$this->errExp());
         }
         unlink(MECCANO_TMP_DIR."/core_plugins_lock");
         return TRUE;
@@ -627,7 +620,7 @@ class Plugins extends ServiceMethods implements intPlugins {
         if (!$this->lockPlugins('delInstalled')) {
             return FALSE;
         }
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'plugins_del_installed')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'plugins_del_installed')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "delInstalled: restricted by the policy");
             unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
@@ -672,20 +665,20 @@ class Plugins extends ServiceMethods implements intPlugins {
             return FALSE;
         }
         // remove policy access rules
-        if (!$this->policyObject->delPolicy($shortName)) {
-            $this->setError($this->policyObject->errId(), "delInstalled -> ".$this->policyObject->errExp());
+        if (!$this->delPolicy($shortName)) {
+            $this->setError($this->errId(), "delInstalled -> ".$this->errExp());
             unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
         }
         // remove log events
-        if (!$this->logObject->delEvents($shortName)) {
-            $this->setError($this->logObject->errId(), "delInstalled -> ".$this->logObject->errExp());
+        if (!$this->delLogEvents($shortName)) {
+            $this->setError($this->errId(), "delInstalled -> ".$this->errExp());
             unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
         }
         // remove texts and titles
-        if (!$this->langmanObject->delPlugin($shortName)) {
-            $this->setError($this->langmanObject->errId(), "delInstalled -> ".$this->langmanObject->errExp());
+        if (!$this->delPlugin($shortName)) {
+            $this->setError($this->errId(), "delInstalled -> ".$this->errExp());
             unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
         }
@@ -727,8 +720,8 @@ class Plugins extends ServiceMethods implements intPlugins {
             }
         }
         //
-        if ($log && !$this->logObject->newRecord('core', 'plugins_del_installed', "$shortName; v$version; ID: $id")) {
-            $this->setError(ERROR_NOT_CRITICAL, "install -> ".$this->logObject->errExp());
+        if ($log && !$this->newLogRecord('core', 'plugins_del_installed', "$shortName; v$version; ID: $id")) {
+            $this->setError(ERROR_NOT_CRITICAL, "install -> ".$this->errExp());
         }
         unlink(MECCANO_TMP_DIR."/core_plugins_lock");
         return TRUE;
@@ -736,7 +729,7 @@ class Plugins extends ServiceMethods implements intPlugins {
     
     public function listInstalled() {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'plugins_installed')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'plugins_installed')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "listInstalled: restricted by the policy");
             return FALSE;
         }
@@ -778,7 +771,7 @@ class Plugins extends ServiceMethods implements intPlugins {
     
     public function aboutInstalled($plugin) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'plugins_installed')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'plugins_installed')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "aboutInstalled: restricted by the policy");
             return FALSE;
         }

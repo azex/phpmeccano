@@ -30,7 +30,7 @@ require_once MECCANO_CORE_DIR.'/files.php';
 require_once MECCANO_CORE_DIR.'/discuss.php';
 
 interface intShare {
-    public function __construct(LogMan $logObject);
+    public function __construct(\mysqli $dbLink);
     public function createCircle($userId, $name);
     public function userCircles($userId);
     public function renameCircle($userId, $circleId, $newName);
@@ -80,13 +80,9 @@ interface intShare {
 }
 
 class Share extends Discuss implements intShare {
-    private $logObject; // log object
-    private $policyObject; // policy object
     
-    public function __construct(LogMan $logObject) {
-        $this->dbLink = $logObject->dbLink;
-        $this->logObject = $logObject;
-        $this->policyObject = $logObject->policyObject;
+    public function __construct(\mysqli $dbLink) {
+        $this->dbLink = $dbLink;
     }
     
     private function checkFileAccess($fileId) {

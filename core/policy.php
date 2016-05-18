@@ -32,17 +32,17 @@ require_once MECCANO_CORE_DIR.'/extclass.php';
 interface intPolicy {
     function __construct(\mysqli $dbLink);
     public function delPolicy($plugin);
-    public function addGroup($id);
-    public function delGroup($id);
-    public function funcAccess($plugin, $func, $groupId, $access = TRUE);
-    public function checkAccess($plugin, $func);
-    public function install(\DOMDocument $policy, $validate = TRUE);
+    public function addPolicyToGroup($id); // old name [addGroup]
+    public function delPolicyFromGroup($id); // old name [delGroup]
+    public function setFuncAccess($plugin, $func, $groupId, $access = TRUE); // old name [funcAccess]
+    public function checkFuncAccess($plugin, $func); // old name [checkAccess]
+    public function installPolicy(\DOMDocument $policy, $validate = TRUE); // old name [install]
     public function groupPolicyList($plugin, $groupId, $code = MECCANO_DEF_LANG);
     public function getPolicyDescById($id);
 }
 
 class Policy extends ServiceMethods implements intPolicy {
-    public $dbLink; // database link
+    protected $dbLink; // database link
     
     public function __construct(\mysqli $dbLink) {
         $this->dbLink = $dbLink;
@@ -91,7 +91,7 @@ class Policy extends ServiceMethods implements intPolicy {
         return TRUE;
     }
     
-    public function addGroup($id) {
+    public function addPolicyToGroup($id) {
         $this->zeroizeError();
         if (!is_integer($id)) {
             $this->setError(ERROR_INCORRECT_DATA, 'addGroup: id must be integer');
@@ -130,7 +130,7 @@ class Policy extends ServiceMethods implements intPolicy {
         return TRUE;
     }
     
-    public function delGroup($id) {
+    public function delPolicyFromGroup($id) {
         $this->zeroizeError();
         if (!is_integer($id)) {
             $this->setError(ERROR_INCORRECT_DATA, 'delGroup: id must be integer');
@@ -149,9 +149,9 @@ class Policy extends ServiceMethods implements intPolicy {
         return TRUE;
     }
     
-    public function funcAccess($plugin, $func, $groupId, $access = TRUE) {
+    public function setFuncAccess($plugin, $func, $groupId, $access = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->checkAccess('core', 'policy_func_access')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'policy_func_access')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "funcAccess: restricted by the policy");
             return FALSE;
         }
@@ -206,7 +206,7 @@ class Policy extends ServiceMethods implements intPolicy {
         return TRUE;
     }
     
-    public function checkAccess($plugin, $func) {
+    public function checkFuncAccess($plugin, $func) {
         $this->zeroizeError();
         if (!pregPlugin($plugin) || !pregPlugin($func)) {
             $this->setError(ERROR_INCORRECT_DATA, 'checkAccess: check incoming parameters');
@@ -247,7 +247,7 @@ class Policy extends ServiceMethods implements intPolicy {
         return (int) $access;
     }
     
-    public function install(\DOMDocument $policy, $validate = TRUE) {
+    public function installPolicy(\DOMDocument $policy, $validate = TRUE) {
         $this->zeroizeError();
         if ($validate && !@$policy->relaxNGValidate(MECCANO_CORE_DIR.'/validation-schemas/policy-v01.rng')) {
             $this->setError(ERROR_INCORRECT_DATA, 'install: incorrect structure of incoming data');
@@ -425,7 +425,7 @@ class Policy extends ServiceMethods implements intPolicy {
     
     public function groupPolicyList($plugin, $groupId, $code = MECCANO_DEF_LANG) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->checkAccess('core', 'policy_list_about')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'policy_list_about')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "groupPolicyList: restricted by the policy");
             return FALSE;
         }
@@ -505,7 +505,7 @@ class Policy extends ServiceMethods implements intPolicy {
     
     public function getPolicyDescById($id) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->checkAccess('core', 'policy_list_about')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'policy_list_about')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "getPolicyDescById: restricted by the policy");
             return FALSE;
         }

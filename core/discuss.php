@@ -28,6 +28,7 @@ namespace core;
 require_once MECCANO_CORE_DIR.'/logman.php';
 
 interface intDiscuss {
+    public function __construct(\mysqli $dbLink);
     public function createTopic($topic = '');
     public function createComment($comment, $userId, $topicId, $parentId = '');
     public function getComments($topicId, $rpp = 20);
@@ -38,8 +39,11 @@ interface intDiscuss {
     public function eraseComment($commentId, $userId);
 }
 
-class Discuss extends ServiceMethods implements intDiscuss {
-    protected $dbLink;
+class Discuss extends LogMan implements intDiscuss {
+
+    public function __construct(\mysqli $dbLink) {
+        $this->dbLink = $dbLink;
+    }
     
     public function createTopic($topic = '') {
         $this->zeroizeError();

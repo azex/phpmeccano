@@ -28,23 +28,20 @@ namespace core;
 require_once MECCANO_CORE_DIR.'/logman.php';
 
 interface intAuth {
-    public function __construct(LogMan $logObject);
+    public function __construct(\mysqli $dbLink);
     public function userLogin($username, $password, $useCookie = TRUE, $cookieTime = 'month', $log = TRUE, $blockBrute = FALSE);
     public function isSession();
     public function userLogout();
     public function getSession($log = TRUE);
 }
 
-class Auth extends ServiceMethods implements intAuth {
-    private $dbLink; // database link
-    private $logObject; // log object
+class Auth extends LogMan implements intAuth {
     
-    public function __construct(LogMan $logObject) {
+    public function __construct(\mysqli $dbLink) {
         if (!session_id()) {
             session_start();
         }
-        $this->dbLink = $logObject->dbLink;
-        $this->logObject = $logObject;
+        $this->dbLink = $dbLink;
     }
     
     public function userLogin($username, $password, $useCookie = TRUE, $cookieTime = 'month', $log = TRUE, $blockBrute = FALSE) {
@@ -190,8 +187,8 @@ class Auth extends ServiceMethods implements intAuth {
         }
         $ipAddress = $_SERVER['REMOTE_ADDR'];
         $userAgent = $_SERVER['HTTP_USER_AGENT'];
-        if ($log && !$this->logObject->newRecord('core', 'auth_session', "name: $username; ID: $userId; IP: $ipAddress; User-agent: $userAgent")) {
-            $this->setError(ERROR_NOT_CRITICAL, "userLogin: -> ".$this->logObject->errExp());
+        if ($log && !$this->newLogRecord('core', 'auth_session', "name: $username; ID: $userId; IP: $ipAddress; User-agent: $userAgent")) {
+            $this->setError(ERROR_NOT_CRITICAL, "userLogin: -> ".$this->errExp());
         }
         $_SESSION[AUTH_USERNAME] = $username;
         $_SESSION[AUTH_USER_ID] = (int) $userId;
@@ -305,8 +302,8 @@ class Auth extends ServiceMethods implements intAuth {
             list($passId, $limited, $userId, $username, $lang, $direction) = $qResult->fetch_row();
             $ipAddress = $_SERVER['REMOTE_ADDR'];
             $userAgent = $_SERVER['HTTP_USER_AGENT'];
-            if ($log && !$this->logObject->newRecord('core', 'auth_session', "name: $username; ID: $userId; IP: $ipAddress; User-agent: $userAgent")) {
-                $this->setError(ERROR_NOT_CRITICAL, "getSession: -> ".$this->logObject->errExp());
+            if ($log && !$this->newLogRecord('core', 'auth_session', "name: $username; ID: $userId; IP: $ipAddress; User-agent: $userAgent")) {
+                $this->setError(ERROR_NOT_CRITICAL, "getSession: -> ".$this->errExp());
             }
             $_SESSION[AUTH_USERNAME] = $username;
             $_SESSION[AUTH_USER_ID] = (int) $userId;

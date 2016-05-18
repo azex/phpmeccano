@@ -28,7 +28,7 @@ namespace core;
 require_once MECCANO_CORE_DIR.'/logman.php';
 
 interface intUserMan {
-    public function __construct(LogMan $logObject);
+    public function __construct(\mysqli $dbLink);
     public function createGroup($groupName, $description, $log = TRUE);
     public function groupStatus($groupId, $active, $log = TRUE);
     public function groupExists($groupName);
@@ -62,21 +62,16 @@ interface intUserMan {
     public function setUserLang($userId, $code = MECCANO_DEF_LANG);
 }
 
-class UserMan extends ServiceMethods implements intUserMan{
-    private $dbLink; // database link
-    private $logObject; // log object
-    private $policyObject; // policy object
+class UserMan extends LogMan implements intUserMan{
     
-    public function __construct(LogMan $logObject) {
-        $this->dbLink = $logObject->dbLink;
-        $this->logObject = $logObject;
-        $this->policyObject = $logObject->policyObject;
+    public function __construct(\mysqli $dbLink) {
+        $this->dbLink = $dbLink;
     }
     
     //group methods
     public function createGroup($groupName, $description, $log = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'userman_create_group')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'userman_create_group')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "createGroup: restricted by the policy");
             return FALSE;
         }
@@ -97,19 +92,19 @@ class UserMan extends ServiceMethods implements intUserMan{
             return FALSE;
         }
         $groupId = $this->dbLink->insert_id;
-        if (!$this->policyObject->addGroup($groupId)) {
-            $this->setError(ERROR_NOT_EXECUTED, "createGroup -> ".$this->policyObject->errExp());
+        if (!$this->addPolicyToGroup($groupId)) {
+            $this->setError(ERROR_NOT_EXECUTED, "createGroup -> ".$this->errExp());
             return FALSE;
         }
-        if ($log && !$this->logObject->newRecord('core', 'userman_create_group', "$groupName; ID: $groupId")) {
-            $this->setError(ERROR_NOT_CRITICAL, "createGroup -> ".$this->logObject->errExp());
+        if ($log && !$this->newLogRecord('core', 'userman_create_group', "$groupName; ID: $groupId")) {
+            $this->setError(ERROR_NOT_CRITICAL, "createGroup -> ".$this->errExp());
         }
         return (int) $groupId;
     }
     
     public function groupStatus($groupId, $active, $log = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'userman_group_status')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'userman_group_status')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "groupStatus: restricted by the policy");
             return FALSE;
         }
@@ -142,8 +137,8 @@ class UserMan extends ServiceMethods implements intUserMan{
             $this->setError(ERROR_NOT_FOUND, 'groupStatus: incorrect group status or group does not exist');
             return FALSE;
         }
-        if ($log && !$this->logObject->newRecord('core', 'userman_group_status', "ID: $groupId; status: $active")) {
-            $this->setError(ERROR_NOT_CRITICAL, "groupStatus -> ".$this->logObject->errExp());
+        if ($log && !$this->newLogRecord('core', 'userman_group_status', "ID: $groupId; status: $active")) {
+            $this->setError(ERROR_NOT_CRITICAL, "groupStatus -> ".$this->errExp());
         }
         return TRUE;
     }
@@ -170,7 +165,7 @@ class UserMan extends ServiceMethods implements intUserMan{
     
     public function moveGroupTo($groupId, $destId, $log = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'userman_move_group')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'userman_move_group')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "moveGroupTo: restricted by the policy");
             return FALSE;
         }
@@ -204,15 +199,15 @@ class UserMan extends ServiceMethods implements intUserMan{
             return FALSE;
         }
         $movedUsers = (int) $this->dbLink->affected_rows;
-        if ($log && !$this->logObject->newRecord('core', 'userman_move_group', "∑=$movedUsers; ID:$groupId -> ID:$destId")) {
-            $this->setError(ERROR_NOT_CRITICAL, "moveGroupTo -> ".$this->logObject->errExp());
+        if ($log && !$this->newLogRecord('core', 'userman_move_group', "∑=$movedUsers; ID:$groupId -> ID:$destId")) {
+            $this->setError(ERROR_NOT_CRITICAL, "moveGroupTo -> ".$this->errExp());
         }
         return $movedUsers;
     }
     
     public function aboutGroup($groupId) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'userman_get_groups')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'userman_get_groups')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "aboutGroup: restricted by the policy");
             return FALSE;
         }
@@ -262,7 +257,7 @@ class UserMan extends ServiceMethods implements intUserMan{
     
     public function setGroupName($groupId, $groupName, $log = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'userman_set_about_group')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'userman_set_about_group')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "setGroupName: restricted by the policy");
             return FALSE;
         }
@@ -285,15 +280,15 @@ class UserMan extends ServiceMethods implements intUserMan{
             $this->setError(ERROR_ALREADY_EXISTS, 'setGroupName: group not found or group name already exists');
             return FALSE;
         }
-        if ($log && !$this->logObject->newRecord('core', 'userman_set_group_name', "ID: $groupId; $groupName")) {
-            $this->setError(ERROR_NOT_CRITICAL, "setGroupName -> ".$this->logObject->errExp());
+        if ($log && !$this->newLogRecord('core', 'userman_set_group_name', "ID: $groupId; $groupName")) {
+            $this->setError(ERROR_NOT_CRITICAL, "setGroupName -> ".$this->errExp());
         }
         return TRUE;
     }
     
     public function setGroupDesc($groupId, $description, $log = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'userman_set_about_group')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'userman_set_about_group')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "setGroupDesc: restricted by the policy");
             return FALSE;
         }
@@ -317,15 +312,15 @@ class UserMan extends ServiceMethods implements intUserMan{
             $this->setError(ERROR_ALREADY_EXISTS, 'setGroupDesc: group not found or description was repeated');
             return FALSE;
         }
-        if ($log && !$this->logObject->newRecord('core', 'userman_set_group_desc', "ID: $groupId")) {
-            $this->setError(ERROR_NOT_CRITICAL, "setGroupDesc -> ".$this->logObject->errExp());
+        if ($log && !$this->newLogRecord('core', 'userman_set_group_desc', "ID: $groupId")) {
+            $this->setError(ERROR_NOT_CRITICAL, "setGroupDesc -> ".$this->errExp());
         }
         return TRUE;
     }
     
     public function delGroup($groupId, $log = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'userman_del_group')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'userman_del_group')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "delGroup: restricted by the policy");
             return FALSE;
         }
@@ -345,8 +340,8 @@ class UserMan extends ServiceMethods implements intUserMan{
             $this->setError(ERROR_SYSTEM_INTERVENTION, 'delGroup: the group contains users');
             return FALSE;
         }
-        if (!$this->policyObject->delGroup($groupId) && !in_array($this->policyObject->errId(), array(ERROR_NOT_FOUND, ''))) {
-            $this->setError(ERROR_INCORRECT_DATA, $this->policyObject->errExp());
+        if (!$this->delPolicyFromGroup($groupId) && !in_array($this->errId(), array(ERROR_NOT_FOUND, ''))) {
+            $this->setError(ERROR_INCORRECT_DATA, $this->errExp());
             return FALSE;
         }
         $sql = array(
@@ -370,8 +365,8 @@ class UserMan extends ServiceMethods implements intUserMan{
                 list($groupname) = $qGroup->fetch_row();
             }
         }
-        if ($log && !$this->logObject->newRecord('core', 'userman_del_group', "$groupname; ID: $groupId")) {
-            $this->setError(ERROR_NOT_CRITICAL, "delGroup -> ".$this->logObject->errExp());
+        if ($log && !$this->newLogRecord('core', 'userman_del_group', "$groupname; ID: $groupId")) {
+            $this->setError(ERROR_NOT_CRITICAL, "delGroup -> ".$this->errExp());
         }
         return TRUE;
     }
@@ -407,7 +402,7 @@ class UserMan extends ServiceMethods implements intUserMan{
     
     public function getGroups($pageNumber, $totalGroups, $rpp = 20, $orderBy = array('id'), $ascent = FALSE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'userman_get_groups')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'userman_get_groups')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "getGroups: restricted by the policy");
             return FALSE;
         }
@@ -489,7 +484,7 @@ class UserMan extends ServiceMethods implements intUserMan{
     
     public function getAllGroups($orderBy = array('id'), $ascent = FALSE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'userman_get_groups')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'userman_get_groups')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "getAllGroups: restricted by the policy");
             return FALSE;
         }
@@ -555,7 +550,7 @@ class UserMan extends ServiceMethods implements intUserMan{
     //user methods
     public function createUser($username, $password, $email, $groupId, $active = TRUE, $langCode = MECCANO_DEF_LANG, $log = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'userman_create_user')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'userman_create_user')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "createUser: restricted by the policy");
             return FALSE;
         }
@@ -630,8 +625,8 @@ class UserMan extends ServiceMethods implements intUserMan{
                 $userid = $this->dbLink->insert_id;
             }
         }
-        if ($log && !$this->logObject->newRecord('core', 'userman_create_user', "$username; ID: $userid")) {
-            $this->setError(ERROR_NOT_CRITICAL, "createUser -> ".$this->logObject->errExp());
+        if ($log && !$this->newLogRecord('core', 'userman_create_user', "$username; ID: $userid")) {
+            $this->setError(ERROR_NOT_CRITICAL, "createUser -> ".$this->errExp());
         }
         return (int) $userid;
     }
@@ -678,7 +673,7 @@ class UserMan extends ServiceMethods implements intUserMan{
     
     public function userStatus($userId, $active, $log = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'userman_user_status')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'userman_user_status')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "userStatus: restricted by the policy");
             return FALSE;
         }
@@ -711,15 +706,15 @@ class UserMan extends ServiceMethods implements intUserMan{
             $this->setError(ERROR_NOT_FOUND, 'userStatus: incorrect user status or group not found');
             return FALSE;
         }
-        if ($log && !$this->logObject->newRecord('core', 'userman_user_status', "ID: $userId; status: $active")) {
-            $this->setError(ERROR_NOT_CRITICAL, "userStatus -> ".$this->logObject->errExp());
+        if ($log && !$this->newLogRecord('core', 'userman_user_status', "ID: $userId; status: $active")) {
+            $this->setError(ERROR_NOT_CRITICAL, "userStatus -> ".$this->errExp());
         }
         return TRUE;
     }
     
     public function moveUserTo($userId, $destId, $log = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'userman_move_user')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'userman_move_user')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "moveUserTo: restricted by the policy");
             return FALSE;
         }
@@ -756,15 +751,15 @@ class UserMan extends ServiceMethods implements intUserMan{
             $this->setError(ERROR_NOT_FOUND, 'moveUserTo: user not found');
             return FALSE;
         }
-        if ($log && !$this->logObject->newRecord('core', 'userman_move_user', "USER_ID:$userId -> GROUP_ID:$destId")) {
-            $this->setError(ERROR_NOT_CRITICAL, "moveUserTo -> ".$this->logObject->errExp());
+        if ($log && !$this->newLogRecord('core', 'userman_move_user', "USER_ID:$userId -> GROUP_ID:$destId")) {
+            $this->setError(ERROR_NOT_CRITICAL, "moveUserTo -> ".$this->errExp());
         }
         return TRUE;
     }
     
     public function delUser($userId, $log = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'userman_del_user')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'userman_del_user')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "delUser: restricted by the policy");
             return FALSE;
         }
@@ -810,15 +805,15 @@ class UserMan extends ServiceMethods implements intUserMan{
             }
         }
         list($username) = $qName->fetch_row();
-        if ($log && !$this->logObject->newRecord('core', 'userman_del_user', "$username; ID: $userId")) {
-            $this->setError(ERROR_NOT_CRITICAL, "delUser -> ".$this->logObject->errExp());
+        if ($log && !$this->newLogRecord('core', 'userman_del_user', "$username; ID: $userId")) {
+            $this->setError(ERROR_NOT_CRITICAL, "delUser -> ".$this->errExp());
         }
         return TRUE;
     }
     
     public function aboutUser($userId) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'userman_about_user')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'userman_about_user')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "aboutUser: restricted by the policy");
             return FALSE;
         }
@@ -872,7 +867,7 @@ class UserMan extends ServiceMethods implements intUserMan{
     
     public function userPasswords($userId) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'userman_user_passwords')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'userman_user_passwords')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "userPasswords: restricted by the policy");
             return FALSE;
         }
@@ -919,7 +914,7 @@ class UserMan extends ServiceMethods implements intUserMan{
     
     public function createPassword($userId, $description, $length = 8, $underline = TRUE, $minus = FALSE, $special = FALSE, $log = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'userman_add_password')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'userman_add_password')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "createPassword: restricted by the policy");
             return FALSE;
         }
@@ -974,8 +969,8 @@ class UserMan extends ServiceMethods implements intUserMan{
                     $this->setError(ERROR_NOT_EXECUTED, 'createPassword: unable to create unique session identifier -> '.$this->dbLink->error);
                     return FALSE;
                 }
-                if ($log && !$this->logObject->newRecord('core', 'userman_add_password', "PASSW_ID: $insertId; USER_ID: $userId")) {
-                    $this->setError(ERROR_NOT_CRITICAL, "createPassword -> ".$this->logObject->errExp());
+                if ($log && !$this->newLogRecord('core', 'userman_add_password', "PASSW_ID: $insertId; USER_ID: $userId")) {
+                    $this->setError(ERROR_NOT_CRITICAL, "createPassword -> ".$this->errExp());
                 }
                 return $password;
             }
@@ -987,7 +982,7 @@ class UserMan extends ServiceMethods implements intUserMan{
     
     public function addPassword($userId, $password, $description='', $log = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'userman_add_password')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'userman_add_password')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "addPassword: restricted by the policy");
             return FALSE;
         }
@@ -1040,15 +1035,15 @@ class UserMan extends ServiceMethods implements intUserMan{
             $this->setError(ERROR_NOT_EXECUTED, 'addPassword: unable to create unique session identifier -> '.$this->dbLink->error);
             return FALSE;
         }
-        if ($log && !$this->logObject->newRecord('core', 'userman_add_password', "PASSW_ID: $insertId; USER_ID: $userId")) {
-            $this->setError(ERROR_NOT_CRITICAL, "addPassword -> ".$this->logObject->errExp());
+        if ($log && !$this->newLogRecord('core', 'userman_add_password', "PASSW_ID: $insertId; USER_ID: $userId")) {
+            $this->setError(ERROR_NOT_CRITICAL, "addPassword -> ".$this->errExp());
         }
         return $insertId;
     }
     
     public function delPassword($passwId, $userId, $log = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'userman_del_password')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'userman_del_password')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "delPassword: restricted by the policy");
             return FALSE;
         }
@@ -1088,15 +1083,15 @@ class UserMan extends ServiceMethods implements intUserMan{
                 return FALSE;
             }
         }
-        if ($log && !$this->logObject->newRecord('core', 'userman_del_password', "PASSW_ID: $passwId; USER_ID: $userId")) {
-            $this->setError(ERROR_NOT_CRITICAL, "delPassword -> ".$this->logObject->errExp());
+        if ($log && !$this->newLogRecord('core', 'userman_del_password', "PASSW_ID: $passwId; USER_ID: $userId")) {
+            $this->setError(ERROR_NOT_CRITICAL, "delPassword -> ".$this->errExp());
         }
         return TRUE;
     }
     
     public function setPassword($passwId, $userId, $password, $log = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'userman_set_password')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'userman_set_password')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "setPassword: restricted by the policy");
             return FALSE;
         }
@@ -1133,15 +1128,15 @@ class UserMan extends ServiceMethods implements intUserMan{
             $this->setError(ERROR_ALREADY_EXISTS, 'setPassword: password not found or password was repeated');
             return FALSE;
         }
-        if ($log && !$this->logObject->newRecord('core', 'userman_set_password', "PASSW_ID: $passwId; USER_ID: $userId")) {
-            $this->setError(ERROR_NOT_CRITICAL, "setPassword -> ".$this->logObject->errExp());
+        if ($log && !$this->newLogRecord('core', 'userman_set_password', "PASSW_ID: $passwId; USER_ID: $userId")) {
+            $this->setError(ERROR_NOT_CRITICAL, "setPassword -> ".$this->errExp());
         }
         return TRUE;
     }
     
     public function setUserName($userId, $username, $log = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'userman_set_username')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'userman_set_username')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "setUserName: restricted by the policy");
             return FALSE;
         }
@@ -1175,15 +1170,15 @@ class UserMan extends ServiceMethods implements intUserMan{
             $this->setError(ERROR_NOT_FOUND, 'setUserName: unable to find user');
             return FALSE;
         }
-        if ($log && !$this->logObject->newRecord('core', 'userman_set_username', "$username; ID: $userId")) {
-            $this->setError(ERROR_NOT_CRITICAL, "setUserName -> ".$this->logObject->errExp());
+        if ($log && !$this->newLogRecord('core', 'userman_set_username', "$username; ID: $userId")) {
+            $this->setError(ERROR_NOT_CRITICAL, "setUserName -> ".$this->errExp());
         }
         return TRUE;
     }
     
     public function setUserMail($userId, $email, $log = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'userman_set_user_mail')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'userman_set_user_mail')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "setUserMail: restricted by the policy");
             return FALSE;
         }
@@ -1206,15 +1201,15 @@ class UserMan extends ServiceMethods implements intUserMan{
             $this->setError(ERROR_ALREADY_EXISTS, 'setUserMail: user does not exist or email was repeated');
             return FALSE;
         }
-        if ($log && !$this->logObject->newRecord('core', 'userman_set_user_mail', "$email; ID: $userId;")) {
-            $this->setError(ERROR_NOT_CRITICAL, "setUserMail -> ".$this->logObject->errExp());
+        if ($log && !$this->newLogRecord('core', 'userman_set_user_mail', "$email; ID: $userId;")) {
+            $this->setError(ERROR_NOT_CRITICAL, "setUserMail -> ".$this->errExp());
         }
         return TRUE;
     }
     
     public function setFullName($userId, $name, $log = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'userman_set_full_name')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'userman_set_full_name')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "setFullName: restricted by the policy");
             return FALSE;
         }
@@ -1234,15 +1229,15 @@ class UserMan extends ServiceMethods implements intUserMan{
             $this->setError(ERROR_ALREADY_EXISTS, 'setFullName: user not found or name was repeated');
             return FALSE;
         }
-        if ($log && !$this->logObject->newRecord('core', 'userman_set_full_name', "$name; ID: $userId")) {
-            $this->setError(ERROR_NOT_CRITICAL, "setFullName -> ".$this->logObject->errExp());
+        if ($log && !$this->newLogRecord('core', 'userman_set_full_name', "$name; ID: $userId")) {
+            $this->setError(ERROR_NOT_CRITICAL, "setFullName -> ".$this->errExp());
         }
         return TRUE;
     }
     
     public function changePassword($passwId, $userId, $oldPassw, $newPassw, $log = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'userman_change_password')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'userman_change_password')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "changePassword: restricted by the policy");
             return FALSE;
         }
@@ -1301,8 +1296,8 @@ class UserMan extends ServiceMethods implements intUserMan{
             $this->setError(ERROR_NOT_FOUND, 'changePassword: password not found, or it has been received invalid old password, or maybe your authentication is limited');
             return FALSE;
         }
-        if ($log && !$this->logObject->newRecord('core', 'userman_change_password', "PASSW_ID: $passwId; USER_ID: $userId")) {
-            $this->setError(ERROR_NOT_CRITICAL, "changePassword -> ".$this->logObject->errExp());
+        if ($log && !$this->newLogRecord('core', 'userman_change_password', "PASSW_ID: $passwId; USER_ID: $userId")) {
+            $this->setError(ERROR_NOT_CRITICAL, "changePassword -> ".$this->errExp());
         }
         return TRUE;
     }
@@ -1338,7 +1333,7 @@ class UserMan extends ServiceMethods implements intUserMan{
     
     public function getUsers($pageNumber, $totalUsers, $rpp = 20, $orderBy = array('id'), $ascent = FALSE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'userman_get_users')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'userman_get_users')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "getUsers: restricted by the policy");
             return FALSE;
         }
@@ -1432,7 +1427,7 @@ class UserMan extends ServiceMethods implements intUserMan{
     
     public function getAllUsers($orderBy = array('id'), $ascent = FALSE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'userman_get_users')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'userman_get_users')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "getAllUsers: restricted by the policy");
             return FALSE;
         }
@@ -1509,7 +1504,7 @@ class UserMan extends ServiceMethods implements intUserMan{
     
     public function setUserLang($userId, $code = MECCANO_DEF_LANG) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'userman_set_user_lang')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'userman_set_user_lang')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "setUserLang: restricted by the policy");
             return FALSE;
         }
