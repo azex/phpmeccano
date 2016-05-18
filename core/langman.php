@@ -28,7 +28,7 @@ namespace core;
 require_once MECCANO_CORE_DIR.'/logman.php';
 
 interface intLangMan {
-    public function __construct(LogMan $logObject);
+    public function __construct(\mysqli $dbLink);
     public function installLang(\DOMDocument $langs, $validate = TRUE);
     public function addLang($code, $name, $log = TRUE);
     public function delLang($code, $log = TRUE);
@@ -72,15 +72,10 @@ interface intLangMan {
     public function getTitleNamesXML($plugin, $section, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('id'), $ascent = FALSE);
 }
 
-class LangMan extends ServiceMethods implements intLangMan{
-    private $dbLink; // database link
-    public $logObject; // log object
-    private $policyObject; // policy objectobject
+class LangMan extends LogMan implements intLangMan{
     
-    public function __construct(LogMan $logObject) {
-        $this->dbLink = $logObject->dbLink;
-        $this->logObject = $logObject;
-        $this->policyObject = $logObject->policyObject;
+    public function __construct(\mysqli $dbLink) {
+        $this->dbLink = $dbLink;
     }
     
     public function installLang(\DOMDocument $langs, $validate = TRUE) {
@@ -170,7 +165,7 @@ class LangMan extends ServiceMethods implements intLangMan{
 
         public function addLang($code, $name, $dir = 'ltr', $log = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'langman_syswide_lang')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'langman_syswide_lang')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "addLang: restricted by the policy");
             return FALSE;
         }
@@ -228,15 +223,15 @@ class LangMan extends ServiceMethods implements intLangMan{
                 return FALSE;
             }
         }
-        if ($log && !$this->logObject->newRecord('core', 'langman_add_lang', "$name; code: $code; DIR: $dir; ID: $codeId")) {
-            $this->setError(ERROR_NOT_CRITICAL, "addLang -> ".$this->logObject->errExp());
+        if ($log && !$this->newLogRecord('core', 'langman_add_lang', "$name; code: $code; DIR: $dir; ID: $codeId")) {
+            $this->setError(ERROR_NOT_CRITICAL, "addLang -> ".$this->errExp());
         }
         return TRUE;
     }
     
     public function delLang($code, $log = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'langman_syswide_lang')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'langman_syswide_lang')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "delLang: restricted by the policy");
             return FALSE;
         }
@@ -298,8 +293,8 @@ class LangMan extends ServiceMethods implements intLangMan{
             $this->setError(ERROR_NOT_EXECUTED, 'delLang: '.$this->dbLink->error);
             return FALSE;
         }
-        if ($log && !$this->logObject->newRecord('core', 'langman_del_lang', "$name; code: $code; DIR: $dir; ID: $codeId")) {
-            $this->setError(ERROR_NOT_CRITICAL, "delLang -> ".$this->logObject->errExp());
+        if ($log && !$this->newLogRecord('core', 'langman_del_lang', "$name; code: $code; DIR: $dir; ID: $codeId")) {
+            $this->setError(ERROR_NOT_CRITICAL, "delLang -> ".$this->errExp());
         }
         return TRUE;
     }
@@ -834,7 +829,7 @@ class LangMan extends ServiceMethods implements intLangMan{
     
     public function addTitleSection($section, $plugin, $log = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'langman_add_title_sec')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'langman_add_title_sec')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "addTitleSection: restricted by the policy");
             return FALSE;
         }
@@ -863,15 +858,15 @@ class LangMan extends ServiceMethods implements intLangMan{
             return FALSE;
         }
         $sectionId = (int) $this->dbLink->insert_id;
-        if ($log && !$this->logObject->newRecord('core', 'langman_add_title_sec', "$section; plugin: $plugin; ID: $sectionId")) {
-            $this->setError(ERROR_NOT_CRITICAL, "addTitleSection -> ".$this->logObject->errExp());
+        if ($log && !$this->newLogRecord('core', 'langman_add_title_sec', "$section; plugin: $plugin; ID: $sectionId")) {
+            $this->setError(ERROR_NOT_CRITICAL, "addTitleSection -> ".$this->errExp());
         }
         return $sectionId;
     }
     
     public function delTitleSection($sid, $log = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'langman_del_title_sec')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'langman_del_title_sec')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "delTitleSection: restricted by the policy");
             return FALSE;
         }
@@ -907,15 +902,15 @@ class LangMan extends ServiceMethods implements intLangMan{
             $this->setError(ERROR_NOT_FOUND, 'delTitleSection: defined section does not exist or your are trying to delete static section');
             return FALSE;
         }
-        if ($log && !$this->logObject->newRecord('core', 'langman_del_title_sec', "ID: $sid")) {
-            $this->setError(ERROR_NOT_CRITICAL, "delTitleSection -> ".$this->logObject->errExp());
+        if ($log && !$this->newLogRecord('core', 'langman_del_title_sec', "ID: $sid")) {
+            $this->setError(ERROR_NOT_CRITICAL, "delTitleSection -> ".$this->errExp());
         }
         return TRUE;
     }
     
     public function addTextSection($section, $plugin, $log = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'langman_add_text_sec')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'langman_add_text_sec')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "addTextSection: restricted by the policy");
             return FALSE;
         }
@@ -944,15 +939,15 @@ class LangMan extends ServiceMethods implements intLangMan{
             return FALSE;
         }
         $sectionId = (int) $this->dbLink->insert_id;
-        if ($log && !$this->logObject->newRecord('core', 'langman_add_text_sec', "$section; plugin: $plugin; ID: $sectionId")) {
-            $this->setError(ERROR_NOT_CRITICAL, "addTextSection -> ".$this->logObject->errExp());
+        if ($log && !$this->newLogRecord('core', 'langman_add_text_sec', "$section; plugin: $plugin; ID: $sectionId")) {
+            $this->setError(ERROR_NOT_CRITICAL, "addTextSection -> ".$this->errExp());
         }
         return $sectionId;
     }
     
     public function delTextSection($sid, $log = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'langman_del_text_sec')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'langman_del_text_sec')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "delTextSection: restricted by the policy");
             return FALSE;
         }
@@ -988,15 +983,15 @@ class LangMan extends ServiceMethods implements intLangMan{
             $this->setError(ERROR_NOT_FOUND, 'delTextSection: defined section does not exist or your are trying to delete static section');
             return FALSE;
         }
-        if ($log && !$this->logObject->newRecord('core', 'langman_del_text_sec', "ID: $sid")) {
-            $this->setError(ERROR_NOT_CRITICAL, "delTitleSection -> ".$this->logObject->errExp());
+        if ($log && !$this->newLogRecord('core', 'langman_del_text_sec', "ID: $sid")) {
+            $this->setError(ERROR_NOT_CRITICAL, "delTitleSection -> ".$this->errExp());
         }
         return TRUE;
     }
     
     public function addTitleName($name, $section, $plugin, $log = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'langman_add_title')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'langman_add_title')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "addTitleName: restricted by the policy");
             return FALSE;
         }
@@ -1028,15 +1023,15 @@ class LangMan extends ServiceMethods implements intLangMan{
             return FALSE;
         }
         $nameId = (int) $this->dbLink->insert_id;
-        if ($log && !$this->logObject->newRecord('core', 'langman_add_title_name', "$name; section: $section; plugin: $plugin; ID: $nameId")) {
-            $this->setError(ERROR_NOT_CRITICAL, "addTitleName -> ".$this->logObject->errExp());
+        if ($log && !$this->newLogRecord('core', 'langman_add_title_name', "$name; section: $section; plugin: $plugin; ID: $nameId")) {
+            $this->setError(ERROR_NOT_CRITICAL, "addTitleName -> ".$this->errExp());
         }
         return $nameId;
     }
     
     public function delTitleName($nameid, $log = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'langman_del_title')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'langman_del_title')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "delTitleName: restricted by the policy");
             return FALSE;
         }
@@ -1069,15 +1064,15 @@ class LangMan extends ServiceMethods implements intLangMan{
             $this->setError(ERROR_NOT_FOUND, 'delTitleName: defined tile name does not exist or your are trying to delete name from section');
             return FALSE;
         }
-        if ($log && !$this->logObject->newRecord('core', 'langman_del_title_name', "ID: $nameid")) {
-            $this->setError(ERROR_NOT_CRITICAL, "delTitleName -> ".$this->logObject->errExp());
+        if ($log && !$this->newLogRecord('core', 'langman_del_title_name', "ID: $nameid")) {
+            $this->setError(ERROR_NOT_CRITICAL, "delTitleName -> ".$this->errExp());
         }
         return TRUE;
     }
     
     public function addTextName($name, $section, $plugin, $log = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'langman_add_text')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'langman_add_text')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "addTextName: restricted by the policy");
             return FALSE;
         }
@@ -1109,15 +1104,15 @@ class LangMan extends ServiceMethods implements intLangMan{
             return FALSE;
         }
         $nameId = (int) $this->dbLink->insert_id;
-        if ($log && !$this->logObject->newRecord('core', 'langman_add_text_name', "$name; section: $section; plugin: $plugin; ID: $nameId")) {
-            $this->setError(ERROR_NOT_CRITICAL, " -> ".$this->logObject->errExp());
+        if ($log && !$this->newLogRecord('core', 'langman_add_text_name', "$name; section: $section; plugin: $plugin; ID: $nameId")) {
+            $this->setError(ERROR_NOT_CRITICAL, " -> ".$this->errExp());
         }
         return $nameId;
     }
     
     public function delTextName($nameid, $log = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'langman_del_text')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'langman_del_text')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "delTextName: restricted by the policy");
             return FALSE;
         }
@@ -1150,15 +1145,15 @@ class LangMan extends ServiceMethods implements intLangMan{
             $this->setError(ERROR_NOT_FOUND, 'delTextName: defined tile name does not exist or your are trying to delete name from section');
             return FALSE;
         }
-        if ($log && !$this->logObject->newRecord('core', 'langman_del_text_name', "ID: $nameid")) {
-            $this->setError(ERROR_NOT_CRITICAL, "delTexteName -> ".$this->logObject->errExp());
+        if ($log && !$this->newLogRecord('core', 'langman_del_text_name', "ID: $nameid")) {
+            $this->setError(ERROR_NOT_CRITICAL, "delTexteName -> ".$this->errExp());
         }
         return TRUE;
     }
     
     public function addTitle($title, $name, $section, $plugin, $code = MECCANO_DEF_LANG, $log = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'langman_add_title')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'langman_add_title')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "addTitle: restricted by the policy");
             return FALSE;
         }
@@ -1206,15 +1201,15 @@ class LangMan extends ServiceMethods implements intLangMan{
             return FALSE;
         }
         $titleId = (int) $this->dbLink->insert_id;
-        if ($log && !$this->logObject->newRecord('core', 'langman_add_title', "name: $name; section: $section; plugin: $plugin; code: $code; ID: $titleId")) {
-            $this->setError(ERROR_NOT_CRITICAL, "addTitle -> ".$this->logObject->errExp());
+        if ($log && !$this->newLogRecord('core', 'langman_add_title', "name: $name; section: $section; plugin: $plugin; code: $code; ID: $titleId")) {
+            $this->setError(ERROR_NOT_CRITICAL, "addTitle -> ".$this->errExp());
         }
         return $titleId;
     }
     
     public function delTitle($tid, $log = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'langman_del_title')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'langman_del_title')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "delTitle: restricted by the policy");
             return FALSE;
         }
@@ -1237,15 +1232,15 @@ class LangMan extends ServiceMethods implements intLangMan{
             $this->setError(ERROR_NOT_FOUND, 'delTitle: unable to find defined title');
             return FALSE;
         }
-        if ($log && !$this->logObject->newRecord('core', 'langman_del_title', "ID: $tid")) {
-            $this->setError(ERROR_NOT_CRITICAL, "delTitle -> ".$this->logObject->errExp());
+        if ($log && !$this->newLogRecord('core', 'langman_del_title', "ID: $tid")) {
+            $this->setError(ERROR_NOT_CRITICAL, "delTitle -> ".$this->errExp());
         }
         return TRUE;
     }
     
     public function addText($title, $document, $name, $section, $plugin, $code = MECCANO_DEF_LANG, $log = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'langman_add_text')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'langman_add_text')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "addText: restricted by the policy");
             return FALSE;
         }
@@ -1294,15 +1289,15 @@ class LangMan extends ServiceMethods implements intLangMan{
             return FALSE;
         }
         $textId = (int) $this->dbLink->insert_id;
-        if ($log && !$this->logObject->newRecord('core', 'langman_add_text', "name: $name; section: $section; plugin: $plugin; code: $code; ID: $textId")) {
-            $this->setError(ERROR_NOT_CRITICAL, "addText -> ".$this->logObject->errExp());
+        if ($log && !$this->newLogRecord('core', 'langman_add_text', "name: $name; section: $section; plugin: $plugin; code: $code; ID: $textId")) {
+            $this->setError(ERROR_NOT_CRITICAL, "addText -> ".$this->errExp());
         }
         return $textId;
     }
     
     public function delText($tid, $log = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'langman_del_text')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'langman_del_text')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "delText: restricted by the policy");
             return FALSE;
         }
@@ -1325,15 +1320,15 @@ class LangMan extends ServiceMethods implements intLangMan{
             $this->setError(ERROR_NOT_FOUND, 'delText: unable to find defined text');
             return FALSE;
         }
-        if ($log && !$this->logObject->newRecord('core', 'langman_del_text', "ID: $tid")) {
-            $this->setError(ERROR_NOT_CRITICAL, "delText -> ".$this->logObject->errExp());
+        if ($log && !$this->newLogRecord('core', 'langman_del_text', "ID: $tid")) {
+            $this->setError(ERROR_NOT_CRITICAL, "delText -> ".$this->errExp());
         }
         return TRUE;
     }
     
     public function updateTitle($id, $title, $log = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'langman_update_title')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'langman_update_title')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "updateTitle: restricted by the policy");
             return FALSE;
         }
@@ -1358,15 +1353,15 @@ class LangMan extends ServiceMethods implements intLangMan{
             $this->setError(ERROR_NOT_FOUND, 'updateTitle: unable to find defined title');
             return FALSE;
         }
-        if ($log && !$this->logObject->newRecord('core', 'langman_update_title', "ID: $id")) {
-            $this->setError(ERROR_NOT_CRITICAL, "updateTitle -> ".$this->logObject->errExp());
+        if ($log && !$this->newLogRecord('core', 'langman_update_title', "ID: $id")) {
+            $this->setError(ERROR_NOT_CRITICAL, "updateTitle -> ".$this->errExp());
         }
         return TRUE;
     }
     
     public function updateText($id, $title, $document, $log = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'langman_update_text')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'langman_update_text')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "updateText: restricted by the policy");
             return FALSE;
         }
@@ -1392,8 +1387,8 @@ class LangMan extends ServiceMethods implements intLangMan{
             $this->setError(ERROR_NOT_FOUND, 'updateText: unable to find defined text');
             return FALSE;
         }
-        if ($log && !$this->logObject->newRecord('core', 'langman_update_text', "ID: $id")) {
-            $this->setError(ERROR_NOT_CRITICAL, " -> ".$this->logObject->errExp());
+        if ($log && !$this->newLogRecord('core', 'langman_update_text', "ID: $id")) {
+            $this->setError(ERROR_NOT_CRITICAL, " -> ".$this->errExp());
         }
         return TRUE;
     }

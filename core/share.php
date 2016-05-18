@@ -30,7 +30,7 @@ require_once MECCANO_CORE_DIR.'/files.php';
 require_once MECCANO_CORE_DIR.'/discuss.php';
 
 interface intShare {
-    public function __construct(LogMan $logObject);
+    public function __construct(\mysqli $dbLink);
     public function createCircle($userId, $name);
     public function userCircles($userId);
     public function renameCircle($userId, $circleId, $newName);
@@ -80,13 +80,9 @@ interface intShare {
 }
 
 class Share extends Discuss implements intShare {
-    private $logObject; // log object
-    private $policyObject; // policy object
     
-    public function __construct(LogMan $logObject) {
-        $this->dbLink = $logObject->dbLink;
-        $this->logObject = $logObject;
-        $this->policyObject = $logObject->policyObject;
+    public function __construct(\mysqli $dbLink) {
+        $this->dbLink = $dbLink;
     }
     
     private function checkFileAccess($fileId) {
@@ -1562,7 +1558,6 @@ class Share extends Discuss implements intShare {
             $this->setError(ERROR_INCORRECT_DATA, 'delMsg: incorrect parameters');
             return FALSE;
         }
-//        $this->dbLink = new \mysqli();
         // check whether message exists
         $this->dbLink->query("SELECT `msgtime` "
                 . "FROM `".MECCANO_TPREF."_core_share_msgs` "
@@ -1642,6 +1637,13 @@ class Share extends Discuss implements intShare {
                 . "WHERE `mid`='$msgId' ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'delMsg: unable to delete message access rights -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        // delete relation with comments
+        $this->dbLink->query("DELETE FROM `".MECCANO_TPREF."_core_share_msg_topic_rel` "
+                . "WHERE `id`='$msgId' ;");
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'delMsg: unable to delete relation with comments -> '.$this->dbLink->error);
             return FALSE;
         }
         // delete message
