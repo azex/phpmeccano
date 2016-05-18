@@ -1558,7 +1558,6 @@ class Share extends Discuss implements intShare {
             $this->setError(ERROR_INCORRECT_DATA, 'delMsg: incorrect parameters');
             return FALSE;
         }
-//        $this->dbLink = new \mysqli();
         // check whether message exists
         $this->dbLink->query("SELECT `msgtime` "
                 . "FROM `".MECCANO_TPREF."_core_share_msgs` "
@@ -1638,6 +1637,13 @@ class Share extends Discuss implements intShare {
                 . "WHERE `mid`='$msgId' ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'delMsg: unable to delete message access rights -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        // delete relation with comments
+        $this->dbLink->query("DELETE FROM `".MECCANO_TPREF."_core_share_msg_topic_rel` "
+                . "WHERE `id`='$msgId' ;");
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'delMsg: unable to delete relation with comments -> '.$this->dbLink->error);
             return FALSE;
         }
         // delete message
