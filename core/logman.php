@@ -186,11 +186,11 @@ class LogMan extends Policy implements intLogMan {
     public function delLogEvents($plugin) {
         $this->zeroizeError();
         if (!pregPlugin($plugin)) {
-            $this->setError(ERROR_INCORRECT_DATA, "delEvents: incorrect plugin name");
+            $this->setError(ERROR_INCORRECT_DATA, "delLogEvents: incorrect plugin name");
             return FALSE;
         }
         if ($plugin == "core") {
-            $this->setError(ERROR_SYSTEM_INTERVENTION, "delEvents: unable to delete core events");
+            $this->setError(ERROR_SYSTEM_INTERVENTION, "delLogEvents: unable to delete core events");
             return FALSE;
         }
         $sql = array(
@@ -217,7 +217,7 @@ class LogMan extends Policy implements intLogMan {
         foreach ($sql as $value) {
             $this->dbLink->query($value);
             if ($this->dbLink->errno) {
-                $this->setError(ERROR_NOT_EXECUTED, "delEvents: unable remove events -> ".$this->dbLink->error);
+                $this->setError(ERROR_NOT_EXECUTED, "delLogEvents: unable remove events -> ".$this->dbLink->error);
                 return FALSE;
             }
         }
@@ -227,7 +227,7 @@ class LogMan extends Policy implements intLogMan {
     public function newLogRecord($plugin, $keyword, $insertion = '') {
         $this->zeroizeError();
         if (!pregPlugin($plugin) || !pregPlugin($keyword) || !is_string($insertion)) {
-            $this->setError(ERROR_INCORRECT_DATA, 'newRecord: check arguments');
+            $this->setError(ERROR_INCORRECT_DATA, 'newLogRecord: check arguments');
             return FALSE;
         }
         $keyword = $this->dbLink->real_escape_string($keyword);
@@ -240,11 +240,11 @@ class LogMan extends Policy implements intLogMan {
                 . "WHERE `e`.`keyword`='$keyword' "
                 . "AND `p`.`name`='$plugin' ;");
         if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'newRecord: unable to get event identifier -> '.$this->dbLink->error);
+            $this->setError(ERROR_NOT_EXECUTED, 'newLogRecord: unable to get event identifier -> '.$this->dbLink->error);
             return FALSE;
         }
         if (!$this->dbLink->affected_rows) {
-            $this->setError(ERROR_NOT_FOUND, 'newRecord: plugin or event not found');
+            $this->setError(ERROR_NOT_FOUND, 'newLogRecord: plugin or event not found');
             return FALSE;
         }
         list($eventId) = $qEvent->fetch_row();
@@ -258,7 +258,7 @@ class LogMan extends Policy implements intLogMan {
                     . "VALUES ($eventId, '$insertion') ;");
         }
         if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'newRecord: unable to make new record -> '.$this->dbLink->error);
+            $this->setError(ERROR_NOT_EXECUTED, 'newLogRecord: unable to make new record -> '.$this->dbLink->error);
             return FALSE;
         }
         return TRUE;

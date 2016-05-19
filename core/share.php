@@ -105,6 +105,10 @@ class Share extends Discuss implements intShare {
             $this->setError(ERROR_NOT_FOUND, "checkFileAccess: file [$fileId] not found in the database");
             return FALSE;
         }
+        // check for full viewing access
+        if ($this->checkFuncAccess('core', 'share_viewing_access')) {
+            return TRUE;
+        }
         // check for public access
         $this->dbLink->query(
                 "SELECT `id` FROM `".MECCANO_TPREF."_core_share_files_accessibility` "
@@ -169,6 +173,10 @@ class Share extends Discuss implements intShare {
         elseif (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, "checkMsgAccess: message [$msgId] not found in the database");
             return FALSE;
+        }
+        // check for full viewing access
+        if ($this->checkFuncAccess('core', 'share_viewing_access')) {
+            return TRUE;
         }
         // check for public access
         $this->dbLink->query(
