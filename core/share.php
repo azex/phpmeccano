@@ -53,6 +53,7 @@ interface intShare {
     public function getMsgShares($msgId, $userId);
     public function updateFile($fileId, $userid, $title, $comment);
     public function repostMsg($msgId, $userId, $hlink = TRUE);
+    public function editMsg($msgId, $userid, $title, $text);
     public function delMsg($msgId, $userId, $keepFiles = TRUE);
     public function repostFile($fileId, $userId, $hlink = TRUE);
     public function sumUserMsgs($userId, $rpp = 20);
@@ -1550,6 +1551,29 @@ class Share extends Discuss implements intShare {
             $this->setError(ERROR_RESTRICTED_ACCESS, 'repostMsg: access denied');
             return FALSE;
         }
+    }
+    
+    public function editMsg($msgId, $userid, $title, $text) {
+        $this->zeroizeError();
+        if (!pregGuid($msgId) || !is_integer($userid) || !is_string($title) || !is_string($text)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'editMsg: incorrect parameters');
+            return FALSE;
+        }
+        $title = $this->dbLink->real_escape_string($title);
+        $comment = $this->dbLink->real_escape_string($comment);
+        $this->dbLink->query("UPDATE `".MECCANO_TPREF."_core_share_msgs` "
+                . "SET `title`='$title', `text`='$text' "
+                . "WHERE `id`='$msgId' "
+                . "AND `userid`=$userid ;");
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'editMsg: unable to edit message -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        if (!$this->dbLink->affected_rows) {
+            $this->setError(ERROR_NOT_FOUND, 'editMsg: message not found');
+            return FALSE;
+        }
+        return TRUE;
     }
     
     public function delMsg($msgId, $userId, $keepFiles = TRUE) {
