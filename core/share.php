@@ -1782,7 +1782,7 @@ class Share extends Discuss implements intShare {
             $rpp = 1;
         }
         // if message data is required by owner
-        if (isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) {
+        if ((isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) || $this->checkFuncAccess('core', 'share_viewing_access')) {
             $qResult = $this->dbLink->query(
                     "SELECT COUNT(`id`) "
                     . "FROM `".MECCANO_TPREF."_core_share_msgs` "
@@ -1899,7 +1899,7 @@ class Share extends Discuss implements intShare {
         //
         list($userName, $fullName) = $qUser->fetch_row();
         // if message data is required by owner
-        if (isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) {
+        if ((isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) || $this->checkFuncAccess('core', 'share_viewing_access')) {
             $qResult = $this->dbLink->query(
                     "SELECT `id`, `source`, `title`, IF(LENGTH(`text`)>512, CONCAT(SUBSTRING(`text`, 1, 512), '...'), `text`), `msgtime`, `microtime` `time` "
                     . "FROM `".MECCANO_TPREF."_core_share_msgs` "
@@ -2016,7 +2016,7 @@ class Share extends Discuss implements intShare {
         //
         list($userName, $fullName) = $qUser->fetch_row();
         // if message data is required by owner
-        if (isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) {
+        if ((isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) || $this->checkFuncAccess('core', 'share_viewing_access')) {
             $qResult = $this->dbLink->query(
                     "SELECT `id`, `source`, `title`, IF(LENGTH(`text`)>512, CONCAT(SUBSTRING(`text`, 1, 512), '...'), `text`), `msgtime`, `microtime` `time` "
                     . "FROM `".MECCANO_TPREF."_core_share_msgs` "
@@ -2151,7 +2151,7 @@ class Share extends Discuss implements intShare {
         //
         list($userName, $fullName) = $qUser->fetch_row();
         // if message data is required by owner
-        if (isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) {
+        if ((isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) || $this->checkFuncAccess('core', 'share_viewing_access')) {
             $qResult = $this->dbLink->query(
                     "SELECT `id`, `source`, `title`, IF(LENGTH(`text`)>512, CONCAT(SUBSTRING(`text`, 1, 512), '...'), `text`), `msgtime`, `microtime` `time` "
                     . "FROM `".MECCANO_TPREF."_core_share_msgs` "
@@ -2284,7 +2284,7 @@ class Share extends Discuss implements intShare {
         //
         list($userName, $fullName) = $qUser->fetch_row();
         // if message data is required by owner
-        if (isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) {
+        if ((isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) || $this->checkFuncAccess('core', 'share_viewing_access')) {
             $qResult = $this->dbLink->query(
                     "SELECT `id`, `source`, `title`, IF(LENGTH(`text`)>512, CONCAT(SUBSTRING(`text`, 1, 512), '...'), `text`), `msgtime`, `microtime` `time` "
                     . "FROM `".MECCANO_TPREF."_core_share_msgs` "
@@ -2404,7 +2404,7 @@ class Share extends Discuss implements intShare {
             $rpp = 1;
         }
         // if file data is required by owner
-        if (isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) {
+        if ((isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) || $this->checkFuncAccess('core', 'share_viewing_access')) {
             $qResult = $this->dbLink->query(
                     "SELECT COUNT(`id`) "
                     . "FROM `".MECCANO_TPREF."_core_share_files` "
@@ -2521,7 +2521,7 @@ class Share extends Discuss implements intShare {
         //
         list($userName, $fullName) = $qUser->fetch_row();
         // if message data is required by owner
-        if (isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) {
+        if ((isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) || $this->checkFuncAccess('core', 'share_viewing_access')) {
             $qResult = $this->dbLink->query(
                     "SELECT `id`, `title`, `name`, IF(LENGTH(`comment`)>512, CONCAT(SUBSTRING(`comment`, 1, 512), '...'), `comment`), `mime`, `size`, `filetime`, `microtime` `time` "
                     . "FROM `".MECCANO_TPREF."_core_share_files` "
@@ -2643,7 +2643,7 @@ class Share extends Discuss implements intShare {
         //
         list($userName, $fullName) = $qUser->fetch_row();
         // if message data is required by owner
-        if (isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) {
+        if ((isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) || $this->checkFuncAccess('core', 'share_viewing_access')) {
             $qResult = $this->dbLink->query(
                     "SELECT `id`, `title`, `name`, IF(LENGTH(`comment`)>512, CONCAT(SUBSTRING(`comment`, 1, 512), '...'), `comment`), `mime`, `size`, `filetime`, `microtime` `time` "
                     . "FROM `".MECCANO_TPREF."_core_share_files` "
@@ -2783,7 +2783,7 @@ class Share extends Discuss implements intShare {
         //
         list($userName, $fullName) = $qUser->fetch_row();
         // if message data is required by owner
-        if (isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) {
+        if ((isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) || $this->checkFuncAccess('core', 'share_viewing_access')) {
             $qResult = $this->dbLink->query(
                     "SELECT `id`, `title`, `name`, IF(LENGTH(`comment`)>512, CONCAT(SUBSTRING(`comment`, 1, 512), '...'), `comment`), `mime`, `size`, `filetime`, `microtime` `time` "
                     . "FROM `".MECCANO_TPREF."_core_share_files` "
@@ -2921,7 +2921,7 @@ class Share extends Discuss implements intShare {
         //
         list($userName, $fullName) = $qUser->fetch_row();
         // if message data is required by owner
-        if (isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) {
+        if ((isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) || $this->checkFuncAccess('core', 'share_viewing_access')) {
             $qResult = $this->dbLink->query(
                     "SELECT `id`, `title`, `name`, IF(LENGTH(`comment`)>512, CONCAT(SUBSTRING(`comment`, 1, 512), '...'), `comment`), `mime`, `size`, `filetime`, `microtime` `time` "
                     . "FROM `".MECCANO_TPREF."_core_share_files` "
