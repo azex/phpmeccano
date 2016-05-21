@@ -51,8 +51,9 @@ interface intShare {
     public function msgFiles($msgId);
     public function getFileShares($fileId, $userId);
     public function getMsgShares($msgId, $userId);
-    public function updateFile($fileId, $userid, $title, $comment);
+    public function editFile($fileId, $userid, $title, $comment);
     public function repostMsg($msgId, $userId, $hlink = TRUE);
+    public function editMsg($msgId, $userid, $title, $text);
     public function delMsg($msgId, $userId, $keepFiles = TRUE);
     public function repostFile($fileId, $userId, $hlink = TRUE);
     public function sumUserMsgs($userId, $rpp = 20);
@@ -103,6 +104,10 @@ class Share extends Discuss implements intShare {
         elseif (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, "checkFileAccess: file [$fileId] not found in the database");
             return FALSE;
+        }
+        // check for full viewing access
+        if ($this->checkFuncAccess('core', 'share_viewing_access')) {
+            return TRUE;
         }
         // check for public access
         $this->dbLink->query(
@@ -168,6 +173,10 @@ class Share extends Discuss implements intShare {
         elseif (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, "checkMsgAccess: message [$msgId] not found in the database");
             return FALSE;
+        }
+        // check for full viewing access
+        if ($this->checkFuncAccess('core', 'share_viewing_access')) {
+            return TRUE;
         }
         // check for public access
         $this->dbLink->query(
@@ -845,6 +854,10 @@ class Share extends Discuss implements intShare {
             $this->setError(ERROR_INCORRECT_DATA, 'delFile: incorrect parameters');
             return FALSE;
         }
+        if (!(isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) && !$this->checkFuncAccess('core', 'share_modify_msgs_files')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, 'delFile: access denied');
+            return FALSE;
+        }
         // whether file exists
         $qFile = $this->dbLink->query(
                 "SELECT `stdir` "
@@ -1377,10 +1390,14 @@ class Share extends Discuss implements intShare {
         }
     }
     
-    public function updateFile($fileId, $userid, $title, $comment) {
+    public function editFile($fileId, $userid, $title, $comment) {
         $this->zeroizeError();
         if (!pregGuid($fileId) || !is_integer($userid) || !is_string($title) || !is_string($comment)) {
             $this->setError(ERROR_INCORRECT_DATA, 'updateFile: incorrect parameters');
+            return FALSE;
+        }
+        if (!(isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) && !$this->checkFuncAccess('core', 'share_modify_msgs_files')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, 'editFile: access denied');
             return FALSE;
         }
         $title = $this->dbLink->real_escape_string($title);
@@ -1552,10 +1569,41 @@ class Share extends Discuss implements intShare {
         }
     }
     
+    public function editMsg($msgId, $userId, $title, $text) {
+        $this->zeroizeError();
+        if (!pregGuid($msgId) || !is_integer($userId) || !is_string($title) || !is_string($text)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'editMsg: incorrect parameters');
+            return FALSE;
+        }
+        if (!(isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) && !$this->checkFuncAccess('core', 'share_modify_msgs_files')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, 'editMsg: access denied');
+            return FALSE;
+        }
+        $title = $this->dbLink->real_escape_string($title);
+        $comment = $this->dbLink->real_escape_string($comment);
+        $this->dbLink->query("UPDATE `".MECCANO_TPREF."_core_share_msgs` "
+                . "SET `title`='$title', `text`='$text' "
+                . "WHERE `id`='$msgId' "
+                . "AND `userid`=$userId ;");
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'editMsg: unable to edit message -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        if (!$this->dbLink->affected_rows) {
+            $this->setError(ERROR_NOT_FOUND, 'editMsg: message not found');
+            return FALSE;
+        }
+        return TRUE;
+    }
+    
     public function delMsg($msgId, $userId, $keepFiles = TRUE) {
         $this->zeroizeError();
         if (!pregGuid($msgId) || !is_integer($userId)) {
             $this->setError(ERROR_INCORRECT_DATA, 'delMsg: incorrect parameters');
+            return FALSE;
+        }
+        if (!(isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) && !$this->checkFuncAccess('core', 'share_modify_msgs_files')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, 'delMsg: access denied');
             return FALSE;
         }
         // check whether message exists
@@ -1750,7 +1798,7 @@ class Share extends Discuss implements intShare {
             $rpp = 1;
         }
         // if message data is required by owner
-        if (isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) {
+        if ((isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) || $this->checkFuncAccess('core', 'share_viewing_access')) {
             $qResult = $this->dbLink->query(
                     "SELECT COUNT(`id`) "
                     . "FROM `".MECCANO_TPREF."_core_share_msgs` "
@@ -1867,7 +1915,7 @@ class Share extends Discuss implements intShare {
         //
         list($userName, $fullName) = $qUser->fetch_row();
         // if message data is required by owner
-        if (isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) {
+        if ((isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) || $this->checkFuncAccess('core', 'share_viewing_access')) {
             $qResult = $this->dbLink->query(
                     "SELECT `id`, `source`, `title`, IF(LENGTH(`text`)>512, CONCAT(SUBSTRING(`text`, 1, 512), '...'), `text`), `msgtime`, `microtime` `time` "
                     . "FROM `".MECCANO_TPREF."_core_share_msgs` "
@@ -1984,7 +2032,7 @@ class Share extends Discuss implements intShare {
         //
         list($userName, $fullName) = $qUser->fetch_row();
         // if message data is required by owner
-        if (isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) {
+        if ((isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) || $this->checkFuncAccess('core', 'share_viewing_access')) {
             $qResult = $this->dbLink->query(
                     "SELECT `id`, `source`, `title`, IF(LENGTH(`text`)>512, CONCAT(SUBSTRING(`text`, 1, 512), '...'), `text`), `msgtime`, `microtime` `time` "
                     . "FROM `".MECCANO_TPREF."_core_share_msgs` "
@@ -2119,7 +2167,7 @@ class Share extends Discuss implements intShare {
         //
         list($userName, $fullName) = $qUser->fetch_row();
         // if message data is required by owner
-        if (isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) {
+        if ((isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) || $this->checkFuncAccess('core', 'share_viewing_access')) {
             $qResult = $this->dbLink->query(
                     "SELECT `id`, `source`, `title`, IF(LENGTH(`text`)>512, CONCAT(SUBSTRING(`text`, 1, 512), '...'), `text`), `msgtime`, `microtime` `time` "
                     . "FROM `".MECCANO_TPREF."_core_share_msgs` "
@@ -2252,7 +2300,7 @@ class Share extends Discuss implements intShare {
         //
         list($userName, $fullName) = $qUser->fetch_row();
         // if message data is required by owner
-        if (isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) {
+        if ((isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) || $this->checkFuncAccess('core', 'share_viewing_access')) {
             $qResult = $this->dbLink->query(
                     "SELECT `id`, `source`, `title`, IF(LENGTH(`text`)>512, CONCAT(SUBSTRING(`text`, 1, 512), '...'), `text`), `msgtime`, `microtime` `time` "
                     . "FROM `".MECCANO_TPREF."_core_share_msgs` "
@@ -2372,7 +2420,7 @@ class Share extends Discuss implements intShare {
             $rpp = 1;
         }
         // if file data is required by owner
-        if (isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) {
+        if ((isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) || $this->checkFuncAccess('core', 'share_viewing_access')) {
             $qResult = $this->dbLink->query(
                     "SELECT COUNT(`id`) "
                     . "FROM `".MECCANO_TPREF."_core_share_files` "
@@ -2489,7 +2537,7 @@ class Share extends Discuss implements intShare {
         //
         list($userName, $fullName) = $qUser->fetch_row();
         // if message data is required by owner
-        if (isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) {
+        if ((isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) || $this->checkFuncAccess('core', 'share_viewing_access')) {
             $qResult = $this->dbLink->query(
                     "SELECT `id`, `title`, `name`, IF(LENGTH(`comment`)>512, CONCAT(SUBSTRING(`comment`, 1, 512), '...'), `comment`), `mime`, `size`, `filetime`, `microtime` `time` "
                     . "FROM `".MECCANO_TPREF."_core_share_files` "
@@ -2611,7 +2659,7 @@ class Share extends Discuss implements intShare {
         //
         list($userName, $fullName) = $qUser->fetch_row();
         // if message data is required by owner
-        if (isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) {
+        if ((isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) || $this->checkFuncAccess('core', 'share_viewing_access')) {
             $qResult = $this->dbLink->query(
                     "SELECT `id`, `title`, `name`, IF(LENGTH(`comment`)>512, CONCAT(SUBSTRING(`comment`, 1, 512), '...'), `comment`), `mime`, `size`, `filetime`, `microtime` `time` "
                     . "FROM `".MECCANO_TPREF."_core_share_files` "
@@ -2751,7 +2799,7 @@ class Share extends Discuss implements intShare {
         //
         list($userName, $fullName) = $qUser->fetch_row();
         // if message data is required by owner
-        if (isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) {
+        if ((isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) || $this->checkFuncAccess('core', 'share_viewing_access')) {
             $qResult = $this->dbLink->query(
                     "SELECT `id`, `title`, `name`, IF(LENGTH(`comment`)>512, CONCAT(SUBSTRING(`comment`, 1, 512), '...'), `comment`), `mime`, `size`, `filetime`, `microtime` `time` "
                     . "FROM `".MECCANO_TPREF."_core_share_files` "
@@ -2889,7 +2937,7 @@ class Share extends Discuss implements intShare {
         //
         list($userName, $fullName) = $qUser->fetch_row();
         // if message data is required by owner
-        if (isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) {
+        if ((isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) || $this->checkFuncAccess('core', 'share_viewing_access')) {
             $qResult = $this->dbLink->query(
                     "SELECT `id`, `title`, `name`, IF(LENGTH(`comment`)>512, CONCAT(SUBSTRING(`comment`, 1, 512), '...'), `comment`), `mime`, `size`, `filetime`, `microtime` `time` "
                     . "FROM `".MECCANO_TPREF."_core_share_files` "
@@ -3518,7 +3566,10 @@ class Share extends Discuss implements intShare {
     }
     
     public function editMsgComment($comment, $commentId, $userId) {
-        $this->zeroizeError();
+        if (!$this->checkFuncAccess('core', 'share_modify_comments')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, 'editMsgComment: access denied');
+            return FALSE;
+        }
         if(!pregGuid($commentId)) {
             $this->setError(ERROR_INCORRECT_DATA, 'editMsgComment: incorrect parameters');
             return FALSE;
@@ -3539,20 +3590,10 @@ class Share extends Discuss implements intShare {
             return FALSE;
         }
         list($msgId) = $qTopic->fetch_row();
-        if (isset($_SESSION[AUTH_USER_ID]) && $this->checkMsgAccess($msgId)) {
-            if ($this->editComment($comment, $commentId, $userId)) {
-                return TRUE;
-            }
-            else {
-                FALSE;
-            }
-        }
-        elseif ($this->errid) {
-            $this->setError($this->errid, 'editMsgComment -> '.$this->errexp);
-            return FALSE;
+        if ($this->editComment($comment, $commentId, $userId)) {
+            return TRUE;
         }
         else {
-            $this->setError(ERROR_RESTRICTED_ACCESS, 'editMsgComment: access denied');
             return FALSE;
         }
     }
@@ -3579,12 +3620,12 @@ class Share extends Discuss implements intShare {
             return FALSE;
         }
         list($msgId) = $qTopic->fetch_row();
-        if (isset($_SESSION[AUTH_USER_ID]) && $this->checkMsgAccess($msgId)) {
+        if ($this->checkMsgAccess($msgId)) {
             if ($comment = $this->getComment($commentId, $userId)) {
                 return $comment;
             }
             else {
-                FALSE;
+                return FALSE;
             }
         }
         elseif ($this->errid) {
@@ -3598,7 +3639,10 @@ class Share extends Discuss implements intShare {
     }
     
     public function eraseMsgComment($commentId, $userId) {
-        $this->zeroizeError();
+        if (!$this->checkFuncAccess('core', 'share_modify_comments')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, 'eraseMsgComment: access denied');
+            return FALSE;
+        }
         if(!pregGuid($commentId)) {
             $this->setError(ERROR_INCORRECT_DATA, 'eraseMsgComment: incorrect parameters');
             return FALSE;
@@ -3619,20 +3663,10 @@ class Share extends Discuss implements intShare {
             return FALSE;
         }
         list($msgId) = $qTopic->fetch_row();
-        if (isset($_SESSION[AUTH_USER_ID]) && $this->checkMsgAccess($msgId)) {
-            if ($this->eraseComment($commentId, $userId)) {
-                return TRUE;
-            }
-            else {
-                FALSE;
-            }
-        }
-        elseif ($this->errid) {
-            $this->setError($this->errid, 'eraseMsgComment -> '.$this->errexp);
-            return FALSE;
+        if ($this->eraseComment($commentId, $userId)) {
+            return TRUE;
         }
         else {
-            $this->setError(ERROR_RESTRICTED_ACCESS, 'eraseMsgComment: access denied');
             return FALSE;
         }
     }
@@ -3643,7 +3677,7 @@ class Share extends Discuss implements intShare {
             $this->setError(ERROR_INCORRECT_DATA, 'getMsgComments: incorrect parameters');
             return FALSE;
         }
-        if (isset($_SESSION[AUTH_USER_ID]) && $this->checkMsgAccess($msgId)) {
+        if ($this->checkMsgAccess($msgId)) {
             $qTopicId = $this->dbLink->query(
                     "SELECT `tid` "
                     . "FROM `".MECCANO_TPREF."_core_share_msg_topic_rel` "
@@ -3679,7 +3713,7 @@ class Share extends Discuss implements intShare {
             $this->setError(ERROR_INCORRECT_DATA, 'appendMsgComments: incorrect parameters');
             return FALSE;
         }
-        if (isset($_SESSION[AUTH_USER_ID]) && $this->checkMsgAccess($msgId)) {
+        if ($this->checkMsgAccess($msgId)) {
             $qTopicId = $this->dbLink->query(
                     "SELECT `tid` "
                     . "FROM `".MECCANO_TPREF."_core_share_msg_topic_rel` "
@@ -3715,7 +3749,7 @@ class Share extends Discuss implements intShare {
             $this->setError(ERROR_INCORRECT_DATA, 'updateMsgComments: incorrect parameters');
             return FALSE;
         }
-        if (isset($_SESSION[AUTH_USER_ID]) && $this->checkMsgAccess($msgId)) {
+        if ($this->checkMsgAccess($msgId)) {
             $qTopicId = $this->dbLink->query(
                     "SELECT `tid` "
                     . "FROM `".MECCANO_TPREF."_core_share_msg_topic_rel` "
