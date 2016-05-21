@@ -3566,7 +3566,10 @@ class Share extends Discuss implements intShare {
     }
     
     public function editMsgComment($comment, $commentId, $userId) {
-        $this->zeroizeError();
+        if (!$this->checkFuncAccess('core', 'share_modify_comments')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, 'editMsgComment: access denied');
+            return FALSE;
+        }
         if(!pregGuid($commentId)) {
             $this->setError(ERROR_INCORRECT_DATA, 'editMsgComment: incorrect parameters');
             return FALSE;
@@ -3587,20 +3590,10 @@ class Share extends Discuss implements intShare {
             return FALSE;
         }
         list($msgId) = $qTopic->fetch_row();
-        if (isset($_SESSION[AUTH_USER_ID]) && $this->checkMsgAccess($msgId)) {
-            if ($this->editComment($comment, $commentId, $userId)) {
-                return TRUE;
-            }
-            else {
-                FALSE;
-            }
-        }
-        elseif ($this->errid) {
-            $this->setError($this->errid, 'editMsgComment -> '.$this->errexp);
-            return FALSE;
+        if ($this->editComment($comment, $commentId, $userId)) {
+            return TRUE;
         }
         else {
-            $this->setError(ERROR_RESTRICTED_ACCESS, 'editMsgComment: access denied');
             return FALSE;
         }
     }
@@ -3632,7 +3625,7 @@ class Share extends Discuss implements intShare {
                 return $comment;
             }
             else {
-                FALSE;
+                return FALSE;
             }
         }
         elseif ($this->errid) {
@@ -3646,7 +3639,10 @@ class Share extends Discuss implements intShare {
     }
     
     public function eraseMsgComment($commentId, $userId) {
-        $this->zeroizeError();
+        if (!$this->checkFuncAccess('core', 'share_modify_comments')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, 'eraseMsgComment: access denied');
+            return FALSE;
+        }
         if(!pregGuid($commentId)) {
             $this->setError(ERROR_INCORRECT_DATA, 'eraseMsgComment: incorrect parameters');
             return FALSE;
@@ -3667,20 +3663,10 @@ class Share extends Discuss implements intShare {
             return FALSE;
         }
         list($msgId) = $qTopic->fetch_row();
-        if (isset($_SESSION[AUTH_USER_ID]) && $this->checkMsgAccess($msgId)) {
-            if ($this->eraseComment($commentId, $userId)) {
-                return TRUE;
-            }
-            else {
-                FALSE;
-            }
-        }
-        elseif ($this->errid) {
-            $this->setError($this->errid, 'eraseMsgComment -> '.$this->errexp);
-            return FALSE;
+        if ($this->eraseComment($commentId, $userId)) {
+            return TRUE;
         }
         else {
-            $this->setError(ERROR_RESTRICTED_ACCESS, 'eraseMsgComment: access denied');
             return FALSE;
         }
     }
