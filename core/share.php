@@ -51,7 +51,7 @@ interface intShare {
     public function msgFiles($msgId);
     public function getFileShares($fileId, $userId);
     public function getMsgShares($msgId, $userId);
-    public function updateFile($fileId, $userid, $title, $comment);
+    public function editFile($fileId, $userid, $title, $comment);
     public function repostMsg($msgId, $userId, $hlink = TRUE);
     public function editMsg($msgId, $userid, $title, $text);
     public function delMsg($msgId, $userId, $keepFiles = TRUE);
@@ -1386,7 +1386,7 @@ class Share extends Discuss implements intShare {
         }
     }
     
-    public function updateFile($fileId, $userid, $title, $comment) {
+    public function editFile($fileId, $userid, $title, $comment) {
         $this->zeroizeError();
         if (!pregGuid($fileId) || !is_integer($userid) || !is_string($title) || !is_string($comment)) {
             $this->setError(ERROR_INCORRECT_DATA, 'updateFile: incorrect parameters');
@@ -3611,7 +3611,7 @@ class Share extends Discuss implements intShare {
             return FALSE;
         }
         list($msgId) = $qTopic->fetch_row();
-        if (isset($_SESSION[AUTH_USER_ID]) && $this->checkMsgAccess($msgId)) {
+        if ($this->checkMsgAccess($msgId)) {
             if ($comment = $this->getComment($commentId, $userId)) {
                 return $comment;
             }
@@ -3675,7 +3675,7 @@ class Share extends Discuss implements intShare {
             $this->setError(ERROR_INCORRECT_DATA, 'getMsgComments: incorrect parameters');
             return FALSE;
         }
-        if (isset($_SESSION[AUTH_USER_ID]) && $this->checkMsgAccess($msgId)) {
+        if ($this->checkMsgAccess($msgId)) {
             $qTopicId = $this->dbLink->query(
                     "SELECT `tid` "
                     . "FROM `".MECCANO_TPREF."_core_share_msg_topic_rel` "
@@ -3711,7 +3711,7 @@ class Share extends Discuss implements intShare {
             $this->setError(ERROR_INCORRECT_DATA, 'appendMsgComments: incorrect parameters');
             return FALSE;
         }
-        if (isset($_SESSION[AUTH_USER_ID]) && $this->checkMsgAccess($msgId)) {
+        if ($this->checkMsgAccess($msgId)) {
             $qTopicId = $this->dbLink->query(
                     "SELECT `tid` "
                     . "FROM `".MECCANO_TPREF."_core_share_msg_topic_rel` "
@@ -3747,7 +3747,7 @@ class Share extends Discuss implements intShare {
             $this->setError(ERROR_INCORRECT_DATA, 'updateMsgComments: incorrect parameters');
             return FALSE;
         }
-        if (isset($_SESSION[AUTH_USER_ID]) && $this->checkMsgAccess($msgId)) {
+        if ($this->checkMsgAccess($msgId)) {
             $qTopicId = $this->dbLink->query(
                     "SELECT `tid` "
                     . "FROM `".MECCANO_TPREF."_core_share_msg_topic_rel` "
