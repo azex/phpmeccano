@@ -854,6 +854,10 @@ class Share extends Discuss implements intShare {
             $this->setError(ERROR_INCORRECT_DATA, 'delFile: incorrect parameters');
             return FALSE;
         }
+        if (!(isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) && !$this->checkFuncAccess('core', 'share_modify_msgs_files')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, 'delFile: access denied');
+            return FALSE;
+        }
         // whether file exists
         $qFile = $this->dbLink->query(
                 "SELECT `stdir` "
@@ -1392,6 +1396,10 @@ class Share extends Discuss implements intShare {
             $this->setError(ERROR_INCORRECT_DATA, 'updateFile: incorrect parameters');
             return FALSE;
         }
+        if (!(isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) && !$this->checkFuncAccess('core', 'share_modify_msgs_files')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, 'editFile: access denied');
+            return FALSE;
+        }
         $title = $this->dbLink->real_escape_string($title);
         $comment = $this->dbLink->real_escape_string($comment);
         $this->dbLink->query("UPDATE `".MECCANO_TPREF."_core_share_files` "
@@ -1561,10 +1569,14 @@ class Share extends Discuss implements intShare {
         }
     }
     
-    public function editMsg($msgId, $userid, $title, $text) {
+    public function editMsg($msgId, $userId, $title, $text) {
         $this->zeroizeError();
-        if (!pregGuid($msgId) || !is_integer($userid) || !is_string($title) || !is_string($text)) {
+        if (!pregGuid($msgId) || !is_integer($userId) || !is_string($title) || !is_string($text)) {
             $this->setError(ERROR_INCORRECT_DATA, 'editMsg: incorrect parameters');
+            return FALSE;
+        }
+        if (!(isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) && !$this->checkFuncAccess('core', 'share_modify_msgs_files')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, 'editMsg: access denied');
             return FALSE;
         }
         $title = $this->dbLink->real_escape_string($title);
@@ -1572,7 +1584,7 @@ class Share extends Discuss implements intShare {
         $this->dbLink->query("UPDATE `".MECCANO_TPREF."_core_share_msgs` "
                 . "SET `title`='$title', `text`='$text' "
                 . "WHERE `id`='$msgId' "
-                . "AND `userid`=$userid ;");
+                . "AND `userid`=$userId ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'editMsg: unable to edit message -> '.$this->dbLink->error);
             return FALSE;
@@ -1588,6 +1600,10 @@ class Share extends Discuss implements intShare {
         $this->zeroizeError();
         if (!pregGuid($msgId) || !is_integer($userId)) {
             $this->setError(ERROR_INCORRECT_DATA, 'delMsg: incorrect parameters');
+            return FALSE;
+        }
+        if (!(isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) && !$this->checkFuncAccess('core', 'share_modify_msgs_files')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, 'delMsg: access denied');
             return FALSE;
         }
         // check whether message exists
