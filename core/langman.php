@@ -173,7 +173,7 @@ class LangMan extends LogMan implements intLangMan{
             $this->setError(ERROR_INCORRECT_DATA, 'addLang: incorrect incoming parameters');
             return FALSE;
         }
-        $name = $this->dbLink->real_escape_string(htmlspecialchars($name));
+        $name = $this->dbLink->real_escape_string($name);
         $this->dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_languages` (`code`, `name`, `dir`) "
                 . "VALUES('$code', '$name', '$dir') ;");
         if ($this->dbLink->errno) {

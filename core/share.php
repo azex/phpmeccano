@@ -284,7 +284,7 @@ class Share extends Discuss implements intShare {
                 $idAttribute = $xml->createAttribute('id');
                 $idAttribute->value = $row[0];
                 $nameAttribute = $xml->createAttribute('name');
-                $nameAttribute->value = htmlspecialchars($row[1]);
+                $nameAttribute->value = $row[1];
                 $circleNode->appendChild($idAttribute);
                 $circleNode->appendChild($nameAttribute);
                 $circlesNode->appendChild($circleNode);
@@ -296,7 +296,7 @@ class Share extends Discuss implements intShare {
             while ($row = $qCircles->fetch_row()) {
                 $circleNode = array();
                 $circleNode['id'] = $row[0];
-                $circleNode['name'] = htmlspecialchars($row[1]);
+                $circleNode['name'] = $row[1];
                 $circlesNode[] = $circleNode;
             }
             return json_encode($circlesNode);
@@ -959,11 +959,11 @@ class Share extends Discuss implements intShare {
                 $fileInfoNode->appendChild($userNameNode);
                 $fullNameNode = $xml->createElement('fullname', $fileInfo[2]);
                 $fileInfoNode->appendChild($fullNameNode);
-                $titleNode = $xml->createElement('title', htmlspecialchars($fileInfo[3]));
+                $titleNode = $xml->createElement('title', $fileInfo[3]);
                 $fileInfoNode->appendChild($titleNode);
-                $fileNameNode = $xml->createElement('filename', htmlspecialchars($fileInfo[4]));
+                $fileNameNode = $xml->createElement('filename', $fileInfo[4]);
                 $fileInfoNode->appendChild($fileNameNode);
-                $commentNode = $xml->createElement('comment', htmlspecialchars($fileInfo[5]));
+                $commentNode = $xml->createElement('comment', $fileInfo[5]);
                 $fileInfoNode->appendChild($commentNode);
                 $mimeNode = $xml->createElement('mime', $fileInfo[6]);
                 $fileInfoNode->appendChild($mimeNode);
@@ -979,9 +979,9 @@ class Share extends Discuss implements intShare {
                 $fileInfoNode['id'] = $fileInfo[0];
                 $fileInfoNode['username'] = $fileInfo[1];
                 $fileInfoNode['fullname'] = $fileInfo[2];
-                $fileInfoNode['title'] = htmlspecialchars($fileInfo[3]);
-                $fileInfoNode['filename'] = htmlspecialchars($fileInfo[4]);
-                $fileInfoNode['comment'] = htmlspecialchars($fileInfo[5]);
+                $fileInfoNode['title'] = $fileInfo[3];
+                $fileInfoNode['filename'] = $fileInfo[4];
+                $fileInfoNode['comment'] = $fileInfo[5];
                 $fileInfoNode['mime'] = $fileInfo[6];
                 $fileInfoNode['size'] = $fileInfo[7];
                 $fileInfoNode['time'] = $fileInfo[8];
@@ -1108,7 +1108,7 @@ class Share extends Discuss implements intShare {
                 //
                 $sourceNode = $xml->createElement('source', $msgSource);
                 $msgNode->appendChild($sourceNode);
-                $titleNode = $xml->createElement('title', htmlspecialchars($msgTitle));
+                $titleNode = $xml->createElement('title', $msgTitle);
                 $msgNode->appendChild($titleNode);
                 $textNode = $xml->createElement('text', $msgText);
                 $msgNode->appendChild($textNode);
@@ -1125,7 +1125,7 @@ class Share extends Discuss implements intShare {
                 //
                 $msgNode['id'] = $msgId;
                 $msgNode['source'] = $msgSource;
-                $msgNode['title'] = htmlspecialchars($msgTitle);
+                $msgNode['title'] = $msgTitle;
                 $msgNode['text'] = $msgText;
                 $msgNode['time'] = $msgTime;
                 $msgNode['username'] = $username;
@@ -1171,9 +1171,9 @@ class Share extends Discuss implements intShare {
                         $fileNode = $xml->createElement('file');
                         $idNode = $xml->createElement('id', $fileInfo[0]);
                         $fileNode->appendChild($idNode);
-                        $titleNode = $xml->createElement('title', htmlspecialchars($fileInfo[1]));
+                        $titleNode = $xml->createElement('title', $fileInfo[1]);
                         $fileNode->appendChild($titleNode);
-                        $nameNode = $xml->createElement('filename', htmlspecialchars($fileInfo[2]));
+                        $nameNode = $xml->createElement('filename', $fileInfo[2]);
                         $fileNode->appendChild($nameNode);
                         $mimeNode = $xml->createElement('mime', $fileInfo[3]);
                         $fileNode->appendChild($mimeNode);
@@ -1191,8 +1191,8 @@ class Share extends Discuss implements intShare {
                     if ($this->checkFileAccess($fileInfo[0])) {
                         $filesNode['files'][] = array(
                             'id' => $fileInfo[0],
-                            'title' => htmlspecialchars($fileInfo[1]),
-                            'filename' => htmlspecialchars($fileInfo[2]),
+                            'title' => $fileInfo[1],
+                            'filename' => $fileInfo[2],
                             'mime' => $fileInfo[3]
                         );
                     }
@@ -1270,7 +1270,7 @@ class Share extends Discuss implements intShare {
                 $circleNode = $xml->createElement('circle');
                 $cIdNode = $xml->createElement('id', $circleData[0]);
                 $circleNode->appendChild($cIdNode);
-                $cNameNode = $xml->createElement('name', htmlspecialchars($circleData[1]));
+                $cNameNode = $xml->createElement('name', $circleData[1]);
                 $circleNode->appendChild($cNameNode);
                 $sharesNode->appendChild($circleNode);
             }
@@ -1361,7 +1361,7 @@ class Share extends Discuss implements intShare {
                 $circleNode = $xml->createElement('circle');
                 $cIdNode = $xml->createElement('id', $circleData[0]);
                 $circleNode->appendChild($cIdNode);
-                $cNameNode = $xml->createElement('name', htmlspecialchars($circleData[1]));
+                $cNameNode = $xml->createElement('name', $circleData[1]);
                 $circleNode->appendChild($cNameNode);
                 $sharesNode->appendChild($circleNode);
             }
@@ -1986,7 +1986,7 @@ class Share extends Discuss implements intShare {
                 $msgNode = $xml->createElement('message');
                 $msgNode->appendChild($xml->createElement('id', $msgId));
                 $msgNode->appendChild($xml->createElement('source', $source));
-                $msgNode->appendChild($xml->createElement('title', htmlspecialchars($title)));
+                $msgNode->appendChild($xml->createElement('title', $title));
                 $msgNode->appendChild($xml->createElement('text', $text));
                 $msgNode->appendChild($xml->createElement('time', $msgTime));
                 $msgsNode->appendChild($msgNode);
@@ -1995,7 +1995,7 @@ class Share extends Discuss implements intShare {
                 $msgsNode['messages'][] = array(
                     'id' => $msgId,
                     'source' => $source,
-                    'title' => htmlspecialchars($title),
+                    'title' => $title,
                     'text' => $text,
                     'time' => $msgTime
                 );
@@ -2110,7 +2110,7 @@ class Share extends Discuss implements intShare {
                 $msgNode = $xml->createElement('message');
                 $msgNode->appendChild($xml->createElement('id', $msgId));
                 $msgNode->appendChild($xml->createElement('source', $source));
-                $msgNode->appendChild($xml->createElement('title', htmlspecialchars($title)));
+                $msgNode->appendChild($xml->createElement('title', $title));
                 $msgNode->appendChild($xml->createElement('text', $text));
                 $msgNode->appendChild($xml->createElement('time', $msgTime));
                 $msgsNode->appendChild($msgNode);
@@ -2119,7 +2119,7 @@ class Share extends Discuss implements intShare {
                 $msgsNode['messages'][] = array(
                     'id' => $msgId,
                     'source' => $source,
-                    'title' => htmlspecialchars($title),
+                    'title' => $title,
                     'text' => $text,
                     'time' => $msgTime
                 );
@@ -2247,7 +2247,7 @@ class Share extends Discuss implements intShare {
                 $msgNode = $xml->createElement('message');
                 $msgNode->appendChild($xml->createElement('id', $msgId));
                 $msgNode->appendChild($xml->createElement('source', $source));
-                $msgNode->appendChild($xml->createElement('title', htmlspecialchars($title)));
+                $msgNode->appendChild($xml->createElement('title', $title));
                 $msgNode->appendChild($xml->createElement('text', $text));
                 $msgNode->appendChild($xml->createElement('time', $msgTime));
                 $msgsNode->appendChild($msgNode);
@@ -2256,7 +2256,7 @@ class Share extends Discuss implements intShare {
                 $msgsNode['messages'][] = array(
                     'id' => $msgId,
                     'source' => $source,
-                    'title' => htmlspecialchars($title),
+                    'title' => $title,
                     'text' => $text,
                     'time' => $msgTime
                 );
@@ -2381,7 +2381,7 @@ class Share extends Discuss implements intShare {
                 $msgNode = $xml->createElement('message');
                 $msgNode->appendChild($xml->createElement('id', $msgId));
                 $msgNode->appendChild($xml->createElement('source', $source));
-                $msgNode->appendChild($xml->createElement('title', htmlspecialchars($title)));
+                $msgNode->appendChild($xml->createElement('title', $title));
                 $msgNode->appendChild($xml->createElement('text', $text));
                 $msgNode->appendChild($xml->createElement('time', $msgTime));
                 $msgsNode->appendChild($msgNode);
@@ -2390,7 +2390,7 @@ class Share extends Discuss implements intShare {
                 $msgsNode['messages'][] = array(
                     'id' => $msgId,
                     'source' => $source,
-                    'title' => htmlspecialchars($title),
+                    'title' => $title,
                     'text' => $text,
                     'time' => $msgTime
                 );
@@ -2607,9 +2607,9 @@ class Share extends Discuss implements intShare {
             if ($this->outputType == 'xml') {
                 $fileNode = $xml->createElement('file');
                 $fileNode->appendChild($xml->createElement('id', $fileId));
-                $fileNode->appendChild($xml->createElement('title', htmlspecialchars($title)));
+                $fileNode->appendChild($xml->createElement('title', $title));
                 $fileNode->appendChild($xml->createElement('filename', $fileName));
-                $fileNode->appendChild($xml->createElement('comment', htmlspecialchars($comment)));
+                $fileNode->appendChild($xml->createElement('comment', $comment));
                 $fileNode->appendChild($xml->createElement('mime', $mimeType));
                 $fileNode->appendChild($xml->createElement('size', $fileSize));
                 $fileNode->appendChild($xml->createElement('time', $fileTime));
@@ -2618,9 +2618,9 @@ class Share extends Discuss implements intShare {
             else {
                 $filesNode['files'][] = array(
                     'id' => $fileId,
-                    'title' => htmlspecialchars($title),
+                    'title' => $title,
                     'filename' => $fileName,
-                    'comment' => htmlspecialchars($comment),
+                    'comment' => $comment,
                     'mime' => $mimeType,
                     'size' => $fileSize,
                     'time' => $fileTime
@@ -2736,9 +2736,9 @@ class Share extends Discuss implements intShare {
             if ($this->outputType == 'xml') {
                 $fileNode = $xml->createElement('file');
                 $fileNode->appendChild($xml->createElement('id', $fileId));
-                $fileNode->appendChild($xml->createElement('title', htmlspecialchars($title)));
+                $fileNode->appendChild($xml->createElement('title', $title));
                 $fileNode->appendChild($xml->createElement('filename', $fileName));
-                $fileNode->appendChild($xml->createElement('comment', htmlspecialchars($comment)));
+                $fileNode->appendChild($xml->createElement('comment', $comment));
                 $fileNode->appendChild($xml->createElement('mime', $mimeType));
                 $fileNode->appendChild($xml->createElement('size', $fileSize));
                 $fileNode->appendChild($xml->createElement('time', $fileTime));
@@ -2747,9 +2747,9 @@ class Share extends Discuss implements intShare {
             else {
                 $filesNode['files'][] = array(
                     'id' => $fileId,
-                    'title' => htmlspecialchars($title),
+                    'title' => $title,
                     'filename' => $fileName,
-                    'comment' => htmlspecialchars($comment),
+                    'comment' => $comment,
                     'mime' => $mimeType,
                     'size' => $fileSize,
                     'time' => $fileTime
@@ -2878,9 +2878,9 @@ class Share extends Discuss implements intShare {
             if ($this->outputType == 'xml') {
                 $fileNode = $xml->createElement('file');
                 $fileNode->appendChild($xml->createElement('id', $fileId));
-                $fileNode->appendChild($xml->createElement('title', htmlspecialchars($title)));
+                $fileNode->appendChild($xml->createElement('title', $title));
                 $fileNode->appendChild($xml->createElement('filename', $fileName));
-                $fileNode->appendChild($xml->createElement('comment', htmlspecialchars($comment)));
+                $fileNode->appendChild($xml->createElement('comment', $comment));
                 $fileNode->appendChild($xml->createElement('mime', $mimeType));
                 $fileNode->appendChild($xml->createElement('size', $fileSize));
                 $fileNode->appendChild($xml->createElement('time', $fileTime));
@@ -2889,9 +2889,9 @@ class Share extends Discuss implements intShare {
             else {
                 $filesNode['files'][] = array(
                     'id' => $fileId,
-                    'title' => htmlspecialchars($title),
+                    'title' => $title,
                     'filename' => $fileName,
-                    'comment' => htmlspecialchars($comment),
+                    'comment' => $comment,
                     'mime' => $mimeType,
                     'size' => $fileSize,
                     'time' => $fileTime
@@ -3017,9 +3017,9 @@ class Share extends Discuss implements intShare {
             if ($this->outputType == 'xml') {
                 $fileNode = $xml->createElement('file');
                 $fileNode->appendChild($xml->createElement('id', $fileId));
-                $fileNode->appendChild($xml->createElement('title', htmlspecialchars($title)));
+                $fileNode->appendChild($xml->createElement('title', $title));
                 $fileNode->appendChild($xml->createElement('filename', $fileName));
-                $fileNode->appendChild($xml->createElement('comment', htmlspecialchars($comment)));
+                $fileNode->appendChild($xml->createElement('comment', $comment));
                 $fileNode->appendChild($xml->createElement('mime', $mimeType));
                 $fileNode->appendChild($xml->createElement('size', $fileSize));
                 $fileNode->appendChild($xml->createElement('time', $fileTime));
@@ -3028,9 +3028,9 @@ class Share extends Discuss implements intShare {
             else {
                 $filesNode['files'][] = array(
                     'id' => $fileId,
-                    'title' => htmlspecialchars($title),
+                    'title' => $title,
                     'filename' => $fileName,
-                    'comment' => htmlspecialchars($comment),
+                    'comment' => $comment,
                     'mime' => $mimeType,
                     'size' => $fileSize,
                     'time' => $fileTime
@@ -3192,7 +3192,7 @@ class Share extends Discuss implements intShare {
                 // message data
                 $msgNode->appendChild($xml->createElement('id', $msgId));
                 $msgNode->appendChild($xml->createElement('source', $source));
-                $msgNode->appendChild($xml->createElement('title', htmlspecialchars($title)));
+                $msgNode->appendChild($xml->createElement('title', $title));
                 $msgNode->appendChild($xml->createElement('text', $text));
                 $msgNode->appendChild($xml->createElement('time', $msgTime));
                 $msgsNode->appendChild($msgNode);
@@ -3204,7 +3204,7 @@ class Share extends Discuss implements intShare {
                     'fullname' => $fullName,
                     'id' => $msgId,
                     'source' => $source,
-                    'title' => htmlspecialchars($title),
+                    'title' => $title,
                     'text' => $text,
                     'time' => $msgTime
                 );
@@ -3283,7 +3283,7 @@ class Share extends Discuss implements intShare {
                 // message data
                 $msgNode->appendChild($xml->createElement('id', $msgId));
                 $msgNode->appendChild($xml->createElement('source', $source));
-                $msgNode->appendChild($xml->createElement('title', htmlspecialchars($title)));
+                $msgNode->appendChild($xml->createElement('title', $title));
                 $msgNode->appendChild($xml->createElement('text', $text));
                 $msgNode->appendChild($xml->createElement('time', $msgTime));
                 $msgsNode->appendChild($msgNode);
@@ -3295,7 +3295,7 @@ class Share extends Discuss implements intShare {
                     'fullname' => $fullName,
                     'id' => $msgId,
                     'source' => $source,
-                    'title' => htmlspecialchars($title),
+                    'title' => $title,
                     'text' => $text,
                     'time' => $msgTime
                 );
@@ -3385,7 +3385,7 @@ class Share extends Discuss implements intShare {
                 // message data
                 $msgNode->appendChild($xml->createElement('id', $msgId));
                 $msgNode->appendChild($xml->createElement('source', $source));
-                $msgNode->appendChild($xml->createElement('title', htmlspecialchars($title)));
+                $msgNode->appendChild($xml->createElement('title', $title));
                 $msgNode->appendChild($xml->createElement('text', $text));
                 $msgNode->appendChild($xml->createElement('time', $msgTime));
                 $msgsNode->appendChild($msgNode);
@@ -3397,7 +3397,7 @@ class Share extends Discuss implements intShare {
                     'fullname' => $fullName,
                     'id' => $msgId,
                     'source' => $source,
-                    'title' => htmlspecialchars($title),
+                    'title' => $title,
                     'text' => $text,
                     'time' => $msgTime
                 );
@@ -3484,7 +3484,7 @@ class Share extends Discuss implements intShare {
                 // message data
                 $msgNode->appendChild($xml->createElement('id', $msgId));
                 $msgNode->appendChild($xml->createElement('source', $source));
-                $msgNode->appendChild($xml->createElement('title', htmlspecialchars($title)));
+                $msgNode->appendChild($xml->createElement('title', $title));
                 $msgNode->appendChild($xml->createElement('text', $text));
                 $msgNode->appendChild($xml->createElement('time', $msgTime));
                 $msgsNode->appendChild($msgNode);
@@ -3496,7 +3496,7 @@ class Share extends Discuss implements intShare {
                     'fullname' => $fullName,
                     'id' => $msgId,
                     'source' => $source,
-                    'title' => htmlspecialchars($title),
+                    'title' => $title,
                     'text' => $text,
                     'time' => $msgTime
                 );
@@ -3837,7 +3837,7 @@ class Share extends Discuss implements intShare {
                 // message data
                 $msgNode->appendChild($xml->createElement('id', $msgId));
                 $msgNode->appendChild($xml->createElement('source', $source));
-                $msgNode->appendChild($xml->createElement('title', htmlspecialchars($title)));
+                $msgNode->appendChild($xml->createElement('title', $title));
                 $msgNode->appendChild($xml->createElement('text', $text));
                 $msgNode->appendChild($xml->createElement('time', $msgTime));
                 $msgsNode->appendChild($msgNode);
@@ -3849,7 +3849,7 @@ class Share extends Discuss implements intShare {
                     'fullname' => $fullName,
                     'id' => $msgId,
                     'source' => $source,
-                    'title' => htmlspecialchars($title),
+                    'title' => $title,
                     'text' => $text,
                     'time' => $msgTime
                 );
@@ -3930,7 +3930,7 @@ class Share extends Discuss implements intShare {
                 // message data
                 $msgNode->appendChild($xml->createElement('id', $msgId));
                 $msgNode->appendChild($xml->createElement('source', $source));
-                $msgNode->appendChild($xml->createElement('title', htmlspecialchars($title)));
+                $msgNode->appendChild($xml->createElement('title', $title));
                 $msgNode->appendChild($xml->createElement('text', $text));
                 $msgNode->appendChild($xml->createElement('time', $msgTime));
                 $msgsNode->appendChild($msgNode);
@@ -3942,7 +3942,7 @@ class Share extends Discuss implements intShare {
                     'fullname' => $fullName,
                     'id' => $msgId,
                     'source' => $source,
-                    'title' => htmlspecialchars($title),
+                    'title' => $title,
                     'text' => $text,
                     'time' => $msgTime
                 );
