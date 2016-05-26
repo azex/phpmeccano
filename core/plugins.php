@@ -142,7 +142,7 @@ class Plugins extends LangMan implements intPlugins {
                 unlink(MECCANO_TMP_DIR."/core_plugins_lock");
                 return FALSE;
             }
-            $fullName = $this->dbLink->real_escape_string(htmlspecialchars($serviceData->getElementsByTagName('fullname')->item(0)->nodeValue));
+            $fullName = $this->dbLink->real_escape_string($serviceData->getElementsByTagName('fullname')->item(0)->nodeValue);
             $version = $serviceData->getElementsByTagName('version')->item(0)->nodeValue;
             $insertColumns = "`short`, `full`, `version`, `spec`, `dirname`";
             $insertValues = "'$shortName', '$fullName', '$version', '$packVersion', '$tmpName'";
@@ -162,7 +162,7 @@ class Plugins extends LangMan implements intPlugins {
             foreach ($dependsNodes as $dependsNode) {
                 $depends = $depends.$dependsNode->getAttribute('name')." (".$dependsNode->getAttribute('operator')." ".$dependsNode->getAttribute('version')."), ";
             }
-            $depends = htmlspecialchars(substr($depends, 0, -2));
+            $depends = substr($depends, 0, -2);
             $insertColumns = $insertColumns.", `depends`";
             $insertValues = $insertValues.", '$depends'";
             $this->dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_plugins_unpacked` ($insertColumns)"
