@@ -59,18 +59,18 @@ interface intShare {
     public function sumUserMsgs($userId, $rpp = 20);
     public function userMsgs($userId, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('time'), $ascent = FALSE);
     public function msgStripe($userId, $rpp = 20);
-    public function appendMsgStripe($userId, $mtmark, $rpp = 20);
-    public function updateMsgStripe($userId, $mtmark);
+    public function appendMsgStripe($userId, $minMark, $rpp = 20);
+    public function updateMsgStripe($userId, $maxMark);
     public function sumUserFiles($userId, $rpp = 20);
     public function userFiles($userId, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('time'), $ascent = FALSE);
     public function fileStripe($userId, $rpp = 20);
-    public function appendFileStripe($userId, $mtmark, $rpp = 20);
-    public function updateFileStripe($userId, $mtmark);
+    public function appendFileStripe($userId, $minMark, $rpp = 20);
+    public function updateFileStripe($userId, $maxMark);
     public function sumUserSubs($userId, $rpp = 20);
     public function userSubs($userId, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('time'), $ascent = FALSE);
     public function subStripe($userId, $rpp = 20);
-    public function appendSubStripe($userId, $mtmark, $rpp = 20);
-    public function updateSubStripe($userId, $mtmark);
+    public function appendSubStripe($userId, $minMark, $rpp = 20);
+    public function updateSubStripe($userId, $maxMark);
     public function createMsgComment($msgId, $userId, $comment, $parentId = '');
     public function editMsgComment($comment, $commentId, $userId);
     public function getMsgComment($commentId, $userId);
@@ -78,6 +78,8 @@ interface intShare {
     public function getMsgComments($msgId, $rpp = 20);
     public function appendMsgComments($msgId, $minMark, $rpp = 20);
     public function updateMsgComments($msgId, $maxMark);
+    public function pubMsgs($rpp = 20);
+    public function appendPubMsgs($minMark, $rpp = 20);
 }
 
 class Share extends Discuss implements intShare {
@@ -3776,6 +3778,188 @@ class Share extends Discuss implements intShare {
         else {
             $this->setError(ERROR_RESTRICTED_ACCESS, 'updateMsgComments: access denied');
             return FALSE;
+        }
+    }
+    
+    public function pubMsgs($rpp = 20) {
+        $this->zeroizeError();
+        // validate parameters
+        if (!is_integer($rpp)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'pubMsgs: incorrect parameters');
+            return FALSE;
+        }
+        // get subscriptions
+        $qResult = $this->dbLink->query(
+                "SELECT DISTINCT `m`.`id`, `m`.`source`, `m`.`title`, IF(LENGTH(`m`.`text`)>512, CONCAT(SUBSTRING(`m`.`text`, 1, 512), '...'), `m`.`text`), `m`.`msgtime`, `m`.`microtime` `time`, `u`.`id`, `u`.`username`, `i`.`fullname` "
+                . "FROM `".MECCANO_TPREF."_core_share_msgs` `m` "
+                . "JOIN `".MECCANO_TPREF."_core_userman_userinfo` `i` "
+                . "ON `i`.`id`=`m`.`userid` "
+                . "JOIN `".MECCANO_TPREF."_core_userman_users` `u` "
+                . "ON `u`.`id`=`m`.`userid` "
+                . "JOIN `".MECCANO_TPREF."_core_share_msg_accessibility` `a` "
+                . "ON `m`.`id`=`a`.`mid` "
+                . "WHERE `a`.`cid`='' "
+                . "ORDER BY `time` DESC LIMIT $rpp ;"
+                );
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'pubMsgs: unable to get messages -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        if ($this->outputType == 'xml') {
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $msgsNode = $xml->createElement('messages');
+            $xml->appendChild($msgsNode);
+        }
+        else {
+            $msgsNode = array();
+        }
+        // default values of min and max microtime marks
+        $minMark = 0;
+        $maxMark = 0;
+        //
+        while ($msgData = $qResult->fetch_row()) {
+            list($msgId, $source, $title, $text, $msgTime, $mtMark, $userId, $userName, $fullName) = $msgData;
+            if (!$maxMark) {
+                $maxMark = $mtMark;
+            }
+            if ($this->outputType == 'xml') {
+                $msgNode = $xml->createElement('message');
+                // user data
+                $uidAtt = $xml->createAttribute('uid');
+                $uidAtt->value = $userId;
+                $msgNode->appendChild($uidAtt);
+                $unameAtt = $xml->createAttribute('username');
+                $unameAtt->value = $userName;
+                $msgNode->appendChild($unameAtt);
+                $fnameAtt = $xml->createAttribute('fullname');
+                $fnameAtt->value = $fullName;
+                $msgNode->appendChild($fnameAtt);
+                // message data
+                $msgNode->appendChild($xml->createElement('id', $msgId));
+                $msgNode->appendChild($xml->createElement('source', $source));
+                $msgNode->appendChild($xml->createElement('title', htmlspecialchars($title)));
+                $msgNode->appendChild($xml->createElement('text', $text));
+                $msgNode->appendChild($xml->createElement('time', $msgTime));
+                $msgsNode->appendChild($msgNode);
+            }
+            else {
+                $msgsNode[] = array(
+                    'uid' => $userId,
+                    'username' => $userName,
+                    'fullname' => $fullName,
+                    'id' => $msgId,
+                    'source' => $source,
+                    'title' => htmlspecialchars($title),
+                    'text' => $text,
+                    'time' => $msgTime
+                );
+            }
+        }
+        if ($maxMark && !$minMark) {
+            $minMark = $mtMark;
+        }
+        if ($this->outputType == 'xml') {
+            $minNode = $xml->createAttribute('minmark');
+            $minNode->value = $minMark;
+            $maxNode = $xml->createAttribute('maxmark');
+            $maxNode->value = $maxMark;
+            $msgsNode->appendChild($minNode);
+            $msgsNode->appendChild($maxNode);
+            return $xml;
+        }
+        else {
+            $msgsNode['minmark'] = (double) $minMark;
+            $msgsNode['maxmark'] = (double) $maxMark;
+            return json_encode($msgsNode);
+        }
+    }
+    
+    public function appendPubMsgs($minMark, $rpp = 20) {
+        $this->zeroizeError();
+        // validate parameters
+        if (!is_double($minMark) || !is_integer($rpp)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'appendPubMsgs: incorrect parameters');
+            return FALSE;
+        }
+        // get subscriptions
+        $qResult = $this->dbLink->query(
+                "SELECT DISTINCT `m`.`id`, `m`.`source`, `m`.`title`, IF(LENGTH(`m`.`text`)>512, CONCAT(SUBSTRING(`m`.`text`, 1, 512), '...'), `m`.`text`), `m`.`msgtime`, `m`.`microtime` `time`, `u`.`id`, `u`.`username`, `i`.`fullname` "
+                . "FROM `".MECCANO_TPREF."_core_share_msgs` `m` "
+                . "JOIN `".MECCANO_TPREF."_core_userman_userinfo` `i` "
+                . "ON `i`.`id`=`m`.`userid` "
+                . "AND `m`.`microtime`<$minMark "
+                . "JOIN `".MECCANO_TPREF."_core_userman_users` `u` "
+                . "ON `u`.`id`=`m`.`userid` "
+                . "JOIN `".MECCANO_TPREF."_core_share_msg_accessibility` `a` "
+                . "ON `m`.`id`=`a`.`mid` "
+                . "WHERE `a`.`cid`='' "
+                . "ORDER BY `time` DESC LIMIT $rpp ;"
+                );
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'appendPubMsgs: unable to get messages -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        if ($this->outputType == 'xml') {
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $msgsNode = $xml->createElement('messages');
+            $xml->appendChild($msgsNode);
+        }
+        else {
+            $msgsNode = array();
+        }
+        // default value max microtime mark
+        $maxMark = 0;
+        //
+        while ($msgData = $qResult->fetch_row()) {
+            list($msgId, $source, $title, $text, $msgTime, $mtMark, $userId, $userName, $fullName) = $msgData;
+            if (!$maxMark) {
+                $maxMark = $mtMark;
+            }
+            if ($this->outputType == 'xml') {
+                $msgNode = $xml->createElement('message');
+                // user data
+                $uidAtt = $xml->createAttribute('uid');
+                $uidAtt->value = $userId;
+                $msgNode->appendChild($uidAtt);
+                $unameAtt = $xml->createAttribute('username');
+                $unameAtt->value = $userName;
+                $msgNode->appendChild($unameAtt);
+                $fnameAtt = $xml->createAttribute('fullname');
+                $fnameAtt->value = $fullName;
+                $msgNode->appendChild($fnameAtt);
+                // message data
+                $msgNode->appendChild($xml->createElement('id', $msgId));
+                $msgNode->appendChild($xml->createElement('source', $source));
+                $msgNode->appendChild($xml->createElement('title', htmlspecialchars($title)));
+                $msgNode->appendChild($xml->createElement('text', $text));
+                $msgNode->appendChild($xml->createElement('time', $msgTime));
+                $msgsNode->appendChild($msgNode);
+            }
+            else {
+                $msgsNode[] = array(
+                    'uid' => $userId,
+                    'username' => $userName,
+                    'fullname' => $fullName,
+                    'id' => $msgId,
+                    'source' => $source,
+                    'title' => htmlspecialchars($title),
+                    'text' => $text,
+                    'time' => $msgTime
+                );
+            }
+        }
+        if ($maxMark) {
+            $minMark = $mtMark;
+        }
+        if ($this->outputType == 'xml') {
+            $minNode = $xml->createAttribute('minmark');
+            $minNode->value = $minMark;
+            $msgsNode->appendChild($minNode);
+            return $xml;
+        }
+        else {
+            $msgsNode['minmark'] = (double) $minMark;
+            return json_encode($msgsNode);
         }
     }
 }
