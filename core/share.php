@@ -534,9 +534,9 @@ class Share extends Discuss implements intShare {
         return TRUE;
     }
     
-    public function createMsg($userId, $title, $text = '') {
+    public function createMsg($userId, $title = '', $text = '') {
         $this->zeroizeError();
-        if (!is_integer($userId) || !is_string($title) || !strlen($title) || !is_string($text)) {
+        if (!is_integer($userId) || !is_string($title) || !is_string($text) || !(strlen($title) || strlen($text))) {
             $this->setError(ERROR_INCORRECT_DATA, 'createMsg: incorrect parameters');
             return FALSE;
         }
