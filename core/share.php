@@ -449,7 +449,7 @@ class Share extends Discuss implements intShare {
             $rootNode['contacts'] = array();
             while ($row = $qContacts->fetch_row()) {
                 $rootNode['contacts'][] = array(
-                    'id' => $row[0],
+                    'id' => (int) $row[0],
                     'username' => $row[1],
                     'fullname' =>$row[2]
                         );
