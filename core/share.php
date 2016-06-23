@@ -50,7 +50,7 @@ interface intShare {
     public function msgFiles($msgId);
     public function getFileShares($fileId, $userId);
     public function getMsgShares($msgId, $userId);
-    public function editFile($fileId, $userid, $title, $comment);
+    public function editFile($fileId, $userId, $title, $comment);
     public function repostMsg($msgId, $userId, $hlink = TRUE);
     public function editMsg($msgId, $userid, $title, $text);
     public function delMsg($msgId, $userId, $keepFiles = TRUE);
@@ -1385,9 +1385,9 @@ class Share extends Discuss implements intShare {
         }
     }
     
-    public function editFile($fileId, $userid, $title, $comment) {
+    public function editFile($fileId, $userId, $title, $comment) {
         $this->zeroizeError();
-        if (!pregGuid($fileId) || !is_integer($userid) || !is_string($title) || !is_string($comment)) {
+        if (!pregGuid($fileId) || !is_integer($userId) || !is_string($title) || !is_string($comment)) {
             $this->setError(ERROR_INCORRECT_DATA, 'updateFile: incorrect parameters');
             return FALSE;
         }
@@ -1400,7 +1400,7 @@ class Share extends Discuss implements intShare {
         $this->dbLink->query("UPDATE `".MECCANO_TPREF."_core_share_files` "
                 . "SET `title`='$title', `comment`='$comment' "
                 . "WHERE `id`='$fileId' "
-                . "AND `userid`=$userid ;");
+                . "AND `userid`=$userId ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'updateFile: unable to change file description -> '.$this->dbLink->error);
             return FALSE;
