@@ -2615,7 +2615,7 @@ class Share extends Discuss implements intShare {
                     'filename' => $fileName,
                     'comment' => $comment,
                     'mime' => $mimeType,
-                    'size' => $fileSize,
+                    'size' => (int) $fileSize,
                     'time' => $fileTime
                 );
             }
@@ -2744,7 +2744,7 @@ class Share extends Discuss implements intShare {
                     'filename' => $fileName,
                     'comment' => $comment,
                     'mime' => $mimeType,
-                    'size' => $fileSize,
+                    'size' => (int) $fileSize,
                     'time' => $fileTime
                 );
             }
@@ -2886,7 +2886,7 @@ class Share extends Discuss implements intShare {
                     'filename' => $fileName,
                     'comment' => $comment,
                     'mime' => $mimeType,
-                    'size' => $fileSize,
+                    'size' => (int) $fileSize,
                     'time' => $fileTime
                 );
             }
@@ -3025,7 +3025,7 @@ class Share extends Discuss implements intShare {
                     'filename' => $fileName,
                     'comment' => $comment,
                     'mime' => $mimeType,
-                    'size' => $fileSize,
+                    'size' => (int) $fileSize,
                     'time' => $fileTime
                 );
             }
@@ -3192,7 +3192,7 @@ class Share extends Discuss implements intShare {
             }
             else {
                 $msgsNode[] = array(
-                    'uid' => $userId,
+                    'uid' => (int) $userId,
                     'username' => $userName,
                     'fullname' => $fullName,
                     'id' => $msgId,
@@ -3250,7 +3250,7 @@ class Share extends Discuss implements intShare {
             $xml->appendChild($msgsNode);
         }
         else {
-            $msgsNode = array();
+            $msgsNode = array('messages' => array());
         }
         // default values of min and max microtime marks
         $minMark = 0;
@@ -3282,8 +3282,8 @@ class Share extends Discuss implements intShare {
                 $msgsNode->appendChild($msgNode);
             }
             else {
-                $msgsNode[] = array(
-                    'uid' => $userId,
+                $msgsNode['messages'][] = array(
+                    'uid' => (int) $userId,
                     'username' => $userName,
                     'fullname' => $fullName,
                     'id' => $msgId,
@@ -3353,7 +3353,7 @@ class Share extends Discuss implements intShare {
             $xml->appendChild($msgsNode);
         }
         else {
-            $msgsNode = array();
+            $msgsNode = array('messages' => array());
         }
         // default value max microtime mark
         $maxMark = 0;
@@ -3384,8 +3384,8 @@ class Share extends Discuss implements intShare {
                 $msgsNode->appendChild($msgNode);
             }
             else {
-                $msgsNode[] = array(
-                    'uid' => $userId,
+                $msgsNode['messages'][] = array(
+                    'uid' => (int) $userId,
                     'username' => $userName,
                     'fullname' => $fullName,
                     'id' => $msgId,
@@ -3451,7 +3451,7 @@ class Share extends Discuss implements intShare {
             $xml->appendChild($msgsNode);
         }
         else {
-            $msgsNode = array();
+            $msgsNode = array('messages' => array());
         }
         // default value of max microtime mark
         $maxMarkBak = $maxMark;
@@ -3483,8 +3483,8 @@ class Share extends Discuss implements intShare {
                 $msgsNode->appendChild($msgNode);
             }
             else {
-                $msgsNode[] = array(
-                    'uid' => $userId,
+                $msgsNode['messages'][] = array(
+                    'uid' => (int) $userId,
                     'username' => $userName,
                     'fullname' => $fullName,
                     'id' => $msgId,
@@ -3837,7 +3837,7 @@ class Share extends Discuss implements intShare {
             }
             else {
                 $msgsNode[] = array(
-                    'uid' => $userId,
+                    'uid' => (int) $userId,
                     'username' => $userName,
                     'fullname' => $fullName,
                     'id' => $msgId,
@@ -3930,7 +3930,7 @@ class Share extends Discuss implements intShare {
             }
             else {
                 $msgsNode[] = array(
-                    'uid' => $userId,
+                    'uid' => (int) $userId,
                     'username' => $userName,
                     'fullname' => $fullName,
                     'id' => $msgId,
