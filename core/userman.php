@@ -248,8 +248,8 @@ class UserMan extends LogMan implements intUserMan{
                         'name' => $about[0],
                         'description' => $about[1],
                         'time' => $about[2],
-                        'active' => $about[3],
-                        'usum' => $sum[0]
+                        'active' => (int) $about[3],
+                        'usum' => (int) $sum[0]
                     )
                     );
         }
@@ -454,7 +454,7 @@ class UserMan extends LogMan implements intUserMan{
             $this->setError(ERROR_NOT_EXECUTED, 'getGroups: group info page could not be gotten -> '.$this->dbLink->error);
             return FALSE;
         }
-        if ($this->outputType = 'xml') {
+        if ($this->outputType == 'xml') {
             $xml = new \DOMDocument('1.0', 'utf-8');
             $groupsNode = $xml->createElement('groups');
             $xml->appendChild($groupsNode);
@@ -472,10 +472,10 @@ class UserMan extends LogMan implements intUserMan{
             $groupsNode = array();
             while ($row = $qResult->fetch_row()) {
                 $groupsNode[] = array(
-                    'id' => $row[0],
+                    'id' => (int) $row[0],
                     'name' => $row[1],
                     'time' => $row[2],
-                    'active' => $row[3]
+                    'active' => (int) $row[3]
                 );
             }
             return json_encode($groupsNode);
@@ -537,10 +537,10 @@ class UserMan extends LogMan implements intUserMan{
             $groupsNode = array();
             while ($row = $qResult->fetch_row()) {
                 $groupsNode[] = array(
-                    'id' => $row[0],
+                    'id' => (int) $row[0],
                     'name' => $row[1],
                     'time' => $row[2],
-                    'active' => $row[3]
+                    'active' => (int) $row[3]
                 );
             }
             return json_encode($groupsNode);
@@ -857,8 +857,8 @@ class UserMan extends LogMan implements intUserMan{
                         'fullname' => $about[1],
                         'email' => $about[2],
                         'time' => $about[3],
-                        'active' => $about[4],
-                        'gid' => $about[5],
+                        'active' => (int) $about[4],
+                        'gid' => (int) $about[5],
                         'group' => $about[6]
                     )
                     );
@@ -903,9 +903,9 @@ class UserMan extends LogMan implements intUserMan{
             $securityNode = array();
             while ($row = $qPassw->fetch_row()) {
                 $securityNode[] = array(
-                    'id' => $row[0],
+                    'id' => (int) $row[0],
                     'description' => $row[1],
-                    'limited' => $row[2]
+                    'limited' => (int) $row[2]
                 );
             }
             return json_encode($securityNode);
@@ -1411,14 +1411,14 @@ class UserMan extends LogMan implements intUserMan{
             $usersNode = array();
             while ($row = $qResult->fetch_row()) {
                 $usersNode[] = array(
-                    'id' => $row[0],
+                    'id' => (int) $row[0],
                     'username' => $row[1],
                     'fullname' => $row[2],
                     'email' => $row[3],
                     'group' => $row[4],
-                    'gid' => $row[5],
+                    'gid' => (int) $row[5],
                     'time' => $row[6],
-                    'active' => $row[7]
+                    'active' => (int) $row[7]
                 );
             }
             return json_encode($usersNode);
@@ -1488,14 +1488,14 @@ class UserMan extends LogMan implements intUserMan{
             $usersNode = array();
             while ($row = $qResult->fetch_row()) {
                 $usersNode[] = array(
-                    'id' => $row[0],
+                    'id' => (int) $row[0],
                     'username' => $row[1],
                     'fullname' => $row[2],
                     'email' => $row[3],
                     'group' => $row[4],
-                    'gid' => $row[5],
+                    'gid' => (int) $row[5],
                     'time' => $row[6],
-                    'active' => $row[7]
+                    'active' => (int) $row[7]
                 );
             }
             return json_encode($usersNode);
