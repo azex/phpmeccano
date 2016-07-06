@@ -1958,7 +1958,7 @@ class LangMan extends LogMan implements intLangMan{
                     'name' => $row[2]
                 );
             }
-            return json_decode($titlesNode);
+            return json_encode($titlesNode);
         }
     }
     
@@ -2052,7 +2052,7 @@ class LangMan extends LogMan implements intLangMan{
                     'name' => $row[2]
                 );
             }
-            return json_decode($titlesNode);
+            return json_encode($titlesNode);
         }
     }
     
@@ -2177,14 +2177,14 @@ class LangMan extends LogMan implements intLangMan{
         }
         else {
             $sectionsNode = array();
-            $sectionsNode['plugin'] = $olugin;
+            $sectionsNode['plugin'] = $plugin;
             $sectionsNode['sections'] = array();
             while ($row = $qSections->fetch_row()) {
                 $sectionsNode['sections'][] = array(
                     'id' => (int) $row[0],
                     'name' => $row[1],
-                    'static' => $row[2],
-                    'contains' => $row[3]
+                    'static' => (int) $row[2],
+                    'contains' => (int) $row[3]
                 );
             }
             return json_encode($sectionsNode);
@@ -2297,8 +2297,8 @@ class LangMan extends LogMan implements intLangMan{
                 $sectionsNode['sections'][] = array(
                     'id' => (int) $row[0],
                     'name' => $row[1],
-                    'static' => $row[2],
-                    'contains' => $row[3]
+                    'static' => (int) $row[2],
+                    'contains' => (int) $row[3]
                 );
             }
             return json_encode($sectionsNode);;
