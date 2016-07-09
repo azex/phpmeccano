@@ -41,6 +41,9 @@ class ServiceMethods implements intServiceMethods {
     protected function setError($id, $exp) {
         $this->errid = $id;
         $this->errexp = $exp;
+        if (MECCANO_SHOW_ERRORS) {
+            echo "<br/><span style='font-style: large; padding: 10px; background: yellow; display: inline-block; color: red'>ERROR $id<br/>$exp</span><br/>";
+        }
     }
     
     protected function zeroizeError() {

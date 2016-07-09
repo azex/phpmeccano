@@ -42,6 +42,9 @@ class Files implements intFiles {
     private static function setError($id, $exp) {
         self::$errid = $id;
         self::$errexp = $exp;
+        if (MECCANO_SHOW_ERRORS) {
+            echo "<br/><span style='font-style: large; padding: 10px; background: yellow; display: inline-block; color: red'>ERROR $id<br/>$exp</span><br/>";
+        }
     }
     
     private static function zeroizeError() {

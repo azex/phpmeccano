@@ -55,3 +55,6 @@ define('MECCANO_DEF_LANG', 'en-US');
 // temporary blocking of the user authentication
 define('MECCANO_AUTH_LIMIT', 5);
 define('MECCANO_AUTH_BLOCK_PERIOD', '00:05:00');
+
+// displaying of errors
+define('MECCANO_SHOW_ERRORS', FALSE);
