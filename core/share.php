@@ -25,7 +25,6 @@
 
 namespace core;
 
-require_once MECCANO_CORE_DIR.'/logman.php';
 require_once MECCANO_CORE_DIR.'/files.php';
 require_once MECCANO_CORE_DIR.'/discuss.php';
 
@@ -51,7 +50,7 @@ interface intShare {
     public function msgFiles($msgId);
     public function getFileShares($fileId, $userId);
     public function getMsgShares($msgId, $userId);
-    public function editFile($fileId, $userid, $title, $comment);
+    public function editFile($fileId, $userId, $title, $comment);
     public function repostMsg($msgId, $userId, $hlink = TRUE);
     public function editMsg($msgId, $userid, $title, $text);
     public function delMsg($msgId, $userId, $keepFiles = TRUE);
@@ -115,7 +114,7 @@ class Share extends Discuss implements intShare {
         $this->dbLink->query(
                 "SELECT `id` FROM `".MECCANO_TPREF."_core_share_files_accessibility` "
                 . "WHERE `fid`='$fileId' "
-                . "AND `cid`='' ;"
+                . "AND `cid`='public' ;"
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'checkFileAccess: '.$this->dbLink->error);
@@ -184,7 +183,7 @@ class Share extends Discuss implements intShare {
         $this->dbLink->query(
                 "SELECT `id` FROM `".MECCANO_TPREF."_core_share_msg_accessibility` "
                 . "WHERE `mid`='$msgId' "
-                . "AND `cid`='' ;"
+                . "AND `cid`='public' ;"
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'checkMsgAccess: '.$this->dbLink->error);
@@ -449,7 +448,7 @@ class Share extends Discuss implements intShare {
             $rootNode['contacts'] = array();
             while ($row = $qContacts->fetch_row()) {
                 $rootNode['contacts'][] = array(
-                    'id' => $row[0],
+                    'id' => (int) $row[0],
                     'username' => $row[1],
                     'fullname' =>$row[2]
                         );
@@ -665,7 +664,7 @@ class Share extends Discuss implements intShare {
         // check circles
         $cKeys = \array_keys($circles);
         foreach ($cKeys as $value) {
-            if (!pregGuid($value) && !(is_string($value) && strlen($value) == 0)) {
+            if (!pregGuid($value) && $value !== 'public') {
                 $this->setError(ERROR_INCORRECT_DATA, 'shareFile: incorrect circle identifiers');
                 return FALSE;
             }
@@ -681,7 +680,7 @@ class Share extends Discuss implements intShare {
             return FALSE;
         }
         foreach ($cKeys as $value) {
-            if (strlen($value) != 0) {
+            if ($value != 'public') {
                 $stmt->bind_param('si', $value, $userId);
                 $stmt->execute();
                 $stmt->store_result();
@@ -1022,7 +1021,7 @@ class Share extends Discuss implements intShare {
         // check circles
         $cKeys = \array_keys($circles);
         foreach ($cKeys as $value) {
-            if (!pregGuid($value) && !(is_string($value) && strlen($value) == 0)) {
+            if (!pregGuid($value) && $value !== 'public') {
                 $this->setError(ERROR_INCORRECT_DATA, 'shareMsg: incorrect circle identifiers');
                 return FALSE;
             }
@@ -1038,7 +1037,7 @@ class Share extends Discuss implements intShare {
             return FALSE;
         }
         foreach ($cKeys as $value) {
-            if (strlen($value) != 0) {
+            if ($value != 'public') {
                 $stmt->bind_param('si', $value, $userId);
                 $stmt->execute();
                 $stmt->store_result();
@@ -1229,16 +1228,30 @@ class Share extends Discuss implements intShare {
             $this->setError(ERROR_NOT_FOUND, 'getFileShares: file not found');
             return FALSE;
         }
+        // get user circles
+        $qCircles = $this->dbLink->query(
+                "SELECT `id`, `cname` "
+                . "FROM `".MECCANO_TPREF."_core_share_circles` "
+                . "WHERE `userid`=$userId "
+                . "ORDER BY `cname` ;"
+                );
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'getFileShares: '.$this->dbLink->error);
+            return FALSE;
+        }
         // get file shares
-        $qShares = $this->dbLink->query("SELECT `a`.`cid`, `c`.`cname` "
-                . "FROM `".MECCANO_TPREF."_core_share_files_accessibility` `a` "
-                . "JOIN `".MECCANO_TPREF."_core_share_circles` `c` "
-                . "ON `a`.`cid`=`c`.`id` "
-                . "WHERE `a`.`fid`='$fileId' ;");
+        $qShares = $this->dbLink->query("SELECT `cid` "
+                . "FROM `".MECCANO_TPREF."_core_share_files_accessibility` "
+                . "WHERE `fid`='$fileId' ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'getFileShares: unable to get file shares -> '.$this->dbLink->error);
             return FALSE;
         }
+        $fileShares = array();
+        while ($row = $qShares->fetch_row()) {
+            $fileShares[] = $row[0];
+        }
+        // create output data
         if ($this->outputType == 'xml') {
             $xml = new \DOMDocument('1.0', 'utf-8');
             $sharesNode = $xml->createElement('shares');
@@ -1247,56 +1260,39 @@ class Share extends Discuss implements intShare {
             $fileIdAttribute = $xml->createAttribute('fileId');
             $fileIdAttribute->value = $fileId;
             $sharesNode->appendChild($fileIdAttribute);
-            // check for public access
-            $this->dbLink->query(
-                    "SELECT `id` FROM `".MECCANO_TPREF."_core_share_files_accessibility` "
-                    . "WHERE `fid`='$fileId' "
-                    . "AND `cid`='' ;"
-                    );
-            if ($this->dbLink->errno) {
-                $this->setError(ERROR_NOT_EXECUTED, 'getFileShares: unable to check for public access -> '.$this->dbLink->error);
-                return FALSE;
-            }
-            if ($this->dbLink->affected_rows) {
-                $circleNode = $xml->createElement('circle');
-                $cIdNode = $xml->createElement('id', '');
-                $circleNode->appendChild($cIdNode);
-                $cNameNode = $xml->createElement('name', '');
-                $circleNode->appendChild($cNameNode);
-                $sharesNode->appendChild($circleNode);
-            }
-            // check access to other circles
-            while ($circleData = $qShares->fetch_row()) {
-                $circleNode = $xml->createElement('circle');
-                $cIdNode = $xml->createElement('id', $circleData[0]);
-                $circleNode->appendChild($cIdNode);
-                $cNameNode = $xml->createElement('name', $circleData[1]);
-                $circleNode->appendChild($cNameNode);
-                $sharesNode->appendChild($circleNode);
-            }
-            return $xml;
         }
         else {
             $sharesNode = array();
             $sharesNode['fileId'] = $fileId;
             $sharesNode['circles'] = array();
-            // check for public access
-            $this->dbLink->query(
-                    "SELECT `id` FROM `".MECCANO_TPREF."_core_share_files_accessibility` "
-                    . "WHERE `fid`='$fileId' "
-                    . "AND `cid`='' ;"
-                    );
-            if ($this->dbLink->errno) {
-                $this->setError(ERROR_NOT_EXECUTED, 'getFileShares: unable to check for public access -> '.$this->dbLink->error);
-                return FALSE;
+        }
+        $row = array('public', '');
+        do {
+            // check access
+            if (in_array($row[0], $fileShares, TRUE)) {
+                $access = 1;
             }
-            if ($this->dbLink->affected_rows) {
-                $sharesNode['circles'][] = array('id' => '', 'name' => '');
+            else {
+                $access = 0;
             }
-            // check access to other circles
-            while ($circleData = $qShares->fetch_row()) {
-                $sharesNode['circles'][] = array('id' => $circleData[0], 'name' => $circleData[1]);
+            if ($this->outputType == 'xml') {
+                $circleNode = $xml->createElement('circle');
+                $cIdNode = $xml->createElement('id', $row[0]);
+                $circleNode->appendChild($cIdNode);
+                $cNameNode = $xml->createElement('name', $row[1]);
+                $circleNode->appendChild($cNameNode);
+                $cAccessNode = $xml->createElement('access', $access);
+                $circleNode->appendChild($cAccessNode);
+                $sharesNode->appendChild($circleNode);
             }
+            else {
+                $sharesNode['circles'][] = array('id' => $row[0], 'name' => $row[1], 'access' => $access);
+            }
+        } while ($row = $qCircles->fetch_row());
+        if ($this->outputType == 'xml') {
+            return $xml;
+        }
+        else {
             return json_encode($sharesNode);
         }
     }
@@ -1320,16 +1316,30 @@ class Share extends Discuss implements intShare {
             $this->setError(ERROR_NOT_FOUND, 'getMsgShares: message not found');
             return FALSE;
         }
+        // get user circles
+        $qCircles = $this->dbLink->query(
+                "SELECT `id`, `cname` "
+                . "FROM `".MECCANO_TPREF."_core_share_circles` "
+                . "WHERE `userid`=$userId "
+                . "ORDER BY `cname` ;"
+                );
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'getMsgShares: '.$this->dbLink->error);
+            return FALSE;
+        }
         // get message shares
-        $qShares = $this->dbLink->query("SELECT `a`.`cid`, `c`.`cname` "
-                . "FROM `".MECCANO_TPREF."_core_share_msg_accessibility` `a` "
-                . "JOIN `".MECCANO_TPREF."_core_share_circles` `c` "
-                . "ON `a`.`cid`=`c`.`id` "
-                . "WHERE `a`.`mid`='$msgId' ;");
+        $qShares = $this->dbLink->query("SELECT `cid` "
+                . "FROM `".MECCANO_TPREF."_core_share_msg_accessibility` "
+                . "WHERE `mid`='$msgId' ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'getMsgShares: unable to get message shares -> '.$this->dbLink->error);
             return FALSE;
         }
+        $fileShares = array();
+        while ($row = $qShares->fetch_row()) {
+            $fileShares[] = $row[0];
+        }
+        // create output data
         if ($this->outputType == 'xml') {
             $xml = new \DOMDocument('1.0', 'utf-8');
             $sharesNode = $xml->createElement('shares');
@@ -1338,63 +1348,46 @@ class Share extends Discuss implements intShare {
             $msgIdAttribute = $xml->createAttribute('msgId');
             $msgIdAttribute->value = $msgId;
             $sharesNode->appendChild($msgIdAttribute);
-            // check for public access
-            $this->dbLink->query(
-                    "SELECT `id` FROM `".MECCANO_TPREF."_core_share_msg_accessibility` "
-                    . "WHERE `mid`='$msgId' "
-                    . "AND `cid`='' ;"
-                    );
-            if ($this->dbLink->errno) {
-                $this->setError(ERROR_NOT_EXECUTED, 'getMsgShares: unable to check for public access ->'.$this->dbLink->error);
-                return FALSE;
-            }
-            if ($this->dbLink->affected_rows) {
-                $circleNode = $xml->createElement('circle');
-                $cIdNode = $xml->createElement('id', '');
-                $circleNode->appendChild($cIdNode);
-                $cNameNode = $xml->createElement('name', '');
-                $circleNode->appendChild($cNameNode);
-                $sharesNode->appendChild($circleNode);
-            }
-            // check access to other circles
-            while ($circleData = $qShares->fetch_row()) {
-                $circleNode = $xml->createElement('circle');
-                $cIdNode = $xml->createElement('id', $circleData[0]);
-                $circleNode->appendChild($cIdNode);
-                $cNameNode = $xml->createElement('name', $circleData[1]);
-                $circleNode->appendChild($cNameNode);
-                $sharesNode->appendChild($circleNode);
-            }
-            return $xml;
         }
         else {
             $sharesNode = array();
             $sharesNode['msgId'] = $msgId;
             $sharesNode['circles'] = array();
-            // check for public access
-            $this->dbLink->query(
-                    "SELECT `id` FROM `".MECCANO_TPREF."_core_share_msg_accessibility` "
-                    . "WHERE `mid`='$msgId' "
-                    . "AND `cid`='' ;"
-                    );
-            if ($this->dbLink->errno) {
-                $this->setError(ERROR_NOT_EXECUTED, 'getMsgShares: unable to check for public access -> '.$this->dbLink->error);
-                return FALSE;
+        }
+        $row = array('public', '');
+        do {
+            // check access
+            if (in_array($row[0], $fileShares, TRUE)) {
+                $access = 1;
             }
-            if ($this->dbLink->affected_rows) {
-                $sharesNode['circles'][] = array('id' => '', 'name' => '');
+            else {
+                $access = 0;
             }
-            // check access to other circles
-            while ($circleData = $qShares->fetch_row()) {
-                $sharesNode['circles'][] = array('id' => $circleData[0], 'name' => $circleData[1]);
+            if ($this->outputType == 'xml') {
+                $circleNode = $xml->createElement('circle');
+                $cIdNode = $xml->createElement('id', $row[0]);
+                $circleNode->appendChild($cIdNode);
+                $cNameNode = $xml->createElement('name', $row[1]);
+                $circleNode->appendChild($cNameNode);
+                $cAccessNode = $xml->createElement('access', $access);
+                $circleNode->appendChild($cAccessNode);
+                $sharesNode->appendChild($circleNode);
             }
+            else {
+                $sharesNode['circles'][] = array('id' => $row[0], 'name' => $row[1], 'access' => $access);
+            }
+        } while ($row = $qCircles->fetch_row());
+        if ($this->outputType == 'xml') {
+            return $xml;
+        }
+        else {
             return json_encode($sharesNode);
         }
     }
     
-    public function editFile($fileId, $userid, $title, $comment) {
+    public function editFile($fileId, $userId, $title, $comment) {
         $this->zeroizeError();
-        if (!pregGuid($fileId) || !is_integer($userid) || !is_string($title) || !is_string($comment)) {
+        if (!pregGuid($fileId) || !is_integer($userId) || !is_string($title) || !is_string($comment)) {
             $this->setError(ERROR_INCORRECT_DATA, 'updateFile: incorrect parameters');
             return FALSE;
         }
@@ -1407,7 +1400,7 @@ class Share extends Discuss implements intShare {
         $this->dbLink->query("UPDATE `".MECCANO_TPREF."_core_share_files` "
                 . "SET `title`='$title', `comment`='$comment' "
                 . "WHERE `id`='$fileId' "
-                . "AND `userid`=$userid ;");
+                . "AND `userid`=$userId ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'updateFile: unable to change file description -> '.$this->dbLink->error);
             return FALSE;
@@ -1820,7 +1813,7 @@ class Share extends Discuss implements intShare {
                     . "ON `c`.`id`=`a`.`cid` "
                     . "LEFT OUTER JOIN `".MECCANO_TPREF."_core_share_buddy_list` `l` "
                     . "ON `l`.`cid`=`c`.`id` "
-                    . "WHERE `a`.`cid`='' "
+                    . "WHERE `a`.`cid`='public' "
                     . "OR `l`.`bid`=$visiterId ;"
                     );
         }
@@ -1831,7 +1824,7 @@ class Share extends Discuss implements intShare {
                     . "FROM `".MECCANO_TPREF."_core_share_msgs` `m` "
                     . "JOIN `".MECCANO_TPREF."_core_share_msg_accessibility` `a` "
                     . "ON `a`.`mid`=`m`.`id` "
-                    . "AND `a`.`cid`='' "
+                    . "AND `a`.`cid`='public' "
                     . "WHERE `m`.`userid`=$userId ;"
                     );
         }
@@ -1938,7 +1931,7 @@ class Share extends Discuss implements intShare {
                     . "ON `c`.`id`=`a`.`cid` "
                     . "LEFT OUTER JOIN `".MECCANO_TPREF."_core_share_buddy_list` `l` "
                     . "ON `l`.`cid`=`c`.`id` "
-                    . "WHERE `a`.`cid`='' "
+                    . "WHERE `a`.`cid`='public' "
                     . "OR `l`.`bid`=$visiterId "
                     . "ORDER BY `$orderBy` $direct LIMIT $start, $rpp ;"
                     );
@@ -1950,7 +1943,7 @@ class Share extends Discuss implements intShare {
                     . "FROM `".MECCANO_TPREF."_core_share_msgs` `m` "
                     . "JOIN `".MECCANO_TPREF."_core_share_msg_accessibility` `a` "
                     . "ON `a`.`mid`=`m`.`id` "
-                    . "AND `a`.`cid`='' "
+                    . "AND `a`.`cid`='public' "
                     . "WHERE `m`.`userid`=$userId "
                     . "ORDER BY `$orderBy` $direct LIMIT $start, $rpp ;"
                     );
@@ -2055,7 +2048,7 @@ class Share extends Discuss implements intShare {
                     . "ON `c`.`id`=`a`.`cid` "
                     . "LEFT OUTER JOIN `".MECCANO_TPREF."_core_share_buddy_list` `l` "
                     . "ON `l`.`cid`=`c`.`id` "
-                    . "WHERE `a`.`cid`='' "
+                    . "WHERE `a`.`cid`='public' "
                     . "OR `l`.`bid`=$visiterId "
                     . "ORDER BY `time` DESC LIMIT $rpp ;"
                     );
@@ -2067,7 +2060,7 @@ class Share extends Discuss implements intShare {
                     . "FROM `".MECCANO_TPREF."_core_share_msgs` `m` "
                     . "JOIN `".MECCANO_TPREF."_core_share_msg_accessibility` `a` "
                     . "ON `a`.`mid`=`m`.`id` "
-                    . "AND `a`.`cid`='' "
+                    . "AND `a`.`cid`='public' "
                     . "WHERE `m`.`userid`=$userId "
                     . "ORDER BY `time` DESC LIMIT $rpp ;"
                     );
@@ -2192,7 +2185,7 @@ class Share extends Discuss implements intShare {
                     . "ON `c`.`id`=`a`.`cid` "
                     . "LEFT OUTER JOIN `".MECCANO_TPREF."_core_share_buddy_list` `l` "
                     . "ON `l`.`cid`=`c`.`id` "
-                    . "WHERE `a`.`cid`='' "
+                    . "WHERE `a`.`cid`='public' "
                     . "OR `l`.`bid`=$visiterId "
                     . "ORDER BY `time` DESC LIMIT $rpp ;"
                     );
@@ -2204,7 +2197,7 @@ class Share extends Discuss implements intShare {
                     . "FROM `".MECCANO_TPREF."_core_share_msgs` `m` "
                     . "JOIN `".MECCANO_TPREF."_core_share_msg_accessibility` `a` "
                     . "ON `a`.`mid`=`m`.`id` "
-                    . "AND `a`.`cid`='' "
+                    . "AND `a`.`cid`='public' "
                     . "AND `m`.`microtime`<$minMark "
                     . "WHERE `m`.`userid`=$userId "
                     . "ORDER BY `time` DESC LIMIT $rpp ;"
@@ -2325,7 +2318,7 @@ class Share extends Discuss implements intShare {
                     . "ON `c`.`id`=`a`.`cid` "
                     . "LEFT OUTER JOIN `".MECCANO_TPREF."_core_share_buddy_list` `l` "
                     . "ON `l`.`cid`=`c`.`id` "
-                    . "WHERE `a`.`cid`='' "
+                    . "WHERE `a`.`cid`='public' "
                     . "OR `l`.`bid`=$visiterId "
                     . "ORDER BY `time` DESC ;"
                     );
@@ -2337,7 +2330,7 @@ class Share extends Discuss implements intShare {
                     . "FROM `".MECCANO_TPREF."_core_share_msgs` `m` "
                     . "JOIN `".MECCANO_TPREF."_core_share_msg_accessibility` `a` "
                     . "ON `a`.`mid`=`m`.`id` "
-                    . "AND `a`.`cid`='' "
+                    . "AND `a`.`cid`='public' "
                     . "AND `m`.`microtime`>$maxMark "
                     . "WHERE `m`.`userid`=$userId "
                     . "ORDER BY `time` DESC ;"
@@ -2442,7 +2435,7 @@ class Share extends Discuss implements intShare {
                     . "ON `c`.`id`=`a`.`cid` "
                     . "LEFT OUTER JOIN `".MECCANO_TPREF."_core_share_buddy_list` `l` "
                     . "ON `l`.`cid`=`c`.`id` "
-                    . "WHERE `a`.`cid`='' "
+                    . "WHERE `a`.`cid`='public' "
                     . "OR `l`.`bid`=$visiterId ;"
                     );
         }
@@ -2453,7 +2446,7 @@ class Share extends Discuss implements intShare {
                     . "FROM `".MECCANO_TPREF."_core_share_files` `f` "
                     . "JOIN `".MECCANO_TPREF."_core_share_files_accessibility` `a` "
                     . "ON `a`.`fid`=`f`.`id` "
-                    . "AND `a`.`cid`='' "
+                    . "AND `a`.`cid`='public' "
                     . "WHERE `f`.`userid`=$userId ;"
                     );
         }
@@ -2560,7 +2553,7 @@ class Share extends Discuss implements intShare {
                     . "ON `c`.`id`=`a`.`cid` "
                     . "LEFT OUTER JOIN `".MECCANO_TPREF."_core_share_buddy_list` `l` "
                     . "ON `l`.`cid`=`c`.`id` "
-                    . "WHERE `a`.`cid`='' "
+                    . "WHERE `a`.`cid`='public' "
                     . "OR `l`.`bid`=$visiterId "
                     . "ORDER BY `$orderBy` $direct LIMIT $start, $rpp ;"
                     );
@@ -2572,7 +2565,7 @@ class Share extends Discuss implements intShare {
                     . "FROM `".MECCANO_TPREF."_core_share_files` `f` "
                     . "JOIN `".MECCANO_TPREF."_core_share_files_accessibility` `a` "
                     . "ON `a`.`fid`=`f`.`id` "
-                    . "AND `a`.`cid`='' "
+                    . "AND `a`.`cid`='public' "
                     . "WHERE `f`.`userid`=$userId "
                     . "ORDER BY `$orderBy` $direct LIMIT $start, $rpp ;"
                     );
@@ -2622,7 +2615,7 @@ class Share extends Discuss implements intShare {
                     'filename' => $fileName,
                     'comment' => $comment,
                     'mime' => $mimeType,
-                    'size' => $fileSize,
+                    'size' => (int) $fileSize,
                     'time' => $fileTime
                 );
             }
@@ -2682,7 +2675,7 @@ class Share extends Discuss implements intShare {
                     . "ON `c`.`id`=`a`.`cid` "
                     . "LEFT OUTER JOIN `".MECCANO_TPREF."_core_share_buddy_list` `l` "
                     . "ON `l`.`cid`=`c`.`id` "
-                    . "WHERE `a`.`cid`='' "
+                    . "WHERE `a`.`cid`='public' "
                     . "OR `l`.`bid`=$visiterId "
                     . "ORDER BY `time` DESC LIMIT $rpp ;"
                     );
@@ -2694,7 +2687,7 @@ class Share extends Discuss implements intShare {
                     . "FROM `".MECCANO_TPREF."_core_share_files` `f` "
                     . "JOIN `".MECCANO_TPREF."_core_share_files_accessibility` `a` "
                     . "ON `a`.`fid`=`f`.`id` "
-                    . "AND `a`.`cid`='' "
+                    . "AND `a`.`cid`='public' "
                     . "WHERE `f`.`userid`=$userId "
                     . "ORDER BY `time` DESC LIMIT $rpp ;"
                     );
@@ -2751,7 +2744,7 @@ class Share extends Discuss implements intShare {
                     'filename' => $fileName,
                     'comment' => $comment,
                     'mime' => $mimeType,
-                    'size' => $fileSize,
+                    'size' => (int) $fileSize,
                     'time' => $fileTime
                 );
             }
@@ -2824,7 +2817,7 @@ class Share extends Discuss implements intShare {
                     . "ON `c`.`id`=`a`.`cid` "
                     . "LEFT OUTER JOIN `".MECCANO_TPREF."_core_share_buddy_list` `l` "
                     . "ON `l`.`cid`=`c`.`id` "
-                    . "WHERE `a`.`cid`='' "
+                    . "WHERE `a`.`cid`='public' "
                     . "OR `l`.`bid`=$visiterId "
                     . "ORDER BY `time` DESC LIMIT $rpp ;"
                     );
@@ -2836,7 +2829,7 @@ class Share extends Discuss implements intShare {
                     . "FROM `".MECCANO_TPREF."_core_share_files` `f` "
                     . "JOIN `".MECCANO_TPREF."_core_share_files_accessibility` `a` "
                     . "ON `a`.`fid`=`f`.`id` "
-                    . "AND `a`.`cid`='' "
+                    . "AND `a`.`cid`='public' "
                     . "AND `f`.`microtime`<$minMark "
                     . "WHERE `f`.`userid`=$userId "
                     . "ORDER BY `time` DESC LIMIT $rpp ;"
@@ -2893,7 +2886,7 @@ class Share extends Discuss implements intShare {
                     'filename' => $fileName,
                     'comment' => $comment,
                     'mime' => $mimeType,
-                    'size' => $fileSize,
+                    'size' => (int) $fileSize,
                     'time' => $fileTime
                 );
             }
@@ -2962,7 +2955,7 @@ class Share extends Discuss implements intShare {
                     . "ON `c`.`id`=`a`.`cid` "
                     . "LEFT OUTER JOIN `".MECCANO_TPREF."_core_share_buddy_list` `l` "
                     . "ON `l`.`cid`=`c`.`id` "
-                    . "WHERE `a`.`cid`='' "
+                    . "WHERE `a`.`cid`='public' "
                     . "OR `l`.`bid`=$visiterId "
                     . "ORDER BY `time` DESC ;"
                     );
@@ -2974,7 +2967,7 @@ class Share extends Discuss implements intShare {
                     . "FROM `".MECCANO_TPREF."_core_share_files` `f` "
                     . "JOIN `".MECCANO_TPREF."_core_share_files_accessibility` `a` "
                     . "ON `a`.`fid`=`f`.`id` "
-                    . "AND `a`.`cid`='' "
+                    . "AND `a`.`cid`='public' "
                     . "AND `f`.`microtime`>$maxMark "
                     . "WHERE `f`.`userid`=$userId "
                     . "ORDER BY `time` DESC ;"
@@ -3032,7 +3025,7 @@ class Share extends Discuss implements intShare {
                     'filename' => $fileName,
                     'comment' => $comment,
                     'mime' => $mimeType,
-                    'size' => $fileSize,
+                    'size' => (int) $fileSize,
                     'time' => $fileTime
                 );
             }
@@ -3076,7 +3069,7 @@ class Share extends Discuss implements intShare {
                 . "LEFT OUTER JOIN `".MECCANO_TPREF."_core_share_buddy_list` `l` "
                 . "ON `a`.`cid`=`l`.`cid` "
                 . "WHERE `l`.`bid`=$userId "
-                . "OR `a`.`cid`='' ;"
+                . "OR `a`.`cid`='public' ;"
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'sumUserSubs: unable to count total messages -> '.$this->dbLink->error);
@@ -3160,7 +3153,7 @@ class Share extends Discuss implements intShare {
                 . "LEFT OUTER JOIN `".MECCANO_TPREF."_core_share_buddy_list` `l` "
                 . "ON `a`.`cid`=`l`.`cid` "
                 . "WHERE `l`.`bid`=$userId "
-                . "OR `a`.`cid`=''"
+                . "OR `a`.`cid`='public'"
                 . "ORDER BY `$orderBy` $direct LIMIT $start, $rpp ;"
                 );
         if ($this->dbLink->errno) {
@@ -3199,7 +3192,7 @@ class Share extends Discuss implements intShare {
             }
             else {
                 $msgsNode[] = array(
-                    'uid' => $userId,
+                    'uid' => (int) $userId,
                     'username' => $userName,
                     'fullname' => $fullName,
                     'id' => $msgId,
@@ -3244,7 +3237,7 @@ class Share extends Discuss implements intShare {
                 . "LEFT OUTER JOIN `".MECCANO_TPREF."_core_share_buddy_list` `l` "
                 . "ON `a`.`cid`=`l`.`cid` "
                 . "WHERE `l`.`bid`=$userId "
-                . "OR `a`.`cid`=''"
+                . "OR `a`.`cid`='public'"
                 . "ORDER BY `time` DESC LIMIT $rpp ;"
                 );
         if ($this->dbLink->errno) {
@@ -3257,7 +3250,7 @@ class Share extends Discuss implements intShare {
             $xml->appendChild($msgsNode);
         }
         else {
-            $msgsNode = array();
+            $msgsNode = array('messages' => array());
         }
         // default values of min and max microtime marks
         $minMark = 0;
@@ -3289,8 +3282,8 @@ class Share extends Discuss implements intShare {
                 $msgsNode->appendChild($msgNode);
             }
             else {
-                $msgsNode[] = array(
-                    'uid' => $userId,
+                $msgsNode['messages'][] = array(
+                    'uid' => (int) $userId,
                     'username' => $userName,
                     'fullname' => $fullName,
                     'id' => $msgId,
@@ -3347,7 +3340,7 @@ class Share extends Discuss implements intShare {
                 . "LEFT OUTER JOIN `".MECCANO_TPREF."_core_share_buddy_list` `l` "
                 . "ON `a`.`cid`=`l`.`cid` "
                 . "WHERE `l`.`bid`=$userId "
-                . "OR `a`.`cid`=''"
+                . "OR `a`.`cid`='public'"
                 . "ORDER BY `time` DESC LIMIT $rpp ;"
                 );
         if ($this->dbLink->errno) {
@@ -3360,7 +3353,7 @@ class Share extends Discuss implements intShare {
             $xml->appendChild($msgsNode);
         }
         else {
-            $msgsNode = array();
+            $msgsNode = array('messages' => array());
         }
         // default value max microtime mark
         $maxMark = 0;
@@ -3391,8 +3384,8 @@ class Share extends Discuss implements intShare {
                 $msgsNode->appendChild($msgNode);
             }
             else {
-                $msgsNode[] = array(
-                    'uid' => $userId,
+                $msgsNode['messages'][] = array(
+                    'uid' => (int) $userId,
                     'username' => $userName,
                     'fullname' => $fullName,
                     'id' => $msgId,
@@ -3445,7 +3438,7 @@ class Share extends Discuss implements intShare {
                 . "LEFT OUTER JOIN `".MECCANO_TPREF."_core_share_buddy_list` `l` "
                 . "ON `a`.`cid`=`l`.`cid` "
                 . "WHERE `l`.`bid`=$userId "
-                . "OR `a`.`cid`=''"
+                . "OR `a`.`cid`='public'"
                 . "ORDER BY `time` DESC ;"
                 );
         if ($this->dbLink->errno) {
@@ -3458,7 +3451,7 @@ class Share extends Discuss implements intShare {
             $xml->appendChild($msgsNode);
         }
         else {
-            $msgsNode = array();
+            $msgsNode = array('messages' => array());
         }
         // default value of max microtime mark
         $maxMarkBak = $maxMark;
@@ -3490,8 +3483,8 @@ class Share extends Discuss implements intShare {
                 $msgsNode->appendChild($msgNode);
             }
             else {
-                $msgsNode[] = array(
-                    'uid' => $userId,
+                $msgsNode['messages'][] = array(
+                    'uid' => (int) $userId,
                     'username' => $userName,
                     'fullname' => $fullName,
                     'id' => $msgId,
@@ -3798,7 +3791,7 @@ class Share extends Discuss implements intShare {
                 . "ON `u`.`id`=`m`.`userid` "
                 . "JOIN `".MECCANO_TPREF."_core_share_msg_accessibility` `a` "
                 . "ON `m`.`id`=`a`.`mid` "
-                . "WHERE `a`.`cid`='' "
+                . "WHERE `a`.`cid`='public' "
                 . "ORDER BY `time` DESC LIMIT $rpp ;"
                 );
         if ($this->dbLink->errno) {
@@ -3844,7 +3837,7 @@ class Share extends Discuss implements intShare {
             }
             else {
                 $msgsNode[] = array(
-                    'uid' => $userId,
+                    'uid' => (int) $userId,
                     'username' => $userName,
                     'fullname' => $fullName,
                     'id' => $msgId,
@@ -3892,7 +3885,7 @@ class Share extends Discuss implements intShare {
                 . "ON `u`.`id`=`m`.`userid` "
                 . "JOIN `".MECCANO_TPREF."_core_share_msg_accessibility` `a` "
                 . "ON `m`.`id`=`a`.`mid` "
-                . "WHERE `a`.`cid`='' "
+                . "WHERE `a`.`cid`='public' "
                 . "ORDER BY `time` DESC LIMIT $rpp ;"
                 );
         if ($this->dbLink->errno) {
@@ -3937,7 +3930,7 @@ class Share extends Discuss implements intShare {
             }
             else {
                 $msgsNode[] = array(
-                    'uid' => $userId,
+                    'uid' => (int) $userId,
                     'username' => $userName,
                     'fullname' => $fullName,
                     'id' => $msgId,

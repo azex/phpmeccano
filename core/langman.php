@@ -330,7 +330,7 @@ class LangMan extends LogMan implements intLangMan{
             $languages = array();
             while ($row = $qLang->fetch_row()) {
                 $languages[] = array(
-                    'id' => $row[0],
+                    'id' => (int) $row[0],
                     'code' => $row[1],
                     'name' => $row[2],
                     'dir' => $row[3]
@@ -1578,7 +1578,7 @@ class LangMan extends LogMan implements intLangMan{
             $textsNode['texts'] = array();
             while ($row = $qTexts->fetch_row()) {
                 $textsNode['texts'][] = array(
-                    'id' => $row[0],
+                    'id' => (int) $row[0],
                     'title' => $row[1],
                     'name' => $row[2],
                     'created' => $row[3],
@@ -1760,7 +1760,7 @@ class LangMan extends LogMan implements intLangMan{
             $textsNode['texts'] = array();
             while ($row = $qTexts->fetch_row()) {
                 $textsNode['texts'][] = array(
-                    'id' => $row[0],
+                    'id' => (int) $row[0],
                     'title' => $row[1],
                     'name' => $row[2],
                     'created' => $row[3],
@@ -1953,12 +1953,12 @@ class LangMan extends LogMan implements intLangMan{
             $titlesNode['titles'] = array();
             while ($row = $qTitles->fetch_row()) {
                 $titlesNode['titles'][] = array(
-                    'id' => $row[0],
+                    'id' => (int) $row[0],
                     'title' => $row[1],
                     'name' => $row[2]
                 );
             }
-            return json_decode($titlesNode);
+            return json_encode($titlesNode);
         }
     }
     
@@ -2047,12 +2047,12 @@ class LangMan extends LogMan implements intLangMan{
             $titlesNode['titles'] = array();
             while ($row = $qTitles->fetch_row()) {
                 $titlesNode['titles'][] = array(
-                    'id' => $row[0],
+                    'id' => (int) $row[0],
                     'title' => $row[1],
                     'name' => $row[2]
                 );
             }
-            return json_decode($titlesNode);
+            return json_encode($titlesNode);
         }
     }
     
@@ -2177,14 +2177,14 @@ class LangMan extends LogMan implements intLangMan{
         }
         else {
             $sectionsNode = array();
-            $sectionsNode['plugin'] = $olugin;
+            $sectionsNode['plugin'] = $plugin;
             $sectionsNode['sections'] = array();
             while ($row = $qSections->fetch_row()) {
                 $sectionsNode['sections'][] = array(
-                    'id' => $row[0],
+                    'id' => (int) $row[0],
                     'name' => $row[1],
-                    'static' => $row[2],
-                    'contains' => $row[3]
+                    'static' => (int) $row[2],
+                    'contains' => (int) $row[3]
                 );
             }
             return json_encode($sectionsNode);
@@ -2295,10 +2295,10 @@ class LangMan extends LogMan implements intLangMan{
             $sectionsNode['sections'] = array();
             while ($row = $qSections->fetch_row()) {
                 $sectionsNode['sections'][] = array(
-                    'id' => $row[0],
+                    'id' => (int) $row[0],
                     'name' => $row[1],
-                    'static' => $row[2],
-                    'contains' => $row[3]
+                    'static' => (int) $row[2],
+                    'contains' => (int) $row[3]
                 );
             }
             return json_encode($sectionsNode);;
@@ -2431,7 +2431,7 @@ class LangMan extends LogMan implements intLangMan{
                     $lCodes[] = $langCode;
                 }
                 $pageNode['texts'][] = array(
-                    'id' => $row[0],
+                    'id' => (int) $row[0],
                     'name' => $row[1],
                     'languages' => $lCodes
                 );
@@ -2566,7 +2566,7 @@ class LangMan extends LogMan implements intLangMan{
                     $lCodes[] = $langCode;
                 }
                 $pageNode['titles'][] = array(
-                    'id' => $row[0],
+                    'id' => (int) $row[0],
                     'name' => $row[1],
                     'languages' => $lCodes
                 );

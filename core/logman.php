@@ -263,7 +263,7 @@ class LogMan extends Policy implements intLogMan {
         }
         return TRUE;
     }
-//    
+    
     public function clearLog() {
         $this->zeroizeError();
         if ($this->usePolicy && !$this->checkFuncAccess('core', 'logman_clear_log')) {
@@ -389,7 +389,7 @@ class LogMan extends Policy implements intLogMan {
             $log = array();
             while ($row = $qResult->fetch_row()) {
                 $log[] = array(
-                    'id' => $row[0],
+                    'id' => (int) $row[0],
                     'time' => $row[1],
                     'event' => $row[2],
                     'user' => $row[3]
@@ -517,9 +517,10 @@ class LogMan extends Policy implements intLogMan {
         }
         else {
             $log = array();
+            $log['plugin'] = $plugin;
             while ($row = $qResult->fetch_row()) {
-                $log[] = array(
-                    'id' => $row[0],
+                $log['records'][] = array(
+                    'id' => (int) $row[0],
                     'time' => $row[1],
                     'event' => $row[2],
                     'user' => $row[3]
@@ -593,7 +594,7 @@ class LogMan extends Policy implements intLogMan {
             $log = array();
             while ($row = $qResult->fetch_row()) {
                 $log[] = array(
-                    'id' => $row[0],
+                    'id' => (int) $row[0],
                     'time' => $row[1],
                     'event' => $row[2],
                     'user' => $row[3]
@@ -673,9 +674,10 @@ class LogMan extends Policy implements intLogMan {
         }
         else {
             $log = array();
+            $log['plugin'] = $plugin;
             while ($row = $qResult->fetch_row()) {
-                $log[] = array(
-                    'id' => $row[0],
+                $log['records'][] = array(
+                    'id' => (int) $row[0],
                     'time' => $row[1],
                     'event' => $row[2],
                     'user' => $row[3]

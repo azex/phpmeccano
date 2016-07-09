@@ -493,10 +493,10 @@ class Policy extends ServiceMethods implements intPolicy {
             $policyNode['functions'] = array();
             while ($row = $qList->fetch_row()) {
                 $policyNode['functions'][] = array(
-                    'id' => $row[0],
+                    'id' => (int) $row[0],
                     'short' => $row[1],
                     'name' => $row[2],
-                    'access' => $row[3]
+                    'access' => (int) $row[3]
                 );
             }
             return json_encode($policyNode);
