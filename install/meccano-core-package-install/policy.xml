@@ -414,4 +414,34 @@
             <detailed>Относится к методу [setUserLang] класса [UserMan].</detailed>
         </description>
     </function>
+    <function name="share_viewing_access" nonauth="0" auth="0">
+        <description code="en-US">
+            <short>Full viewing access to posted messages, files and comments</short>
+            <detailed>Refers to the methods [getFile], [getFileInfo], [getMsg], [msgFiles], [sumUserMsgs], [userMsgs], [msgStripe], [appendMsgStripe], [updateMsgStripe], [sumUserFiles], [userFiles], [fileStripe], [appendFileStripe], [updateFileStripe], [getMsgComment], [getMsgComments], [appendMsgComments], [updateMsgComments] and [repostMsg] of the class [Share].</detailed>
+        </description>
+        <description code="ru-RU">
+            <short>Полный доступ к просмотру опубликованных сообщений, файлов и комментариев</short>
+            <detailed>Относится к методам [getFile], [getFileInfo], [getMsg], [msgFiles], [sumUserMsgs], [userMsgs], [msgStripe], [appendMsgStripe], [updateMsgStripe], [sumUserFiles], [userFiles], [fileStripe], [appendFileStripe], [updateFileStripe], [getMsgComment], [getMsgComments], [appendMsgComments], [updateMsgComments] и [repostMsg] класса [Share].</detailed>
+        </description>
+    </function>
+    <function name="share_modify_msgs_files" nonauth="0" auth="0">
+        <description code="en-US">
+            <short>Edit and delete all posted messages and files</short>
+            <detailed>Refers to the methods [delFile], [updateFile], [delMsg] and [updateMsg] of the class [Share].</detailed>
+        </description>
+        <description code="ru-RU">
+            <short>Редактировать и удалять все опубликованные сообщения и файлы</short>
+            <detailed>Относится к методам [delFile], [updateFile], [delMsg] и [updateMsg] класса [Share].</detailed>
+        </description>
+    </function>
+    <function name="share_modify_comments" nonauth="0" auth="0">
+        <description code="en-US">
+            <short>Edit and delete comments to all posted messages</short>
+            <detailed>Refers to the methods [editMsgComment] and [eraseMsgComment] of the class [Share].</detailed>
+        </description>
+        <description code="ru-RU">
+            <short>Редактировать и удалять коментарии ко всем опубликованным сообщениям</short>
+            <detailed>Относится к методам [editMsgComment] и [eraseMsgComment] класса [Share].</detailed>
+        </description>
+    </function>
 </policy>
