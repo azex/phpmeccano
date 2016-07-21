@@ -62,7 +62,10 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
             "MECCANO_DOCUMENTS_DIR",
             "MECCANO_UNPACKED_PLUGINS",
             "MECCANO_UNINSTALL",
-            "MECCANO_DEF_LANG"
+            "MECCANO_DEF_LANG",
+            "MECCANO_AUTH_LIMIT",
+            "MECCANO_AUTH_BLOCK_PERIOD",
+            "MECCANO_SHOW_ERRORS"
         );
         foreach ($_checkConst as $value) {
             if (!defined($value)) {
@@ -158,7 +161,43 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
         else {
             $constStatus['MECCANO_DEF_LANG'] = array(FALSE, htmlspecialchars(MECCANO_DEF_LANG));
         }
-        // return results the validation
+        // validate temporary blocking data
+        // authentication limit
+        if (is_integer(MECCANO_AUTH_LIMIT) && MECCANO_AUTH_LIMIT > -1) {
+            $constStatus['MECCANO_AUTH_LIMIT'] = array(TRUE, MECCANO_AUTH_LIMIT);
+        }
+        elseif (is_numeric(MECCANO_AUTH_LIMIT)) {
+                $constStatus['MECCANO_AUTH_LIMIT'] = array(FALSE, MECCANO_AUTH_LIMIT);
+        }
+        elseif (!is_string(MECCANO_AUTH_LIMIT) || !preg_replace("/[\s\n\r\t]+/", "", MECCANO_AUTH_LIMIT)) {
+                $constStatus['MECCANO_AUTH_LIMIT'] = array(FALSE, "N/A");
+        }
+        else {
+            $constStatus['MECCANO_AUTH_LIMIT'] = array(FALSE, htmlspecialchars(MECCANO_AUTH_LIMIT));
+        }
+        // authentication blocking period
+        if (is_string(MECCANO_AUTH_BLOCK_PERIOD) && preg_match('/^([0-1]{1}[0-9]{1}|[2]{1}[0-3]{1}):[0-5]{1}[0-9]{1}:[0-5]{1}[0-9]{1}$/', MECCANO_AUTH_BLOCK_PERIOD)) {
+            $constStatus['MECCANO_AUTH_BLOCK_PERIOD'] = array(TRUE, MECCANO_AUTH_BLOCK_PERIOD);
+        }
+        elseif (!is_string(MECCANO_AUTH_BLOCK_PERIOD) || !preg_replace("/[\s\n\r\t]+/", "", MECCANO_AUTH_BLOCK_PERIOD)) {
+                $constStatus['MECCANO_AUTH_BLOCK_PERIOD'] = array(FALSE, "N/A");
+        }
+        else {
+            $constStatus['MECCANO_AUTH_BLOCK_PERIOD'] = array(FALSE, htmlspecialchars(MECCANO_AUTH_BLOCK_PERIOD));
+        }
+        // displaying of errors
+        if (is_bool(MECCANO_SHOW_ERRORS)) {
+            if (MECCANO_SHOW_ERRORS) {
+                $constStatus['MECCANO_SHOW_ERRORS'] = array(TRUE, "TRUE");
+            }
+            else {
+                $constStatus['MECCANO_SHOW_ERRORS'] = array(TRUE, "FALSE");
+            }
+        }
+        else {
+            $constStatus['MECCANO_SHOW_ERRORS'] = array(FALSE, "N/A");
+        }
+        // return results of the validation
         return $constStatus;
     }
     
@@ -167,7 +206,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
         $this->zeroizeError();
         // validate post data
         if (!is_array($post)) {
-            $this->setError(ERROR_INCORRECT_DATA, "revalidateAll: incorrect type of the argument");
+            $this->setError(ERROR_INCORRECT_DATA, "step #0: incorrect type of the argument");
             return FALSE;
         }
         $required_keys = array(
@@ -179,30 +218,30 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
             'email'
         );
         if (array_diff($required_keys, array_keys($post))) {
-            $this->setError(ERROR_INCORRECT_DATA, "revalidateAll: incomplete user parameters");
+            $this->setError(ERROR_INCORRECT_DATA, "step #0: incomplete user parameters");
             return FALSE;
         }
         if (!pregGName($post['groupname'])) {
-            $this->setError(ERROR_INCORRECT_DATA, "revalidateAll: invalid group name");
+            $this->setError(ERROR_INCORRECT_DATA, "step #0: invalid group name");
             return FALSE;
         }
         if (!pregUName($post['username'])) {
-            $this->setError(ERROR_INCORRECT_DATA, "revalidateAll: invalid username");
+            $this->setError(ERROR_INCORRECT_DATA, "step #0: invalid username");
             return FALSE;
         }
         if (!pregPassw($post['passw']) || ($post['passw'] != $post['repassw'])) {
-            $this->setError(ERROR_INCORRECT_DATA, "revalidateAll: invalid password or passwords mismatch");
+            $this->setError(ERROR_INCORRECT_DATA, "step #0: invalid password or passwords mismatch");
             return FALSE;
         }
         if (!pregMail($post['email'])) {
-            $this->setError(ERROR_INCORRECT_DATA, "revalidateAll: incorrect e-mail address");
+            $this->setError(ERROR_INCORRECT_DATA, "step #0: incorrect e-mail address");
             return FALSE;
         }
         // validate configurations
         $constStatus = $this->validateConstants();
         foreach ($constStatus as $value) {
             if (!$value[0]) {
-                $this->setError(ERROR_INCORRECT_DATA, "revalidateAll: incorrect system parameters");
+                $this->setError(ERROR_INCORRECT_DATA, "step #0: incorrect system parameters");
                 return FALSE;
             }
         }
@@ -591,7 +630,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
         foreach ($queries as $query) {
             $sql->query($query);
             if ($sql->errno) {
-                $this->setError(ERROR_NOT_EXECUTED, "createDbTables: ".$sql->error);
+                $this->setError(ERROR_NOT_EXECUTED, "step #1: ".$sql->error);
                 return FALSE;
             }
         }
@@ -601,24 +640,21 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
     // step #2
     public function installPackage() {
         $this->zeroizeError();
-        $packPath = "meccano_core_v0.0.1alpha.zip";
+        $packPath = "meccano_core_v0.1.0alpha.zip";
         if (!is_file($packPath)) {
-            $this->setError(ERROR_NOT_FOUND, 'installPackage: installation package not found');
+            $this->setError(ERROR_NOT_FOUND, 'step #2: installation package not found');
             return FALSE;
         }
         $sql = new \mysqli(MECCANO_DBHOST, MECCANO_DBANAME, MECCANO_DBAPASS, MECCANO_DBNAME, MECCANO_DBPORT);
         $sql->set_charset('utf8');
-        $policy = new Policy($sql);
-        $log = new LogMan($policy);
-        $lang = new LangMan($log);
-        $plugin = new Plugins($lang);
+        $plugin = new Plugins($sql);
         $plugin->applyPolicy(FALSE);
         if(!$plugin->unpack($packPath)) {
-            $this->setError($plugin->errId(), "installPackage -> ".$plugin->errExp());
+            $this->setError($plugin->errId(), "step #2 -> ".$plugin->errExp());
             return FALSE;
         }
         if (!$plugin->install("core") || !$plugin->delUnpacked("core")) {
-            $this->setError($plugin->errId(), "installPackage -> ".$plugin->errExp());
+            $this->setError($plugin->errId(), "step #2 -> ".$plugin->errExp());
             return FALSE;
         }
         return TRUE;
@@ -628,18 +664,16 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
     public function groupUsers($userParam) {
         $this->zeroizeError();
         require_once MECCANO_CORE_DIR . '/userman.php';
-        $mysqli = new \mysqli(MECCANO_DBHOST, MECCANO_DBANAME, MECCANO_DBAPASS, MECCANO_DBNAME, MECCANO_DBPORT);
-        $mysqli->set_charset("utf8");
-        $policy = new Policy($mysqli);
-        $logman = new LogMan($policy);
-        $userman = new UserMan($logman);
+        $sql = new \mysqli(MECCANO_DBHOST, MECCANO_DBANAME, MECCANO_DBAPASS, MECCANO_DBNAME, MECCANO_DBPORT);
+        $sql->set_charset("utf8");
+        $userman = new UserMan($sql);
         $userman->applyPolicy(FALSE);
         if (!$groupId = $userman->createGroup($userParam['groupname'], $userParam['groupdesc'])) {
-            $this->setError($userman->errId(), "groupUsers -> ".$userman->errExp());
+            $this->setError($userman->errId(), "step #3 -> ".$userman->errExp());
             return FALSE;
         }
         if (!$userman->createUser($userParam['username'], $userParam['passw'], $userParam['email'], $groupId)) {
-            $this->setError($userman->errId(), "groupUsers -> ".$userman->errExp());
+            $this->setError($userman->errId(), "step #3 -> ".$userman->errExp());
             return FALSE;
         }
         return TRUE;
