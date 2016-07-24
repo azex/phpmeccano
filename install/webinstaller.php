@@ -62,6 +62,8 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
             "MECCANO_DOCUMENTS_DIR",
             "MECCANO_UNPACKED_PLUGINS",
             "MECCANO_UNINSTALL",
+            "MECCANO_SHARED_FILES",
+            "MECCANO_SHARED_STDIR",
             "MECCANO_DEF_LANG",
             "MECCANO_AUTH_LIMIT",
             "MECCANO_AUTH_BLOCK_PERIOD",
@@ -125,7 +127,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
                 $constStatus[$key] = array(FALSE, htmlspecialchars($value));
             }
         }
-        // validate system pathes
+        // validate system pathes and path to folder of shared files
         $sysPathes = array(
             'MECCANO_CONF_FILE' => MECCANO_CONF_FILE,
             'MECCANO_ROOT_DIR' => MECCANO_ROOT_DIR,
@@ -136,6 +138,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
             'MECCANO_DOCUMENTS_DIR' => MECCANO_DOCUMENTS_DIR,
             'MECCANO_UNPACKED_PLUGINS' => MECCANO_UNPACKED_PLUGINS,
             'MECCANO_UNINSTALL' => MECCANO_UNINSTALL,
+            'MECCANO_SHARED_FILES' => MECCANO_SHARED_FILES
         );
         foreach ($sysPathes as $key => $value) {
             if ($key == 'MECCANO_CONF_FILE' && is_file($value) && is_readable($value)) {
@@ -150,6 +153,16 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
             else {
                 $constStatus[$key] = array(FALSE, htmlspecialchars($value));
             }
+        }
+        //  validate sub-folder of shared files
+        if (is_string(MECCANO_SHARED_STDIR) && preg_match("/^[-a-zA-Z0-9_]{5,40}$/", MECCANO_SHARED_STDIR)) {
+            $constStatus['MECCANO_SHARED_STDIR'] = array(TRUE, MECCANO_SHARED_STDIR);
+        }
+        elseif (!is_string(MECCANO_SHARED_STDIR) || !preg_replace("/[\s\n\r\t]+/", "", MECCANO_SHARED_STDIR)) {
+            $constStatus['MECCANO_SHARED_STDIR'] = array(FALSE, "N/A");
+        }
+        else {
+            $constStatus['MECCANO_SHARED_STDIR'] = array(FALSE, htmlspecialchars(MECCANO_SHARED_STDIR));
         }
         //validate default language
         if (in_array(MECCANO_DEF_LANG, array("en-US", "ru-RU"))) {
