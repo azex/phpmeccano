@@ -1,6 +1,6 @@
 /*
- *     phpMeccano v0.0.1. Web-framework written with php programming language. Component of the web installer.
- *     Copyright (C) 2015  Alexei Muzarov
+ *     phpMeccano v0.1.0. Web-framework written with php programming language. Component of the web installer.
+ *     Copyright (C) 2015-2016  Alexei Muzarov
  * 
  *     This program is free software; you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by

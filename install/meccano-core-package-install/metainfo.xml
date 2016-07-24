@@ -2,7 +2,7 @@
 
 <!--
     This file is part of phpMeccano project.
-    Copyright (C) 2015  Alexei Muzarov
+    Copyright (C) 2015-2016  Alexei Muzarov
     
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -26,8 +26,18 @@
 <metainfo version="0.2">
     <shortname>core</shortname>
     <fullname>phpMeccano web framework</fullname>
-    <version>0.0.1</version>
-    <about>Framework phpMeccano gives API for creation and management of user groups; user authentication; access control to the functions by using group policy; creation of the multilingual interface; copying, moving and removing of local files and folders; event logging. System of plugins allows to extend functional and add new features. Current version is the first alpha and it is not recommended to use in production.</about>
+    <version>0.1.0</version>
+    <about>Framework phpMeccano gives API:
+to create and manage groups of users;
+to authenticate users;
+to control access to functions by using group policies;
+to create multilingual interface;
+to copy, move and remove local files and folders;
+to log events;
+to create and share messages and files between contacts of users like in simple social network;
+to create topics to discuss and comment them.
+System of plugins allows to extend functionality and to add new features.
+Current version is still the alpha version.</about>
     <credits>Programmed and designed by Alexei Muzarov</credits>
     <url>https://bitbucket.org/azexmail/phpmeccano</url>
     <email>azexmail@gmail.com</email>

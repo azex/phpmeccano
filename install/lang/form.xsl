@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 
 <!--
-    phpMeccano v0.0.1. Web-framework written with php programming language. Transformation stylesheet for localization of the web installer.
-    Copyright (C) 2015  Alexei Muzarov
+    phpMeccano v0.1.0. Web-framework written with php programming language. Transformation stylesheet for localization of the web installer.
+    Copyright (C) 2015-2016  Alexei Muzarov
     
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -190,8 +190,8 @@
                 </div>
             </div>
             <div class="cut"></div>
-            <p class="licence center">phpMeccano v0.0.1alpha</p>
-            <p class="licence center">Licensed under GNU GPLv2+. Copyright (C) 2015  Alexei Muzarov</p>
+            <p class="licence center">phpMeccano v0.1.0alpha</p>
+            <p class="licence center">Licensed under GNU GPLv2+. Copyright (C) 2015-2016  Alexei Muzarov</p>
         </div>
     </xsl:template>
 </xsl:stylesheet>
