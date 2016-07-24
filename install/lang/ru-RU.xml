@@ -44,7 +44,10 @@
     <dbname>Имя базы данных</dbname>
     <tpref>Префикс таблиц</tpref>
     <syspaths>Системные пути</syspaths>
+    <sharedfiles>Хранение общих файлов</sharedfiles>
     <deflang>Язык по умолчанию</deflang>
+    <blockauth>Временная блокировка аутентификации</blockauth>
+    <showerrors>Отображение ошибок</showerrors>
     <instprogress>Идёт установка...</instprogress>
     <creatingdb>Создание базы данных и таблиц</creatingdb>
     <instpack>Установка пакета</instpack>

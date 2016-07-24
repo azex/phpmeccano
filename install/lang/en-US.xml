@@ -44,7 +44,10 @@
     <dbname>Database name</dbname>
     <tpref>Prefix of the tables</tpref>
     <syspaths>System paths</syspaths>
+    <sharedfiles>Storage of shared files</sharedfiles>
     <deflang>Default language</deflang>
+    <blockauth>Temporary blocking of authentication</blockauth>
+    <showerrors>Displaying of errors</showerrors>
     <instprogress>Installation in progress...</instprogress>
     <creatingdb>Creation of the database and the tables</creatingdb>
     <instpack>Installation of the package</instpack>
