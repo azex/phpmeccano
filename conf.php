@@ -45,7 +45,7 @@ define('MECCANO_DOCUMENTS_DIR', MECCANO_ROOT_DIR.'/documents');
 define('MECCANO_UNPACKED_PLUGINS', MECCANO_ROOT_DIR.'/unpacked');
 define('MECCANO_UNINSTALL', MECCANO_ROOT_DIR.'/uninstall');
 
-// share parameters
+// storage of shared files
 define('MECCANO_SHARED_FILES', MECCANO_ROOT_DIR.'/shfiles');
 define('MECCANO_SHARED_STDIR', date('Y-m-d'));
 
