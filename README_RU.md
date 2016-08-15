@@ -1,62 +1,82 @@
-# phpMeccano web programming framework #
+# Фреймворк для веб-программирования phpMeccano #
 
-phpMeccano is the open-source module-structured PHP framework. Framework phpMeccano gives API next abilities:
+phpMeccano - модульно структурированный PHP фреймворк с открытым исходный кодом. Фреймворк phpMeccano предоставляет API для следующих возможностей:
 
-* to create and to manage user groups;
-* to authenticate the user;
-* to control access to functions through group policy;
-* to create the multilingual interface;
-* to copy, to move and to remove local files and folders;
-* to log events.
+* создание и управление группами пользователей;
+* аутентификация пользователей;
+* контроль доступа к функциям через групповые политики;
+* создание многоязычного интерфейса;
+* копирование, перемецение и удаление локальных файлов и папок;
+* ведение журнала событий;
+* создание и обмен сообщениями и файлами между контактами пользователя по типу простой социальной сети;
+* создание тем для обсуждения и комментирования.
 
-Plug-in system allows to extend capacity and to add new features. Current version 0.0.1 of this framework is the first alpha and it is not recommended to use in production.
+Система плагинов позволяет расширять функционал и добавлять новые возможности. Данная версия фреймворка является второй альфа-версией.
 
-## Requirements ##
+## Требования ##
 
-phpMeccano requires web server with installed and configured PHP and MySQL/MariaDB.
-phpMeccano has been tested with the following environments:
+Для работы phpMeccano требуется веб-сервер (*Apache*, *NGINX* или *lighttpd*) с установленными и сконфигурированными PHP и MySQL/MariaDB.
+phpMeccano был протестирован со следующими окружениями:
 
 * Apache 2.2.15 (Red Hat)
 * PHP 5.3.3/ 5.4.40
-* MariaDB 5.5
-* MySQL 5.1.73/ 5.5.41
+* MySQL 5.1.73/ 5.5.50
 
 ==================================================
 
 * Apache 2.4.7 (Ubuntu)
 * PHP 5.5.9
-* MariaDB 10.0.20
+* MariaDB 10.0.26
 
-To run web installer you should use recent versions of Firefox, any WebKit based browser (Chromium, Google Chrome, Yandex Browser, Opera etc.) or IE10+. Web installer has been tested with desktop, iOS and Android versions of browsers.
+==================================================
 
-## Installation ##
+* Apache 2.4.18 (Ubuntu)
+* PHP 7.0.8
+* MariaDB 10.0.26
 
-Make sure that framework is placed into the web-accessible directory. Then edit file *conf.php* and set the database parameters:
+==================================================
 
-* **MECCANO_DBSTORAGE_ENGINE** - database storage engine. Available values are "*MyISAM*" and "*InnoDB*";
-* **MECCANO_DBANAME** - name of the database administrator;
-* **MECCANO_DBAPASS** - password of the database administrator;
-* **MECCANO_DBHOST** - database host;
-* **MECCANO_DBPORT** - database port;
-* **MECCANO_DBNAME** - name of the database;
-* **MECCANO_TPREF** - prefix of the database tables.
+* nginx/1.10.0 (Ubuntu)
+* PHP 7.0.8
+* MySQL 5.7.13
 
-Also you may edit system paths at your opinion. Make sure that web server has read/write access to files and directories.
+==================================================
 
-By editing value of **MECCANO_DEF_LANG** you can set default language. Initially available values are "*en-US*" (English) and "*ru-RU*" (Russian).
+* lighttpd/1.4.35 (Ubuntu)
+* PHP 7.0.8
+* MySQL 5.7.13
 
-Then open web browser and go to address ```http://hostname/install/``` to run web installer.
+Для запуcка установщика следует использовать последние версии Firefox, любого браузера, основанного на WebKit (Chromium, Google Chrome, Yandex Browser, Opera и т.д.), или IE10+. Веб-установщик был протестирован с десктопными, iOS и Android версиями браузеров.
 
-Now save changes.
+## Установка ##
 
-## API Reference ##
-Russian: [EPUB](https://bitbucket.org/azexmail/phpmeccano/downloads/phpmeccano_api_reference_russian.epub), [PDF](https://bitbucket.org/azexmail/phpmeccano/downloads/phpmeccano_api_reference_russian.pdf).
+Убедитесь, что фреймворк размещен в директории доступной из сети. Затем отредактируйте файл *conf.php* и задайте параметры базы данных:
 
-English: coming...
+* **MECCANO_DBSTORAGE_ENGINE** - механизм хранения базы данных. Возможные значения: "*MyISAM*" and "*InnoDB*";
+* **MECCANO_DBANAME** - имя администратора базы данных;
+* **MECCANO_DBAPASS** - пароль администратора базы данных;
+* **MECCANO_DBHOST** - хост базы данных;
+* **MECCANO_DBPORT** - порт базы данных;
+* **MECCANO_DBNAME** - имя базы данных;
+* **MECCANO_TPREF** - префик таблиц базы данных.
 
-## Code example ##
+Также, на своё усмотрение, вы можите отредактировать системные пути. Убедитесь, что веб-сервер имеет права на чтение/запись файлов и директорий.
 
-To pass authentication write:
+Редактируя значение **MECCANO_DEF_LANG**, вы можете задать язык по умолчанию. Изначально возможные значения: "*en-US*" (Английский) и "*ru-RU*" (Русский).
+
+Сохраните изменения.
+
+Теперь откройте веб-браузер и перейдите по адресу ```http://hostname/install/```, чтобы запустить веб-установщик.
+
+
+## Справочное руководство по API ##
+На русском: [EPUB](https://bitbucket.org/azexmail/phpmeccano/downloads/phpmeccano_api_ref_0_1_0_rus.epub), [PDF](https://bitbucket.org/azexmail/phpmeccano/downloads/phpmeccano_api_ref_0_1_0_rus.pdf).
+
+На английском: на подходе...
+
+## Пример кода ##
+
+Для того, чтобы пройти аутентификацию, напишите:
 
 
 ```
@@ -64,16 +84,16 @@ To pass authentication write:
 
 <?php
 
+header('Content-Type: text/html; charset=utf-8');
+
 require_once 'conf.php';
 require_once MECCANO_CORE_DIR . '/auth.php';
 
 $db = new mysqli(MECCANO_DBHOST, MECCANO_DBANAME, MECCANO_DBAPASS, MECCANO_DBNAME, MECCANO_DBPORT);
-$policy = new core\Policy($db);
-$log = new core\LogMan($policy);
-$auth = new core\Auth($log);
+$auth = new core\Auth($db);
 
 if ($auth->userLogin("your_username", "your_password")) {
-    echo "You have passed authentication";
+    echo "Вы прошли аутентификацию";
 }
 else {
     echo $auth->errExp();
@@ -81,6 +101,6 @@ else {
 ```
 
 
-## License ##
+## Лицензия ##
 
-GNU General Public License, version 2, or (at your option) any later version.
+GNU General Public License, версия 2, или (на ваше усмотрение) любая более поздняя версия.
