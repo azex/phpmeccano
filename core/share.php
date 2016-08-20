@@ -590,7 +590,7 @@ class Share extends Discuss implements intShare {
             return FALSE;
         }
         if (!is_file($file) || is_link($file)) {
-            $this->setError(ERROR_INCORRECT_DATA, 'stageFile: this is no file');
+            $this->setError(ERROR_INCORRECT_DATA, 'stageFile: this is not file');
             return FALSE;
         }
         elseif (!is_readable($file)) {
@@ -750,13 +750,17 @@ class Share extends Discuss implements intShare {
                         // https://www.nginx.com/resources/wiki/start/topics/examples/xsendfile/
                         header("X-Accel-Redirect: /".basename(MECCANO_SHARED_FILES)."/$storageDir/$fileId");
                     }
+                    elseif (preg_match('/.*lighttpd.*/', $_SERVER['SERVER_SOFTWARE'])) {
+                        // https://redmine.lighttpd.net/projects/lighttpd/wiki/X-LIGHTTPD-send-file
+                        header("X-LIGHTTPD-send-file: " . realpath($fullPath));
+                    }
                     else {
                         $this->setError(ERROR_NOT_EXECUTED, "getFile: unknown web server");
                         return FALSE;
                     }
                 }
                 else {
-                    $this->setError(ERROR_NOT_EXECUTED, "getFile: must be run with web server (Apache or nginx)");
+                    $this->setError(ERROR_NOT_EXECUTED, "getFile: must be run with web server (Apache, NGINX or lighttpd)");
                     return FALSE;
                 }
                 header("Content-Type: $mimeType");
