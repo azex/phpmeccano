@@ -33,7 +33,6 @@ interface intPolicy {
     function __construct(\mysqli $dbLink);
     public function delPolicy($plugin);
     public function setFuncAccess($plugin, $func, $groupId, $access = TRUE); // old name [funcAccess]
-    public function checkFuncAccess($plugin, $func); // old name [checkAccess]
     public function installPolicy(\DOMDocument $policy, $validate = TRUE); // old name [install]
     public function groupPolicyList($plugin, $groupId, $code = MECCANO_DEF_LANG);
     public function getPolicyDescById($id);
@@ -144,47 +143,6 @@ class Policy extends ServiceMethods implements intPolicy {
             return FALSE;
         }
         return TRUE;
-    }
-    
-    public function checkFuncAccess($plugin, $func) {
-        $this->zeroizeError();
-        if (!pregPlugin($plugin) || !pregPlugin($func)) {
-            $this->setError(ERROR_INCORRECT_DATA, 'checkFuncAccess: check incoming parameters');
-            return FALSE;
-        }
-        if (isset($_SESSION[AUTH_USER_ID])) {
-            $qAccess = $this->dbLink->query("SELECT `a`.`access` "
-                    . "FROM `".MECCANO_TPREF."_core_policy_access` `a` "
-                    . "JOIN `".MECCANO_TPREF."_core_policy_summary_list` `s` "
-                    . "ON `a`.`funcid`=`s`.`id` "
-                    . "JOIN `".MECCANO_TPREF."_core_userman_groups` `g` "
-                    . "ON `a`.`groupid`=`g`.`id` "
-                    . "JOIN `".MECCANO_TPREF."_core_userman_users` `u` "
-                    . "ON `g`.`id`=`u`.`groupid` "
-                    . "WHERE `u`.`id`=".$_SESSION[AUTH_USER_ID]." "
-                    . "AND `s`.`name`='$plugin' "
-                    . "AND `s`.`func`='$func' "
-                    . "LIMIT 1 ;");
-        }
-        else {
-            $qAccess = $this->dbLink->query("SELECT `n`.`access` "
-                    . "FROM `".MECCANO_TPREF."_core_policy_nosession` `n` "
-                    . "JOIN `".MECCANO_TPREF."_core_policy_summary_list` `s` "
-                    . "ON `n`.`funcid`=`s`.`id` "
-                    . "WHERE `s`.`name`='$plugin' "
-                    . "AND `s`.`func`='$func' "
-                    . "LIMIT 1 ;");
-        }
-        if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'checkFuncAccess: something went wrong -> '.$this->dbLink->error);
-            return FALSE;
-        }
-        if (!$this->dbLink->affected_rows) {
-            $this->setError(ERROR_NOT_FOUND, 'checkFuncAccess: policy is not found');
-            return FALSE;
-        }
-        list($access) = $qAccess->fetch_row();
-        return (int) $access;
     }
     
     public function installPolicy(\DOMDocument $policy, $validate = TRUE) {
