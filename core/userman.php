@@ -25,7 +25,7 @@
 
 namespace core;
 
-require_once MECCANO_CORE_DIR.'/logman.php';
+require_once MECCANO_CORE_DIR.'/extclass.php';
 
 interface intUserMan {
     public function __construct(\mysqli $dbLink);
@@ -62,7 +62,7 @@ interface intUserMan {
     public function setUserLang($userId, $code = MECCANO_DEF_LANG);
 }
 
-class UserMan extends LogMan implements intUserMan{
+class UserMan extends ServiceMethods implements intUserMan{
     
     public function __construct(\mysqli $dbLink) {
         $this->dbLink = $dbLink;

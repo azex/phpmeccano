@@ -25,7 +25,7 @@
 
 namespace core;
 
-require_once MECCANO_CORE_DIR.'/logman.php';
+require_once MECCANO_CORE_DIR.'/extclass.php';
 
 interface intLangMan {
     public function __construct(\mysqli $dbLink);
@@ -72,7 +72,7 @@ interface intLangMan {
     public function getTitleNamesXML($plugin, $section, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('id'), $ascent = FALSE);
 }
 
-class LangMan extends LogMan implements intLangMan{
+class LangMan extends ServiceMethods implements intLangMan{
     
     public function __construct(\mysqli $dbLink) {
         $this->dbLink = $dbLink;

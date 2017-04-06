@@ -25,6 +25,9 @@
 
 namespace core;
 
+require_once MECCANO_CORE_DIR.'/swconst.php';
+require_once MECCANO_CORE_DIR.'/unifunctions.php';
+
 interface intServiceMethods {
     public function errId();
     public function errExp();

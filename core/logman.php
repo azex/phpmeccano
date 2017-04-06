@@ -25,7 +25,7 @@
 
 namespace core;
 
-require_once MECCANO_CORE_DIR.'/policy.php';
+require_once MECCANO_CORE_DIR.'/extclass.php';
 
 interface intLogMan {
     function __construct(\mysqli $dbLink);
@@ -40,7 +40,7 @@ interface intLogMan {
     public function getLogByPlugin($plugin, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE);
 }
 
-class LogMan extends Policy implements intLogMan {
+class LogMan extends ServiceMethods implements intLogMan {
     
     public function __construct(\mysqli $dbLink) {
         $this->dbLink = $dbLink;
