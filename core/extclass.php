@@ -31,6 +31,7 @@ interface intServiceMethods {
     public function applyPolicy($flag);
     public function outputFormat($output = 'xml');
     public function checkFuncAccess($plugin, $func); // old name [checkAccess]
+    public function newLogRecord($plugin, $event, $insertion = ''); // old name [newRecord]
 }
 
 class ServiceMethods implements intServiceMethods {
@@ -120,5 +121,46 @@ class ServiceMethods implements intServiceMethods {
         }
         list($access) = $qAccess->fetch_row();
         return (int) $access;
+    }
+    
+    // method came from core module logman.php
+    public function newLogRecord($plugin, $keyword, $insertion = '') {
+        $this->zeroizeError();
+        if (!pregPlugin($plugin) || !pregPlugin($keyword) || !is_string($insertion)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'newLogRecord: check arguments');
+            return FALSE;
+        }
+        $keyword = $this->dbLink->real_escape_string($keyword);
+        $insertion = $this->dbLink->real_escape_string($insertion);
+        // get event identifier
+        $qEvent = $this->dbLink->query("SELECT `e`.`id` "
+                . "FROM `".MECCANO_TPREF."_core_logman_events` `e` "
+                . "JOIN `".MECCANO_TPREF."_core_plugins_installed` `p` "
+                . "ON `p`.`id`=`e`.`plugid` "
+                . "WHERE `e`.`keyword`='$keyword' "
+                . "AND `p`.`name`='$plugin' ;");
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'newLogRecord: unable to get event identifier -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        if (!$this->dbLink->affected_rows) {
+            $this->setError(ERROR_NOT_FOUND, 'newLogRecord: plugin or event not found');
+            return FALSE;
+        }
+        list($eventId) = $qEvent->fetch_row();
+        // make new record
+        if (isset($_SESSION[AUTH_LIMITED])) {
+            $this->dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_logman_records` (`eventid`, `insertion`, `user`) "
+                    . "VALUES ($eventId, '$insertion', '".$_SESSION[AUTH_USERNAME]."') ;");
+        }
+        else {
+            $this->dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_logman_records` (`eventid`, `insertion`) "
+                    . "VALUES ($eventId, '$insertion') ;");
+        }
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'newLogRecord: unable to make new record -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        return TRUE;
     }
 }
