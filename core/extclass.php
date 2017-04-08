@@ -43,11 +43,11 @@ class ServiceMethods implements intServiceMethods {
     protected $usePolicy = TRUE; // flag of the policy application
     protected $outputType = 'json'; // format of the output data
     
-    protected function setError($id, $exp) {
+    protected function setError($id, $exp, $errtype = E_USER_NOTICE) {
         $this->errid = $id;
         $this->errexp = $exp;
         if (MECCANO_SHOW_ERRORS) {
-            echo "<br/><span style='font-style: large; padding: 10px; background: yellow; display: inline-block; color: red'>ERROR $id<br/>$exp</span><br/>";
+            trigger_error("ERROR $id. $exp", $errtype);
         }
     }
     
