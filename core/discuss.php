@@ -25,7 +25,7 @@
 
 namespace core;
 
-require_once MECCANO_CORE_DIR.'/logman.php';
+require_once MECCANO_CORE_DIR.'/extclass.php';
 
 interface intDiscuss {
     public function __construct(\mysqli $dbLink);
@@ -39,7 +39,7 @@ interface intDiscuss {
     public function eraseComment($commentId, $userId);
 }
 
-class Discuss extends LogMan implements intDiscuss {
+class Discuss extends ServiceMethods implements intDiscuss {
 
     public function __construct(\mysqli $dbLink) {
         $this->dbLink = $dbLink;

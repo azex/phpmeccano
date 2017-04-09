@@ -25,7 +25,7 @@
 
 namespace core;
 
-require_once MECCANO_CORE_DIR.'/logman.php';
+require_once MECCANO_CORE_DIR.'/extclass.php';
 
 interface intAuth {
     public function __construct(\mysqli $dbLink);
@@ -35,7 +35,7 @@ interface intAuth {
     public function getSession($log = TRUE);
 }
 
-class Auth extends LogMan implements intAuth {
+class Auth extends ServiceMethods implements intAuth {
     
     public function __construct(\mysqli $dbLink) {
         if (!session_id()) {

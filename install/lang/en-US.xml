@@ -55,5 +55,5 @@
     <error>Error: </error>
     <completed>Installation has been successfully completed. The engine went to full speed and ready to use in your project.</completed>
     <selfremove>It is highly recommended to remove installer when the installation is finished</selfremove>
-    <removed>Installer successfully removed</removed>
+    <removed>Installer has been successfully removed</removed>
 </interface>

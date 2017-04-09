@@ -56,13 +56,18 @@
 	* **checkAccess** -> **checkFuncAccess**;
 	* **install** -> **installPolicy**.
 
-9) Organization of relations between classes of core modules of the framework was made by extending, it makes easier creation of objects;
+9) Some methods were moved from their classes to another classes:
+
+* **Logman->newLogRecord** to **ServiceMethods->newLogRecord**;
+* **Policy->checkFuncAccess** to **ServiceMethods->checkFuncAccess**;
+* **Policy->addPolicyToGroup** to **UserMan->addPolicyToGroup**;
+* **Policy->delPolicyFromGroup** to **UserMan->delPolicyFromGroup**.
 
 10) Changes in module *extclass.php*:
 
 * new method **outputFormat**, it sets the way of data output as string *json* or as object *DOMDocument*;
 * in all methods of classes of all core modules which had data output as object *DOMDocument* was provided output as string *json*.
-* ability to display information about errors on screen  was realize in method **setError**. Constant **MECCANO_SHOW_ERRORS** was added to configuration file *conf.php* to manage displaying of information about errors on screen.
+* ability to display information about errors on the page was realize in method **setError**. Constant **MECCANO_SHOW_ERRORS** was added to configuration file *conf.php* to manage displaying of information about errors on screen.
 
 11) Changes in module *files.php*:
 

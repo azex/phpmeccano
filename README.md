@@ -69,9 +69,7 @@ Save changes.
 Now open web browser and go to address ```http://hostname/install/``` to run web installer.
 
 ## API Reference ##
-Russian: [EPUB](https://bitbucket.org/azexmail/phpmeccano/downloads/phpmeccano_api_ref_0_1_0_rus.epub), [PDF](https://bitbucket.org/azexmail/phpmeccano/downloads/phpmeccano_api_ref_0_1_0_rus.pdf).
-
-English: coming...
+Please, follow the [wiki page](wiki) to get the API reference. There are available English and Russian versions.
 
 ## Code example ##
 

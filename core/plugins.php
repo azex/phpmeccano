@@ -25,8 +25,10 @@
 
 namespace core;
 
-require_once MECCANO_CORE_DIR.'/langman.php';
 require_once MECCANO_CORE_DIR.'/files.php';
+require_once MECCANO_CORE_DIR.'/langman.php';
+require_once MECCANO_CORE_DIR.'/logman.php';
+require_once MECCANO_CORE_DIR.'/policy.php';
 
 interface intPlugins {
     public function __construct(\mysqli $dbLink);
@@ -41,10 +43,16 @@ interface intPlugins {
     public function aboutInstalled($plugin);
 }
 
-class Plugins extends LangMan implements intPlugins {
+class Plugins extends ServiceMethods implements intPlugins {
+    private $langMan;
+    private $logMan;
+    private $policyMan;
 
     public function __construct(\mysqli $dbLink) {
         $this->dbLink = $dbLink;
+        $this->langMan = new LangMan($dbLink);
+        $this->logMan = new LogMan($dbLink);
+        $this->policyMan = new Policy($dbLink);
     }
     
     private function lockPlugins($methodName) {
@@ -549,35 +557,35 @@ class Plugins extends LangMan implements intPlugins {
         }
         // install languages
         $serviceData->load($plugPath.'/languages.xml');
-        if (!$this->installLang($serviceData, FALSE)) {
+        if (!$this->langMan->installLang($serviceData, FALSE)) {
             $this->setError($this->errId(), "install -> ".$this->errExp());
             unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
         }
         // install policy access rules
         $serviceData->load($plugPath.'/policy.xml');
-        if (!$this->installPolicy($serviceData, FALSE)) {
+        if (!$this->policyMan->installPolicy($serviceData, FALSE)) {
             $this->setError($this->errId(), "install -> ".$this->errExp());
             unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
         }
         // install log events
         $serviceData->load($plugPath.'/log.xml');
-        if (!$this->installEvents($serviceData, FALSE)) {
+        if (!$this->logMan->installEvents($serviceData, FALSE)) {
             $this->setError($this->errId(), "install -> ".$this->errExp());
             unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
         }
         // install texts
         $serviceData->load($plugPath.'/texts.xml');
-        if (!$this->installTexts($serviceData, FALSE)) {
+        if (!$this->langMan->installTexts($serviceData, FALSE)) {
             $this->setError($this->errId(), "install -> ".$this->errExp());
             unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
         }
         // install titles
         $serviceData->load($plugPath.'/titles.xml');
-        if (!$this->installTitles($serviceData, FALSE)) {
+        if (!$this->langMan->installTitles($serviceData, FALSE)) {
             $this->setError($this->errId(), "install -> ".$this->errExp());
             unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
@@ -665,19 +673,19 @@ class Plugins extends LangMan implements intPlugins {
             return FALSE;
         }
         // remove policy access rules
-        if (!$this->delPolicy($shortName)) {
+        if (!$this->policyMan->delPolicy($shortName)) {
             $this->setError($this->errId(), "delInstalled -> ".$this->errExp());
             unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
         }
         // remove log events
-        if (!$this->delLogEvents($shortName)) {
+        if (!$this->logMan->delLogEvents($shortName)) {
             $this->setError($this->errId(), "delInstalled -> ".$this->errExp());
             unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;
         }
         // remove texts and titles
-        if (!$this->delPlugin($shortName)) {
+        if (!$this->langMan->delPlugin($shortName)) {
             $this->setError($this->errId(), "delInstalled -> ".$this->errExp());
             unlink(MECCANO_TMP_DIR."/core_plugins_lock");
             return FALSE;

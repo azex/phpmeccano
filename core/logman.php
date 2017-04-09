@@ -25,13 +25,12 @@
 
 namespace core;
 
-require_once MECCANO_CORE_DIR.'/policy.php';
+require_once MECCANO_CORE_DIR.'/extclass.php';
 
 interface intLogMan {
     function __construct(\mysqli $dbLink);
     public function installEvents(\DOMDocument $events, $validate = TRUE);
     public function delLogEvents($plugin); // old name [delEvents]
-    public function newLogRecord($plugin, $event, $insertion = ''); // old name [newRecord]
     public function clearLog();
     public function sumLogAllPlugins($rpp = 20);
     public function getPageAllPlugins($pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE);
@@ -41,7 +40,7 @@ interface intLogMan {
     public function getLogByPlugin($plugin, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE);
 }
 
-class LogMan extends Policy implements intLogMan {
+class LogMan extends ServiceMethods implements intLogMan {
     
     public function __construct(\mysqli $dbLink) {
         $this->dbLink = $dbLink;
@@ -220,46 +219,6 @@ class LogMan extends Policy implements intLogMan {
                 $this->setError(ERROR_NOT_EXECUTED, "delLogEvents: unable remove events -> ".$this->dbLink->error);
                 return FALSE;
             }
-        }
-        return TRUE;
-    }
-
-    public function newLogRecord($plugin, $keyword, $insertion = '') {
-        $this->zeroizeError();
-        if (!pregPlugin($plugin) || !pregPlugin($keyword) || !is_string($insertion)) {
-            $this->setError(ERROR_INCORRECT_DATA, 'newLogRecord: check arguments');
-            return FALSE;
-        }
-        $keyword = $this->dbLink->real_escape_string($keyword);
-        $insertion = $this->dbLink->real_escape_string($insertion);
-        // get event identifier
-        $qEvent = $this->dbLink->query("SELECT `e`.`id` "
-                . "FROM `".MECCANO_TPREF."_core_logman_events` `e` "
-                . "JOIN `".MECCANO_TPREF."_core_plugins_installed` `p` "
-                . "ON `p`.`id`=`e`.`plugid` "
-                . "WHERE `e`.`keyword`='$keyword' "
-                . "AND `p`.`name`='$plugin' ;");
-        if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'newLogRecord: unable to get event identifier -> '.$this->dbLink->error);
-            return FALSE;
-        }
-        if (!$this->dbLink->affected_rows) {
-            $this->setError(ERROR_NOT_FOUND, 'newLogRecord: plugin or event not found');
-            return FALSE;
-        }
-        list($eventId) = $qEvent->fetch_row();
-        // make new record
-        if (isset($_SESSION[AUTH_LIMITED])) {
-            $this->dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_logman_records` (`eventid`, `insertion`, `user`) "
-                    . "VALUES ($eventId, '$insertion', '".$_SESSION[AUTH_USERNAME]."') ;");
-        }
-        else {
-            $this->dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_logman_records` (`eventid`, `insertion`) "
-                    . "VALUES ($eventId, '$insertion') ;");
-        }
-        if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'newLogRecord: unable to make new record -> '.$this->dbLink->error);
-            return FALSE;
         }
         return TRUE;
     }

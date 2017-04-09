@@ -25,7 +25,7 @@
 
 namespace core;
 
-require_once MECCANO_CORE_DIR.'/logman.php';
+require_once MECCANO_CORE_DIR.'/extclass.php';
 
 interface intUserMan {
     public function __construct(\mysqli $dbLink);
@@ -62,7 +62,7 @@ interface intUserMan {
     public function setUserLang($userId, $code = MECCANO_DEF_LANG);
 }
 
-class UserMan extends LogMan implements intUserMan{
+class UserMan extends ServiceMethods implements intUserMan{
     
     public function __construct(\mysqli $dbLink) {
         $this->dbLink = $dbLink;
@@ -100,6 +100,47 @@ class UserMan extends LogMan implements intUserMan{
             $this->setError(ERROR_NOT_CRITICAL, "createGroup -> ".$this->errExp());
         }
         return (int) $groupId;
+    }
+    
+    // method came from core module policy.php
+    // old name [addGroup]
+    private function addPolicyToGroup($id) {
+        $this->zeroizeError();
+        if (!is_integer($id)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'addPolicyToGroup: id must be integer');
+            return FALSE;
+        }
+        $qIsGroup = $this->dbLink->query("SELECT `g`.`id` FROM `".MECCANO_TPREF."_core_userman_groups` `g` "
+                . "WHERE `g`.`id`=$id "
+                . "AND NOT EXISTS ("
+                . "SELECT `a`.`id` "
+                . "FROM `".MECCANO_TPREF."_core_policy_access` `a` "
+                . "WHERE `a`.`groupid`=$id LIMIT 1) ;");
+        if (!$this->dbLink->affected_rows) {
+            $this->setError(ERROR_ALREADY_EXISTS, 'addPolicyToGroup: defined group is not found or already was added');
+            return FALSE;
+        }
+        $qDbFuncs = $this->dbLink->query("SELECT `id` "
+            . "FROM `".MECCANO_TPREF."_core_policy_summary_list` ;");
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'addPolicy: unable to get policies -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        if ($id == 1) {
+            $access = 1;
+        }
+        else {
+            $access = 0;
+        }
+        while (list($row) = $qDbFuncs->fetch_row()) {
+            $this->dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_policy_access` (`groupid`, `funcid`, `access`) "
+                    . "VALUES ($id, $row, $access) ;");
+            if ($this->dbLink->errno) {
+                $this->setError(ERROR_NOT_EXECUTED, 'addPolicy: unable to add policy -> '.$this->dbLink->error);
+                return FALSE;
+            }
+        }
+        return TRUE;
     }
     
     public function groupStatus($groupId, $active, $log = TRUE) {
@@ -367,6 +408,27 @@ class UserMan extends LogMan implements intUserMan{
         }
         if ($log && !$this->newLogRecord('core', 'userman_del_group', "$groupname; ID: $groupId")) {
             $this->setError(ERROR_NOT_CRITICAL, "delGroup -> ".$this->errExp());
+        }
+        return TRUE;
+    }
+    
+    // method came from core module policy.php
+    // old name [delGroup]
+    private function delPolicyFromGroup($id) {
+        $this->zeroizeError();
+        if (!is_integer($id)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'delPolicyFromGroup: id must be integer');
+            return FALSE;
+        }
+        $this->dbLink->query("DELETE FROM `".MECCANO_TPREF."_core_policy_access` "
+                . "WHERE `groupid`=$id ;");
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'addPolicy: unable to delete policy -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        if (!$this->dbLink->affected_rows) {
+            $this->setError(ERROR_NOT_FOUND, 'delPolicyFromGroup: defined group is not found');
+            return FALSE;
         }
         return TRUE;
     }
