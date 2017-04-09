@@ -1,6 +1,6 @@
-#Changelog#
+# Changelog #
 
-##v0.1.0##
+## v0.1.0 ##
 
 1) New module *discuss.php* with class **Discuss** to create topics to discuss and to comment something;
 
