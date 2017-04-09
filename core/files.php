@@ -1,8 +1,8 @@
 <?php
 
 /*
- *     phpMeccano v0.0.1. Web-framework written with php programming language. Core module [files.php].
- *     Copyright (C) 2015  Alexei Muzarov
+ *     phpMeccano v0.1.0. Web-framework written with php programming language. Core module [files.php].
+ *     Copyright (C) 2015-2016  Alexei Muzarov
  * 
  *     This program is free software; you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@
 
 namespace core;
 
-require_once 'swconst.php';
+require_once MECCANO_CORE_DIR.'/swconst.php';
 
 interface intFiles {
     public static function errId();
@@ -42,6 +42,9 @@ class Files implements intFiles {
     private static function setError($id, $exp) {
         self::$errid = $id;
         self::$errexp = $exp;
+        if (MECCANO_SHOW_ERRORS) {
+            echo "<br/><span style='font-style: large; padding: 10px; background: yellow; display: inline-block; color: red'>ERROR $id<br/>$exp</span><br/>";
+        }
     }
     
     private static function zeroizeError() {

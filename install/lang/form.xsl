@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 
 <!--
-    phpMeccano v0.0.1. Web-framework written with php programming language. Transformation stylesheet for localization of the web installer.
-    Copyright (C) 2015  Alexei Muzarov
+    phpMeccano v0.1.0. Web-framework written with php programming language. Transformation stylesheet for localization of the web installer.
+    Copyright (C) 2015-2016  Alexei Muzarov
     
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -159,16 +159,39 @@
                         MECCANO_UNINSTALL:
                         <span id="MECCANO_UNINSTALL"></span>
                     </p>
+                    <h2><xsl:value-of select="sharedfiles" /></h2>
+                    <p>
+                        MECCANO_SHARED_FILES:
+                        <span id="MECCANO_SHARED_FILES"></span>
+                    </p>
+                    <p>
+                        MECCANO_SHARED_STDIR:
+                        <span id="MECCANO_SHARED_STDIR"></span>
+                    </p>
                     <h2><xsl:value-of select="deflang" /></h2>
                     <p>
                         MECCANO_DEF_LANG:
                         <span id="MECCANO_DEF_LANG"></span>
                     </p>
+                    <h2><xsl:value-of select="blockauth" /></h2>
+                    <p>
+                        MECCANO_AUTH_LIMIT:
+                        <span id="MECCANO_AUTH_LIMIT"></span>
+                    </p>
+                    <p>
+                        MECCANO_AUTH_BLOCK_PERIOD:
+                        <span id="MECCANO_AUTH_BLOCK_PERIOD"></span>
+                    </p>
+                    <h2><xsl:value-of select="showerrors" /></h2>
+                    <p>
+                        MECCANO_SHOW_ERRORS:
+                        <span id="MECCANO_SHOW_ERRORS"></span>
+                    </p>
                 </div>
             </div>
             <div class="cut"></div>
-            <p class="licence center">phpMeccano v0.0.1alpha</p>
-            <p class="licence center">Licensed under GNU GPLv2+. Copyright (C) 2015  Alexei Muzarov</p>
+            <p class="licence center">phpMeccano v0.1.0alpha</p>
+            <p class="licence center">Licensed under GNU GPLv2+. Copyright (C) 2015-2017 Alexei Muzarov</p>
         </div>
     </xsl:template>
 </xsl:stylesheet>

@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 
 <!--
-     phpMeccano v0.0.1. Web-framework written with php programming language. Validation schema of the localization files of the web installer.
-     Copyright (C) 2015  Alexei Muzarov
+     phpMeccano v0.1.0. Web-framework written with php programming language. Validation schema of the localization files of the web installer.
+     Copyright (C) 2015-2016  Alexei Muzarov
  
      This program is free software; you can redistribute it and/or modify
      it under the terms of the GNU General Public License as published by
@@ -143,7 +143,22 @@
                     <param name="minLength">1</param>
                 </data>
             </element>
+            <element name="sharedfiles">
+                <data type="string">
+                    <param name="minLength">1</param>
+                </data>
+            </element>
             <element name="deflang">
+                <data type="string">
+                    <param name="minLength">1</param>
+                </data>
+            </element>
+            <element name="blockauth">
+                <data type="string">
+                    <param name="minLength">1</param>
+                </data>
+            </element>
+            <element name="showerrors">
                 <data type="string">
                     <param name="minLength">1</param>
                 </data>

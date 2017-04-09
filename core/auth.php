@@ -1,8 +1,8 @@
 <?php
 
 /*
- *     phpMeccano v0.0.1. Web-framework written with php programming language. Core module [auth.php].
- *     Copyright (C) 2015  Alexei Muzarov
+ *     phpMeccano v0.1.0. Web-framework written with php programming language. Core module [auth.php].
+ *     Copyright (C) 2015-2016  Alexei Muzarov
  * 
  *     This program is free software; you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -25,38 +25,29 @@
 
 namespace core;
 
-require_once 'logman.php';
+require_once MECCANO_CORE_DIR.'/extclass.php';
 
 interface intAuth {
-    public function __construct(LogMan $logObject);
-    public function userLogin($username, $password, $useCookie = TRUE, $cookieTime = 'month', $log = TRUE);
+    public function __construct(\mysqli $dbLink);
+    public function userLogin($username, $password, $useCookie = TRUE, $cookieTime = 'month', $log = TRUE, $blockBrute = FALSE);
     public function isSession();
     public function userLogout();
     public function getSession($log = TRUE);
 }
 
 class Auth extends ServiceMethods implements intAuth {
-    private $dbLink; // database link
-    private $logObject; // log object
-    private $policyObject; // policy object
     
-    public function __construct(LogMan $logObject) {
+    public function __construct(\mysqli $dbLink) {
         if (!session_id()) {
             session_start();
         }
-        $this->dbLink = $logObject->dbLink;
-        $this->logObject = $logObject;
-        $this->policyObject = $logObject->policyObject;
+        $this->dbLink = $dbLink;
     }
     
-    public function userLogin($username, $password, $useCookie = TRUE, $cookieTime = 'month', $log = TRUE) {
+    public function userLogin($username, $password, $useCookie = TRUE, $cookieTime = 'month', $log = TRUE, $blockBrute = FALSE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'auth_session')) {
-            $this->setError(ERROR_RESTRICTED_ACCESS, "userLogin: restricted by the policy");
-            return FALSE;
-        }
         if (isset($_SESSION[AUTH_USER_ID])) {
-            $this->setError(ERROR_NOT_EXECUTED, 'userLogin: finish current session before starting new');
+            $this->setError(ERROR_NOT_EXECUTED, 'userLogin: close current session before to start new');
             return FALSE;
         }
         if (!pregUName($username)) {
@@ -95,22 +86,93 @@ class Auth extends ServiceMethods implements intAuth {
             $this->setError(ERROR_NOT_FOUND, 'userLogin: invalid username or user (group) is disabled');
             return FALSE;
         }
-        list($userId, $salt, $lang, $direction) = $qResult->fetch_array(MYSQL_NUM);
+        list($userId, $salt, $lang, $direction) = $qResult->fetch_row();
         $passwEncoded = passwHash($password, $salt);
-        $qResult = $this->dbLink->query("SELECT `u`.`username`, `p`.`id`, `p`.`limited` "
-                . "FROM `".MECCANO_TPREF."_core_userman_users` `u` "
-                . "JOIN `".MECCANO_TPREF."_core_userman_userpass` `p` "
-                . "ON `u`.`id`=`p`.`userid` "
-                . "WHERE `u`.`id`=$userId AND `p`.`password`='$passwEncoded' ;");
+        // check whether password is valid
+        if ($blockBrute) {
+            $checkPassw = "SELECT `u`.`username`, `p`.`id`, `p`.`limited` "
+                    . "FROM `".MECCANO_TPREF."_core_userman_users` `u` "
+                    . "JOIN `".MECCANO_TPREF."_core_userman_userpass` `p` "
+                    . "ON `u`.`id`=`p`.`userid` "
+                    . "JOIN `".MECCANO_TPREF."_core_userman_temp_block` `b` "
+                    . "ON `u`.`id`=`b`.`id` "
+                    . "WHERE `u`.`id`=$userId "
+                    . "AND `p`.`password`='$passwEncoded' "
+                    . "AND `b`.`tempblock` < CURRENT_TIMESTAMP ;";
+        }
+        else {
+            $checkPassw = "SELECT `u`.`username`, `p`.`id`, `p`.`limited` "
+                    . "FROM `".MECCANO_TPREF."_core_userman_users` `u` "
+                    . "JOIN `".MECCANO_TPREF."_core_userman_userpass` `p` "
+                    . "ON `u`.`id`=`p`.`userid` "
+                    . "WHERE `u`.`id`=$userId "
+                    . "AND `p`.`password`='$passwEncoded' ;";
+        }
+        $qResult = $this->dbLink->query($checkPassw);
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'userLogin: unable to confirm password -> '.$this->dbLink->error);
             return FALSE;
         }
         if (!$this->dbLink->affected_rows) {
-            $this->setError(ERROR_NOT_FOUND, 'userLogin: invalid password');
+            if ($blockBrute) {
+                // check whether authentication is not blocked
+                $qResult = $this->dbLink->query("SELECT `b`.`counter`, TO_SECONDS(`b`.`tempblock`), TO_SECONDS(CURRENT_TIMESTAMP) "
+                        . "FROM `".MECCANO_TPREF."_core_userman_temp_block` `b` "
+                        . "JOIN  `".MECCANO_TPREF."_core_userman_users` `u`"
+                        . "ON `b`.`id`=`u`.`id` "
+                        . "WHERE `u`.`id`=$userId "
+                        . "AND `b`.`tempblock` < CURRENT_TIMESTAMP ;");
+                // authentication is blocked
+                if (!$this->dbLink->affected_rows) {
+                    $this->setError(ERROR_RESTRICTED_ACCESS, 'userLogin: user authentication is blocked temporarily');
+                    return FALSE;
+                }
+                else {
+                    list($counter, $tempblock, $now) = $qResult->fetch_row();
+                    $blockperiod = strtotime(MECCANO_AUTH_BLOCK_PERIOD) - strtotime('TODAY');
+                    $difference = $now - $tempblock;
+                    // reset counter if incorrect password has not been put more than MECCANO_AUTH_BLOCK_PERIOD
+                    if ($difference > $blockperiod) {
+                        $counter = 1;
+                    }
+                    // block authentication
+                    if ($counter == MECCANO_AUTH_LIMIT) {
+                        $this->dbLink->query("UPDATE `".MECCANO_TPREF."_core_userman_temp_block` "
+                                . "SET `tempblock`=ADDTIME(CURRENT_TIMESTAMP, '".MECCANO_AUTH_BLOCK_PERIOD."'), "
+                                . "`counter`=1 "
+                                . "WHERE `id`=$userId;");
+                        if ($this->dbLink->errno) {
+                            $this->setError(ERROR_NOT_EXECUTED, 'userLogin: unable to block user authentication -> '.$this->dbLink->error);
+                            return FALSE;
+                        }
+                        $this->setError(ERROR_RESTRICTED_ACCESS, 'userLogin: user authentication is blocked temporarily');
+                        return FALSE;
+                    }
+                    // raise counter
+                    else {
+                        $counter += 1;
+                        $this->dbLink->query("UPDATE `".MECCANO_TPREF."_core_userman_temp_block` "
+                                . "SET `tempblock`=SUBTIME(CURRENT_TIMESTAMP, '00:00:01'), "
+                                . "`counter`=$counter "
+                                . "WHERE `id`=$userId;");
+                        if ($this->dbLink->errno) {
+                            $this->setError(ERROR_NOT_EXECUTED, 'userLogin: unable to block user authentication -> '.$this->dbLink->error);
+                            return FALSE;
+                        }
+                    }
+                }
+            }
+            $this->setError(ERROR_INCORRECT_DATA, 'userLogin: invalid password');
             return FALSE;
         }
-        list($username, $passId, $limited) = $qResult->fetch_array(MYSQLI_NUM);
+        $this->dbLink->query("UPDATE `".MECCANO_TPREF."_core_userman_temp_block` "
+                . "SET `counter`=1 "
+                . "WHERE `id`=$userId;");
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'userLogin: unable to reset blocking counter -> '.$this->dbLink->error);
+            return FALSE;
+        }
+        list($username, $passId, $limited) = $qResult->fetch_row();
         $usi = makeIdent($username);
         if ($useCookie) {
             $term = $terms[$cookieTime];
@@ -125,8 +187,8 @@ class Auth extends ServiceMethods implements intAuth {
         }
         $ipAddress = $_SERVER['REMOTE_ADDR'];
         $userAgent = $_SERVER['HTTP_USER_AGENT'];
-        if ($log && !$this->logObject->newRecord('core', 'auth_session', "name: $username; ID: $userId; IP: $ipAddress; User-agent: $userAgent")) {
-            $this->setError(ERROR_NOT_CRITICAL, "userLogin: -> ".$this->logObject->errExp());
+        if ($log && !$this->newLogRecord('core', 'auth_session', "name: $username; ID: $userId; IP: $ipAddress; User-agent: $userAgent")) {
+            $this->setError(ERROR_NOT_CRITICAL, "userLogin: -> ".$this->errExp());
         }
         $_SESSION[AUTH_USERNAME] = $username;
         $_SESSION[AUTH_USER_ID] = (int) $userId;
@@ -144,11 +206,6 @@ class Auth extends ServiceMethods implements intAuth {
     
     public function isSession() {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'auth_session')) {
-            $this->userLogout();
-            $this->setError(ERROR_RESTRICTED_ACCESS, "isSession: restricted by the policy");
-            return FALSE;
-        }
         if (isset($_SESSION[AUTH_USER_ID])) {
             if ($_SESSION[AUTH_IP] != $_SERVER['REMOTE_ADDR'] || $_SESSION[AUTH_USER_AGENT] != $_SERVER['HTTP_USER_AGENT']) {
                 $this->userLogout();
@@ -220,10 +277,6 @@ class Auth extends ServiceMethods implements intAuth {
     
     public function getSession($log = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'auth_session')) {
-            $this->setError(ERROR_RESTRICTED_ACCESS, "getSession: restricted by the policy");
-            return FALSE;
-        }
         if (!isset($_SESSION[AUTH_USER_ID]) && isset($_COOKIE[AUTH_UNIQUE_SESSION_ID]) && pregIdent($_COOKIE[AUTH_UNIQUE_SESSION_ID])) {
             $qResult = $this->dbLink->query("SELECT `p`.`id`, `p`.`limited`, `u`.`id`, `u`.`username`, `l`.`code`, `l`.`dir` "
                     . "FROM `".MECCANO_TPREF."_core_auth_usi` `s` "
@@ -246,11 +299,11 @@ class Auth extends ServiceMethods implements intAuth {
             if (!$this->dbLink->affected_rows) {
                 return FALSE;
             }
-            list($passId, $limited, $userId, $username, $lang, $direction) = $qResult->fetch_array(MYSQLI_NUM);
+            list($passId, $limited, $userId, $username, $lang, $direction) = $qResult->fetch_row();
             $ipAddress = $_SERVER['REMOTE_ADDR'];
             $userAgent = $_SERVER['HTTP_USER_AGENT'];
-            if ($log && !$this->logObject->newRecord('core', 'auth_session', "name: $username; ID: $userId; IP: $ipAddress; User-agent: $userAgent")) {
-                $this->setError(ERROR_NOT_CRITICAL, "getSession: -> ".$this->logObject->errExp());
+            if ($log && !$this->newLogRecord('core', 'auth_session', "name: $username; ID: $userId; IP: $ipAddress; User-agent: $userAgent")) {
+                $this->setError(ERROR_NOT_CRITICAL, "getSession: -> ".$this->errExp());
             }
             $_SESSION[AUTH_USERNAME] = $username;
             $_SESSION[AUTH_USER_ID] = (int) $userId;

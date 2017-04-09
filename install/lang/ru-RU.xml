@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-    phpMeccano v0.0.1. Web-framework written with php programming language. Localization file of the web installer.
-    Copyright (C) 2015  Alexei Muzarov
+    phpMeccano v0.1.0. Web-framework written with php programming language. Localization file of the web installer.
+    Copyright (C) 2015-2016  Alexei Muzarov
     
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -44,7 +44,10 @@
     <dbname>Имя базы данных</dbname>
     <tpref>Префикс таблиц</tpref>
     <syspaths>Системные пути</syspaths>
+    <sharedfiles>Хранение общих файлов</sharedfiles>
     <deflang>Язык по умолчанию</deflang>
+    <blockauth>Временная блокировка аутентификации</blockauth>
+    <showerrors>Отображение ошибок</showerrors>
     <instprogress>Идёт установка...</instprogress>
     <creatingdb>Создание базы данных и таблиц</creatingdb>
     <instpack>Установка пакета</instpack>

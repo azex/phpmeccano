@@ -7,25 +7,44 @@ phpMeccano is the open-source module-structured PHP framework. Framework phpMecc
 * to control access to functions through group policy;
 * to create the multilingual interface;
 * to copy, to move and to remove local files and folders;
-* to log events.
+* to log events;
+* to create and to share messages and files between contacts of the user like in simple social network;
+* to create topics to discuss and to comment them.
 
-Plug-in system allows to extend capacity and to add new features. Current version 0.0.1 of this framework is the first alpha and it is not recommended to use in production.
+Plug-in system allows to extend capacity and to add new features. Current version 0.1.0 is the second alpha version.
 
 ## Requirements ##
 
-phpMeccano requires web server with installed and configured PHP and MySQL/MariaDB.
+phpMeccano requires web server (*Apache*, *NGINX* or *lighttpd*) with installed and configured PHP and MySQL/MariaDB.
 phpMeccano has been tested with the following environments:
 
 * Apache 2.2.15 (Red Hat)
 * PHP 5.3.3/ 5.4.40
-* MariaDB 5.5
-* MySQL 5.1.73/ 5.5.41
+* MySQL 5.1.73/ 5.5.50
 
 ==================================================
 
 * Apache 2.4.7 (Ubuntu)
 * PHP 5.5.9
-* MariaDB 10.0.20
+* MariaDB 10.0.26
+
+==================================================
+
+* Apache 2.4.18 (Ubuntu)
+* PHP 7.0.8
+* MariaDB 10.0.26
+
+==================================================
+
+* nginx/1.10.0 (Ubuntu)
+* PHP 7.0.8
+* MySQL 5.7.13
+
+==================================================
+
+* lighttpd/1.4.35 (Ubuntu)
+* PHP 7.0.8
+* MySQL 5.7.13
 
 To run web installer you should use recent versions of Firefox, any WebKit based browser (Chromium, Google Chrome, Yandex Browser, Opera etc.) or IE10+. Web installer has been tested with desktop, iOS and Android versions of browsers.
 
@@ -45,14 +64,12 @@ Also you may edit system paths at your opinion. Make sure that web server has re
 
 By editing value of **MECCANO_DEF_LANG** you can set default language. Initially available values are "*en-US*" (English) and "*ru-RU*" (Russian).
 
-Then open web browser and go to address ```http://hostname/install/``` to run web installer.
+Save changes.
 
-Now save changes.
+Now open web browser and go to address ```http://hostname/install/``` to run web installer.
 
 ## API Reference ##
-Russian: [EPUB](https://bitbucket.org/azexmail/phpmeccano/downloads/phpmeccano_api_reference_russian.epub), [PDF](https://bitbucket.org/azexmail/phpmeccano/downloads/phpmeccano_api_reference_russian.pdf).
-
-English: coming...
+Please, follow the [wiki page](wiki) to get the API reference. There are available English and Russian versions.
 
 ## Code example ##
 
@@ -64,13 +81,13 @@ To pass authentication write:
 
 <?php
 
+header('Content-Type: text/html; charset=utf-8');
+
 require_once 'conf.php';
 require_once MECCANO_CORE_DIR . '/auth.php';
 
 $db = new mysqli(MECCANO_DBHOST, MECCANO_DBANAME, MECCANO_DBAPASS, MECCANO_DBNAME, MECCANO_DBPORT);
-$policy = new core\Policy($db);
-$log = new core\LogMan($policy);
-$auth = new core\Auth($log);
+$auth = new core\Auth($db);
 
 if ($auth->userLogin("your_username", "your_password")) {
     echo "You have passed authentication";

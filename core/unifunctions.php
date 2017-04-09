@@ -1,8 +1,8 @@
 <?php
 
 /*
- *     phpMeccano v0.0.1. Web-framework written with php programming language. Core module [unifunctions.php].
- *     Copyright (C) 2015  Alexei Muzarov
+ *     phpMeccano v0.1.0. Web-framework written with php programming language. Core module [unifunctions.php].
+ *     Copyright (C) 2015-2016  Alexei Muzarov
  * 
  *     This program is free software; you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -25,16 +25,16 @@
 
 namespace core;
 
-require_once 'swconst.php';
+require_once MECCANO_CORE_DIR.'/swconst.php';
 
 // it generates and returns unique password salt
 function makeSalt($prefix = '') {
-    return substr(base64_encode(sha1(uniqid().microtime(TRUE).rand(1, 10e9).uniqid($prefix, TRUE))), 0, 22);
+    return substr(base64_encode(sha1(uniqid().microtime(TRUE).mt_rand(1, PHP_INT_MAX).uniqid($prefix, TRUE))), 0, 22);
 }
 
 // it generates and returns unique identifier for user, session etc.
 function makeIdent($prefix = '') {
-    return sha1(uniqid().microtime(TRUE).rand(1, 10e9).uniqid($prefix, TRUE));
+    return sha1(uniqid().microtime(TRUE).mt_rand(1, PHP_INT_MAX).uniqid($prefix, TRUE));
 }
 
 // it calculates password hash
@@ -47,9 +47,17 @@ function passwHash($password, $salt) {
     }
 }
 
+// it checks database name
+function pregDbName($dbname) {
+    if (is_string($dbname) && preg_match('/^[a-zA-Z\d_]{1,64}$/', $dbname)) {
+        return TRUE;
+    }
+    return FALSE;
+}
+
 // it checks database prefix
 function pregPref($prefix) {
-    if (is_string($prefix) && preg_match('/^[a-zA-Z\d]{1,20}$/', $prefix)) {
+    if (is_string($prefix) && preg_match('/^[a-zA-Z\d]{1,10}$/', $prefix)) {
         return TRUE;
     }
     return FALSE;
@@ -57,7 +65,7 @@ function pregPref($prefix) {
 
 // it checks user name
 function pregUName($username) {
-    if (is_string($username) && preg_match('/^[a-zA-Z\d]{3,20}$/', $username)) {
+    if (is_string($username) && preg_match('/^[a-zA-Z\d_]{3,20}$/', $username)) {
         return TRUE;
     }
     return FALSE;
@@ -73,7 +81,7 @@ function pregGName($groupname) {
 
 // it checks entered password
 function pregPassw($password) {
-    if (is_string($password) && preg_match('/^[-+=_a-zA-Z\d@.,?!;:"\'~`|#№*$%&^\][(){}<>\/\\\]{8,50}$/', $password)) {
+    if (is_string($password) && preg_match('/^[-+=_a-zA-Z\d@.,?!;:"\'~`|#*$%&^\][(){}<>\/\\\]{8,50}$/', $password)) {
         return TRUE;
     }
     return FALSE;
@@ -85,6 +93,23 @@ function pregIdent($ident) {
         return TRUE;
     }
     return FALSE;
+}
+
+// it checks entered guid
+function pregGuid($guid) {
+    if (is_string($guid) && preg_match('/^[a-z\d]{8}-[a-z\d]{4}-4[a-z\d]{3}-[a-z\d]{4}-[a-z\d]{12}$/', $guid)) {
+        return TRUE;
+    }
+    return FALSE;
+}
+
+// guid generator
+// used modified code from http://php.net/manual/en/function.com-create-guid.php#117893
+function guid() {
+    $data = openssl_random_pseudo_bytes(16);
+    $data[6] = chr(ord($data[6]) & 0x0f | 0x40); // set version to 0100
+    $data[8] = chr(ord($data[8]) & 0x3f | 0x80); // set bits 6-7 to 10
+    return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
 }
 
 // it checks entered language code
@@ -240,4 +265,52 @@ function calcSumVersion($version) {
     list($uv, $mv, $lv) = explode(".", $version);
     $sumVersion = 10000*$uv + 100*$mv + $lv;
     return (int) $sumVersion;
+}
+
+// password generator
+function genPassword($length = 8, $lower = TRUE, $upper = TRUE, $numbers = TRUE, $underline = TRUE, $minus = TRUE, $special = TRUE) {
+    if (!is_integer($length) || !($length >= 8 && $length <= 50)) {
+        return FALSE;
+    }
+    // charachter groups
+    $allGroups = array(
+        'lower' => 'abcdefghijklmnopqrstuwxyz',
+        'upper' => 'ABCDEFGHIJKLMNOPQRSTUWXYZ',
+        'numbers' => '0123456789',
+        'underline' => '_',
+        'minus' => '-',
+        'special' => '+=@.,?!;:"\'~`|#*$%&^][(){}<>/\\'
+    );
+    $parameters = array(
+        "lower" => $lower,
+        "upper" => $upper,
+        "numbers" => $numbers,
+        "underline" => $underline,
+        "minus" => $minus,
+        "special" => $special
+    );
+    $groupsInUse = array();
+    $groupLimits = array();
+    foreach ($parameters as $key => $value) {
+        if ($value) {
+            $groupLimits[$key] = strlen($allGroups[$key]) - 1;
+            $groupsInUse[] = $key;
+        }
+    }
+    // check whether at least one group is used
+    if (!count($groupsInUse)) {
+        return FALSE;
+    }
+    // temporary list of groups
+    $tmpGroups = array();
+    $password = '';
+    for ($i = 0; $i < $length; $i++) {
+        if (!count($tmpGroups)) {
+            $tmpGroups = $groupsInUse;
+            shuffle($tmpGroups);
+        }
+        $curGroup = array_pop($tmpGroups);
+        $password = $password.$allGroups[$curGroup][mt_rand(0, $groupLimits[$curGroup])];
+    }
+    return $password;
 }

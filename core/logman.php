@@ -1,8 +1,8 @@
 <?php
 
 /*
- *     phpMeccano v0.0.1. Web-framework written with php programming language. Core module [logman.php].
- *     Copyright (C) 2015  Alexei Muzarov
+ *     phpMeccano v0.1.0. Web-framework written with php programming language. Core module [logman.php].
+ *     Copyright (C) 2015-2016  Alexei Muzarov
  * 
  *     This program is free software; you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -25,13 +25,12 @@
 
 namespace core;
 
-require_once 'policy.php';
+require_once MECCANO_CORE_DIR.'/extclass.php';
 
 interface intLogMan {
-    function __construct(Policy $policyObject);
+    function __construct(\mysqli $dbLink);
     public function installEvents(\DOMDocument $events, $validate = TRUE);
-    public function delEvents($plugin);
-    public function newRecord($plugin, $event, $insertion = '');
+    public function delLogEvents($plugin); // old name [delEvents]
     public function clearLog();
     public function sumLogAllPlugins($rpp = 20);
     public function getPageAllPlugins($pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE);
@@ -42,12 +41,9 @@ interface intLogMan {
 }
 
 class LogMan extends ServiceMethods implements intLogMan {
-    public $dbLink; // database link
-    public $policyObject; // policy objectobject
     
-    public function __construct(Policy $policyObject) {
-        $this->dbLink = $policyObject->dbLink;
-        $this->policyObject = $policyObject;
+    public function __construct(\mysqli $dbLink) {
+        $this->dbLink = $dbLink;
     }
 
     public function installEvents(\DOMDocument $events, $validate = TRUE) {
@@ -186,14 +182,14 @@ class LogMan extends ServiceMethods implements intLogMan {
         return TRUE;
     }
     
-    public function delEvents($plugin) {
+    public function delLogEvents($plugin) {
         $this->zeroizeError();
         if (!pregPlugin($plugin)) {
-            $this->setError(ERROR_INCORRECT_DATA, "delEvents: incorrect plugin name");
+            $this->setError(ERROR_INCORRECT_DATA, "delLogEvents: incorrect plugin name");
             return FALSE;
         }
         if ($plugin == "core") {
-            $this->setError(ERROR_SYSTEM_INTERVENTION, "delEvents: unable to delete core events");
+            $this->setError(ERROR_SYSTEM_INTERVENTION, "delLogEvents: unable to delete core events");
             return FALSE;
         }
         $sql = array(
@@ -220,56 +216,16 @@ class LogMan extends ServiceMethods implements intLogMan {
         foreach ($sql as $value) {
             $this->dbLink->query($value);
             if ($this->dbLink->errno) {
-                $this->setError(ERROR_NOT_EXECUTED, "delEvents: unable remove events -> ".$this->dbLink->error);
+                $this->setError(ERROR_NOT_EXECUTED, "delLogEvents: unable remove events -> ".$this->dbLink->error);
                 return FALSE;
             }
         }
         return TRUE;
     }
-
-        public function newRecord($plugin, $keyword, $insertion = '') {
-        $this->zeroizeError();
-        if (!pregPlugin($plugin) || !pregPlugin($keyword) || !is_string($insertion)) {
-            $this->setError(ERROR_INCORRECT_DATA, 'newRecord: check arguments');
-            return FALSE;
-        }
-        $keyword = $this->dbLink->real_escape_string($keyword);
-        $insertion = $this->dbLink->real_escape_string($insertion);
-        // get event identifier
-        $qEvent = $this->dbLink->query("SELECT `e`.`id` "
-                . "FROM `".MECCANO_TPREF."_core_logman_events` `e` "
-                . "JOIN `".MECCANO_TPREF."_core_plugins_installed` `p` "
-                . "ON `p`.`id`=`e`.`plugid` "
-                . "WHERE `e`.`keyword`='$keyword' "
-                . "AND `p`.`name`='$plugin' ;");
-        if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'newRecord: unable to get event identifier -> '.$this->dbLink->error);
-            return FALSE;
-        }
-        if (!$this->dbLink->affected_rows) {
-            $this->setError(ERROR_NOT_FOUND, 'newRecord: plugin or event not found');
-            return FALSE;
-        }
-        list($eventId) = $qEvent->fetch_row();
-        // make new record
-        if (isset($_SESSION[AUTH_LIMITED])) {
-            $this->dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_logman_records` (`eventid`, `insertion`, `user`) "
-                    . "VALUES ($eventId, '$insertion', '".$_SESSION[AUTH_USERNAME]."') ;");
-        }
-        else {
-            $this->dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_logman_records` (`eventid`, `insertion`) "
-                    . "VALUES ($eventId, '$insertion') ;");
-        }
-        if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'newRecord: unable to make new record -> '.$this->dbLink->error);
-            return FALSE;
-        }
-        return TRUE;
-    }
-//    
+    
     public function clearLog() {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'logman_clear_log')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'logman_clear_log')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "clearLog: restricted by the policy");
             return FALSE;
         }
@@ -282,7 +238,7 @@ class LogMan extends ServiceMethods implements intLogMan {
             $this->setError(ERROR_NOT_EXECUTED, 'clearLog: unable to clear log -> '.$this->dbLink->error);
             return FALSE;
         }
-        $this->newRecord('core', 'logman_clear_log');
+        $this->newLogRecord('core', 'logman_clear_log');
         return TRUE;
     }
     
@@ -317,12 +273,12 @@ class LogMan extends ServiceMethods implements intLogMan {
     
     public function getPageAllPlugins($pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'logman_get_log')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'logman_get_log')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "getPageAllPlugins: restricted by the policy");
             return FALSE;
         }
         if (!pregLang($code) || !is_integer($pageNumber) || !is_integer($totalPages) || !is_integer($rpp)) {
-            $this->setError(ERROR_INCORRECT_DATA, 'getPage: check arguments');
+            $this->setError(ERROR_INCORRECT_DATA, 'getPageAllPlugins: check arguments');
             return FALSE;
         }
         $rightEntry = array('id', 'user', 'event', 'time');
@@ -340,7 +296,7 @@ class LogMan extends ServiceMethods implements intLogMan {
             }
         }
         else {
-            $this->setError(ERROR_INCORRECT_DATA, 'getPage: check order parameters');
+            $this->setError(ERROR_INCORRECT_DATA, 'getPageAllPlugins: check order parameters');
             return FALSE;
         }
         if ($pageNumber < 1) {
@@ -371,21 +327,35 @@ class LogMan extends ServiceMethods implements intLogMan {
                 . "WHERE `l`.`code` = '$code' "
                 . "ORDER BY `$orderBy` $direct LIMIT $start, $rpp;");
         if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'getPage: unable to get log page -> '.$this->dbLink->error);
+            $this->setError(ERROR_NOT_EXECUTED, 'getPageAllPlugins: unable to get log page -> '.$this->dbLink->error);
             return FALSE;
         }
-        $xml = new \DOMDocument('1.0', 'utf-8');
-        $logNode = $xml->createElement('log');
-        $xml->appendChild($logNode);
-        while ($row = $qResult->fetch_array(MYSQL_NUM)) {
-            $recordNode = $xml->createElement('record');
-            $logNode->appendChild($recordNode);
-            $recordNode->appendChild($xml->createElement('id', $row[0]));
-            $recordNode->appendChild($xml->createElement('time', $row[1]));
-            $recordNode->appendChild($xml->createElement('event', $row[2]));
-            $recordNode->appendChild($xml->createElement('user', $row[3]));
+        if ($this->outputType == 'xml') {
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $logNode = $xml->createElement('log');
+            $xml->appendChild($logNode);
+            while ($row = $qResult->fetch_row()) {
+                $recordNode = $xml->createElement('record');
+                $logNode->appendChild($recordNode);
+                $recordNode->appendChild($xml->createElement('id', $row[0]));
+                $recordNode->appendChild($xml->createElement('time', $row[1]));
+                $recordNode->appendChild($xml->createElement('event', $row[2]));
+                $recordNode->appendChild($xml->createElement('user', $row[3]));
+            }
+            return $xml;
         }
-        return $xml;
+        else {
+            $log = array();
+            while ($row = $qResult->fetch_row()) {
+                $log[] = array(
+                    'id' => (int) $row[0],
+                    'time' => $row[1],
+                    'event' => $row[2],
+                    'user' => $row[3]
+                );
+            }
+            return json_encode($log);
+        }
     }
     
     public function sumLogByPlugin($plugin, $rpp = 20) {
@@ -425,12 +395,12 @@ class LogMan extends ServiceMethods implements intLogMan {
     
     public function getPageByPlugin($plugin, $pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'logman_get_log')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'logman_get_log')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "getPageByPlugin: restricted by the policy");
             return FALSE;
         }
         if (!pregPlugin($plugin) || !pregLang($code) || !is_integer($pageNumber) || !is_integer($totalPages) || !is_integer($rpp)) {
-            $this->setError(ERROR_INCORRECT_DATA, 'getPage: check arguments');
+            $this->setError(ERROR_INCORRECT_DATA, 'getPageByPlugin: check arguments');
             return FALSE;
         }
         $rightEntry = array('id', 'user', 'event', 'time');
@@ -448,7 +418,7 @@ class LogMan extends ServiceMethods implements intLogMan {
             }
         }
         else {
-            $this->setError(ERROR_INCORRECT_DATA, 'getPage: check order parameters');
+            $this->setError(ERROR_INCORRECT_DATA, 'getPageByPlugin: check order parameters');
             return FALSE;
         }
         if ($pageNumber < 1) {
@@ -484,34 +454,49 @@ class LogMan extends ServiceMethods implements intLogMan {
                 . "AND `p`.`name`='$plugin' "
                 . "ORDER BY `$orderBy` $direct LIMIT $start, $rpp;");
         if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'getPage: unable to get log page -> '.$this->dbLink->error);
+            $this->setError(ERROR_NOT_EXECUTED, 'getPageByPlugin: unable to get log page -> '.$this->dbLink->error);
             return FALSE;
         }
-        $xml = new \DOMDocument('1.0', 'utf-8');
-        $logNode = $xml->createElement('log');
-        $attr_plugin = $xml->createAttribute('plugin');
-        $attr_plugin->value = $plugin;
-        $logNode->appendChild($attr_plugin);
-        $xml->appendChild($logNode);
-        while ($row = $qResult->fetch_array(MYSQL_NUM)) {
-            $recordNode = $xml->createElement('record');
-            $logNode->appendChild($recordNode);
-            $recordNode->appendChild($xml->createElement('id', $row[0]));
-            $recordNode->appendChild($xml->createElement('time', $row[1]));
-            $recordNode->appendChild($xml->createElement('event', $row[2]));
-            $recordNode->appendChild($xml->createElement('user', $row[3]));
+        if ($this->outputType == 'xml') {
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $logNode = $xml->createElement('log');
+            $attr_plugin = $xml->createAttribute('plugin');
+            $attr_plugin->value = $plugin;
+            $logNode->appendChild($attr_plugin);
+            $xml->appendChild($logNode);
+            while ($row = $qResult->fetch_row()) {
+                $recordNode = $xml->createElement('record');
+                $logNode->appendChild($recordNode);
+                $recordNode->appendChild($xml->createElement('id', $row[0]));
+                $recordNode->appendChild($xml->createElement('time', $row[1]));
+                $recordNode->appendChild($xml->createElement('event', $row[2]));
+                $recordNode->appendChild($xml->createElement('user', $row[3]));
+            }
+            return $xml;
         }
-        return $xml;
+        else {
+            $log = array();
+            $log['plugin'] = $plugin;
+            while ($row = $qResult->fetch_row()) {
+                $log['records'][] = array(
+                    'id' => (int) $row[0],
+                    'time' => $row[1],
+                    'event' => $row[2],
+                    'user' => $row[3]
+                );
+            }
+            return json_encode($log);
+        }
     }
     
     public function getLogAllPlugins($code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'logman_get_log')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'logman_get_log')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "getLogAllPlugins: restricted by the policy");
             return FALSE;
         }
         if (!pregLang($code)) {
-            $this->setError(ERROR_INCORRECT_DATA, 'getPage: check arguments');
+            $this->setError(ERROR_INCORRECT_DATA, 'getLogAllPlugins: check arguments');
             return FALSE;
         }
         $rightEntry = array('id', 'user', 'event', 'time');
@@ -529,7 +514,7 @@ class LogMan extends ServiceMethods implements intLogMan {
             }
         }
         else {
-            $this->setError(ERROR_INCORRECT_DATA, 'getPage: check order parameters');
+            $this->setError(ERROR_INCORRECT_DATA, 'getLogAllPlugins: check order parameters');
             return FALSE;
         }
         if ($ascent == TRUE) {
@@ -547,31 +532,45 @@ class LogMan extends ServiceMethods implements intLogMan {
                 . "WHERE `l`.`code` = '$code' "
                 . "ORDER BY `$orderBy` $direct ;");
         if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'getPage: unable to get log -> '.$this->dbLink->error);
+            $this->setError(ERROR_NOT_EXECUTED, 'getLogAllPlugins: unable to get log -> '.$this->dbLink->error);
             return FALSE;
         }
-        $xml = new \DOMDocument('1.0', 'utf-8');
-        $logNode = $xml->createElement('log');
-        $xml->appendChild($logNode);
-        while ($row = $qResult->fetch_array(MYSQL_NUM)) {
-            $recordNode = $xml->createElement('record');
-            $logNode->appendChild($recordNode);
-            $recordNode->appendChild($xml->createElement('id', $row[0]));
-            $recordNode->appendChild($xml->createElement('time', $row[1]));
-            $recordNode->appendChild($xml->createElement('event', $row[2]));
-            $recordNode->appendChild($xml->createElement('user', $row[3]));
+        if ($this->outputType == 'xml') {
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $logNode = $xml->createElement('log');
+            $xml->appendChild($logNode);
+            while ($row = $qResult->fetch_row()) {
+                $recordNode = $xml->createElement('record');
+                $logNode->appendChild($recordNode);
+                $recordNode->appendChild($xml->createElement('id', $row[0]));
+                $recordNode->appendChild($xml->createElement('time', $row[1]));
+                $recordNode->appendChild($xml->createElement('event', $row[2]));
+                $recordNode->appendChild($xml->createElement('user', $row[3]));
+            }
+            return $xml;
         }
-        return $xml;
+        else {
+            $log = array();
+            while ($row = $qResult->fetch_row()) {
+                $log[] = array(
+                    'id' => (int) $row[0],
+                    'time' => $row[1],
+                    'event' => $row[2],
+                    'user' => $row[3]
+                );
+            }
+            return json_encode($log);
+        }
     }
     
     public function getLogByPlugin($plugin, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->policyObject->checkAccess('core', 'logman_get_log')) {
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'logman_get_log')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "getLogByPlugin: restricted by the policy");
             return FALSE;
         }
         if (!pregPlugin($plugin) || !pregLang($code)) {
-            $this->setError(ERROR_INCORRECT_DATA, 'getPage: check arguments');
+            $this->setError(ERROR_INCORRECT_DATA, 'getLogByPlugin: check arguments');
             return FALSE;
         }
         $rightEntry = array('id', 'user', 'event', 'time');
@@ -589,7 +588,7 @@ class LogMan extends ServiceMethods implements intLogMan {
             }
         }
         else {
-            $this->setError(ERROR_INCORRECT_DATA, 'getPage: check order parameters');
+            $this->setError(ERROR_INCORRECT_DATA, 'getLogByPlugin: check order parameters');
             return FALSE;
         }
         if ($ascent == TRUE) {
@@ -612,24 +611,39 @@ class LogMan extends ServiceMethods implements intLogMan {
                 . "AND `p`.`name`='$plugin' "
                 . "ORDER BY `$orderBy` $direct ;");
         if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'getPage: unable to get log -> '.$this->dbLink->error);
+            $this->setError(ERROR_NOT_EXECUTED, 'getLogByPlugin: unable to get log -> '.$this->dbLink->error);
             return FALSE;
         }
-        $xml = new \DOMDocument('1.0', 'utf-8');
-        $logNode = $xml->createElement('log');
-        $attr_plugin = $xml->createAttribute('plugin');
-        $attr_plugin->value = $plugin;
-        $logNode->appendChild($attr_plugin);
-        $xml->appendChild($logNode);
-        while ($row = $qResult->fetch_array(MYSQL_NUM)) {
-            $recordNode = $xml->createElement('record');
-            $logNode->appendChild($recordNode);
-            $recordNode->appendChild($xml->createElement('id', $row[0]));
-            $recordNode->appendChild($xml->createElement('time', $row[1]));
-            $recordNode->appendChild($xml->createElement('event', $row[2]));
-            $recordNode->appendChild($xml->createElement('user', $row[3]));
+        if ($this->outputType == 'xml') {
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $logNode = $xml->createElement('log');
+            $attr_plugin = $xml->createAttribute('plugin');
+            $attr_plugin->value = $plugin;
+            $logNode->appendChild($attr_plugin);
+            $xml->appendChild($logNode);
+            while ($row = $qResult->fetch_row()) {
+                $recordNode = $xml->createElement('record');
+                $logNode->appendChild($recordNode);
+                $recordNode->appendChild($xml->createElement('id', $row[0]));
+                $recordNode->appendChild($xml->createElement('time', $row[1]));
+                $recordNode->appendChild($xml->createElement('event', $row[2]));
+                $recordNode->appendChild($xml->createElement('user', $row[3]));
+            }
+            return $xml;
         }
-        return $xml;
+        else {
+            $log = array();
+            $log['plugin'] = $plugin;
+            while ($row = $qResult->fetch_row()) {
+                $log['records'][] = array(
+                    'id' => (int) $row[0],
+                    'time' => $row[1],
+                    'event' => $row[2],
+                    'user' => $row[3]
+                );
+            }
+            return json_encode($log);
+        }
     }
     
 }
