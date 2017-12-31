@@ -174,15 +174,15 @@ class Auth extends ServiceMethods implements intAuth {
         }
         list($username, $passId, $limited) = $qResult->fetch_row();
         $usi = makeIdent($username);
+        $term = $terms[$cookieTime];
+        $this->dbLink->query("UPDATE `".MECCANO_TPREF."_core_auth_usi` "
+                . "SET `usi`='$usi', `endtime`=FROM_UNIXTIME($term) "
+                . "WHERE `id`=$passId ;");
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, 'userLogin: unable to set unique session identifier -> '.$this->dbLink->error);
+            return FALSE;
+        }
         if ($useCookie) {
-            $term = $terms[$cookieTime];
-            $this->dbLink->query("UPDATE `".MECCANO_TPREF."_core_auth_usi` "
-                    . "SET `usi`='$usi', `endtime`=FROM_UNIXTIME($term) "
-                    . "WHERE `id`=$passId ;");
-            if ($this->dbLink->errno) {
-                $this->setError(ERROR_NOT_EXECUTED, 'userLogin: unable to set unique session identifier -> '.$this->dbLink->error);
-                return FALSE;
-            }
             setcookie(COOKIE_UNIQUE_SESSION_ID, $usi, $term, '/');
         }
         $ipAddress = $_SERVER['REMOTE_ADDR'];
