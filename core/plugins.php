@@ -470,7 +470,7 @@ class Plugins extends ServiceMethods implements intPlugins {
         // check for plugin dependences
         $dependsNodes = $serviceData->getElementsByTagName("plugin");
         foreach ($dependsNodes as $dependsNode) {
-            $depPlugin = $depends.$dependsNode->getAttribute('name');
+            $depPlugin = $dependsNode->getAttribute('name');
             $depVersion = $dependsNode->getAttribute('version');
             $operator = $dependsNode->getAttribute('operator');
             $existDep = $this->pluginData($depPlugin);
