@@ -96,7 +96,12 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
         $isValid = @$mysqlTest->real_connect(MECCANO_DBHOST, MECCANO_DBANAME, MECCANO_DBAPASS, '', MECCANO_DBPORT);
         foreach ($dbConf as $key => $value) {
             if (!is_string($value) || !preg_replace("/[\s\n\r\t]+/", "", $value)) {
-                $constStatus[$key] = array(FALSE, "N/A");
+                if ($key == 'MECCANO_DBAPASS') {
+                    $constStatus[$key] = array(TRUE, "N/A");
+                }
+                else {
+                    $constStatus[$key] = array(FALSE, "N/A");
+                }
             }
             else {
                 if ($key == 'MECCANO_DBAPASS') {
@@ -201,7 +206,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
         // displaying of errors
         if (is_bool(MECCANO_SHOW_ERRORS)) {
             if (MECCANO_SHOW_ERRORS) {
-                $constStatus['MECCANO_SHOW_ERRORS'] = array(TRUE, "TRUE");
+                $constStatus['MECCANO_SHOW_ERRORS'] = array(FALSE, "TRUE");
             }
             else {
                 $constStatus['MECCANO_SHOW_ERRORS'] = array(TRUE, "FALSE");
