@@ -50,8 +50,8 @@ class Auth extends ServiceMethods implements intAuth {
             $this->setError(ERROR_NOT_EXECUTED, 'userLogin: close current session before to start new');
             return FALSE;
         }
-        if (!pregUName($username)) {
-            $this->setError(ERROR_INCORRECT_DATA, 'userLogin: username can contain only letters and numbers and has length from 3 to 20');
+        if (!pregUName($username) && !pregMail($username)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'userLogin: username can contain only letters and numbers and has length from 3 to 20 or you should use e-mail instead of username');
             return FALSE;
         }
         if (!pregPassw($password)) {
@@ -69,15 +69,30 @@ class Auth extends ServiceMethods implements intAuth {
         if (!isset($terms[$cookieTime])) {
             $useCookie = FALSE;
         }
-        $qResult = $this->dbLink->query("SELECT `u`.`id`, `u`.`salt`, `l`.`code`, `l`.`dir` "
-                . "FROM `".MECCANO_TPREF."_core_userman_groups` `g` "
-                . "JOIN `".MECCANO_TPREF."_core_userman_users` `u` "
-                . "ON `g`.`id`=`u`.`groupid` "
-                . "JOIN `".MECCANO_TPREF."_core_langman_languages` `l` "
-                . "ON `u`.`langid`=`l`.`id` "
-                . "WHERE `u`.`username`='$username' "
-                . "AND `u`.`active`=1 "
-                . "AND `g`.`active`=1 ;");
+        if (pregUName($username)) {
+            $qResult = $this->dbLink->query("SELECT `u`.`id`, `u`.`salt`, `l`.`code`, `l`.`dir` "
+                    . "FROM `".MECCANO_TPREF."_core_userman_groups` `g` "
+                    . "JOIN `".MECCANO_TPREF."_core_userman_users` `u` "
+                    . "ON `g`.`id`=`u`.`groupid` "
+                    . "JOIN `".MECCANO_TPREF."_core_langman_languages` `l` "
+                    . "ON `u`.`langid`=`l`.`id` "
+                    . "WHERE `u`.`username`='$username' "
+                    . "AND `u`.`active`=1 "
+                    . "AND `g`.`active`=1 ;");
+        }
+        else {
+            $qResult = $this->dbLink->query("SELECT `u`.`id`, `u`.`salt`, `l`.`code`, `l`.`dir` "
+                    . "FROM `".MECCANO_TPREF."_core_userman_groups` `g` "
+                    . "JOIN `".MECCANO_TPREF."_core_userman_users` `u` "
+                    . "ON `g`.`id`=`u`.`groupid` "
+                    . "JOIN `".MECCANO_TPREF."_core_langman_languages` `l` "
+                    . "ON `u`.`langid`=`l`.`id` "
+                    . "JOIN `".MECCANO_TPREF."_core_userman_userinfo` `i` "
+                    . "ON `i`.`id`=`u`.`id` "
+                    . "WHERE `i`.`email`='$username' "
+                    . "AND `u`.`active`=1 "
+                    . "AND `g`.`active`=1 ;");
+        }
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'userLogin: unable to confirm username -> '.$this->dbLink->error);
             return FALSE;
@@ -174,7 +189,14 @@ class Auth extends ServiceMethods implements intAuth {
         }
         list($username, $passId, $limited) = $qResult->fetch_row();
         $usi = makeIdent($username);
-        $term = $terms[$cookieTime];
+        if (!$useCookie) {
+            $term = $curTime;
+        }
+        else {
+            $term = $terms[$cookieTime];
+            setcookie(COOKIE_UNIQUE_SESSION_ID, $usi, $term, '/');
+        }
+        // record data about the session term
         $this->dbLink->query("UPDATE `".MECCANO_TPREF."_core_auth_usi` "
                 . "SET `usi`='$usi', `endtime`=FROM_UNIXTIME($term) "
                 . "WHERE `id`=$passId ;");
@@ -182,9 +204,7 @@ class Auth extends ServiceMethods implements intAuth {
             $this->setError(ERROR_NOT_EXECUTED, 'userLogin: unable to set unique session identifier -> '.$this->dbLink->error);
             return FALSE;
         }
-        if ($useCookie) {
-            setcookie(COOKIE_UNIQUE_SESSION_ID, $usi, $term, '/');
-        }
+        //
         $ipAddress = $_SERVER['REMOTE_ADDR'];
         $userAgent = $_SERVER['HTTP_USER_AGENT'];
         if ($log && !$this->newLogRecord('core', 'auth_session', "name: $username; ID: $userId; IP: $ipAddress; User-agent: $userAgent")) {
