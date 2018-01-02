@@ -75,6 +75,7 @@ interface intShare {
     public function getMsgComment($commentId, $userId);
     public function eraseMsgComment($commentId, $userId);
     public function getMsgComments($msgId, $rpp = 20);
+    public function getMsgAllComments($msgId);
     public function appendMsgComments($msgId, $minMark, $rpp = 20);
     public function updateMsgComments($msgId, $maxMark);
     public function pubMsgs($rpp = 20);
@@ -3692,6 +3693,42 @@ class Share extends Discuss implements intShare {
             }
             list($topicId) = $qTopicId->fetch_row();
             if ($comments = $this->getComments($topicId, $rpp)) {
+                return $comments;
+            }
+            return FALSE;
+        }
+        elseif ($this->errid) {
+            $this->setError($this->errid, 'getMsgComments -> '.$this->errexp);
+            return FALSE;
+        }
+        else {
+            $this->setError(ERROR_RESTRICTED_ACCESS, 'getMsgComments: access denied');
+            return FALSE;
+        }
+    }
+    
+    public function getMsgAllComments($msgId) {
+        $this->zeroizeError();
+        if (!pregGuid($msgId)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'getMsgComments: incorrect parameters');
+            return FALSE;
+        }
+        if ($this->checkMsgAccess($msgId)) {
+            $qTopicId = $this->dbLink->query(
+                    "SELECT `tid` "
+                    . "FROM `".MECCANO_TPREF."_core_share_msg_topic_rel` "
+                    . "WHERE `id`='$msgId' ;"
+                    );
+            if ($this->dbLink->errno) {
+                $this->setError(ERROR_NOT_EXECUTED, 'getMsgComments: unable to get topic id -> '.$this->dbLink->error);
+                return FALSE;
+            }
+            if (!$this->dbLink->affected_rows) {
+                $this->setError(ERROR_NOT_FOUND, 'getMsgComments: topic of message not found');
+                return FALSE;
+            }
+            list($topicId) = $qTopicId->fetch_row();
+            if ($comments = $this->getAllComments($topicId)) {
                 return $comments;
             }
             return FALSE;
