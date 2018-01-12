@@ -41,6 +41,7 @@ define('MECCANO_CORE_DIR', MECCANO_ROOT_DIR.'/core');
 define('MECCANO_TMP_DIR', MECCANO_ROOT_DIR.'/tmp');
 define('MECCANO_PHP_DIR', MECCANO_ROOT_DIR.'/phplibs');
 define('MECCANO_JS_DIR', MECCANO_ROOT_DIR.'/jslibs');
+define('MECCANO_CSS_DIR', MECCANO_ROOT_DIR.'/csslibs');
 define('MECCANO_DOCUMENTS_DIR', MECCANO_ROOT_DIR.'/documents');
 define('MECCANO_UNPACKED_PLUGINS', MECCANO_ROOT_DIR.'/unpacked');
 define('MECCANO_UNINSTALL', MECCANO_ROOT_DIR.'/uninstall');

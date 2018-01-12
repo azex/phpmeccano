@@ -128,7 +128,7 @@ class Plugins extends ServiceMethods implements intPlugins {
             }
             // get data from metainfo.xml
             $packVersion = $serviceData->getElementsByTagName('metainfo')->item(0)->getAttribute('version');
-            if ($packVersion != '0.2') {
+            if ($packVersion != '0.3') {
                 Files::remove($tmpPath);
                 $this->setError(ERROR_INCORRECT_DATA, "unpack: installer is incompatible with the package specification [$packVersion]");
                 unlink(MECCANO_TMP_DIR."/core_plugins_lock");
@@ -432,7 +432,7 @@ class Plugins extends ServiceMethods implements intPlugins {
             return FALSE;
         }
         list($shortName, $fullName, $version, $packVersion, $plugDir, $about, $credits, $url, $email, $license) = $qPlugin->fetch_row();
-        if ($packVersion != '0.2') {
+        if ($packVersion != '0.3') {
                 $this->setError(ERROR_INCORRECT_DATA, "install: installer is incompatible with the package specification [$packVersion]");
                 unlink(MECCANO_TMP_DIR."/core_plugins_lock");
                 return FALSE;
@@ -489,7 +489,7 @@ class Plugins extends ServiceMethods implements intPlugins {
                 return FALSE;
             }
         }
-        $requiredDirs = array($plugPath."/documents", $plugPath."/js", $plugPath."/php", MECCANO_DOCUMENTS_DIR, MECCANO_JS_DIR, MECCANO_PHP_DIR);
+        $requiredDirs = array($plugPath."/documents", $plugPath."/js", $plugPath."/css", $plugPath."/php", MECCANO_DOCUMENTS_DIR, MECCANO_JS_DIR, MECCANO_PHP_DIR);
         foreach ($requiredDirs as $dirName) {
             if (!is_dir($dirName)) {
                 $this->setError(ERROR_NOT_FOUND, "install: directory [$dirName] is required");
@@ -601,6 +601,7 @@ class Plugins extends ServiceMethods implements intPlugins {
             "documents" => MECCANO_DOCUMENTS_DIR."/$shortName",
             "php" => $docDest,
             "js" => MECCANO_JS_DIR."/$shortName",
+            "css" => MECCANO_CSS_DIR."/$shortName",
             "rm.php" => MECCANO_UNINSTALL."/$shortName.php"
         );
         foreach ($beingCopied as $source => $dest) {
@@ -700,6 +701,7 @@ class Plugins extends ServiceMethods implements intPlugins {
         $beingRemoved = array(
             "php" => MECCANO_PHP_DIR."/$shortName",
             "js" => MECCANO_JS_DIR."/$shortName",
+            "css" => MECCANO_CSS_DIR."/$shortName",
             "rm.php" => MECCANO_UNINSTALL."/$shortName.php"
         );
         if (!$keepData) {

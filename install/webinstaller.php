@@ -706,7 +706,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
     // step #2
     public function installPackage() {
         $this->zeroizeError();
-        $packPath = "meccano_core_v0.1.0alpha.zip";
+        $packPath = "meccano_core.zip";
         if (!is_file($packPath)) {
             $this->setError(ERROR_NOT_FOUND, 'step #2: installation package not found');
             return FALSE;
