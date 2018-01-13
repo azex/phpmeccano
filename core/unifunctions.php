@@ -314,3 +314,22 @@ function genPassword($length = 8, $lower = TRUE, $upper = TRUE, $numbers = TRUE,
     }
     return $password;
 }
+
+function loadLib($libtype = "js", $plugin, $filename) {
+    if(!in_array($libtype, array('js', 'css', 'php', 'doc'), TRUE) || !is_string($plugin) || !is_string($filename)) {
+        return FALSE;
+    }
+    $libPathes = array('js' => MECCANO_JS_DIR, 'css' => MECCANO_CSS_DIR, 'php' => MECCANO_PHP_DIR, 'doc' => MECCANO_DOCUMENTS_DIR);
+    if (in_array($libtype, array('js', 'css')) && is_file($libPathes[$libtype]."/$plugin/$filename")) {
+        return file_get_contents($libPathes[$libtype]."/$plugin/$filename");
+    }
+    elseif ($libtype == 'php' && $plugin != "core" && is_file($libPathes[$libtype]."/$plugin/$filename")) {
+        return $libPathes[$libtype]."/$plugin/$filename";
+    }
+    elseif ($libtype == 'doc' && is_file($libPathes[$libtype]."/$plugin/$filename")) {
+        return $libPathes[$libtype]."/$plugin/$filename";
+    }
+    else {
+        return FALSE;
+    }
+}
