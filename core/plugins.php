@@ -112,7 +112,7 @@ class Plugins extends ServiceMethods implements intPlugins {
                     unlink(MECCANO_TMP_DIR."/core_plugins_lock");
                     return FALSE;
                 }
-                if (mime_content_type($tmpPath."/$valComponent") != "application/xml") {
+                if (!in_array(mime_content_type($tmpPath."/$valComponent"), array("application/xml", "text/xml"))) {
                     Files::remove($tmpPath);
                     $this->setError(ERROR_NOT_EXECUTED, "unpack: [$valComponent] is not XML-structured");
                     unlink(MECCANO_TMP_DIR."/core_plugins_lock");
@@ -455,7 +455,7 @@ class Plugins extends ServiceMethods implements intPlugins {
                 unlink(MECCANO_TMP_DIR."/core_plugins_lock");
                 return FALSE;
             }
-            if (mime_content_type($plugPath."/$valComponent") != "application/xml") {
+            if (!in_array(mime_content_type($plugPath."/$valComponent"), array("application/xml", "text/xml"))) {
                 $this->setError(ERROR_NOT_EXECUTED, "unpack: [$valComponent] is not XML-structured");
                 unlink(MECCANO_TMP_DIR."/core_plugins_lock");
                 return FALSE;
