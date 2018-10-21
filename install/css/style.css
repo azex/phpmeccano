@@ -67,6 +67,7 @@ input {
     font-size: 0.9em;
     padding: 0.3em;
     width: 50%;
+    color: black;
     background: #EAEAEA;
     border: 1px solid grey;
 }
@@ -91,6 +92,7 @@ textarea {
     height: 10em;
     max-height: 15em;
     min-height: 1.3em;
+    color: black;
     background: #EAEAEA;
     border: 1px solid darkgreen;
 }
