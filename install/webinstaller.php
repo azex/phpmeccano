@@ -277,6 +277,9 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
         $sql->set_charset('utf8');
         $sql->query("DROP DATABASE `$dbName` ;");
         $queries = array(
+            // disable errors while installation on newer MySQL versions
+            "SET SQL_MODE='NO_AUTO_VALUE_ON_ZERO';",
+
             // create database
             "CREATE DATABASE `$dbName` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci ;",
             
