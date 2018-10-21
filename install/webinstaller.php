@@ -277,6 +277,9 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
         $sql->set_charset('utf8');
         $sql->query("DROP DATABASE `$dbName` ;");
         $queries = array(
+            // disable errors while installation on newer MySQL versions
+            "SET SQL_MODE='NO_AUTO_VALUE_ON_ZERO';",
+
             // create database
             "CREATE DATABASE `$dbName` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci ;",
             
@@ -291,7 +294,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
                 `time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 PRIMARY KEY (`id`),
                 UNIQUE KEY `name` (`name`)
-            ) ENGINE=$sEngine DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;",
+            ) ENGINE=$sEngine DEFAULT CHARSET=utf8 COMMENT 'Installed plug-ins' AUTO_INCREMENT=1 ;",
             
             // about installed plugin
             "CREATE TABLE `{$tabPrefix}_core_plugins_installed_about` (
@@ -304,7 +307,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
                 `license` text NOT NULL DEFAULT '' COMMENT 'License agreement',
                 FOREIGN KEY (`id`) REFERENCES `{$tabPrefix}_core_plugins_installed` (`id`),
                 PRIMARY KEY (`id`)
-            ) ENGINE=$sEngine DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;",
+            ) ENGINE=$sEngine DEFAULT CHARSET=utf8 COMMENT 'Information about installed plug-ins' AUTO_INCREMENT=1 ;",
             
             // about unpacked plugins
             "CREATE TABLE `{$tabPrefix}_core_plugins_unpacked` (
@@ -322,7 +325,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
                 `depends` text NOT NULL DEFAULT '' COMMENT 'Dependences needed for the plugin',
                 PRIMARY KEY (`id`),
                 UNIQUE KEY `short` (`short`)
-            ) ENGINE=$sEngine DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;",
+            ) ENGINE=$sEngine DEFAULT CHARSET=utf8 COMMENT 'Information about unpacked but not installed plug-ins' AUTO_INCREMENT=1 ;",
             
             // system languages
             "CREATE TABLE `{$tabPrefix}_core_langman_languages` (
