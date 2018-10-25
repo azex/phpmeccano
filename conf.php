@@ -59,3 +59,5 @@ define('MECCANO_AUTH_BLOCK_PERIOD', '00:05:00');
 
 // displaying of errors
 define('MECCANO_SHOW_ERRORS', FALSE);
+
+require_once MECCANO_CORE_DIR.'/__loader__.php';
