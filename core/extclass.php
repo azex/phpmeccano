@@ -79,6 +79,9 @@ class ServiceMethods implements intServiceMethods {
         elseif ($output == 'json') {
             $this->outputType = 'json';
         }
+        elseif ($output == 'array') {
+            $this->outputType = 'array';
+        }
         else {
             $this->outputType = 'json';
         }
