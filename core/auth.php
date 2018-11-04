@@ -33,6 +33,7 @@ interface intAuth {
     public function isSession();
     public function userLogout();
     public function getSession($log = TRUE);
+    public function userSessions($userId);
 }
 
 class Auth extends ServiceMethods implements intAuth {
@@ -385,5 +386,86 @@ class Auth extends ServiceMethods implements intAuth {
             return TRUE;
         }
         return FALSE;
+    }
+    
+    public function userSessions($userId) {
+        $this->zeroizeError();
+        if (!is_integer($userId) || $userId<1) {
+            $this->setError(ERROR_INCORRECT_DATA, 'userSessions: user id must be integer and greater than zero');
+            return FALSE;
+        }
+        // delete expired sessions of the user
+        $sql = array(
+            "DELETE `si` FROM `".MECCANO_TPREF."_core_auth_session_info` `si` "
+            . "JOIN `".MECCANO_TPREF."_core_auth_usi` `s` "
+            . "ON `si`.`id`=`s`.`id` "
+            . "JOIN `".MECCANO_TPREF."_core_userman_userpass` `p` "
+            . "ON `s`.`pid`=`p`.`id`"
+            . "JOIN  `".MECCANO_TPREF."_core_userman_users` `u` "
+            . "ON `p`.`userid`=`u`.`id` "
+            . "WHERE `u`.`id`=$userId "
+            . "AND `s`.`endtime`<NOW() ;",
+            "DELETE `s` FROM `".MECCANO_TPREF."_core_auth_usi` `s` "
+            . "JOIN `".MECCANO_TPREF."_core_userman_userpass` `p` "
+            . "ON `s`.`pid`=`p`.`id`"
+            . "JOIN  `".MECCANO_TPREF."_core_userman_users` `u` "
+            . "ON `p`.`userid`=`u`.`id` "
+            . "WHERE `u`.`id`=$userId "
+            . "AND `s`.`endtime`<NOW() ;"
+            );
+        foreach ($sql as $key => $value) {
+            $this->dbLink->query($value);
+            if ($this->dbLink->errno) {
+                $this->setError(ERROR_NOT_EXECUTED, 'userSessions: unable to delete expired sessions of the user -> '.$this->dbLink->error);
+                return FALSE;
+            }
+        }
+        // get user sessions
+        $qResult = $this->dbLink->query(
+                "SELECT `si`.`id` `usi`, `si`.`ip` `ip`, `si`.`useragent` `useragent`, `si`.`created` `created`  FROM `".MECCANO_TPREF."_core_auth_session_info` `si` "
+                . "JOIN `".MECCANO_TPREF."_core_auth_usi` `s` "
+                . "ON `si`.`id`=`s`.`id` "
+                . "JOIN `".MECCANO_TPREF."_core_userman_userpass` `p` "
+                . "ON `s`.`pid`=`p`.`id`"
+                . "JOIN  `".MECCANO_TPREF."_core_userman_users` `u` "
+                . "ON `p`.`userid`=`u`.`id` "
+                . "WHERE `u`.`id`=$userId "
+                . "ORDER BY `si`.`created` ;"
+                );
+        if ($this->dbLink->errno) {
+                $this->setError(ERROR_NOT_EXECUTED, 'userSessions: unable to get list of the user sessions -> '.$this->dbLink->error);
+                return FALSE;
+            }
+        if ($this->outputType == 'xml') {
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $listNode = $xml->createElement('list');
+            $xml->appendChild($listNode);
+            while ($row = $qResult->fetch_row()) {
+                $sessionNode = $xml->createElement('session');
+                $listNode->appendChild($sessionNode);
+                $sessionNode->appendChild($xml->createElement('usi', $row[0]));
+                $sessionNode->appendChild($xml->createElement('ip', $row[1]));
+                $sessionNode->appendChild($xml->createElement('useragent', $row[2]));
+                $sessionNode->appendChild($xml->createElement('created', $row[3]));
+            }
+            return $xml;
+        }
+        else {
+            $listNode = array();
+            while ($row = $qResult->fetch_row()) {
+                $listNode[] = array(
+                    'usi' => $row[0],
+                    'ip' => $row[1],
+                    'useragent' => $row[2],
+                    'created' => $row[3]
+                );
+            }
+            if ($this->outputType == 'array') {
+                return $listNode;
+            }
+            else {
+                return json_encode($listNode);
+            }
+        }
     }
 }
