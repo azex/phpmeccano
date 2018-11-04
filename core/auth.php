@@ -25,11 +25,11 @@
 
 namespace core;
 
-require_once MECCANO_CORE_DIR.'/extclass.php';
+loadPHP('extclass');
 
 interface intAuth {
     public function __construct(\mysqli $dbLink);
-    public function userLogin($username, $password, $useCookie = TRUE, $cookieTime = 'month', $log = TRUE, $blockBrute = FALSE);
+    public function userLogin($username, $password, $useCookie = TRUE, $cookieTime = 'month', $log = TRUE, $blockBrute = FALSE, $cleanSessions = TRUE);
     public function isSession();
     public function userLogout();
     public function getSession($log = TRUE);
@@ -44,7 +44,7 @@ class Auth extends ServiceMethods implements intAuth {
         $this->dbLink = $dbLink;
     }
     
-    public function userLogin($username, $password, $useCookie = TRUE, $cookieTime = 'month', $log = TRUE, $blockBrute = FALSE) {
+    public function userLogin($username, $password, $useCookie = TRUE, $cookieTime = 'month', $log = TRUE, $blockBrute = FALSE, $cleanSessions = TRUE) {
         $this->zeroizeError();
         if (isset($_SESSION[AUTH_USER_ID])) {
             $this->setError(ERROR_NOT_EXECUTED, 'userLogin: close current session before to start new');
@@ -188,7 +188,11 @@ class Auth extends ServiceMethods implements intAuth {
             return FALSE;
         }
         list($username, $passId, $limited) = $qResult->fetch_row();
-        $usi = makeIdent($username);
+        // new unique session id
+        $usi = guid();
+        // IP and user-agent of the user
+        $ipAddress = $_SERVER['REMOTE_ADDR'];
+        $userAgent = $_SERVER['HTTP_USER_AGENT'];
         if (!$useCookie) {
             $term = $curTime;
         }
@@ -197,19 +201,52 @@ class Auth extends ServiceMethods implements intAuth {
             setcookie(COOKIE_UNIQUE_SESSION_ID, $usi, $term, '/');
         }
         // record data about the session term
-        $this->dbLink->query("UPDATE `".MECCANO_TPREF."_core_auth_usi` "
-                . "SET `usi`='$usi', `endtime`=FROM_UNIXTIME($term) "
-                . "WHERE `id`=$passId ;");
-        if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'userLogin: unable to set unique session identifier -> '.$this->dbLink->error);
-            return FALSE;
+        $sql = array(
+            "INSERT INTO `".MECCANO_TPREF."_core_auth_usi` (`id`, `pid`, `endtime`) "
+            . "VALUES('$usi', '$passId', FROM_UNIXTIME($term)) ;",
+            "INSERT INTO `".MECCANO_TPREF."_core_auth_session_info` (`id`, `ip`, `useragent`, `created`) "
+            . "VALUES('$usi', '$ipAddress', '$userAgent', CURRENT_TIMESTAMP) ;"
+        );
+        foreach ($sql as $key => $value) {
+            $this->dbLink->query($value);
+            if ($this->dbLink->errno) {
+                $this->setError(ERROR_NOT_EXECUTED, 'userLogin: unable to set unique session identifier -> '.$this->dbLink->error);
+                return FALSE;
+            }
         }
-        //
-        $ipAddress = $_SERVER['REMOTE_ADDR'];
-        $userAgent = $_SERVER['HTTP_USER_AGENT'];
+        if ($cleanSessions) {
+            // delete expired sessions of the user
+            $sql = array(
+                "DELETE `si` FROM `".MECCANO_TPREF."_core_auth_session_info` `si` "
+                . "JOIN `".MECCANO_TPREF."_core_auth_usi` `s` "
+                . "ON `si`.`id`=`s`.`id` "
+                . "JOIN `".MECCANO_TPREF."_core_userman_userpass` `p` "
+                . "ON `s`.`pid`=`p`.`id`"
+                . "JOIN  `".MECCANO_TPREF."_core_userman_users` `u` "
+                . "ON `p`.`userid`=`u`.`id` "
+                . "WHERE `u`.`id`=$userId "
+                . "AND `s`.`endtime`<NOW() ;",
+                "DELETE `s` FROM `".MECCANO_TPREF."_core_auth_usi` `s` "
+                . "JOIN `".MECCANO_TPREF."_core_userman_userpass` `p` "
+                . "ON `s`.`pid`=`p`.`id`"
+                . "JOIN  `".MECCANO_TPREF."_core_userman_users` `u` "
+                . "ON `p`.`userid`=`u`.`id` "
+                . "WHERE `u`.`id`=$userId "
+                . "AND `s`.`endtime`<NOW() ;"
+            );
+            foreach ($sql as $key => $value) {
+                $this->dbLink->query($value);
+                if ($this->dbLink->errno) {
+                    $this->setError(ERROR_NOT_EXECUTED, 'userLogin: unable to delete expired sessions of the user -> '.$this->dbLink->error);
+                    return FALSE;
+                }
+            }
+        }
         if ($log && !$this->newLogRecord('core', 'auth_session', "name: $username; ID: $userId; IP: $ipAddress; User-agent: $userAgent")) {
             $this->setError(ERROR_NOT_CRITICAL, "userLogin: -> ".$this->errExp());
         }
+        
+        // record the session valiables //
         $_SESSION[AUTH_USERNAME] = $username;
         $_SESSION[AUTH_USER_ID] = (int) $userId;
         $_SESSION[AUTH_LIMITED] = (int) $limited;
@@ -217,7 +254,7 @@ class Auth extends ServiceMethods implements intAuth {
         $_SESSION[AUTH_LANGUAGE_DIR] = $direction;
         // control parameters
         $_SESSION[AUTH_UNIQUE_SESSION_ID] = $usi;
-        $_SESSION[AUTH_PASSWORD_ID] = (int) $passId;
+        $_SESSION[AUTH_PASSWORD_ID] = $passId;
         $_SESSION[AUTH_IP] = $ipAddress;
         $_SESSION[AUTH_USER_AGENT] = $userAgent;
         $_SESSION[AUTH_TOKEN] = makeIdent($username);
@@ -239,14 +276,14 @@ class Auth extends ServiceMethods implements intAuth {
                     . "JOIN `".MECCANO_TPREF."_core_userman_userpass` `p` "
                     . "ON `p`.`userid`=`u`.`id` "
                     . "JOIN `".MECCANO_TPREF."_core_auth_usi` `s` "
-                    . "ON `s`.`id`=`p`.`id` "
+                    . "ON `s`.`pid`=`p`.`id` "
                     . "JOIN `".MECCANO_TPREF."_core_langman_languages` `l`"
                     . "ON `l`.`id`=`u`.`langid` "
                     . "WHERE `u`.`id`=".$_SESSION[AUTH_USER_ID]." "
                     . "AND `u`.`active`=1 "
                     . "AND `g`.`active`=1 "
-                    . "AND `p`.`id`=".$_SESSION[AUTH_PASSWORD_ID]." "
-                    . "AND `s`.`usi`='".$_SESSION[AUTH_UNIQUE_SESSION_ID]."' ;");
+                    . "AND `p`.`id`='".$_SESSION[AUTH_PASSWORD_ID]."' "
+                    . "AND `s`.`id`='".$_SESSION[AUTH_UNIQUE_SESSION_ID]."' ;");
             if ($this->dbLink->errno) {
                 $this->setError(ERROR_NOT_EXECUTED, 'isSession: unable to check user availability -> '.$this->dbLink->error);
                 return FALSE;
@@ -269,19 +306,28 @@ class Auth extends ServiceMethods implements intAuth {
         if (isset($_SESSION[AUTH_USER_ID])) {
             $qResult = $this->dbLink->query("SELECT `id` "
                     . "FROM `".MECCANO_TPREF."_core_auth_usi` "
-                    . "WHERE `usi`='".$_SESSION[AUTH_UNIQUE_SESSION_ID]."' ;");
+                    . "WHERE `id`='".$_SESSION[AUTH_UNIQUE_SESSION_ID]."' ;");
             if ($this->dbLink->errno) {
                 $this->setError(ERROR_NOT_EXECUTED, 'userLogout: unable to check unique session identifier -> '.$this->dbLink->error);
                 return FALSE;
             }
             if ($this->dbLink->affected_rows) {
-                $usi = makeIdent($_SESSION[AUTH_USERNAME]);
-                $this->dbLink->query("UPDATE `".MECCANO_TPREF."_core_auth_usi` "
-                        . "SET `usi`='$usi' "
-                        . "WHERE `id`=".$_SESSION[AUTH_PASSWORD_ID]." ;");
-                if ($this->dbLink->errno) {
-                    $this->setError(ERROR_NOT_EXECUTED, 'userLogout: unable to reset unique session identifier -> '.$this->dbLink->error);
-                    return FALSE;
+                $sql = array(
+                    "DELETE FROM `".MECCANO_TPREF."_core_auth_session_info` "
+                    . "WHERE `id`='".$_SESSION[AUTH_UNIQUE_SESSION_ID]."' ;", 
+                    "DELETE FROM `".MECCANO_TPREF."_core_auth_usi` "
+                    . "WHERE `id`='".$_SESSION[AUTH_UNIQUE_SESSION_ID]."' ;"
+                );
+                foreach ($sql as $key => $value) {
+                    $this->dbLink->query($value);
+                    if ($this->dbLink->errno) {
+                        $this->setError(ERROR_NOT_EXECUTED, 'userLogout: unable to delete session identifier -> '.$this->dbLink->error);
+                        return FALSE;
+                    }
+                    if (!$this->dbLink->affected_rows) {
+                        $this->setError(ERROR_NOT_FOUND, 'userLogout: session is not found');
+                        return FALSE;
+                    }
                 }
             }
             if (isset($_COOKIE)) {
@@ -297,18 +343,18 @@ class Auth extends ServiceMethods implements intAuth {
     
     public function getSession($log = TRUE) {
         $this->zeroizeError();
-        if (!isset($_SESSION[AUTH_USER_ID]) && isset($_COOKIE[AUTH_UNIQUE_SESSION_ID]) && pregIdent($_COOKIE[AUTH_UNIQUE_SESSION_ID])) {
+        if (!isset($_SESSION[AUTH_USER_ID]) && isset($_COOKIE[AUTH_UNIQUE_SESSION_ID]) && pregGuid($_COOKIE[AUTH_UNIQUE_SESSION_ID])) {
             $qResult = $this->dbLink->query("SELECT `p`.`id`, `p`.`limited`, `u`.`id`, `u`.`username`, `l`.`code`, `l`.`dir` "
                     . "FROM `".MECCANO_TPREF."_core_auth_usi` `s` "
                     . "JOIN `".MECCANO_TPREF."_core_userman_userpass` `p` "
-                    . "ON `p`.`id`=`s`.`id` "
+                    . "ON `p`.`id`=`s`.`pid` "
                     . "JOIN `".MECCANO_TPREF."_core_userman_users` `u` "
                     . "ON `u`.`id`=`p`.`userid` "
                     . "JOIN `".MECCANO_TPREF."_core_langman_languages` `l` "
                     . "ON `u`.`langid`=`l`.`id` "
                     . "JOIN `".MECCANO_TPREF."_core_userman_groups` `g` "
                     . "ON `g`.`id`=`u`.`groupid` "
-                    . "WHERE `s`.`usi`='".$_COOKIE[AUTH_UNIQUE_SESSION_ID]."' "
+                    . "WHERE `s`.`id`='".$_COOKIE[AUTH_UNIQUE_SESSION_ID]."' "
                     . "AND `s`.`endtime`>NOW() "
                     . "AND `u`.`active`=1 "
                     . "AND `g`.`active`=1 ;");
@@ -332,7 +378,7 @@ class Auth extends ServiceMethods implements intAuth {
             $_SESSION[AUTH_LANGUAGE_DIR] = $direction;
             // control parameters
             $_SESSION[AUTH_UNIQUE_SESSION_ID] = $_COOKIE[AUTH_UNIQUE_SESSION_ID];
-            $_SESSION[AUTH_PASSWORD_ID] = (int) $passId;
+            $_SESSION[AUTH_PASSWORD_ID] = $passId;
             $_SESSION[AUTH_IP] = $ipAddress;
             $_SESSION[AUTH_USER_AGENT] = $userAgent;
             $_SESSION[AUTH_TOKEN] = makeIdent($username);
