@@ -35,6 +35,7 @@ interface intAuth {
     public function getSession($log = TRUE);
     public function userSessions($userId);
     public function destroyAllSessions($userId);
+    public function destroySession($userId, $sesId);
 }
 
 class Auth extends ServiceMethods implements intAuth {
@@ -427,7 +428,7 @@ class Auth extends ServiceMethods implements intAuth {
         }
         // get user sessions
         $qResult = $this->dbLink->query(
-                "SELECT `si`.`id` `usi`, `si`.`ip` `ip`, `si`.`useragent` `useragent`, `si`.`created` `created`  FROM `".MECCANO_TPREF."_core_auth_session_info` `si` "
+                "SELECT `si`.`id` `usi`, `si`.`ip` `ip`, `si`.`useragent` `useragent`, `si`.`created` `created`, `s`.`endtime` `endtime`  FROM `".MECCANO_TPREF."_core_auth_session_info` `si` "
                 . "JOIN `".MECCANO_TPREF."_core_auth_usi` `s` "
                 . "ON `si`.`id`=`s`.`id` "
                 . "JOIN `".MECCANO_TPREF."_core_userman_userpass` `p` "
@@ -435,7 +436,7 @@ class Auth extends ServiceMethods implements intAuth {
                 . "JOIN  `".MECCANO_TPREF."_core_userman_users` `u` "
                 . "ON `p`.`userid`=`u`.`id` "
                 . "WHERE `u`.`id`=$userId "
-                . "ORDER BY `si`.`created` ;"
+                . "ORDER BY `si`.`created` DESC ;"
                 );
         if ($this->dbLink->errno) {
                 $this->setError(ERROR_NOT_EXECUTED, 'userSessions: unable to get list of the user sessions -> '.$this->dbLink->error);
@@ -445,6 +446,9 @@ class Auth extends ServiceMethods implements intAuth {
             $xml = new \DOMDocument('1.0', 'utf-8');
             $listNode = $xml->createElement('list');
             $xml->appendChild($listNode);
+            $uidAttribute = $xml->createAttribute('uid');
+            $uidAttribute->value = $userId;
+            $listNode->appendChild($uidAttribute);
             while ($row = $qResult->fetch_row()) {
                 $sessionNode = $xml->createElement('session');
                 $listNode->appendChild($sessionNode);
@@ -452,17 +456,21 @@ class Auth extends ServiceMethods implements intAuth {
                 $sessionNode->appendChild($xml->createElement('ip', $row[1]));
                 $sessionNode->appendChild($xml->createElement('useragent', $row[2]));
                 $sessionNode->appendChild($xml->createElement('created', $row[3]));
+                $sessionNode->appendChild($xml->createElement('endtime', $row[4]));
             }
             return $xml;
         }
         else {
             $listNode = array();
+            $listNode['uid'] = $userId;
+            $listNode['sessions'] = array();
             while ($row = $qResult->fetch_row()) {
-                $listNode[] = array(
+                $listNode['sessions'][] = array(
                     'usi' => $row[0],
                     'ip' => $row[1],
                     'useragent' => $row[2],
-                    'created' => $row[3]
+                    'created' => $row[3],
+                    'endtime' => $row[4]
                 );
             }
             if ($this->outputType == 'array') {
@@ -505,6 +513,51 @@ class Auth extends ServiceMethods implements intAuth {
             $this->dbLink->query($value);
             if ($this->dbLink->errno) {
                 $this->setError(ERROR_NOT_EXECUTED, 'destroyAllSessions: unable to delete sessions of the user -> '.$this->dbLink->error);
+                return FALSE;
+            }
+        }
+        return TRUE;
+    }
+    
+    public function destroySession($userId, $sesId) {
+        $this->zeroizeError();
+        if (!is_integer($userId) || $userId<1) {
+            $this->setError(ERROR_INCORRECT_DATA, 'destroyAllSessions: user id must be integer and greater than zero');
+            return FALSE;
+        }
+        if (!pregGuid($sesId)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'destroySession: incorrect unique session identifier ');
+            return FALSE;
+        }
+        if (((isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID]!=$userId) || !isset($_SESSION[AUTH_USER_ID])) && $this->usePolicy && !$this->checkFuncAccess('core', 'auth_destroy_sessions')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "destroySession: restricted by the policy");
+            return FALSE;
+        }
+        // delete expired sessions of the user
+        $sql = array(
+            "DELETE `si` FROM `".MECCANO_TPREF."_core_auth_session_info` `si` "
+            . "JOIN `".MECCANO_TPREF."_core_auth_usi` `s` "
+            . "ON `si`.`id`=`s`.`id` "
+            . "JOIN `".MECCANO_TPREF."_core_userman_userpass` `p` "
+            . "ON `s`.`pid`=`p`.`id` "
+            . "JOIN  `".MECCANO_TPREF."_core_userman_users` `u` "
+            . "ON `p`.`userid`=`u`.`id` "
+            . "WHERE `si`.`id` = '$sesId' ;",
+            "DELETE `s` FROM `".MECCANO_TPREF."_core_auth_usi` `s` "
+            . "JOIN `".MECCANO_TPREF."_core_userman_userpass` `p` "
+            . "ON `s`.`pid`=`p`.`id` "
+            . "JOIN  `".MECCANO_TPREF."_core_userman_users` `u` "
+            . "ON `p`.`userid`=`u`.`id` "
+            . "WHERE `s`.`id` = '$sesId' ;"
+            );
+        foreach ($sql as $key => $value) {
+            $this->dbLink->query($value);
+            if ($this->dbLink->errno) {
+                $this->setError(ERROR_NOT_EXECUTED, 'destroySession: unable to delete session of the user -> '.$this->dbLink->error);
+                return FALSE;
+            }
+            if (!$this->dbLink->affected_rows) {
+                $this->setError(ERROR_NOT_FOUND, 'destroySession: session is not found');
                 return FALSE;
             }
         }
