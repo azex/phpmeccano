@@ -34,6 +34,7 @@ interface intAuth {
     public function userLogout();
     public function getSession($log = TRUE);
     public function userSessions($userId);
+    public function destroyAllSessions($userId);
 }
 
 class Auth extends ServiceMethods implements intAuth {
@@ -394,6 +395,10 @@ class Auth extends ServiceMethods implements intAuth {
             $this->setError(ERROR_INCORRECT_DATA, 'userSessions: user id must be integer and greater than zero');
             return FALSE;
         }
+        if (((isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID]!=$userId) || !isset($_SESSION[AUTH_USER_ID])) && $this->usePolicy && !$this->checkFuncAccess('core', 'auth_user_sessions')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "userSessions: restricted by the policy");
+            return FALSE;
+        }
         // delete expired sessions of the user
         $sql = array(
             "DELETE `si` FROM `".MECCANO_TPREF."_core_auth_session_info` `si` "
@@ -467,5 +472,42 @@ class Auth extends ServiceMethods implements intAuth {
                 return json_encode($listNode);
             }
         }
+    }
+    
+    public function destroyAllSessions($userId) {
+        $this->zeroizeError();
+        if (!is_integer($userId) || $userId<1) {
+            $this->setError(ERROR_INCORRECT_DATA, 'destroyAllSessions: user id must be integer and greater than zero');
+            return FALSE;
+        }
+        if (((isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID]!=$userId) || !isset($_SESSION[AUTH_USER_ID])) && $this->usePolicy && !$this->checkFuncAccess('core', 'auth_destroy_sessions')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "destroyAllSessions: restricted by the policy");
+            return FALSE;
+        }
+        // delete expired sessions of the user
+        $sql = array(
+            "DELETE `si` FROM `".MECCANO_TPREF."_core_auth_session_info` `si` "
+            . "JOIN `".MECCANO_TPREF."_core_auth_usi` `s` "
+            . "ON `si`.`id`=`s`.`id` "
+            . "JOIN `".MECCANO_TPREF."_core_userman_userpass` `p` "
+            . "ON `s`.`pid`=`p`.`id`"
+            . "JOIN  `".MECCANO_TPREF."_core_userman_users` `u` "
+            . "ON `p`.`userid`=`u`.`id` "
+            . "WHERE `u`.`id`=$userId ;",
+            "DELETE `s` FROM `".MECCANO_TPREF."_core_auth_usi` `s` "
+            . "JOIN `".MECCANO_TPREF."_core_userman_userpass` `p` "
+            . "ON `s`.`pid`=`p`.`id`"
+            . "JOIN  `".MECCANO_TPREF."_core_userman_users` `u` "
+            . "ON `p`.`userid`=`u`.`id` "
+            . "WHERE `u`.`id`=$userId ;"
+            );
+        foreach ($sql as $key => $value) {
+            $this->dbLink->query($value);
+            if ($this->dbLink->errno) {
+                $this->setError(ERROR_NOT_EXECUTED, 'destroyAllSessions: unable to delete sessions of the user -> '.$this->dbLink->error);
+                return FALSE;
+            }
+        }
+        return TRUE;
     }
 }
