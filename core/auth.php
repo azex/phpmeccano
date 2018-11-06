@@ -428,7 +428,7 @@ class Auth extends ServiceMethods implements intAuth {
         }
         // get user sessions
         $qResult = $this->dbLink->query(
-                "SELECT `si`.`id` `usi`, `si`.`ip` `ip`, `si`.`useragent` `useragent`, `si`.`created` `created`, `s`.`endtime` `endtime`  FROM `".MECCANO_TPREF."_core_auth_session_info` `si` "
+                "SELECT `si`.`id` `usi`, `si`.`ip` `ip`, `si`.`useragent` `useragent`, `si`.`created` `created`, `s`.`endtime` `endtime`, `p`.`description` `info`  FROM `".MECCANO_TPREF."_core_auth_session_info` `si` "
                 . "JOIN `".MECCANO_TPREF."_core_auth_usi` `s` "
                 . "ON `si`.`id`=`s`.`id` "
                 . "JOIN `".MECCANO_TPREF."_core_userman_userpass` `p` "
@@ -457,6 +457,7 @@ class Auth extends ServiceMethods implements intAuth {
                 $sessionNode->appendChild($xml->createElement('useragent', $row[2]));
                 $sessionNode->appendChild($xml->createElement('created', $row[3]));
                 $sessionNode->appendChild($xml->createElement('endtime', $row[4]));
+                $sessionNode->appendChild($xml->createElement('info', $row[5]));
             }
             return $xml;
         }
@@ -470,7 +471,8 @@ class Auth extends ServiceMethods implements intAuth {
                     'ip' => $row[1],
                     'useragent' => $row[2],
                     'created' => $row[3],
-                    'endtime' => $row[4]
+                    'endtime' => $row[4],
+                    'info' => $row[5]
                 );
             }
             if ($this->outputType == 'array') {
