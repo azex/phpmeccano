@@ -544,13 +544,15 @@ class Auth extends ServiceMethods implements intAuth {
             . "ON `s`.`pid`=`p`.`id` "
             . "JOIN  `".MECCANO_TPREF."_core_userman_users` `u` "
             . "ON `p`.`userid`=`u`.`id` "
-            . "WHERE `si`.`id` = '$sesId' ;",
+            . "WHERE `si`.`id` = '$sesId' "
+            . "AND `u`.`id`=$userId ;",
             "DELETE `s` FROM `".MECCANO_TPREF."_core_auth_usi` `s` "
             . "JOIN `".MECCANO_TPREF."_core_userman_userpass` `p` "
             . "ON `s`.`pid`=`p`.`id` "
             . "JOIN  `".MECCANO_TPREF."_core_userman_users` `u` "
             . "ON `p`.`userid`=`u`.`id` "
-            . "WHERE `s`.`id` = '$sesId' ;"
+            . "WHERE `s`.`id` = '$sesId' "
+            . "AND `u`.`id`=$userId ;"
             );
         foreach ($sql as $key => $value) {
             $this->dbLink->query($value);
