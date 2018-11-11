@@ -25,7 +25,7 @@
 
 namespace core;
 
-require_once MECCANO_CORE_DIR.'/extclass.php';
+loadPHP('extclass');
 
 interface intUserMan {
     public function __construct(\mysqli $dbLink);
@@ -71,12 +71,12 @@ class UserMan extends ServiceMethods implements intUserMan{
     //group methods
     public function createGroup($groupName, $description, $log = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->checkFuncAccess('core', 'userman_create_group')) {
+        if (!$this->checkFuncAccess('core', 'userman_create_group')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "createGroup: restricted by the policy");
             return FALSE;
         }
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
-            $this->setError(ERROR_RESTRICTED_ACCESS, 'createGroup: function execution was terminated because of using of limited authentication');
+            $this->setError(ERROR_RESTRICTED_ACCESS, 'createGroup: execution of the function was aborted because you are authenticated with the secondary password');
             return FALSE;
         }
         if (!pregGName($groupName) || !is_string($description)) {
@@ -145,12 +145,12 @@ class UserMan extends ServiceMethods implements intUserMan{
     
     public function groupStatus($groupId, $active, $log = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->checkFuncAccess('core', 'userman_group_status')) {
+        if (!$this->checkFuncAccess('core', 'userman_group_status')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "groupStatus: restricted by the policy");
             return FALSE;
         }
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
-            $this->setError(ERROR_RESTRICTED_ACCESS, 'groupStatus: function execution was terminated because of using of limited authentication');
+            $this->setError(ERROR_RESTRICTED_ACCESS, 'groupStatus: execution of the function was aborted because you are authenticated with the secondary password');
             return FALSE;
         }
         if (!is_integer($groupId) || $groupId<1) {
@@ -206,12 +206,12 @@ class UserMan extends ServiceMethods implements intUserMan{
     
     public function moveGroupTo($groupId, $destId, $log = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->checkFuncAccess('core', 'userman_move_group')) {
+        if (!$this->checkFuncAccess('core', 'userman_move_group')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "moveGroupTo: restricted by the policy");
             return FALSE;
         }
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
-            $this->setError(ERROR_RESTRICTED_ACCESS, 'moveGroupTo: function execution was terminated because of using of limited authentication');
+            $this->setError(ERROR_RESTRICTED_ACCESS, 'moveGroupTo: execution of the function was aborted because you are authenticated with the secondary password');
             return FALSE;
         }
         if (!is_integer($groupId) || !is_integer($destId) || $destId<1 || $destId == $groupId) {
@@ -248,7 +248,7 @@ class UserMan extends ServiceMethods implements intUserMan{
     
     public function aboutGroup($groupId) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->checkFuncAccess('core', 'userman_get_groups')) {
+        if (!$this->checkFuncAccess('core', 'userman_get_groups')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "aboutGroup: restricted by the policy");
             return FALSE;
         }
@@ -276,6 +276,7 @@ class UserMan extends ServiceMethods implements intUserMan{
             $xml = new \DOMDocument('1.0', 'utf-8');
             $aboutNode = $xml->createElement('group');
             $xml->appendChild($aboutNode);
+            $aboutNode->appendChild($xml->createElement('id', $groupId));
             $aboutNode->appendChild($xml->createElement('name', $about[0]));
             $aboutNode->appendChild($xml->createElement('description', $about[1]));
             $aboutNode->appendChild($xml->createElement('time', $about[2]));
@@ -284,26 +285,31 @@ class UserMan extends ServiceMethods implements intUserMan{
             return $xml;
         }
         else {
-            return json_encode(
-                    array(
-                        'name' => $about[0],
-                        'description' => $about[1],
-                        'time' => $about[2],
-                        'active' => (int) $about[3],
-                        'usum' => (int) $sum[0]
-                    )
-                    );
+            $aboutNode = array(
+                            'id' => $groupId,
+                            'name' => $about[0],
+                            'description' => $about[1],
+                            'time' => $about[2],
+                            'active' => (int) $about[3],
+                            'usum' => (int) $sum[0]
+                            );
+            if ($this->outputType == 'array') {
+                return $aboutNode;
+            }
+            else {
+                return json_encode($aboutNode);
+            }
         }
     }
     
     public function setGroupName($groupId, $groupName, $log = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->checkFuncAccess('core', 'userman_set_about_group')) {
+        if (!$this->checkFuncAccess('core', 'userman_set_about_group')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "setGroupName: restricted by the policy");
             return FALSE;
         }
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
-            $this->setError(ERROR_RESTRICTED_ACCESS, 'setGroupName: function execution was terminated because of using of limited authentication');
+            $this->setError(ERROR_RESTRICTED_ACCESS, 'setGroupName: execution of the function was aborted because you are authenticated with the secondary password');
             return FALSE;
         }
         if (!is_integer($groupId) || !pregGName($groupName)) {
@@ -329,12 +335,12 @@ class UserMan extends ServiceMethods implements intUserMan{
     
     public function setGroupDesc($groupId, $description, $log = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->checkFuncAccess('core', 'userman_set_about_group')) {
+        if (!$this->checkFuncAccess('core', 'userman_set_about_group')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "setGroupDesc: restricted by the policy");
             return FALSE;
         }
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
-            $this->setError(ERROR_RESTRICTED_ACCESS, 'setGroupDesc: function execution was terminated because of using of limited authentication');
+            $this->setError(ERROR_RESTRICTED_ACCESS, 'setGroupDesc: execution of the function was aborted because you are authenticated with the secondary password');
             return FALSE;
         }
         if (!is_integer($groupId) || !is_string($description)) {
@@ -361,7 +367,7 @@ class UserMan extends ServiceMethods implements intUserMan{
     
     public function delGroup($groupId, $log = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->checkFuncAccess('core', 'userman_del_group')) {
+        if (!$this->checkFuncAccess('core', 'userman_del_group')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "delGroup: restricted by the policy");
             return FALSE;
         }
@@ -464,7 +470,7 @@ class UserMan extends ServiceMethods implements intUserMan{
     
     public function getGroups($pageNumber, $totalGroups, $rpp = 20, $orderBy = array('id'), $ascent = FALSE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->checkFuncAccess('core', 'userman_get_groups')) {
+        if (!$this->checkFuncAccess('core', 'userman_get_groups')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "getGroups: restricted by the policy");
             return FALSE;
         }
@@ -540,13 +546,18 @@ class UserMan extends ServiceMethods implements intUserMan{
                     'active' => (int) $row[3]
                 );
             }
-            return json_encode($groupsNode);
+            if ($this->outputType == 'array') {
+                return $groupsNode;
+            }
+            else {
+                return json_encode($groupsNode);
+            }
         }
     }
     
     public function getAllGroups($orderBy = array('id'), $ascent = FALSE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->checkFuncAccess('core', 'userman_get_groups')) {
+        if (!$this->checkFuncAccess('core', 'userman_get_groups')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "getAllGroups: restricted by the policy");
             return FALSE;
         }
@@ -605,19 +616,24 @@ class UserMan extends ServiceMethods implements intUserMan{
                     'active' => (int) $row[3]
                 );
             }
-            return json_encode($groupsNode);
+            if ($this->outputType == 'array') {
+                return $groupsNode;
+            }
+            else {
+                return json_encode($groupsNode);
+            }
         }
     }
 
     //user methods
     public function createUser($username, $password, $email, $groupId, $active = TRUE, $langCode = MECCANO_DEF_LANG, $log = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->checkFuncAccess('core', 'userman_create_user')) {
+        if (!$this->checkFuncAccess('core', 'userman_create_user')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "createUser: restricted by the policy");
             return FALSE;
         }
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
-            $this->setError(ERROR_RESTRICTED_ACCESS, 'createUser: function execution was terminated because of using of limited authentication');
+            $this->setError(ERROR_RESTRICTED_ACCESS, 'createUser: execution of the function was aborted because you are authenticated with the secondary password');
             return FALSE;
         }
         if (!pregUName($username) || !pregPassw($password) || !pregMail($email) || !is_integer($groupId) || !pregLang($langCode)) {
@@ -665,6 +681,7 @@ class UserMan extends ServiceMethods implements intUserMan{
         $usi = makeIdent($username);
         if ($active) { $active = 1; }
         else { $active = 0; }
+        $passId = guid();
         $sql = array(
             'userid' => "INSERT INTO `".MECCANO_TPREF."_core_userman_users` (`username`, `groupid`, `salt`, `active`, `langid`) "
             . "VALUES ('$username', '$groupId', '$salt', $active, $langId) ;",
@@ -672,10 +689,8 @@ class UserMan extends ServiceMethods implements intUserMan{
             . "VALUES (LAST_INSERT_ID(), '$email') ;",
             'tblock' => "INSERT INTO `".MECCANO_TPREF."_core_userman_temp_block` (`id`) "
             . "VALUES (LAST_INSERT_ID()) ;",
-            'passw' => "INSERT INTO `".MECCANO_TPREF."_core_userman_userpass` (`userid`, `password`, `limited`) "
-            . "VALUES (LAST_INSERT_ID(), '$passw', 0) ;",
-            'usi' => "INSERT INTO `".MECCANO_TPREF."_core_auth_usi` (`id`, `usi`) "
-            . "VALUES (LAST_INSERT_ID(), '$usi') ;"
+            'passw' => "INSERT INTO `".MECCANO_TPREF."_core_userman_userpass` (`id`, `userid`, `password`, `limited`) "
+            . "VALUES ('$passId', LAST_INSERT_ID(), '$passw', 0) ;"
             );
         foreach ($sql as $key => $value) {
             $this->dbLink->query($value);
@@ -735,12 +750,12 @@ class UserMan extends ServiceMethods implements intUserMan{
     
     public function userStatus($userId, $active, $log = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->checkFuncAccess('core', 'userman_user_status')) {
+        if (!$this->checkFuncAccess('core', 'userman_user_status')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "userStatus: restricted by the policy");
             return FALSE;
         }
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
-            $this->setError(ERROR_RESTRICTED_ACCESS, 'userStatus: function execution was terminated because of using of limited authentication');
+            $this->setError(ERROR_RESTRICTED_ACCESS, 'userStatus: execution of the function was aborted because you are authenticated with the secondary password');
             return FALSE;
         }
         if (!is_integer($userId) || $userId<1) {
@@ -776,12 +791,12 @@ class UserMan extends ServiceMethods implements intUserMan{
     
     public function moveUserTo($userId, $destId, $log = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->checkFuncAccess('core', 'userman_move_user')) {
+        if (!$this->checkFuncAccess('core', 'userman_move_user')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "moveUserTo: restricted by the policy");
             return FALSE;
         }
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
-            $this->setError(ERROR_RESTRICTED_ACCESS, 'moveUserTo: function execution was terminated because of using of limited authentication');
+            $this->setError(ERROR_RESTRICTED_ACCESS, 'moveUserTo: execution of the function was aborted because you are authenticated with the secondary password');
             return FALSE;
         }
         if (!is_integer($userId) || !is_integer($destId) || $destId<1 || $destId == $userId) {
@@ -821,12 +836,12 @@ class UserMan extends ServiceMethods implements intUserMan{
     
     public function delUser($userId, $log = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->checkFuncAccess('core', 'userman_del_user')) {
+        if (!$this->checkFuncAccess('core', 'userman_del_user')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "delUser: restricted by the policy");
             return FALSE;
         }
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
-            $this->setError(ERROR_RESTRICTED_ACCESS, 'delUser: function execution was terminated because of using of limited authentication');
+            $this->setError(ERROR_RESTRICTED_ACCESS, 'delUser: execution of the function was aborted because you are authenticated with the secondary password');
             return FALSE;
         }
         if (!is_integer($userId)) {
@@ -845,11 +860,20 @@ class UserMan extends ServiceMethods implements intUserMan{
             return FALSE;
         }
         $sql = array(
-            "DELETE FROM `".MECCANO_TPREF."_core_auth_usi` "
-            . "WHERE `id` IN "
-            . "(SELECT `id` "
-            . "FROM `".MECCANO_TPREF."_core_userman_userpass` "
-            . "WHERE `userid`=$userId) ;",
+            "DELETE `si` FROM `".MECCANO_TPREF."_core_auth_session_info` `si` "
+            . "JOIN `".MECCANO_TPREF."_core_auth_usi` `s` "
+            . "ON `si`.`id`=`s`.`id` "
+            . "JOIN `".MECCANO_TPREF."_core_userman_userpass` `p` "
+            . "ON `s`.`pid`=`p`.`id`"
+            . "JOIN  `".MECCANO_TPREF."_core_userman_users` `u` "
+            . "ON `p`.`userid`=`u`.`id` "
+            . "WHERE `u`.`id`=$userId ;",
+            "DELETE `s` FROM `".MECCANO_TPREF."_core_auth_usi` `s` "
+            . "JOIN `".MECCANO_TPREF."_core_userman_userpass` `p` "
+            . "ON `s`.`pid`=`p`.`id`"
+            . "JOIN  `".MECCANO_TPREF."_core_userman_users` `u` "
+            . "ON `p`.`userid`=`u`.`id` "
+            . "WHERE `u`.`id`=$userId ;",
             "DELETE FROM `".MECCANO_TPREF."_core_userman_userpass` "
             . "WHERE `userid`=$userId ;",
             "DELETE FROM `".MECCANO_TPREF."_core_userman_userinfo` "
@@ -875,12 +899,12 @@ class UserMan extends ServiceMethods implements intUserMan{
     
     public function aboutUser($userId) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->checkFuncAccess('core', 'userman_about_user')) {
-            $this->setError(ERROR_RESTRICTED_ACCESS, "aboutUser: restricted by the policy");
-            return FALSE;
-        }
         if (!is_integer($userId)) {
             $this->setError(ERROR_INCORRECT_DATA, 'aboutUser: id must be integer');
+            return FALSE;
+        }
+        if (!$this->checkFuncAccess('core', 'userman_about_user', $userId)) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "aboutUser: restricted by the policy");
             return FALSE;
         }
         $qAbout = $this->dbLink->query("SELECT `u`.`username`, `i`.`fullname`, `i`.`email`, `u`.`creationtime`, `u`.`active`, `g`.`id`, `g`.`groupname` "
@@ -903,6 +927,7 @@ class UserMan extends ServiceMethods implements intUserMan{
             $xml = new \DOMDocument('1.0', 'utf-8');
             $aboutNode = $xml->createElement('user');
             $xml->appendChild($aboutNode);
+            $aboutNode->appendChild($xml->createElement('id', $userId));
             $aboutNode->appendChild($xml->createElement('username', $about[0]));
             $aboutNode->appendChild($xml->createElement('fullname', $about[1]));
             $aboutNode->appendChild($xml->createElement('email', $about[2]));
@@ -913,8 +938,8 @@ class UserMan extends ServiceMethods implements intUserMan{
             return $xml;
         }
         else {
-            return json_encode(
-                    array(
+            $aboutNode = array(
+                        'id' => $userId,
                         'username' => $about[0],
                         'fullname' => $about[1],
                         'email' => $about[2],
@@ -922,24 +947,30 @@ class UserMan extends ServiceMethods implements intUserMan{
                         'active' => (int) $about[4],
                         'gid' => (int) $about[5],
                         'group' => $about[6]
-                    )
-                    );
+                        );
+            if ($this->outputType == 'array') {
+                return $aboutNode;
+            }
+            else {
+                return json_encode($aboutNode);
+            }
         }
     }
     
     public function userPasswords($userId) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->checkFuncAccess('core', 'userman_user_passwords')) {
-            $this->setError(ERROR_RESTRICTED_ACCESS, "userPasswords: restricted by the policy");
-            return FALSE;
-        }
         if (!is_integer($userId)) {
             $this->setError(ERROR_INCORRECT_DATA, 'userPasswords: id must be integer');
             return FALSE;
         }
+        if (!$this->checkFuncAccess('core', 'userman_user_passwords', $userId)) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "userPasswords: restricted by the policy");
+            return FALSE;
+        }
         $qPassw = $this->dbLink->query("SELECT `id`, `description`, `limited` "
                 . "FROM `".MECCANO_TPREF."_core_userman_userpass` "
-                . "WHERE `userid` = $userId ;");
+                . "WHERE `userid` = $userId "
+                . "ORDER BY `limited` ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'userPasswords: '.$this->dbLink->error);
             return FALSE;
@@ -952,6 +983,9 @@ class UserMan extends ServiceMethods implements intUserMan{
             $xml = new \DOMDocument('1.0', 'utf-8');
             $securityNode = $xml->createElement('security');
             $xml->appendChild($securityNode);
+            $uidAttribute = $xml->createAttribute('uid');
+            $uidAttribute->value = $userId;
+            $securityNode->appendChild($uidAttribute);
             while ($row = $qPassw->fetch_row()) {
                 $passwNode = $xml->createElement('password');
                 $securityNode->appendChild($passwNode);
@@ -963,29 +997,36 @@ class UserMan extends ServiceMethods implements intUserMan{
         }
         else {
             $securityNode = array();
+            $securityNode['uid'] = $userId;
+            $securityNode['passwords'] = array();
             while ($row = $qPassw->fetch_row()) {
-                $securityNode[] = array(
-                    'id' => (int) $row[0],
+                $securityNode['passwords'][] = array(
+                    'id' => $row[0],
                     'description' => $row[1],
                     'limited' => (int) $row[2]
                 );
             }
-            return json_encode($securityNode);
+            if ($this->outputType == 'array') {
+                return $securityNode;
+            }
+            else {
+                return json_encode($securityNode);
+            }
         }
     }
     
     public function createPassword($userId, $description, $length = 8, $underline = TRUE, $minus = FALSE, $special = FALSE, $log = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->checkFuncAccess('core', 'userman_add_password')) {
-            $this->setError(ERROR_RESTRICTED_ACCESS, "createPassword: restricted by the policy");
-            return FALSE;
-        }
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
-            $this->setError(ERROR_RESTRICTED_ACCESS, 'createPassword: function execution was terminated because of using of limited authentication');
+            $this->setError(ERROR_RESTRICTED_ACCESS, 'createPassword: execution of the function was aborted because you are authenticated with the secondary password');
             return FALSE;
         }
         if (!is_integer($userId) || !is_string($description)) {
             $this->setError(ERROR_INCORRECT_DATA, 'createPassword: incorrect incoming parameters');
+            return FALSE;
+        }
+        if (!$this->checkFuncAccess('core', 'userman_add_password', $userId)) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "createPassword: restricted by the policy");
             return FALSE;
         }
         if (!$password = genPassword($length, TRUE, TRUE, TRUE, $underline, $minus, $special)) {
@@ -1016,19 +1057,12 @@ class UserMan extends ServiceMethods implements intUserMan{
                 return FALSE;
             }
             if (!$this->dbLink->affected_rows) {
+                $insertId = guid();
                 $description = $this->dbLink->real_escape_string($description);
-                $this->dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_userman_userpass` (`userid`, `password`, `description`, `limited`) "
-                        . "VALUES($userId, '$passwHash', '$description', 1) ;");
+                $this->dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_userman_userpass` (`id`, `userid`, `password`, `description`, `limited`) "
+                        . "VALUES('$insertId', $userId, '$passwHash', '$description', 1) ;");
                 if ($this->dbLink->errno) {
                     $this->setError(ERROR_NOT_EXECUTED, 'createPassword: unable to add password -> '.$this->dbLink->error);
-                    return FALSE;
-                }
-                $insertId = (int) $this->dbLink->insert_id;
-                $usi = makeIdent("$insertId");
-                $this->dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_auth_usi` (`id`, `usi`) "
-                        . "VALUES($insertId, '$usi') ;");
-                if ($this->dbLink->errno) {
-                    $this->setError(ERROR_NOT_EXECUTED, 'createPassword: unable to create unique session identifier -> '.$this->dbLink->error);
                     return FALSE;
                 }
                 if ($log && !$this->newLogRecord('core', 'userman_add_password', "PASSW_ID: $insertId; USER_ID: $userId")) {
@@ -1044,16 +1078,16 @@ class UserMan extends ServiceMethods implements intUserMan{
     
     public function addPassword($userId, $password, $description='', $log = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->checkFuncAccess('core', 'userman_add_password')) {
-            $this->setError(ERROR_RESTRICTED_ACCESS, "addPassword: restricted by the policy");
-            return FALSE;
-        }
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
-            $this->setError(ERROR_RESTRICTED_ACCESS, 'addPassword: function execution was terminated because of using of limited authentication');
+            $this->setError(ERROR_RESTRICTED_ACCESS, 'addPassword: execution of the function was aborted because you are authenticated with the secondary password');
             return FALSE;
         }
         if (!is_integer($userId) || !pregPassw($password) || !is_string($description)) {
             $this->setError(ERROR_INCORRECT_DATA, 'addPassword: incorrect incoming parameters');
+            return FALSE;
+        }
+        if (!$this->checkFuncAccess('core', 'userman_add_password', $userId)) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "addPassword: restricted by the policy");
             return FALSE;
         }
         $qHash = $this->dbLink->query("SELECT `salt` "
@@ -1083,18 +1117,11 @@ class UserMan extends ServiceMethods implements intUserMan{
             return FALSE;
         }
         $description = $this->dbLink->real_escape_string($description);
-        $this->dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_userman_userpass` (`userid`, `password`, `description`, `limited`) "
-                . "VALUES($userId, '$passwHash', '$description', 1) ;");
+        $insertId = guid();
+        $this->dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_userman_userpass` (`id`, `userid`, `password`, `description`, `limited`) "
+                . "VALUES('$insertId', $userId, '$passwHash', '$description', 1) ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'addPassword: unable to add password -> '.$this->dbLink->error);
-            return FALSE;
-        }
-        $insertId = (int) $this->dbLink->insert_id;
-        $usi = makeIdent("$insertId");
-        $this->dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_auth_usi` (`id`, `usi`) "
-                . "VALUES($insertId, '$usi') ;");
-        if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'addPassword: unable to create unique session identifier -> '.$this->dbLink->error);
             return FALSE;
         }
         if ($log && !$this->newLogRecord('core', 'userman_add_password', "PASSW_ID: $insertId; USER_ID: $userId")) {
@@ -1105,21 +1132,21 @@ class UserMan extends ServiceMethods implements intUserMan{
     
     public function delPassword($passwId, $userId, $log = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->checkFuncAccess('core', 'userman_del_password')) {
+        if (!pregGuid($passwId) || !is_integer($userId)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'delPassword: incorrect incoming parameters');
+            return FALSE;
+        }
+        if (!$this->checkFuncAccess('core', 'userman_del_password', $userId)) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "delPassword: restricted by the policy");
             return FALSE;
         }
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
-            $this->setError(ERROR_RESTRICTED_ACCESS, 'delPassword: function execution was terminated because of using of limited authentication');
-            return FALSE;
-        }
-        if (!is_integer($passwId) || !is_integer($userId)) {
-            $this->setError(ERROR_INCORRECT_DATA, 'delPassword: incorrect incoming parameters');
+            $this->setError(ERROR_RESTRICTED_ACCESS, 'delPassword: execution of the function was aborted because you are authenticated with the secondary password');
             return FALSE;
         }
         $qLimited = $this->dbLink->query("SELECT `limited` "
                 . "FROM `".MECCANO_TPREF."_core_userman_userpass` "
-                . "WHERE `id`=$passwId "
+                . "WHERE `id`='$passwId' "
                 . "AND `userid`=$userId ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_INCORRECT_DATA, 'delPassword: unable to check limitation status of the password -> '.$this->dbLink->error);
@@ -1134,10 +1161,16 @@ class UserMan extends ServiceMethods implements intUserMan{
             $this->setError(ERROR_SYSTEM_INTERVENTION, 'delPassword: impossible to delete primary password');
             return FALSE;
         }
-        $sql = array("DELETE FROM `".MECCANO_TPREF."_core_auth_usi` "
-            . "WHERE `id`=$passwId ;",
+        $sql = array(
+            "DELETE `si` FROM `".MECCANO_TPREF."_core_auth_session_info` `si` "
+            . "JOIN `".MECCANO_TPREF."_core_auth_usi` `s` "
+            . "ON `si`.`id`=`s`.`id` "
+            . "WHERE `s`.`pid`='$passwId' ;",
+            "DELETE FROM `".MECCANO_TPREF."_core_auth_usi` "
+            . "WHERE `pid`='$passwId' ;",
             "DELETE FROM `".MECCANO_TPREF."_core_userman_userpass` "
-            . "WHERE `id`=$passwId ;");
+            . "WHERE `id`='$passwId' ;"
+                );
         foreach ($sql as $value) {
             $this->dbLink->query($value);
             if ($this->dbLink->errno) {
@@ -1153,16 +1186,16 @@ class UserMan extends ServiceMethods implements intUserMan{
     
     public function setPassword($passwId, $userId, $password, $log = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->checkFuncAccess('core', 'userman_set_password')) {
-            $this->setError(ERROR_RESTRICTED_ACCESS, "setPassword: restricted by the policy");
-            return FALSE;
-        }
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
-            $this->setError(ERROR_RESTRICTED_ACCESS, 'setPassword: function execution was terminated because of using of limited authentication');
+            $this->setError(ERROR_RESTRICTED_ACCESS, 'setPassword: execution of the function was aborted because you are authenticated with the secondary password');
             return FALSE;
         }
-        if (!is_integer($passwId) || !is_integer($userId) || !pregPassw($password)) {
+        if (!pregGuid($passwId) || !is_integer($userId) || !pregPassw($password)) {
             $this->setError(ERROR_INCORRECT_DATA, 'setPassword: incorrect incoming parameters');
+            return FALSE;
+        }
+        if (!$this->checkFuncAccess('core', 'userman_set_password', $userId)) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "setPassword: restricted by the policy");
             return FALSE;
         }
         $qSalt = $this->dbLink->query("SELECT `salt` "
@@ -1180,7 +1213,7 @@ class UserMan extends ServiceMethods implements intUserMan{
         $passwHash = passwHash($password, $salt);
         $this->dbLink->query("UPDATE `".MECCANO_TPREF."_core_userman_userpass` "
                 . "SET `password`='$passwHash' "
-                . "WHERE `id`=$passwId "
+                . "WHERE `id`='$passwId' "
                 . "AND `userid`=$userId ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'setPassword: unable to update password -> '.$this->dbLink->error);
@@ -1198,12 +1231,12 @@ class UserMan extends ServiceMethods implements intUserMan{
     
     public function setUserName($userId, $username, $log = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->checkFuncAccess('core', 'userman_set_username')) {
+        if (!$this->checkFuncAccess('core', 'userman_set_username')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "setUserName: restricted by the policy");
             return FALSE;
         }
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
-            $this->setError(ERROR_RESTRICTED_ACCESS, 'setUserName: function execution was terminated because of using of limited authentication');
+            $this->setError(ERROR_RESTRICTED_ACCESS, 'setUserName: execution of the function was aborted because you are authenticated with the secondary password');
             return FALSE;
         }
         if (!is_integer($userId) || !pregUName($username)) {
@@ -1240,16 +1273,16 @@ class UserMan extends ServiceMethods implements intUserMan{
     
     public function setUserMail($userId, $email, $log = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->checkFuncAccess('core', 'userman_set_user_mail')) {
+        if (!is_integer($userId) || !pregMail($email)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'setUserMail: incorrect incoming parameters');
+            return FALSE;
+        }
+        if (!$this->checkFuncAccess('core', 'userman_set_user_mail', $userId)) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "setUserMail: restricted by the policy");
             return FALSE;
         }
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
-            $this->setError(ERROR_RESTRICTED_ACCESS, 'setUserMail: function execution was terminated because of using of limited authentication');
-            return FALSE;
-        }
-        if (!is_integer($userId) || !pregMail($email)) {
-            $this->setError(ERROR_INCORRECT_DATA, 'setUserMail: incorrect incoming parameters');
+            $this->setError(ERROR_RESTRICTED_ACCESS, 'setUserMail: execution of the function was aborted because you are authenticated with the secondary password');
             return FALSE;
         }
         $this->dbLink->query("UPDATE `".MECCANO_TPREF."_core_userman_userinfo` "
@@ -1271,12 +1304,12 @@ class UserMan extends ServiceMethods implements intUserMan{
     
     public function setFullName($userId, $name, $log = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->checkFuncAccess('core', 'userman_set_full_name')) {
-            $this->setError(ERROR_RESTRICTED_ACCESS, "setFullName: restricted by the policy");
-            return FALSE;
-        }
         if (!is_integer($userId) || !is_string($name)) {
             $this->setError(ERROR_INCORRECT_DATA, 'setFullName: incorrect incoming parameters');
+            return FALSE;
+        }
+        if (!$this->checkFuncAccess('core', 'userman_set_full_name', $userId)) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "setFullName: restricted by the policy");
             return FALSE;
         }
         $name = $this->dbLink->real_escape_string($name);
@@ -1299,12 +1332,12 @@ class UserMan extends ServiceMethods implements intUserMan{
     
     public function changePassword($passwId, $userId, $oldPassw, $newPassw, $log = TRUE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->checkFuncAccess('core', 'userman_change_password')) {
-            $this->setError(ERROR_RESTRICTED_ACCESS, "changePassword: restricted by the policy");
+        if (!pregGuid($passwId) || !is_integer($userId) || !pregPassw($oldPassw) || !pregPassw($newPassw)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'changePassword: incorrect incoming parameters');
             return FALSE;
         }
-        if (!is_integer($passwId) || !is_integer($userId) || !pregPassw($oldPassw) || !pregPassw($newPassw)) {
-            $this->setError(ERROR_INCORRECT_DATA, 'changePassword: incorrect incoming parameters');
+        if (!$this->checkFuncAccess('core', 'userman_change_password', $userId)) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "changePassword: restricted by the policy");
             return FALSE;
         }
         $qSalt = $this->dbLink->query("SELECT `salt` "
@@ -1338,7 +1371,7 @@ class UserMan extends ServiceMethods implements intUserMan{
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
             $this->dbLink->query("UPDATE `".MECCANO_TPREF."_core_userman_userpass` "
                     . "SET `password`='$newPasswHash' "
-                    . "WHERE `id`=$passwId "
+                    . "WHERE `id`='$passwId' "
                     . "AND `userid`=$userId "
                     . "AND `password`='$oldPasswHash' "
                     . "AND `limited`=1 ;");
@@ -1346,7 +1379,7 @@ class UserMan extends ServiceMethods implements intUserMan{
         else {
             $this->dbLink->query("UPDATE `".MECCANO_TPREF."_core_userman_userpass` "
                     . "SET `password`='$newPasswHash' "
-                    . "WHERE `id`=$passwId "
+                    . "WHERE `id`='$passwId' "
                     . "AND `userid`=$userId "
                     . "AND `password`='$oldPasswHash' ;");
         }
@@ -1395,7 +1428,7 @@ class UserMan extends ServiceMethods implements intUserMan{
     
     public function getUsers($pageNumber, $totalUsers, $rpp = 20, $orderBy = array('id'), $ascent = FALSE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->checkFuncAccess('core', 'userman_get_users')) {
+        if (!$this->checkFuncAccess('core', 'userman_get_users')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "getUsers: restricted by the policy");
             return FALSE;
         }
@@ -1483,13 +1516,18 @@ class UserMan extends ServiceMethods implements intUserMan{
                     'active' => (int) $row[7]
                 );
             }
-            return json_encode($usersNode);
+            if ($this->outputType == 'array') {
+                return $usersNode;
+            }
+            else {
+                return json_encode($usersNode);
+            }
         }
     }
     
     public function getAllUsers($orderBy = array('id'), $ascent = FALSE) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->checkFuncAccess('core', 'userman_get_users')) {
+        if (!$this->checkFuncAccess('core', 'userman_get_users')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "getAllUsers: restricted by the policy");
             return FALSE;
         }
@@ -1560,18 +1598,23 @@ class UserMan extends ServiceMethods implements intUserMan{
                     'active' => (int) $row[7]
                 );
             }
-            return json_encode($usersNode);
+            if ($this->outputType == 'array') {
+                return $usersNode;
+            }
+            else {
+                return json_encode($usersNode);
+            }
         }
     }
     
     public function setUserLang($userId, $code = MECCANO_DEF_LANG) {
         $this->zeroizeError();
-        if ($this->usePolicy && !$this->checkFuncAccess('core', 'userman_set_user_lang')) {
-            $this->setError(ERROR_RESTRICTED_ACCESS, "setUserLang: restricted by the policy");
-            return FALSE;
-        }
         if (!is_integer($userId) || !pregLang($code)) {
             $this->setError(ERROR_INCORRECT_DATA, "setUserLang: incorrect argument(s)");
+            return FALSE;
+        }
+        if (!$this->checkFuncAccess('core', 'userman_set_user_lang', $userId)) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "setUserLang: restricted by the policy");
             return FALSE;
         }
         $sql = array(
