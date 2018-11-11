@@ -276,6 +276,7 @@ class UserMan extends ServiceMethods implements intUserMan{
             $xml = new \DOMDocument('1.0', 'utf-8');
             $aboutNode = $xml->createElement('group');
             $xml->appendChild($aboutNode);
+            $aboutNode->appendChild($xml->createElement('id', $groupId));
             $aboutNode->appendChild($xml->createElement('name', $about[0]));
             $aboutNode->appendChild($xml->createElement('description', $about[1]));
             $aboutNode->appendChild($xml->createElement('time', $about[2]));
@@ -285,6 +286,7 @@ class UserMan extends ServiceMethods implements intUserMan{
         }
         else {
             $aboutNode = array(
+                            'id' => $groupId,
                             'name' => $about[0],
                             'description' => $about[1],
                             'time' => $about[2],
@@ -925,6 +927,7 @@ class UserMan extends ServiceMethods implements intUserMan{
             $xml = new \DOMDocument('1.0', 'utf-8');
             $aboutNode = $xml->createElement('user');
             $xml->appendChild($aboutNode);
+            $aboutNode->appendChild($xml->createElement('id', $userId));
             $aboutNode->appendChild($xml->createElement('username', $about[0]));
             $aboutNode->appendChild($xml->createElement('fullname', $about[1]));
             $aboutNode->appendChild($xml->createElement('email', $about[2]));
@@ -936,6 +939,7 @@ class UserMan extends ServiceMethods implements intUserMan{
         }
         else {
             $aboutNode = array(
+                        'id' => $userId,
                         'username' => $about[0],
                         'fullname' => $about[1],
                         'email' => $about[2],
@@ -979,6 +983,9 @@ class UserMan extends ServiceMethods implements intUserMan{
             $xml = new \DOMDocument('1.0', 'utf-8');
             $securityNode = $xml->createElement('security');
             $xml->appendChild($securityNode);
+            $uidAttribute = $xml->createAttribute('uid');
+            $uidAttribute->value = $userId;
+            $securityNode->appendChild($uidAttribute);
             while ($row = $qPassw->fetch_row()) {
                 $passwNode = $xml->createElement('password');
                 $securityNode->appendChild($passwNode);
@@ -990,8 +997,10 @@ class UserMan extends ServiceMethods implements intUserMan{
         }
         else {
             $securityNode = array();
+            $securityNode['uid'] = $userId;
+            $securityNode['passwords'] = array();
             while ($row = $qPassw->fetch_row()) {
-                $securityNode[] = array(
+                $securityNode['passwords'][] = array(
                     'id' => $row[0],
                     'description' => $row[1],
                     'limited' => (int) $row[2]
