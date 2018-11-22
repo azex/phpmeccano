@@ -395,7 +395,12 @@ class Policy extends ServiceMethods implements intPolicy {
                     'access' => (int) $row[3]
                 );
             }
-            return json_encode($policyNode);
+            if ($this->outputType == 'array') {
+                return $policyNode;
+            }
+            else {
+                return json_encode($policyNode);
+            }
         }
     }
     
@@ -421,7 +426,25 @@ class Policy extends ServiceMethods implements intPolicy {
             return FALSE;
         }
         list($short, $detailed) = $qDesc->fetch_row();
-        return array('short' => $short, 'detailed' => $detailed);
+        if ($this->outputType == 'xml') {
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $polycyNode = $xml->createElement('policy');
+            $xml->appendChild($polycyNode);
+            $shortNode = $xml->createElement('short', $short);
+            $detailedNode = $xml->createElement('detailed', $detailed);
+            $polycyNode->appendChild($shortNode);
+            $polycyNode->appendChild($detailedNode);
+            return $xml;
+        }
+        else {
+            if ($this->outputType == 'array') {
+                return array('short' => $short, 'detailed' => $detailed);
+            }
+            else {
+                return json_encode(array('short' => $short, 'detailed' => $detailed));
+            }
+        }
+        
     }
     
 }
