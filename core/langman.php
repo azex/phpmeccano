@@ -53,23 +53,23 @@ interface intLangMan {
     public function getTitle($name, $section, $plugin, $code = MECCANO_DEF_LANG);
     public function getText($name, $section, $plugin, $code = MECCANO_DEF_LANG);
     public function getTitles($section, $plugin, $code = MECCANO_DEF_LANG);
-    public function getAllTextsXML($section, $plugin, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE);
+    public function getAllTextsList($section, $plugin, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE);
     public function getTextById($id);
     public function sumTexts($section, $plugin, $code = MECCANO_DEF_LANG, $rpp = 20);
-    public function getTextsXML($section, $plugin, $pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE);
+    public function getTextsList($section, $plugin, $pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE);
     public function getTexts($section, $plugin, $code = MECCANO_DEF_LANG);
     public function sumTitles($section, $plugin, $code = MECCANO_DEF_LANG, $rpp = 20);
-    public function getTitlesXML($section, $plugin, $pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE);
-    public function getAllTitlesXML($section, $plugin, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE);
+    public function getTitlesList($section, $plugin, $pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE);
+    public function getAllTitlesList($section, $plugin, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE);
     public function getTitleById($id);
     public function sumTextSections($plugin, $rpp = 20);
-    public function getTextSectionsXML($plugin, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('id'), $ascent = FALSE);
+    public function getTextSectionsList($plugin, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('id'), $ascent = FALSE);
     public function sumTitleSections($plugin, $rpp = 20);
-    public function getTitleSectionsXML($plugin, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('id'), $ascent = FALSE);
+    public function getTitleSectionsList($plugin, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('id'), $ascent = FALSE);
     public function sumTextNames($plugin, $section, $rpp = 20);
-    public function getTextNamesXML($plugin, $section, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('id'), $ascent = FALSE);
+    public function getTextNamesList($plugin, $section, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('id'), $ascent = FALSE);
     public function sumTitleNames($plugin, $section, $rpp = 20);
-    public function getTitleNamesXML($plugin, $section, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('id'), $ascent = FALSE);
+    public function getTitleNamesList($plugin, $section, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('id'), $ascent = FALSE);
 }
 
 class LangMan extends ServiceMethods implements intLangMan{
@@ -1491,10 +1491,10 @@ class LangMan extends ServiceMethods implements intLangMan{
         return $titles;
     }
     
-    public function getAllTextsXML($section, $plugin, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE) {
+    public function getAllTextsList($section, $plugin, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE) {
         $this->zeroizeError();
         if (!pregName40($section) || !pregName40($plugin) || !pregLang($code)) {
-            $this->setError(ERROR_INCORRECT_DATA, 'getAllTextsXML: incorrect incoming parameters');
+            $this->setError(ERROR_INCORRECT_DATA, 'getAllTextsList: incorrect incoming parameters');
             return FALSE;
         }
         $rightEntry = array('id', 'title', 'name', 'created', 'edited');
@@ -1512,7 +1512,7 @@ class LangMan extends ServiceMethods implements intLangMan{
             }
         }
         else {
-            $this->setError(ERROR_INCORRECT_DATA, 'getAllTextsXML: orderBy must be array');
+            $this->setError(ERROR_INCORRECT_DATA, 'getAllTextsList: orderBy must be array');
             return FALSE;
         }
         if ($ascent == TRUE) {
@@ -1537,11 +1537,11 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "AND `l`.`code`='$code' "
                 . "ORDER BY `$orderBy` $direct ;");
         if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'getAllTextsXML: unable to get section -> '.$this->dbLink->error);
+            $this->setError(ERROR_NOT_EXECUTED, 'getAllTextsList: unable to get section -> '.$this->dbLink->error);
             return FALSE;
         }
         if (!$this->dbLink->affected_rows) {
-            $this->setError(ERROR_NOT_FOUND, 'getAllTextsXML: unable to find defined section');
+            $this->setError(ERROR_NOT_FOUND, 'getAllTextsList: unable to find defined section');
             return FALSE;
         }
         // get text direction for defined language
@@ -1655,7 +1655,7 @@ class LangMan extends ServiceMethods implements intLangMan{
         return array('records' => (int) $totalTexts, 'pages' => (int) $totalPages);
     }
     
-    public function getTextsXML($section, $plugin, $pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE) {
+    public function getTextsList($section, $plugin, $pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE) {
         $this->zeroizeError();
         if (!pregName40($section) || 
                 !pregName40($plugin) || 
@@ -1663,7 +1663,7 @@ class LangMan extends ServiceMethods implements intLangMan{
                 !is_integer($totalPages) || 
                 !is_integer($rpp) || 
                 !pregLang($code)) {
-            $this->setError(ERROR_INCORRECT_DATA, 'getTextsXML: incorrect incoming parameters');
+            $this->setError(ERROR_INCORRECT_DATA, 'getTextsList: incorrect incoming parameters');
             return FALSE;
         }
         $rightEntry = array('id', 'title', 'name', 'created', 'edited');
@@ -1681,7 +1681,7 @@ class LangMan extends ServiceMethods implements intLangMan{
             }
         }
         else {
-            $this->setError(ERROR_INCORRECT_DATA, 'getTextsXML: orderBy must be array');
+            $this->setError(ERROR_INCORRECT_DATA, 'getTextsList: orderBy must be array');
             return FALSE;
         }
         if ($pageNumber < 1) {
@@ -1719,11 +1719,11 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "AND `l`.`code`='$code' "
                 . "ORDER BY `$orderBy` $direct LIMIT $start, $rpp ;");
         if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'getTextsXML: unable to get section -> '.$this->dbLink->error);
+            $this->setError(ERROR_NOT_EXECUTED, 'getTextsList: unable to get section -> '.$this->dbLink->error);
             return FALSE;
         }
         if (!$this->dbLink->affected_rows) {
-            $this->setError(ERROR_NOT_FOUND, 'getTextsXML: unable to find defined section');
+            $this->setError(ERROR_NOT_FOUND, 'getTextsList: unable to find defined section');
             return FALSE;
         }
         // get text direction for defined language
@@ -1850,7 +1850,7 @@ class LangMan extends ServiceMethods implements intLangMan{
         return array('records' => (int) $totalTitles, 'pages' => (int) $totalPages);
     }
     
-    public function getTitlesXML($section, $plugin, $pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE) {
+    public function getTitlesList($section, $plugin, $pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE) {
         $this->zeroizeError();
         if (!pregName40($section) || 
                 !pregName40($plugin) || 
@@ -1858,7 +1858,7 @@ class LangMan extends ServiceMethods implements intLangMan{
                 !is_integer($totalPages) || 
                 !is_integer($rpp) || 
                 !pregLang($code)) {
-            $this->setError(ERROR_INCORRECT_DATA, 'getTitlesXML: incorrect incoming parameters');
+            $this->setError(ERROR_INCORRECT_DATA, 'getTitlesList: incorrect incoming parameters');
             return FALSE;
         }
         $rightEntry = array('id', 'title', 'name');
@@ -1876,7 +1876,7 @@ class LangMan extends ServiceMethods implements intLangMan{
             }
         }
         else {
-            $this->setError(ERROR_INCORRECT_DATA, 'getTitlesXML: orderBy must be array');
+            $this->setError(ERROR_INCORRECT_DATA, 'getTitlesList: orderBy must be array');
             return FALSE;
         }
         if ($pageNumber < 1) {
@@ -1914,11 +1914,11 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "AND `l`.`code`='$code' "
                 . "ORDER BY `$orderBy` $direct LIMIT $start, $rpp ;");
         if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'getTitlesXML: unable to get section -> '.$this->dbLink->error);
+            $this->setError(ERROR_NOT_EXECUTED, 'getTitlesList: unable to get section -> '.$this->dbLink->error);
             return FALSE;
         }
         if (!$this->dbLink->affected_rows) {
-            $this->setError(ERROR_NOT_FOUND, 'getTitlesXML: unable to find defined section');
+            $this->setError(ERROR_NOT_FOUND, 'getTitlesList: unable to find defined section');
             return FALSE;
         }
         // get text direction for defined language
@@ -1962,10 +1962,10 @@ class LangMan extends ServiceMethods implements intLangMan{
         }
     }
     
-    public function getAllTitlesXML($section, $plugin, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE) {
+    public function getAllTitlesList($section, $plugin, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE) {
         $this->zeroizeError();
         if (!pregName40($section) || !pregName40($plugin) || !pregLang($code)) {
-            $this->setError(ERROR_INCORRECT_DATA, 'getAllTitlesXML: incorrect incoming parameters');
+            $this->setError(ERROR_INCORRECT_DATA, 'getAllTitlesList: incorrect incoming parameters');
             return FALSE;
         }
         $rightEntry = array('id', 'title', 'name');
@@ -1983,7 +1983,7 @@ class LangMan extends ServiceMethods implements intLangMan{
             }
         }
         else {
-            $this->setError(ERROR_INCORRECT_DATA, 'getAllTitlesXML: value of $orderBy must be string or array');
+            $this->setError(ERROR_INCORRECT_DATA, 'getAllTitlesList: value of $orderBy must be string or array');
             return FALSE;
         }
         if ($ascent == TRUE) {
@@ -2008,11 +2008,11 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "AND `l`.`code`='$code' "
                 . "ORDER BY `$orderBy` $direct ;");
         if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'getAllTitlesXML: unable to get section -> '.$this->dbLink->error);
+            $this->setError(ERROR_NOT_EXECUTED, 'getAllTitlesList: unable to get section -> '.$this->dbLink->error);
             return FALSE;
         }
         if (!$this->dbLink->affected_rows) {
-            $this->setError(ERROR_NOT_FOUND, 'getAllTitlesXML: unable to find defined section');
+            $this->setError(ERROR_NOT_FOUND, 'getAllTitlesList: unable to find defined section');
             return FALSE;
         }
         // get text direction for defined language
@@ -2114,10 +2114,10 @@ class LangMan extends ServiceMethods implements intLangMan{
         return array('records' => (int) $totalSections, 'pages' => (int) $totalPages);
     }
     
-    public function getTextSectionsXML($plugin, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('id'), $ascent = FALSE) {
+    public function getTextSectionsList($plugin, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('id'), $ascent = FALSE) {
         $this->zeroizeError();
         if (!pregPlugin($plugin) || !is_integer($pageNumber) || !is_integer($totalPages) || !is_integer($rpp)) {
-            $this->setError(ERROR_INCORRECT_DATA, 'getTextSectionsXML: incorrect incoming parameters');
+            $this->setError(ERROR_INCORRECT_DATA, 'getTextSectionsList: incorrect incoming parameters');
             return FALSE;
         }
         $rightEntry = array('id', 'name', 'static');
@@ -2135,7 +2135,7 @@ class LangMan extends ServiceMethods implements intLangMan{
             }
         }
         else {
-            $this->setError(ERROR_INCORRECT_DATA, 'getTextSectionsXML: value of $orderBy must be string or array');
+            $this->setError(ERROR_INCORRECT_DATA, 'getTextSectionsList: value of $orderBy must be string or array');
             return FALSE;
         }
         if ($ascent == TRUE) {
@@ -2151,11 +2151,11 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "WHERE `p`.`name`='$plugin' "
                 . "ORDER BY `$orderBy` $direct ;");
         if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'getTextSectionsXML: unable to get sections -> '.$this->dbLink->error);
+            $this->setError(ERROR_NOT_EXECUTED, 'getTextSectionsList: unable to get sections -> '.$this->dbLink->error);
             return FALSE;
         }
         if (!$this->dbLink->affected_rows) {
-            $this->setError(ERROR_NOT_FOUND, 'getTextSectionsXML: unable to find defined plugin');
+            $this->setError(ERROR_NOT_FOUND, 'getTextSectionsList: unable to find defined plugin');
             return FALSE;
         }
         if ($this->outputType == 'xml') {
@@ -2228,10 +2228,10 @@ class LangMan extends ServiceMethods implements intLangMan{
         return array('records' => (int) $totalSections, 'pages' => (int) $totalPages);
     }
     
-    public function getTitleSectionsXML($plugin, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('id'), $ascent = FALSE) {
+    public function getTitleSectionsList($plugin, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('id'), $ascent = FALSE) {
         $this->zeroizeError();
         if (!pregPlugin($plugin) || !is_integer($pageNumber) || !is_integer($totalPages) || !is_integer($rpp)) {
-            $this->setError(ERROR_INCORRECT_DATA, 'getTitleSectionsXML: incorrect incoming parameters');
+            $this->setError(ERROR_INCORRECT_DATA, 'getTitleSectionsList: incorrect incoming parameters');
             return FALSE;
         }
         $rightEntry = array('id', 'name', 'static');
@@ -2249,7 +2249,7 @@ class LangMan extends ServiceMethods implements intLangMan{
             }
         }
         else {
-            $this->setError(ERROR_INCORRECT_DATA, 'getTitleSectionsXML: value of $orderBy must be string or array');
+            $this->setError(ERROR_INCORRECT_DATA, 'getTitleSectionsList: value of $orderBy must be string or array');
             return FALSE;
         }
         if ($ascent == TRUE) {
@@ -2265,11 +2265,11 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "WHERE `p`.`name`='$plugin' "
                 . "ORDER BY `$orderBy` $direct ;");
         if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'getTitleSectionsXML: unable to get sections -> '.$this->dbLink->error);
+            $this->setError(ERROR_NOT_EXECUTED, 'getTitleSectionsList: unable to get sections -> '.$this->dbLink->error);
             return FALSE;
         }
         if (!$this->dbLink->affected_rows) {
-            $this->setError(ERROR_NOT_FOUND, 'getTitleSectionsXML: unable to find defined plugin');
+            $this->setError(ERROR_NOT_FOUND, 'getTitleSectionsList: unable to find defined plugin');
             return FALSE;
         }
         if ($this->outputType == 'xml') {
@@ -2345,10 +2345,10 @@ class LangMan extends ServiceMethods implements intLangMan{
         return array('records' => (int) $totalNames, 'pages' => (int) $totalPages);
     }
     
-    public function getTextNamesXML($plugin, $section, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('id'), $ascent = FALSE) {
+    public function getTextNamesList($plugin, $section, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('id'), $ascent = FALSE) {
         $this->zeroizeError();
         if (!pregPlugin($plugin) || !pregName40($section) || !is_integer($pageNumber) || !is_integer($totalPages) || !is_integer($rpp)) {
-            $this->setError(ERROR_INCORRECT_DATA, 'getTextNamesXML: incorrect incoming parameters');
+            $this->setError(ERROR_INCORRECT_DATA, 'getTextNamesList: incorrect incoming parameters');
             return FALSE;
         }
         $rightEntry = array('id', 'name');
@@ -2366,7 +2366,7 @@ class LangMan extends ServiceMethods implements intLangMan{
             }
         }
         else {
-            $this->setError(ERROR_INCORRECT_DATA, 'getTextNamesXML: value of $orderBy must be string or array');
+            $this->setError(ERROR_INCORRECT_DATA, 'getTextNamesList: value of $orderBy must be string or array');
             return FALSE;
         }
         if ($ascent == TRUE) {
@@ -2388,11 +2388,11 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "WHERE `p`.`name`='$plugin' AND `s`.`section`='$section' "
                 . "ORDER BY `$orderBy` $direct ;");
         if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'getTextNamesXML: unable to get names -> '.$this->dbLink->error);
+            $this->setError(ERROR_NOT_EXECUTED, 'getTextNamesList: unable to get names -> '.$this->dbLink->error);
             return FALSE;
         }
         if (!$this->dbLink->affected_rows) {
-            $this->setError(ERROR_NOT_FOUND, 'getTextNamesXML: unable to find defined section');
+            $this->setError(ERROR_NOT_FOUND, 'getTextNamesList: unable to find defined section');
             return FALSE;
         }
         if ($this->outputType == 'xml') {
@@ -2480,10 +2480,10 @@ class LangMan extends ServiceMethods implements intLangMan{
         return array('records' => (int) $totalNames, 'pages' => (int) $totalPages);
     }
     
-    public function getTitleNamesXML($plugin, $section, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('id'), $ascent = FALSE) {
+    public function getTitleNamesList($plugin, $section, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('id'), $ascent = FALSE) {
         $this->zeroizeError();
         if (!pregPlugin($plugin) || !pregName40($section) || !is_integer($pageNumber) || !is_integer($totalPages) || !is_integer($rpp)) {
-            $this->setError(ERROR_INCORRECT_DATA, 'getTitleNamesXML: incorrect incoming parameters');
+            $this->setError(ERROR_INCORRECT_DATA, 'getTitleNamesList: incorrect incoming parameters');
             return FALSE;
         }
         $rightEntry = array('id', 'name');
@@ -2501,7 +2501,7 @@ class LangMan extends ServiceMethods implements intLangMan{
             }
         }
         else {
-            $this->setError(ERROR_INCORRECT_DATA, 'getTitleNamesXML: value of $orderBy must be string or array');
+            $this->setError(ERROR_INCORRECT_DATA, 'getTitleNamesList: value of $orderBy must be string or array');
             return FALSE;
         }
         if ($ascent == TRUE) {
@@ -2523,11 +2523,11 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "WHERE `p`.`name`='$plugin' AND `s`.`section`='$section' "
                 . "ORDER BY `$orderBy` $direct ;");
         if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'getTitleNamesXML: unable to get names -> '.$this->dbLink->error);
+            $this->setError(ERROR_NOT_EXECUTED, 'getTitleNamesList: unable to get names -> '.$this->dbLink->error);
             return FALSE;
         }
         if (!$this->dbLink->affected_rows) {
-            $this->setError(ERROR_NOT_FOUND, 'getTitleNamesXML: unable to find defined section');
+            $this->setError(ERROR_NOT_FOUND, 'getTitleNamesList: unable to find defined section');
             return FALSE;
         }
         if ($this->outputType == 'xml') {
