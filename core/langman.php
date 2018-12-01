@@ -1772,7 +1772,12 @@ class LangMan extends ServiceMethods implements intLangMan{
                     'edited' => $row[4]
                 );
             }
-            return json_encode($textsNode);
+            if ($this->outputType == 'array') {
+                return $textsNode;
+            }
+            else {
+                return json_encode($textsNode);
+            }
         }
     }
     
