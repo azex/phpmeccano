@@ -2207,7 +2207,12 @@ class LangMan extends ServiceMethods implements intLangMan{
                     'contains' => (int) $row[3]
                 );
             }
-            return json_encode($sectionsNode);
+            if ($this->outputType == 'array') {
+                return $sectionsNode;
+            }
+            else {
+                return json_encode($sectionsNode);
+            }
         }
     }
     
