@@ -2606,7 +2606,12 @@ class LangMan extends ServiceMethods implements intLangMan{
                     'languages' => $lCodes
                 );
             }
-            return json_encode($pageNode);
+            if ($this->outputType == 'array') {
+                return $pageNode;
+            }
+            else {
+                return json_encode($pageNode);
+            }
         }
     }
 }
