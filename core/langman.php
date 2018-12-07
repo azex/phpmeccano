@@ -336,7 +336,12 @@ class LangMan extends ServiceMethods implements intLangMan{
                     'dir' => $row[3]
                 );
             }
-            return json_encode($languages);
+            if ($this->outputType == 'array') {
+                return $languages;
+            }
+            else {
+                return json_encode($languages);
+            }
         }
     }
     
