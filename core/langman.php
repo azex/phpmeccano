@@ -1630,9 +1630,11 @@ class LangMan extends ServiceMethods implements intLangMan{
             $this->setError(ERROR_INCORRECT_DATA, 'getTextById: identifier must be integer');
             return FALSE;
         }
-        $qText = $this->dbLink->query("SELECT `title`, `document`, `created`, `edited` "
-                . "FROM `".MECCANO_TPREF."_core_langman_texts` "
-                . "WHERE `id`=$id ;");
+        $qText = $this->dbLink->query("SELECT `t`.`title`, `t`.`document`, `t`.`created`, `t`.`edited`, `l`.`dir` "
+                . "FROM `".MECCANO_TPREF."_core_langman_texts` `t` "
+                . "JOIN `".MECCANO_TPREF."_core_langman_languages` `l` "
+                . "ON `t`.`codeid`=`l`.`id` "
+                . "WHERE `t`.`id`=$id ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'getTextById: unable to get text -> '.$this->dbLink->error);
             return FALSE;
@@ -1641,8 +1643,33 @@ class LangMan extends ServiceMethods implements intLangMan{
             $this->setError(ERROR_NOT_FOUND, 'getTextById: unable to find defined text');
             return FALSE;
         }
-        list($title, $document, $created, $edited) = $qText->fetch_row();
-        return array('title' => $title, 'document' => $document, 'created' => $created, 'edited' => $edited);
+        list($title, $document, $created, $edited, $direction) = $qText->fetch_row();
+        if ($this->outputType == 'xml') {
+            // create DOM
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $textNode = $xml->createElement('text');
+            $titleNode = $xml->createElement('title', $title);
+            $documentNode = $xml->createElement('document', $document);
+            $createdNode = $xml->createElement('created', $created);
+            $editedNode = $xml->createElement('edited', $edited);
+            $dirNode = $xml->createElement('dir', $direction);
+            $textNode->appendChild($titleNode);
+            $textNode->appendChild($documentNode);
+            $textNode->appendChild($createdNode);
+            $textNode->appendChild($editedNode);
+            $textNode->appendChild($dirNode);
+            $xml->appendChild($textNode);
+            return $xml;
+        }
+        else {
+            $textNode = array('title' => $title, 'document' => $document, 'created' => $created, 'edited' => $edited, 'dir' => $direction);
+            if ($this->outputType == 'json') {
+                return json_encode($textNode);
+            }
+            else {
+                return $textNode;
+            }
+        }
     }
     
     public function sumTexts($section, $plugin, $code = MECCANO_DEF_LANG, $rpp = 20) {
