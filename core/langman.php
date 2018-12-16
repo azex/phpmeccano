@@ -1459,7 +1459,32 @@ class LangMan extends ServiceMethods implements intLangMan{
             return FALSE;
         }
         list($title, $document, $created, $edited, $direction) = $qText->fetch_row();
-        return array('title' => $title, 'document' => $document, 'created' => $created, 'edited' => $edited, 'dir' => $direction);
+        if ($this->outputType == 'xml') {
+            // create DOM
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $textNode = $xml->createElement('text');
+            $titleNode = $xml->createElement('title', $title);
+            $documentNode = $xml->createElement('document', $document);
+            $createdNode = $xml->createElement('created', $created);
+            $editedNode = $xml->createElement('edited', $edited);
+            $dirNode = $xml->createElement('dir', $direction);
+            $textNode->appendChild($titleNode);
+            $textNode->appendChild($documentNode);
+            $textNode->appendChild($createdNode);
+            $textNode->appendChild($editedNode);
+            $textNode->appendChild($dirNode);
+            $xml->appendChild($textNode);
+            return $xml;
+        }
+        else {
+            $textNode = array('title' => $title, 'document' => $document, 'created' => $created, 'edited' => $edited, 'dir' => $direction);
+            if ($this->outputType == 'json') {
+                return json_encode($textNode);
+            }
+            else {
+                return $textNode;
+            }
+        }
     }
     
     public function getTitles($section, $plugin, $code = MECCANO_DEF_LANG) {
