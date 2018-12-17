@@ -1427,7 +1427,26 @@ class LangMan extends ServiceMethods implements intLangMan{
             return FALSE;
         }
         list($title, $direction) = $qTitle->fetch_row();
-        return array('title' => $title, 'dir' => $direction);
+        if ($this->outputType == 'xml') {
+            // create DOM
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $stringNode = $xml->createElement('string');
+            $titleNode = $xml->createElement('title', $title);
+            $dirNode = $xml->createElement('dir', $direction);
+            $stringNode->appendChild($titleNode);
+            $stringNode->appendChild($dirNode);
+            $xml->appendChild($stringNode);
+            return $xml;
+        }
+        else {
+            $stringNode = array('title' => $title, 'dir' => $direction);
+            if ($this->outputType == 'json') {
+                return json_encode($stringNode);
+            }
+            else {
+                return $stringNode;
+            }
+        }
     }
     
     public function getText($name, $section, $plugin, $code = MECCANO_DEF_LANG) {
