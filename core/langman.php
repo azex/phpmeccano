@@ -2158,9 +2158,11 @@ class LangMan extends ServiceMethods implements intLangMan{
             $this->setError(ERROR_INCORRECT_DATA, 'getTitleById: identifier must be integer');
             return FALSE;
         }
-        $qTitle = $this->dbLink->query("SELECT `title` "
-                . "FROM `".MECCANO_TPREF."_core_langman_titles` "
-                . "WHERE `id`=$id ;");
+        $qTitle = $this->dbLink->query("SELECT `t`.`title`, `l`.`dir` "
+                . "FROM `".MECCANO_TPREF."_core_langman_titles` `t` "
+                . "JOIN `".MECCANO_TPREF."_core_langman_languages` `l` "
+                . "ON `t`.`codeid`=`l`.`id` "
+                . "WHERE `t`.`id`=$id ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'getTitleById: unable to get title -> '.$this->dbLink->error);
             return FALSE;
@@ -2169,8 +2171,27 @@ class LangMan extends ServiceMethods implements intLangMan{
             $this->setError(ERROR_NOT_FOUND, 'getTitleById: unable to find defined title');
             return FALSE;
         }
-        list($title) = $qTitle->fetch_row();
-        return $title;
+        list($title, $direction) = $qTitle->fetch_row();
+        if ($this->outputType == 'xml') {
+            // create DOM
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $stringNode = $xml->createElement('string');
+            $titleNode = $xml->createElement('title', $title);
+            $dirNode = $xml->createElement('dir', $direction);
+            $stringNode->appendChild($titleNode);
+            $stringNode->appendChild($dirNode);
+            $xml->appendChild($stringNode);
+            return $xml;
+        }
+        else {
+            $stringNode = array('title' => $title, 'dir' => $direction);
+            if ($this->outputType == 'json') {
+                return json_encode($stringNode);
+            }
+            else {
+                return $stringNode;
+            }
+        }
     }
     
     public function sumTextSections($plugin, $rpp = 20) {
