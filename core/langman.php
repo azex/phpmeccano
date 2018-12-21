@@ -1863,7 +1863,7 @@ class LangMan extends ServiceMethods implements intLangMan{
             $this->setError(ERROR_INCORRECT_DATA, 'getTexts: incorrect incoming parameters');
             return FALSE;
         }
-        $qTexts = $this->dbLink->query("SELECT `n`.`name`, `t`.`title` "
+        $qTexts = $this->dbLink->query("SELECT `n`.`name`, `t`.`title`, `t`.`document` "
                 . "FROM `".MECCANO_TPREF."_core_langman_texts` `t` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_text_names` `n` "
                 . "ON `n`.`id`=`t`.`nameid` "
@@ -1884,11 +1884,35 @@ class LangMan extends ServiceMethods implements intLangMan{
             $this->setError(ERROR_NOT_FOUND, 'getTexts: unable to find defined section');
             return FALSE;
         }
-        $texts = array();
-        while ($result = $qTexts->fetch_row()) {
-            $texts[$result[0]] = $result[1];
+        if ($this->outputType == 'xml') {
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $textsNode = $xml->createElement('texts');
+            $xml->appendChild($textsNode);
+            while ($result = $qTexts->fetch_row()) {
+                $textNode = $xml->createElement('text');
+                $nameAttribute = $xml->createAttribute('name');
+                $nameAttribute->value = $result[0];
+                $textNode->appendChild($nameAttribute);
+                $titleNode = $xml->createElement('title', $result[1]);
+                $documentNode = $xml->createElement('document', $result[2]);
+                $textNode->appendChild($titleNode);
+                $textNode->appendChild($documentNode);
+                $textsNode->appendChild($textNode);
+            }
+            return $xml;
         }
-        return $texts;
+        else {
+            $texts = array();
+            while ($result = $qTexts->fetch_row()) {
+                $texts[$result[0]] = array('title' => $result[1], 'document' => $result[2]);
+            }
+            if ($this->outputType == 'json') {
+                return json_encode($texts);
+            }
+            else {
+                return $texts;
+            }
+        }
     }
     
     public function sumTitles($section, $plugin, $code = MECCANO_DEF_LANG, $rpp = 20) {
