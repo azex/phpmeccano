@@ -430,18 +430,20 @@ class Policy extends ServiceMethods implements intPolicy {
             $xml = new \DOMDocument('1.0', 'utf-8');
             $polycyNode = $xml->createElement('policy');
             $xml->appendChild($polycyNode);
+            $idNode = $xml->createElement('id', $id);
             $shortNode = $xml->createElement('short', $short);
             $detailedNode = $xml->createElement('detailed', $detailed);
+            $polycyNode->appendChild($idNode);
             $polycyNode->appendChild($shortNode);
             $polycyNode->appendChild($detailedNode);
             return $xml;
         }
         else {
-            if ($this->outputType == 'array') {
-                return array('short' => $short, 'detailed' => $detailed);
+            if ($this->outputType == 'json') {
+                return json_encode(array('id' => $id, 'short' => $short, 'detailed' => $detailed));
             }
             else {
-                return json_encode(array('short' => $short, 'detailed' => $detailed));
+                return array('id' => $id, 'short' => $short, 'detailed' => $detailed);
             }
         }
         
