@@ -1533,11 +1533,31 @@ class LangMan extends ServiceMethods implements intLangMan{
             $this->setError(ERROR_NOT_FOUND, 'getTitles: unable to find defined section');
             return FALSE;
         }
-        $titles = array();
-        while ($result = $qTitles->fetch_row()) {
-            $titles[$result[0]] = $result[1];
+        if ($this->outputType == 'xml') {
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $titlesNode = $xml->createElement('titles');
+            $xml->appendChild($titlesNode);
+            while ($result = $qTitles->fetch_row()) {
+                $nameAttribute = $xml->createAttribute('name');
+                $nameAttribute->value = $result[0];
+                $titleNode = $xml->createElement('title', $result[1]);
+                $titleNode->appendChild($nameAttribute);
+                $titlesNode->appendChild($titleNode);
+            }
+            return $xml;
         }
-        return $titles;
+        else {
+            $titlesNodes = array();
+            while ($result = $qTitles->fetch_row()) {
+                $titlesNodes[$result[0]] = $result[1];
+            }
+            if ($this->outputType == 'json') {
+                return json_encode($titlesNodes);
+            }
+            else {
+                return $titlesNodes;
+            }
+        }
     }
     
     public function getAllTextsList($section, $plugin, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE) {
