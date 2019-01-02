@@ -375,7 +375,7 @@ class Plugins extends ServiceMethods implements intPlugins {
             $unpacked = array(
                 'short' => $shortName,
                 'full' => $fullName,
-                'version' =>$version,
+                'version' => $version,
                 'about' => $about,
                 'credits' => $credits,
                 'url' => $url,
@@ -384,7 +384,12 @@ class Plugins extends ServiceMethods implements intPlugins {
                 'depends' => $depends,
                 'action' => $action
             );
-            return json_encode($unpacked);
+            if ($this->outputType == 'json'){
+                return json_encode($unpacked);
+            }
+            else {
+                return $unpacked;
+            }
         }
     }
     
