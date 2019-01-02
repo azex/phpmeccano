@@ -308,7 +308,12 @@ class Plugins extends ServiceMethods implements intPlugins {
                     'action' => $action
                 );
             }
-            return json_encode($unpacked);
+            if ($this->outputType == 'json') {
+                return json_encode($unpacked);
+            }
+            else {
+                return $unpacked;
+            }
         }
     }
     
