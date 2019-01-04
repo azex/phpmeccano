@@ -845,7 +845,12 @@ class Plugins extends ServiceMethods implements intPlugins {
                 "email" => $email,
                 "license" => $license
             );
-            return json_encode($installed);
+            if ($this->outputType == 'json') {
+                return json_encode($installed);
+            }
+            else {
+                return $installed;
+            }
         }
     }
 }
