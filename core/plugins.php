@@ -785,7 +785,12 @@ class Plugins extends ServiceMethods implements intPlugins {
                     "time" => $row[3]
                 );
             }
-            return json_encode($installed);
+            if ($this->outputType == 'json') {
+                return json_encode($installed);
+            }
+            else {
+                return $installed;
+            }
         }
     }
     
