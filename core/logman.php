@@ -490,7 +490,12 @@ class LogMan extends ServiceMethods implements intLogMan {
                     'user' => $row[3]
                 );
             }
-            return json_encode($log);
+            if ($this->outputType == 'json') {
+                return json_encode($log);
+            }
+            else {
+                return $log;
+            }
         }
     }
     
