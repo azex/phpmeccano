@@ -247,7 +247,7 @@ class Discuss extends ServiceMethods implements intDiscuss {
     public function getAllComments($topicId) {
         $this->zeroizeError();
         if (!pregGuid($topicId)) {
-            $this->setError(ERROR_INCORRECT_DATA, 'getComments: incorrect parameter');
+            $this->setError(ERROR_INCORRECT_DATA, 'getAllComments: incorrect parameter');
             return FALSE;
         }
         // check whether topic exists
@@ -257,11 +257,11 @@ class Discuss extends ServiceMethods implements intDiscuss {
                 . "WHERE `id`='$topicId' ;"
                 );
         if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'getComments: unable to check whether topic exists -> '.$this->dbLink->error);
+            $this->setError(ERROR_NOT_EXECUTED, 'getAllComments: unable to check whether topic exists -> '.$this->dbLink->error);
             return FALSE;
         }
         if (!$this->dbLink->affected_rows) {
-            $this->setError(ERROR_NOT_FOUND, 'getComments: topic not found -> '.$this->dbLink->error);
+            $this->setError(ERROR_NOT_FOUND, 'getAllComments: topic not found -> '.$this->dbLink->error);
             return FALSE;
         }
         $topicRow = $qTopic->fetch_row();
@@ -278,7 +278,7 @@ class Discuss extends ServiceMethods implements intDiscuss {
                 . "ORDER BY `c`.`microtime` DESC ;"
                 );
         if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'getComments: unable to get comments -> '.$this->dbLink->error);
+            $this->setError(ERROR_NOT_EXECUTED, 'getAllComments: unable to get comments -> '.$this->dbLink->error);
             return FALSE;
         }
         if ($this->outputType == 'xml') {
@@ -350,7 +350,12 @@ class Discuss extends ServiceMethods implements intDiscuss {
             $comsNode['tid'] = $topicId;
             $comsNode['minmark'] = (double) $minMark;
             $comsNode['maxmark'] = (double) $maxMark;
-            return json_encode($comsNode);
+            if ($this->outputType == 'json') {
+                return json_encode($comsNode);
+            }
+            else {
+                return $comsNode;
+            }
         }
     }
     
