@@ -761,7 +761,7 @@ class Share extends Discuss implements intShare {
                     }
                 }
                 else {
-                    $this->setError(ERROR_NOT_EXECUTED, "getFile: must be run with web server (Apache, NGINX or lighttpd)");
+                    $this->setError(ERROR_NOT_EXECUTED, "getFile: must be executed at the web server (Apache, NGINX or lighttpd)");
                     return FALSE;
                 }
                 header("Content-Type: $mimeType");
@@ -770,7 +770,7 @@ class Share extends Discuss implements intShare {
                 exit;
             }
             else {
-                $this->setError(ERROR_NOT_FOUND, "getFile: file [$fileId] not found on the disk");
+                $this->setError(ERROR_NOT_FOUND, "getFile: file [$fileId] is not found on the disk");
                 return FALSE;
             }
         }
