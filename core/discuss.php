@@ -440,7 +440,12 @@ class Discuss extends ServiceMethods implements intDiscuss {
         }
         else {
             $comsNode['minmark'] = (double) $minMark;
-            return json_encode($comsNode);
+            if ($this->outputType == 'json') {
+                return json_encode($comsNode);
+            }
+            else {
+                return $comsNode;
+            }
         }
     }
     
