@@ -529,7 +529,12 @@ class Discuss extends ServiceMethods implements intDiscuss {
         }
         else {
             $comsNode['maxmark'] = (double) $maxMark;
-            return json_encode($comsNode);
+            if ($this->outputType == 'json') {
+                return json_encode($comsNode);
+            }
+            else {
+                return $comsNode;
+            }
         }
     }
     
