@@ -605,15 +605,18 @@ class Discuss extends ServiceMethods implements intDiscuss {
             return $xml;
         }
         else {
-            return json_encode(
-                    array(
-                        'uid' => $userId,
-                        'username' => $userName,
-                        'fullname' => $fullName,
-                        'cid' => $commentId,
-                        'text' => $text
-                    )
-                    );
+            $comment = array(
+                'uid' => $userId, 
+                'username' => $userName, 
+                'fullname' => $fullName, 
+                'cid' => $commentId, 
+                'text' => $text);
+            if ($this->outputType == 'json') {
+                return json_encode($comment);
+            }
+            else {
+                return $comment;
+            }
         }
     }
     
