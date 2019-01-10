@@ -299,7 +299,12 @@ class Share extends Discuss implements intShare {
                 $circleNode['name'] = $row[1];
                 $circlesNode[] = $circleNode;
             }
-            return json_encode($circlesNode);
+            if ($this->outputType == 'json') {
+                return json_encode($circlesNode);
+            }
+            else {
+                return $circlesNode;
+            }
         }
     }
     
