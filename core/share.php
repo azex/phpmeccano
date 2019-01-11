@@ -459,7 +459,12 @@ class Share extends Discuss implements intShare {
                     'fullname' =>$row[2]
                         );
             }
-            return json_encode($rootNode);
+            if ($this->outputType == 'json') {
+                return json_encode($rootNode);
+            }
+            else {
+                return $rootNode;
+            }
         }
     }
     
