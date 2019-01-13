@@ -1149,7 +1149,12 @@ class Share extends Discuss implements intShare {
                 $msgNode['time'] = $msgTime;
                 $msgNode['username'] = $username;
                 $msgNode['fullname'] = $fullName;
-                return json_encode($msgNode);
+                if ($this->outputType == 'json') {
+                    return json_encode($msgNode);
+                }
+                else {
+                    return $msgNode;
+                }
             }
         }
         elseif ($this->errid) {
