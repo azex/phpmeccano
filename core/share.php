@@ -997,9 +997,14 @@ class Share extends Discuss implements intShare {
                 $fileInfoNode['filename'] = $fileInfo[4];
                 $fileInfoNode['comment'] = $fileInfo[5];
                 $fileInfoNode['mime'] = $fileInfo[6];
-                $fileInfoNode['size'] = $fileInfo[7];
+                $fileInfoNode['size'] = (int) $fileInfo[7];
                 $fileInfoNode['time'] = $fileInfo[8];
-                return json_encode($fileInfoNode);
+                if ($this->outputType == 'json') {
+                    return json_encode($fileInfoNode);
+                }
+                else {
+                    return $fileInfoNode;
+                }
             }
         }
         elseif ($this->errid) {
