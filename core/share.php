@@ -1221,7 +1221,12 @@ class Share extends Discuss implements intShare {
                         );
                     }
                 }
-                return json_encode($filesNode);
+                if ($this->outputType == 'json') {
+                    return json_encode($filesNode);
+                }
+                else {
+                    return $filesNode;
+                }
             }
         }
         elseif ($this->errid) {
