@@ -2033,8 +2033,11 @@ class Share extends Discuss implements intShare {
         if ($this->outputType == 'xml') {
             return $xml;
         }
-        else {
+        elseif ($this->outputType == 'json') {
             return json_encode($msgsNode);
+        }
+        else {
+            return $msgsNode;
         }
     }
     
