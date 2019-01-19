@@ -2964,7 +2964,12 @@ class Share extends Discuss implements intShare {
         }
         else {
             $filesNode['minmark'] = (double) $minMark;
-            return json_encode($filesNode);
+            if ($this->outputType == 'json') {
+                return json_encode($filesNode);
+            }
+            else {
+                return $filesNode;
+            }
         }
     }
     
