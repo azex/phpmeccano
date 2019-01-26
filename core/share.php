@@ -3279,7 +3279,12 @@ class Share extends Discuss implements intShare {
             return $xml;
         }
         else {
-            return json_encode($msgsNode);
+            if ($this->outputType == 'json') {
+                return json_encode($msgsNode);
+            }
+            else {
+                return $msgsNode;
+            }
         }
     }
     
