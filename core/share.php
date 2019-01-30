@@ -3594,7 +3594,12 @@ class Share extends Discuss implements intShare {
         }
         else {
             $msgsNode['maxmark'] = (double) $maxMark;
-            return json_encode($msgsNode);
+            if ($this->outputType == 'json') {
+                return json_encode($msgsNode);
+            }
+            else {
+                return $msgsNode;
+            }
         }
     }
     
