@@ -299,7 +299,12 @@ class Share extends Discuss implements intShare {
                 $circleNode['name'] = $row[1];
                 $circlesNode[] = $circleNode;
             }
-            return json_encode($circlesNode);
+            if ($this->outputType == 'json') {
+                return json_encode($circlesNode);
+            }
+            else {
+                return $circlesNode;
+            }
         }
     }
     
@@ -454,7 +459,12 @@ class Share extends Discuss implements intShare {
                     'fullname' =>$row[2]
                         );
             }
-            return json_encode($rootNode);
+            if ($this->outputType == 'json') {
+                return json_encode($rootNode);
+            }
+            else {
+                return $rootNode;
+            }
         }
     }
     
@@ -761,7 +771,7 @@ class Share extends Discuss implements intShare {
                     }
                 }
                 else {
-                    $this->setError(ERROR_NOT_EXECUTED, "getFile: must be run with web server (Apache, NGINX or lighttpd)");
+                    $this->setError(ERROR_NOT_EXECUTED, "getFile: must be executed at the web server (Apache, NGINX or lighttpd)");
                     return FALSE;
                 }
                 header("Content-Type: $mimeType");
@@ -770,7 +780,7 @@ class Share extends Discuss implements intShare {
                 exit;
             }
             else {
-                $this->setError(ERROR_NOT_FOUND, "getFile: file [$fileId] not found on the disk");
+                $this->setError(ERROR_NOT_FOUND, "getFile: file [$fileId] is not found on the disk");
                 return FALSE;
             }
         }
@@ -987,9 +997,14 @@ class Share extends Discuss implements intShare {
                 $fileInfoNode['filename'] = $fileInfo[4];
                 $fileInfoNode['comment'] = $fileInfo[5];
                 $fileInfoNode['mime'] = $fileInfo[6];
-                $fileInfoNode['size'] = $fileInfo[7];
+                $fileInfoNode['size'] = (int) $fileInfo[7];
                 $fileInfoNode['time'] = $fileInfo[8];
-                return json_encode($fileInfoNode);
+                if ($this->outputType == 'json') {
+                    return json_encode($fileInfoNode);
+                }
+                else {
+                    return $fileInfoNode;
+                }
             }
         }
         elseif ($this->errid) {
@@ -1134,7 +1149,12 @@ class Share extends Discuss implements intShare {
                 $msgNode['time'] = $msgTime;
                 $msgNode['username'] = $username;
                 $msgNode['fullname'] = $fullName;
-                return json_encode($msgNode);
+                if ($this->outputType == 'json') {
+                    return json_encode($msgNode);
+                }
+                else {
+                    return $msgNode;
+                }
             }
         }
         elseif ($this->errid) {
@@ -1201,7 +1221,12 @@ class Share extends Discuss implements intShare {
                         );
                     }
                 }
-                return json_encode($filesNode);
+                if ($this->outputType == 'json') {
+                    return json_encode($filesNode);
+                }
+                else {
+                    return $filesNode;
+                }
             }
         }
         elseif ($this->errid) {
@@ -1297,8 +1322,11 @@ class Share extends Discuss implements intShare {
         if ($this->outputType == 'xml') {
             return $xml;
         }
-        else {
+        elseif ($this->outputType == 'json') {
             return json_encode($sharesNode);
+        }
+        else {
+            return $sharesNode;
         }
     }
     
@@ -1385,8 +1413,11 @@ class Share extends Discuss implements intShare {
         if ($this->outputType == 'xml') {
             return $xml;
         }
-        else {
+        elseif ($this->outputType == 'json') {
             return json_encode($sharesNode);
+        }
+        else {
+            return $sharesNode;
         }
     }
     
@@ -2002,8 +2033,11 @@ class Share extends Discuss implements intShare {
         if ($this->outputType == 'xml') {
             return $xml;
         }
-        else {
+        elseif ($this->outputType == 'json') {
             return json_encode($msgsNode);
+        }
+        else {
+            return $msgsNode;
         }
     }
     
@@ -2138,7 +2172,12 @@ class Share extends Discuss implements intShare {
         else {
             $msgsNode['minmark'] = (double) $minMark;
             $msgsNode['maxmark'] = (double) $maxMark;
-            return json_encode($msgsNode);
+            if ($this->outputType == 'json') {
+                return json_encode($msgsNode);
+            }
+            else {
+                return $msgsNode;
+            }
         }
     }
     
@@ -2271,7 +2310,12 @@ class Share extends Discuss implements intShare {
         }
         else {
             $msgsNode['minmark'] = (double) $minMark;
-            return json_encode($msgsNode);
+            if ($this->outputType == 'json') {
+                return json_encode($msgsNode);
+            }
+            else {
+                return $msgsNode;
+            }
         }
     }
     
@@ -2406,7 +2450,12 @@ class Share extends Discuss implements intShare {
         }
         else {
             $msgsNode['maxmark'] = (double) $maxMark;
-            return json_encode($msgsNode);
+            if ($this->outputType == 'json') {
+                return json_encode($msgsNode);
+            }
+            else {
+                return $msgsNode;
+            }
         }
     }
     
@@ -2628,8 +2677,11 @@ class Share extends Discuss implements intShare {
         if ($this->outputType == 'xml') {
             return $xml;
         }
-        else {
+        elseif ($this->outputType == 'json') {
             return json_encode($filesNode);
+        }
+        else {
+            return $filesNode;
         }
     }
     
@@ -2769,7 +2821,12 @@ class Share extends Discuss implements intShare {
         else {
             $filesNode['minmark'] = (double) $minMark;
             $filesNode['maxmark'] = (double) $maxMark;
-            return json_encode($filesNode);
+            if ($this->outputType == 'json') {
+                return json_encode($filesNode);
+            }
+            else {
+                return $filesNode;
+            }
         }
     }
     
@@ -2907,7 +2964,12 @@ class Share extends Discuss implements intShare {
         }
         else {
             $filesNode['minmark'] = (double) $minMark;
-            return json_encode($filesNode);
+            if ($this->outputType == 'json') {
+                return json_encode($filesNode);
+            }
+            else {
+                return $filesNode;
+            }
         }
     }
     
@@ -3047,7 +3109,12 @@ class Share extends Discuss implements intShare {
         }
         else {
             $filesNode['maxmark'] = (double) $maxMark;
-            return json_encode($filesNode);
+            if ($this->outputType == 'json') {
+                return json_encode($filesNode);
+            }
+            else {
+                return $filesNode;
+            }
         }
     }
     
@@ -3212,7 +3279,12 @@ class Share extends Discuss implements intShare {
             return $xml;
         }
         else {
-            return json_encode($msgsNode);
+            if ($this->outputType == 'json') {
+                return json_encode($msgsNode);
+            }
+            else {
+                return $msgsNode;
+            }
         }
     }
     
@@ -3314,7 +3386,12 @@ class Share extends Discuss implements intShare {
         else {
             $msgsNode['minmark'] = (double) $minMark;
             $msgsNode['maxmark'] = (double) $maxMark;
-            return json_encode($msgsNode);
+            if ($this->outputType == 'json') {
+                return json_encode($msgsNode);
+            }
+            else {
+                return $msgsNode;
+            }
         }
     }
     
@@ -3412,7 +3489,12 @@ class Share extends Discuss implements intShare {
         }
         else {
             $msgsNode['minmark'] = (double) $minMark;
-            return json_encode($msgsNode);
+            if ($this->outputType == 'json') {
+                return json_encode($msgsNode);
+            }
+            else {
+                return $msgsNode;
+            }
         }
     }
     
@@ -3512,7 +3594,12 @@ class Share extends Discuss implements intShare {
         }
         else {
             $msgsNode['maxmark'] = (double) $maxMark;
-            return json_encode($msgsNode);
+            if ($this->outputType == 'json') {
+                return json_encode($msgsNode);
+            }
+            else {
+                return $msgsNode;
+            }
         }
     }
     
@@ -3904,7 +3991,12 @@ class Share extends Discuss implements intShare {
         else {
             $msgsNode['minmark'] = (double) $minMark;
             $msgsNode['maxmark'] = (double) $maxMark;
-            return json_encode($msgsNode);
+            if ($this->outputType == 'json') {
+                return json_encode($msgsNode);
+            }
+            else {
+                return $msgsNode;
+            }
         }
     }
     
@@ -3993,7 +4085,12 @@ class Share extends Discuss implements intShare {
         }
         else {
             $msgsNode['minmark'] = (double) $minMark;
-            return json_encode($msgsNode);
+            if ($this->outputType == 'json') {
+                return json_encode($msgsNode);
+            }
+            else {
+                return $msgsNode;
+            }
         }
     }
 }
