@@ -27,15 +27,20 @@ namespace core;
 
 // a function to load PHP libraries of the core or any installed plugin
 function loadPHP($lib, $plugin = "core") {
+    if (!is_string($lib) || preg_match('/.*\.\.\/*./', $lib) || !is_string($plugin) || preg_match('/.*\.\.\/*./', $plugin)) {
+        return NULL;
+    }
     if ($plugin == "core") {
-        if (is_file(MECCANO_CORE_DIR."/$lib.php")) {
-            require_once MECCANO_CORE_DIR."/$lib.php";
+        $fullPath = realpath(MECCANO_CORE_DIR."/$lib.php");
+        if ($fullPath && is_file($fullPath) && is_readable($fullPath)) {
+            require_once $fullPath;
             return TRUE;
         }
     }
     else {
-        if (is_file(MECCANO_PHP_DIR."/$plugin/$lib.php")) {
-            require_once MECCANO_PHP_DIR."/$plugin/$lib.php";
+        $fullPath = realpath(MECCANO_PHP_DIR."/$plugin/$lib.php");
+        if ($fullPath && is_file($fullPath) && is_readable($fullPath)) {
+            require_once $fullPath;
             return TRUE;
         }
     }
@@ -44,16 +49,24 @@ function loadPHP($lib, $plugin = "core") {
 
 // a function to load JavaScript libraries of the core or any installed plugin
 function loadJS($lib, $plugin = "core") {
-    if (is_file(MECCANO_JS_DIR."/$plugin/$lib.js")) {
-        return file_get_contents(MECCANO_JS_DIR."/$plugin/$lib.js");
+    if (!is_string($lib) || preg_match('/.*\.\.\/*./', $lib) || !is_string($plugin) || preg_match('/.*\.\.\/*./', $plugin)) {
+        return NULL;
+    }
+    $fullPath = realpath(MECCANO_JS_DIR."/$plugin/$lib.js");
+    if ($fullPath && is_file($fullPath) && is_readable($fullPath)) {
+        return file_get_contents($fullPath);
     }
     return FALSE;
 }
 
 // a function to load CSS libraries of the core or any installed plugin
 function loadCSS($lib, $plugin = "core") {
-    if (is_file(MECCANO_CSS_DIR."/$plugin/$lib.css")) {
-        return file_get_contents(MECCANO_CSS_DIR."/$plugin/$lib.css");
+    if (!is_string($lib) || preg_match('/.*\.\.\/*./', $lib) || !is_string($plugin) || preg_match('/.*\.\.\/*./', $plugin)) {
+        return NULL;
+    }
+    $fullPath = realpath(MECCANO_CSS_DIR."/$plugin/$lib.css");
+    if ($fullPath && is_file($fullPath) && is_readable($fullPath)) {
+        return file_get_contents($fullPath);
     }
     return FALSE;
 }
