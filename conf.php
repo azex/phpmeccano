@@ -45,6 +45,7 @@ define('MECCANO_CSS_DIR', MECCANO_ROOT_DIR.'/csslibs');
 define('MECCANO_DOCUMENTS_DIR', MECCANO_ROOT_DIR.'/documents');
 define('MECCANO_UNPACKED_PLUGINS', MECCANO_ROOT_DIR.'/unpacked');
 define('MECCANO_UNINSTALL', MECCANO_ROOT_DIR.'/uninstall');
+define('MECCANO_SERVICE_PAGES', MECCANO_ROOT_DIR.'/servpages');
 
 // storage of shared files
 define('MECCANO_SHARED_FILES', MECCANO_ROOT_DIR.'/shfiles');
