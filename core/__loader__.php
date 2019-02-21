@@ -70,3 +70,50 @@ function loadCSS($lib, $plugin = "core") {
     }
     return FALSE;
 }
+
+// a function to load documents and files of the core or any installed plugin
+function loadDOC($doc, $plugin = "core", $disp = "inline", $nocache = FALSE) {
+    if (!isset($_SERVER['SERVER_SOFTWARE'])) {
+        return FALSE; // The function must be executed on a web server
+    }
+    if (!is_string($doc) || preg_match('/.*\.\.\/*./', $doc) || !is_string($plugin) || preg_match('/.*\.\.\/*./', $plugin) || !in_array($disp, array('inline', 'attachment'))) {
+        include MECCANO_SERVICE_PAGES.'/400.php'; // Bad Request
+        exit();
+    }
+    $fullPath = realpath(MECCANO_DOCUMENTS_DIR."/$plugin/$doc");
+    if (!$fullPath || !is_file($fullPath)) {
+        include MECCANO_SERVICE_PAGES.'/404.php'; // Not Found
+        exit();
+    }
+    if (!is_readable($fullPath)) {
+        include MECCANO_SERVICE_PAGES.'/403.php'; // Forbidden
+        exit();
+    }
+    if (preg_match('/.*Apache.*/', $_SERVER['SERVER_SOFTWARE'])) {
+        // https://tn123.org/mod_xsendfile/
+        header("X-SendFile: $fullPath");
+    }
+    elseif (preg_match('/.*nginx.*/', $_SERVER['SERVER_SOFTWARE'])) {
+        // https://www.nginx.com/resources/wiki/start/topics/examples/xsendfile/
+        header("X-Accel-Redirect: /".basename(MECCANO_DOCUMENTS_DIR)."/$plugin/$doc");
+    }
+    elseif (preg_match('/.*lighttpd.*/', $_SERVER['SERVER_SOFTWARE'])) {
+        // https://redmine.lighttpd.net/projects/lighttpd/wiki/X-LIGHTTPD-send-file
+        header("X-LIGHTTPD-send-file: $fullPath");
+    }
+    else {
+        include MECCANO_SERVICE_PAGES.'/501.php'; // Not Implemented
+        exit();
+    }
+    if ($nocache) { // if the file should't be cached
+        header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+        header("Pragma: no-cache");
+    }
+    $mimeType = mime_content_type($fullPath);
+    $fileSize = filesize($fullPath);
+    $fileName = basename($fullPath);
+    header("Content-Type: $mimeType");
+    header("Content-Length: $fileSize");
+    header("Content-Disposition: $disp; filename=$fileName");
+    exit();
+}
