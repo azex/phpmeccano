@@ -733,11 +733,15 @@ class Share extends Discuss implements intShare {
         return TRUE;
     }
     
-    public function getFile($fileId, $contDisp = 'inline') {
+    public function getFile($fileId, $disp = 'inline', $nocache = FALSE) {
         $this->zeroizeError();
-        if (!in_array($contDisp, array('inline', 'attachment'))) {
-            $this->setError(ERROR_INCORRECT_DATA, 'getFile: incorrect content disposition value');
+        if (!isset($_SERVER['SERVER_SOFTWARE'])) {
+            $this->setError(ERROR_NOT_EXECUTED, "getFile: the method must be executed on a web server");
             return FALSE;
+        }
+        if (!pregGuid($fileId) || !in_array($disp, array('inline', 'attachment'))) {
+            include MECCANO_SERVICE_PAGES.'/400.php'; // Bad Request
+            exit();
         }
         if ($this->checkFileAccess($fileId)) {
             $qFile = $this->dbLink->query(
@@ -746,51 +750,55 @@ class Share extends Discuss implements intShare {
                     . "WHERE `id`='$fileId' ;"
                     );
             if ($this->dbLink->errno) {
-                $this->setError(ERROR_NOT_EXECUTED, 'getFile: unable to get file information -> '.$this->dbLink->error);
-                return FALSE;
+                include MECCANO_SERVICE_PAGES.'/503.php'; // Service Unavailable
+                exit();
             }
             list($fileName, $storageDir, $mimeType, $fileSize) = $qFile->fetch_row();
             $fullPath = realpath(MECCANO_SHARED_FILES."/$storageDir/$fileId");
-            if (is_file($fullPath) && is_readable($fullPath)) {
-                if (isset($_SERVER['SERVER_SOFTWARE'])) {
-                    if (preg_match('/.*Apache.*/', $_SERVER['SERVER_SOFTWARE'])) {
-                        // https://tn123.org/mod_xsendfile/
-                        header("X-SendFile: $fullPath");
-                    }
-                    elseif (preg_match('/.*nginx.*/', $_SERVER['SERVER_SOFTWARE'])) {
-                        // https://www.nginx.com/resources/wiki/start/topics/examples/xsendfile/
-                        header("X-Accel-Redirect: /".basename(MECCANO_SHARED_FILES)."/$storageDir/$fileId");
-                    }
-                    elseif (preg_match('/.*lighttpd.*/', $_SERVER['SERVER_SOFTWARE'])) {
-                        // https://redmine.lighttpd.net/projects/lighttpd/wiki/X-LIGHTTPD-send-file
-                        header("X-LIGHTTPD-send-file: " . realpath($fullPath));
-                    }
-                    else {
-                        $this->setError(ERROR_NOT_EXECUTED, "getFile: unknown web server");
-                        return FALSE;
-                    }
-                }
-                else {
-                    $this->setError(ERROR_NOT_EXECUTED, "getFile: must be executed at the web server (Apache, NGINX or lighttpd)");
-                    return FALSE;
-                }
-                header("Content-Type: $mimeType");
-                header("Content-Length: $fileSize");
-                header("Content-Disposition: $contDisp; filename=$fileName");
-                exit;
+            if (!$fullPath || !is_file($fullPath)) {
+                include MECCANO_SERVICE_PAGES.'/404.php'; // Not Found
+                exit();
+            }
+            if (!is_readable($fullPath)) {
+                include MECCANO_SERVICE_PAGES.'/403.php'; // Forbidden
+                exit();
+            }
+            if (preg_match('/.*Apache.*/', $_SERVER['SERVER_SOFTWARE'])) {
+                // https://tn123.org/mod_xsendfile/
+                header("X-SendFile: $fullPath");
+            }
+            elseif (preg_match('/.*nginx.*/', $_SERVER['SERVER_SOFTWARE'])) {
+                // https://www.nginx.com/resources/wiki/start/topics/examples/xsendfile/
+                header("X-Accel-Redirect: /".basename(MECCANO_SHARED_FILES)."/$storageDir/$fileId");
+            }
+            elseif (preg_match('/.*lighttpd.*/', $_SERVER['SERVER_SOFTWARE'])) {
+                // https://redmine.lighttpd.net/projects/lighttpd/wiki/X-LIGHTTPD-send-file
+                header("X-LIGHTTPD-send-file: $fullPath");
             }
             else {
-                $this->setError(ERROR_NOT_FOUND, "getFile: file [$fileId] is not found on the disk");
-                return FALSE;
+                include MECCANO_SERVICE_PAGES.'/501.php'; // Not Implemented
+                exit();
             }
+            if ($nocache) { // if the file should't be cached
+                header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+                header("Pragma: no-cache");
+            }
+            header("Content-Type: $mimeType");
+            header("Content-Length: $fileSize");
+            header("Content-Disposition: $disp; filename=$fileName");
+            exit();
         }
-        elseif ($this->errid) {
-            $this->setError($this->errid, 'getFile -> '.$this->errexp);
-            return FALSE;
+        elseif ($this->errid == ERROR_NOT_FOUND) {
+            include MECCANO_SERVICE_PAGES.'/404.php'; // Not Found
+            exit();
+        }
+        elseif ($this->errid == ERROR_NOT_EXECUTED) {
+            include MECCANO_SERVICE_PAGES.'/503.php'; // Service Unavailable
+            exit();
         }
         else {
-            $this->setError(ERROR_RESTRICTED_ACCESS, 'getFile: access denied');
-            return FALSE;
+            include MECCANO_SERVICE_PAGES.'/403.php'; // Forbidden
+            exit();
         }
     }
     
