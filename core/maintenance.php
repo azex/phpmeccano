@@ -29,6 +29,7 @@ loadPHP('extclass');
 
 interface intMaintenance {
     public function readConfig();
+    public function writeConfig($conf);
 }
 
 class Maintenance extends ServiceMethods implements intMaintenance {
@@ -45,5 +46,39 @@ class Maintenance extends ServiceMethods implements intMaintenance {
         }
         $conf = file_get_contents(MECCANO_SERVICE_PAGES.'/maintenance.json');
         return $conf;
+    }
+    
+    public function writeConfig($conf) {
+        if (gettype($conf) != 'object') {
+            $this->setError(ERROR_INCORRECT_DATA, 'writeConfig: invalid type of got parameters');
+            return false;
+        }
+        if (!isset($conf->enabled) || gettype($conf->enabled) != 'boolean') {
+            $this->setError(ERROR_INCORRECT_DATA, 'writeConfig: parameter [enabled] is incorrect or not exist');
+            return false;
+        }
+        if (!isset($conf->timeout) || gettype($conf->timeout) != 'integer') {
+            $this->setError(ERROR_INCORRECT_DATA, 'writeConfig: parameter [timeout] is incorrect or not exist');
+            return false;
+        }
+        if (!isset($conf->prmsg) || gettype($conf->prmsg) != 'string') {
+            $this->setError(ERROR_INCORRECT_DATA, 'writeConfig: parameter [prmsg] is incorrect or not exist');
+            return false;
+        }
+        if (!isset($conf->secmsg) || gettype($conf->secmsg) != 'string') {
+            $this->setError(ERROR_INCORRECT_DATA, 'writeConfig: parameter [secmsg] is incorrect or not exist');
+            return false;
+        }
+        $confPath = MECCANO_SERVICE_PAGES.'/maintenance.json';
+        if (!is_file($confPath)) {
+            $this->setError(ERROR_NOT_FOUND, "writeConfig: configurational file [$confPath] is not found");
+            return false;
+        }
+        if (!is_writable($confPath)) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "writeConfig: configurational file [$confPath] is not writable");
+            return false;
+        }
+        file_put_contents($confPath, json_encode($conf));
+        return true;
     }
 }
