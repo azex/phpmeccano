@@ -32,6 +32,7 @@ interface intMaintenance {
     public function writeConfig($conf);
     public function state();
     public function enable();
+    public function disable();
 }
 
 class Maintenance extends ServiceMethods implements intMaintenance {
@@ -121,6 +122,20 @@ class Maintenance extends ServiceMethods implements intMaintenance {
         $decoded = json_decode($conf);
         if (!$decoded->enabled) {
             $decoded->enabled = true;
+            $this->writeConfig($decoded);
+        }
+        return array('enabled' => $decoded->enabled);
+    }
+    
+    public function disable() {
+        $conf = $this->readConfig();
+        if (!$conf) {
+            $this->setError($this->errid, 'disable -> '.$this->errexp);
+            return false;
+        }
+        $decoded = json_decode($conf);
+        if ($decoded->enabled) {
+            $decoded->enabled = false;
             $this->writeConfig($decoded);
         }
         return array('enabled' => $decoded->enabled);
