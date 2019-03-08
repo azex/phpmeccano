@@ -30,6 +30,7 @@ loadPHP('extclass');
 interface intMaintenance {
     public function readConfig();
     public function writeConfig($conf);
+    public function state();
 }
 
 class Maintenance extends ServiceMethods implements intMaintenance {
@@ -45,6 +46,24 @@ class Maintenance extends ServiceMethods implements intMaintenance {
             return false;
         }
         $conf = file_get_contents(MECCANO_SERVICE_PAGES.'/maintenance.json');
+        // checking of recieved data
+        $decoded = json_decode($conf);
+        if (!isset($decoded->enabled) || gettype($decoded->enabled) != 'boolean') {
+            $this->setError(ERROR_INCORRECT_DATA, 'readConf: parameter [enabled] is incorrect or not exist');
+            return false;
+        }
+        if (!isset($decoded->timeout) || gettype($decoded->timeout) != 'integer' || $decoded->timeout<0) {
+            $this->setError(ERROR_INCORRECT_DATA, 'readConf: parameter [timeout] is incorrect or not exist');
+            return false;
+        }
+        if (!isset($decoded->prmsg) || gettype($decoded->prmsg) != 'string') {
+            $this->setError(ERROR_INCORRECT_DATA, 'readConf: parameter [prmsg] is incorrect or not exist');
+            return false;
+        }
+        if (!isset($decoded->secmsg) || gettype($decoded->secmsg) != 'string') {
+            $this->setError(ERROR_INCORRECT_DATA, 'readConf: parameter [secmsg] is incorrect or not exist');
+            return false;
+        }
         return $conf;
     }
     
@@ -57,7 +76,7 @@ class Maintenance extends ServiceMethods implements intMaintenance {
             $this->setError(ERROR_INCORRECT_DATA, 'writeConfig: parameter [enabled] is incorrect or not exist');
             return false;
         }
-        if (!isset($conf->timeout) || gettype($conf->timeout) != 'integer') {
+        if (!isset($conf->timeout) || gettype($conf->timeout) != 'integer' || $decoded->timeout<0) {
             $this->setError(ERROR_INCORRECT_DATA, 'writeConfig: parameter [timeout] is incorrect or not exist');
             return false;
         }
@@ -80,5 +99,15 @@ class Maintenance extends ServiceMethods implements intMaintenance {
         }
         file_put_contents($confPath, json_encode($conf));
         return true;
+    }
+    
+    public function state() {
+        $conf = $this->readConfig();
+        if (!$conf) {
+            $this->setError($this->errid, 'state -> '.$this->errexp);
+            return false;
+        }
+        $decoded = json_decode($conf);
+        return array('enabled' => $decoded->enabled);
     }
 }
