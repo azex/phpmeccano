@@ -30,14 +30,21 @@ else {
     $confPath = 'maintenance.json';
 }
 
-$conf = json_decode(file_get_contents($confPath));
-$prmsg = htmlspecialchars($conf->prmsg);
-$secmsg = htmlspecialchars($conf->secmsg);
-if ($conf->timeout) {
-    $timeout = gmdate('D, d M Y H:i:s T', $conf->timeout);
+if (!is_file($confPath) || !is_readable($confPath)) {
+    $timeout = 1800;
+    $prmsg = 'The site is under maintenance';
+    $secmsg = 'Please, be patient';
 }
 else {
-    $timeout = 1800;
+    $conf = json_decode(file_get_contents($confPath));
+    $prmsg = htmlspecialchars($conf->prmsg);
+    $secmsg = htmlspecialchars($conf->secmsg);
+    if ($conf->timeout) {
+        $timeout = gmdate('D, d M Y H:i:s T', $conf->startpoint + $conf->timeout);
+    }
+    else {
+        $timeout = 1800;
+    }
 }
 
 http_response_code(503);
