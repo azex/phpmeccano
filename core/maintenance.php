@@ -136,7 +136,10 @@ class Maintenance extends ServiceMethods implements intMaintenance {
         $decoded = (object) $conf;
         if (!$decoded->enabled) {
             $decoded->enabled = true;
-            $this->write($decoded, time());
+            if (!$this->write($decoded, time())) {
+                $this->setError($this->errid, 'enable -> '.$this->errexp);
+                return false;
+            }
         }
         return array('enabled' => $decoded->enabled);
     }
@@ -150,7 +153,10 @@ class Maintenance extends ServiceMethods implements intMaintenance {
         $decoded = (object) $conf;
         if ($decoded->enabled) {
             $decoded->enabled = false;
-            $this->write($decoded);
+            if (!$this->write($decoded)) {
+                $this->setError($this->errid, 'disable -> '.$this->errexp);
+                return false;
+            }
         }
         return array('enabled' => $decoded->enabled);
     }
@@ -168,7 +174,7 @@ class Maintenance extends ServiceMethods implements intMaintenance {
         $decoded = (object) $conf;
         if (!$decoded->timeout == $sec) {
             $decoded->timeout = $sec;
-            if (!$this->write($decoded)) {
+            if (!$this->write($decoded, $decoded->startpoint)) {
                 $this->setError($this->errid, 'timeout -> '.$this->errexp);
                 return false;
             }
