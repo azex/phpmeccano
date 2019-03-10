@@ -32,6 +32,7 @@ interface intMaintenance {
     public function state();
     public function enable();
     public function disable();
+    public function timeout($sec = 0);
 }
 
 class Maintenance extends ServiceMethods implements intMaintenance {
@@ -152,5 +153,26 @@ class Maintenance extends ServiceMethods implements intMaintenance {
             $this->write($decoded);
         }
         return array('enabled' => $decoded->enabled);
+    }
+    
+    public function timeout($sec = 0) {
+        if (gettype($sec) != 'integer' || $sec < 0) {
+            $this->setError(ERROR_INCORRECT_DATA, 'timeout: invalid type of got parameters');
+            return false;
+        }
+        $conf = $this->state();
+        if (!$conf) {
+            $this->setError($this->errid, 'timeout -> '.$this->errexp);
+            return false;
+        }
+        $decoded = (object) $conf;
+        if (!$decoded->timeout == $sec) {
+            $decoded->timeout = $sec;
+            if (!$this->write($decoded)) {
+                $this->setError($this->errid, 'timeout -> '.$this->errexp);
+                return false;
+            }
+        }
+        return array('timeout' => $decoded->timeout);
     }
 }
