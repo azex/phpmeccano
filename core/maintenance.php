@@ -34,6 +34,7 @@ interface intMaintenance {
     public function disable();
     public function timeout($sec = 0);
     public function prmsg($msg = 'The site is under maintenance');
+    public function secmsg($msg = 'Please, be patient');
 }
 
 class Maintenance extends ServiceMethods implements intMaintenance {
@@ -41,11 +42,11 @@ class Maintenance extends ServiceMethods implements intMaintenance {
     public function state() {
         $confPath = MECCANO_SERVICE_PAGES.'/maintenance.json';
         if (!is_file($confPath)) {
-            $this->setError(ERROR_NOT_FOUND, "readConf: configurational file [$confPath] is not found");
+            $this->setError(ERROR_NOT_FOUND, "readConf: configurational file [confPath] is not found");
             return false;
         }
         if (!is_readable($confPath)) {
-            $this->setError(ERROR_RESTRICTED_ACCESS, "readConf: configurational file [$confPath] is not readable");
+            $this->setError(ERROR_RESTRICTED_ACCESS, "readConf: configurational file [confPath] is not readable");
             return false;
         }
         $conf = file_get_contents(MECCANO_SERVICE_PAGES.'/maintenance.json');
@@ -82,7 +83,7 @@ class Maintenance extends ServiceMethods implements intMaintenance {
     
     public function write($conf, $startpoint = 0) {
         if (!is_object($conf)) {
-            $this->setError(ERROR_INCORRECT_DATA, 'write: parameter [$conf] must be object');
+            $this->setError(ERROR_INCORRECT_DATA, 'write: parameter [conf] must be object');
             return false;
         }
         if (!isset($conf->enabled) || !is_bool($conf->enabled)) {
@@ -102,16 +103,16 @@ class Maintenance extends ServiceMethods implements intMaintenance {
             return false;
         }
         if (!is_integer($startpoint) || $startpoint<0) {
-            $this->setError(ERROR_INCORRECT_DATA, 'write: parameter [$startpoint] must be integer and not less than 0');
+            $this->setError(ERROR_INCORRECT_DATA, 'write: parameter [startpoint] must be integer and not less than 0');
             return false;
         }
         $confPath = MECCANO_SERVICE_PAGES.'/maintenance.json';
         if (!is_file($confPath)) {
-            $this->setError(ERROR_NOT_FOUND, "write: configurational file [$confPath] is not found");
+            $this->setError(ERROR_NOT_FOUND, "write: configurational file [confPath] is not found");
             return false;
         }
         if (!is_writable($confPath)) {
-            $this->setError(ERROR_RESTRICTED_ACCESS, "write: configurational file [$confPath] is not writable");
+            $this->setError(ERROR_RESTRICTED_ACCESS, "write: configurational file [confPath] is not writable");
             return false;
         }
         file_put_contents(
@@ -202,5 +203,26 @@ class Maintenance extends ServiceMethods implements intMaintenance {
             }
         }
         return array('prmsg' => $decoded->prmsg);
+    }
+    
+    public function secmsg($msg = 'Please, be patient') {
+        if (!is_string($msg)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'secmsg: invalid type of got parameters');
+            return false;
+        }
+        $conf = $this->state();
+        if (!$conf) {
+            $this->setError($this->errid, 'secmsg -> '.$this->errexp);
+            return false;
+        }
+        $decoded = (object) $conf;
+        if ($decoded->secmsg != $msg) {
+            $decoded->secmsg = $msg;
+            if (!$this->write($decoded, $decoded->startpoint)) {
+                $this->setError($this->errid, 'secmsg -> '.$this->errexp);
+                return false;
+            }
+        }
+        return array('secmsg' => $decoded->secmsg);
     }
 }
