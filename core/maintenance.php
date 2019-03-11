@@ -50,23 +50,23 @@ class Maintenance extends ServiceMethods implements intMaintenance {
         $conf = file_get_contents(MECCANO_SERVICE_PAGES.'/maintenance.json');
         // checking of recieved data
         $decoded = json_decode($conf);
-        if (!isset($decoded->enabled) || gettype($decoded->enabled) != 'boolean') {
+        if (!isset($decoded->enabled) || !is_bool($decoded->enabled)) {
             $this->setError(ERROR_INCORRECT_DATA, 'readConf: parameter [enabled] is incorrect or not exist');
             return false;
         }
-        if (!isset($decoded->timeout) || gettype($decoded->timeout) != 'integer' || $decoded->timeout<0) {
+        if (!isset($decoded->timeout) || !is_integer($decoded->timeout) || $decoded->timeout<0) {
             $this->setError(ERROR_INCORRECT_DATA, 'readConf: parameter [timeout] is incorrect or not exist');
             return false;
         }
-        if (!isset($decoded->startpoint) || gettype($decoded->startpoint) != 'integer' || $decoded->startpoint<0) {
+        if (!isset($decoded->startpoint) || !is_integer($decoded->startpoint) || $decoded->startpoint<0) {
             $this->setError(ERROR_INCORRECT_DATA, 'readConf: parameter [startpoint] is incorrect or not exist');
             return false;
         }
-        if (!isset($decoded->prmsg) || gettype($decoded->prmsg) != 'string') {
+        if (!isset($decoded->prmsg) || !is_string($decoded->prmsg)) {
             $this->setError(ERROR_INCORRECT_DATA, 'readConf: parameter [prmsg] is incorrect or not exist');
             return false;
         }
-        if (!isset($decoded->secmsg) || gettype($decoded->secmsg) != 'string') {
+        if (!isset($decoded->secmsg) || !is_string($decoded->secmsg)) {
             $this->setError(ERROR_INCORRECT_DATA, 'readConf: parameter [secmsg] is incorrect or not exist');
             return false;
         }
@@ -80,28 +80,28 @@ class Maintenance extends ServiceMethods implements intMaintenance {
     }
     
     public function write($conf, $startpoint = 0) {
-        if (gettype($conf) != 'object') {
-            $this->setError(ERROR_INCORRECT_DATA, 'write: invalid type of got parameters');
+        if (!is_object($conf)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'write: parameter [$conf] must be object');
             return false;
         }
-        if (!isset($conf->enabled) || gettype($conf->enabled) != 'boolean') {
+        if (!isset($conf->enabled) || !is_bool($conf->enabled)) {
             $this->setError(ERROR_INCORRECT_DATA, 'write: parameter [enabled] is incorrect or not exist');
             return false;
         }
-        if (!isset($conf->prmsg) || gettype($conf->prmsg) != 'string') {
+        if (!isset($conf->prmsg) || !is_string($conf->prmsg)) {
             $this->setError(ERROR_INCORRECT_DATA, 'write: parameter [prmsg] is incorrect or not exist');
             return false;
         }
-        if (!isset($conf->secmsg) || gettype($conf->secmsg) != 'string') {
+        if (!isset($conf->secmsg) || !is_string($conf->secmsg)) {
             $this->setError(ERROR_INCORRECT_DATA, 'write: parameter [secmsg] is incorrect or not exist');
             return false;
         }
-        if (!isset($conf->timeout) || gettype($conf->timeout) != 'integer' || $conf->timeout<0) {
+        if (!isset($conf->timeout) || !is_integer($conf->timeout) || $conf->timeout<0) {
             $this->setError(ERROR_INCORRECT_DATA, 'write: parameter [timeout] is incorrect or not exist');
             return false;
         }
-        if (gettype($startpoint) != 'integer' || $startpoint<0) {
-            $this->setError(ERROR_INCORRECT_DATA, 'write: parameter [$startpoint] is incorrect or not exist');
+        if (!is_integer($startpoint) || $startpoint<0) {
+            $this->setError(ERROR_INCORRECT_DATA, 'write: parameter [$startpoint] must be integer and not less than 0');
             return false;
         }
         $confPath = MECCANO_SERVICE_PAGES.'/maintenance.json';
@@ -162,7 +162,7 @@ class Maintenance extends ServiceMethods implements intMaintenance {
     }
     
     public function timeout($sec = 0) {
-        if (gettype($sec) != 'integer' || $sec < 0) {
+        if (!is_integer($sec) || $sec < 0) {
             $this->setError(ERROR_INCORRECT_DATA, 'timeout: invalid type of got parameters');
             return false;
         }
@@ -172,7 +172,7 @@ class Maintenance extends ServiceMethods implements intMaintenance {
             return false;
         }
         $decoded = (object) $conf;
-        if (!$decoded->timeout == $sec) {
+        if ($decoded->timeout != $sec) {
             $decoded->timeout = $sec;
             if (!$this->write($decoded, $decoded->startpoint)) {
                 $this->setError($this->errid, 'timeout -> '.$this->errexp);
