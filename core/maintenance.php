@@ -33,6 +33,7 @@ interface intMaintenance {
     public function enable();
     public function disable();
     public function timeout($sec = 0);
+    public function prmsg($msg = 'The site is under maintenance');
 }
 
 class Maintenance extends ServiceMethods implements intMaintenance {
@@ -180,5 +181,26 @@ class Maintenance extends ServiceMethods implements intMaintenance {
             }
         }
         return array('timeout' => $decoded->timeout);
+    }
+    
+    public function prmsg($msg = 'The site is under maintenance') {
+        if (!is_string($msg)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'prmsg: invalid type of got parameters');
+            return false;
+        }
+        $conf = $this->state();
+        if (!$conf) {
+            $this->setError($this->errid, 'prmsg -> '.$this->errexp);
+            return false;
+        }
+        $decoded = (object) $conf;
+        if ($decoded->prmsg != $msg) {
+            $decoded->prmsg = $msg;
+            if (!$this->write($decoded, $decoded->startpoint)) {
+                $this->setError($this->errid, 'prmsg -> '.$this->errexp);
+                return false;
+            }
+        }
+        return array('prmsg' => $decoded->prmsg);
     }
 }
