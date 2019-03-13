@@ -35,6 +35,7 @@ interface intMaintenance {
     public function timeout($sec = 0);
     public function prmsg($msg = 'The site is under maintenance');
     public function secmsg($msg = 'Please, be patient');
+    public function reset();
 }
 
 class Maintenance extends ServiceMethods implements intMaintenance {
@@ -78,7 +79,14 @@ class Maintenance extends ServiceMethods implements intMaintenance {
         else {
             $expired = false;
         }
-        return array('enabled' => $decoded->enabled, 'prmsg' => $decoded->prmsg, 'secmsg' => $decoded->secmsg, 'timeout' => $decoded->timeout, 'startpoint' => $decoded->startpoint, 'expired' => $expired);
+        return array(
+                    'enabled' => $decoded->enabled,
+                    'prmsg' => $decoded->prmsg,
+                    'secmsg' => $decoded->secmsg,
+                    'timeout' => $decoded->timeout,
+                    'startpoint' => $decoded->startpoint,
+                    'expired' => $expired
+                    );
     }
     
     public function write($conf, $startpoint = 0) {
@@ -224,5 +232,28 @@ class Maintenance extends ServiceMethods implements intMaintenance {
             }
         }
         return array('secmsg' => $decoded->secmsg);
+    }
+    
+    public function reset() {
+        $conf = $this->state();
+        if (!$conf) {
+            $this->setError($this->errid, 'reset -> '.$this->errexp);
+            return false;
+        }
+        $decoded = (object) $conf;
+        $decoded->prmsg = 'The site is under maintenance';
+        $decoded->secmsg = 'Please, be patient';
+        $decoded->timeout = 0;
+        if (!$this->write($decoded)) {
+            $this->setError($this->errid, 'reset -> '.$this->errexp);
+                return false;
+        }
+        return array(
+                    'enabled' => $decoded->enabled,
+                    'prmsg' => $decoded->prmsg,
+                    'secmsg' => $decoded->secmsg,
+                    'timeout' => $decoded->timeout,
+                    'startpoint' => 0,
+                    );
     }
 }
