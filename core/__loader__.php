@@ -117,3 +117,12 @@ function loadDOC($doc, $plugin = "core", $disp = "inline", $nocache = FALSE) {
     header("Content-Disposition: $disp; filename=$fileName");
     exit();
 }
+
+function mntc() {
+    $conf = json_decode(file_get_contents(MECCANO_SERVICE_PAGES.'/maintenance.json'));
+    if ($conf->enabled && !in_array($_SERVER['REMOTE_ADDR'], MECCANO_MNTC_IP, true)) {
+        include MECCANO_SERVICE_PAGES.'/maintenance.php'; // Maintenance mode is enabled
+        exit();
+    }
+    return FALSE;
+}
