@@ -44,34 +44,34 @@ class Maintenance extends ServiceMethods implements intMaintenance {
         $this->zeroizeError();
         $confPath = MECCANO_SERVICE_PAGES.'/maintenance.json';
         if (!is_file($confPath)) {
-            $this->setError(ERROR_NOT_FOUND, "readConf: configurational file [confPath] is not found");
+            $this->setError(ERROR_NOT_FOUND, "state: configurational file [confPath] is not found");
             return false;
         }
         if (!is_readable($confPath)) {
-            $this->setError(ERROR_RESTRICTED_ACCESS, "readConf: configurational file [confPath] is not readable");
+            $this->setError(ERROR_RESTRICTED_ACCESS, "state: configurational file [confPath] is not readable");
             return false;
         }
         $conf = file_get_contents(MECCANO_SERVICE_PAGES.'/maintenance.json');
         // checking of recieved data
         $decoded = json_decode($conf);
         if (!isset($decoded->enabled) || !is_bool($decoded->enabled)) {
-            $this->setError(ERROR_INCORRECT_DATA, 'readConf: parameter [enabled] is incorrect or not exist');
+            $this->setError(ERROR_INCORRECT_DATA, 'state: parameter [enabled] is incorrect or not exist');
             return false;
         }
         if (!isset($decoded->timeout) || !is_integer($decoded->timeout) || $decoded->timeout<0) {
-            $this->setError(ERROR_INCORRECT_DATA, 'readConf: parameter [timeout] is incorrect or not exist');
+            $this->setError(ERROR_INCORRECT_DATA, 'state: parameter [timeout] is incorrect or not exist');
             return false;
         }
         if (!isset($decoded->startpoint) || !is_integer($decoded->startpoint) || $decoded->startpoint<0) {
-            $this->setError(ERROR_INCORRECT_DATA, 'readConf: parameter [startpoint] is incorrect or not exist');
+            $this->setError(ERROR_INCORRECT_DATA, 'state: parameter [startpoint] is incorrect or not exist');
             return false;
         }
         if (!isset($decoded->prmsg) || !is_string($decoded->prmsg)) {
-            $this->setError(ERROR_INCORRECT_DATA, 'readConf: parameter [prmsg] is incorrect or not exist');
+            $this->setError(ERROR_INCORRECT_DATA, 'state: parameter [prmsg] is incorrect or not exist');
             return false;
         }
         if (!isset($decoded->secmsg) || !is_string($decoded->secmsg)) {
-            $this->setError(ERROR_INCORRECT_DATA, 'readConf: parameter [secmsg] is incorrect or not exist');
+            $this->setError(ERROR_INCORRECT_DATA, 'state: parameter [secmsg] is incorrect or not exist');
             return false;
         }
         if ($decoded->enabled && $decoded->timeout && ($decoded->timeout + $decoded->startpoint)< time()) {
