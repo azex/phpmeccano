@@ -41,6 +41,7 @@ interface intMaintenance {
 class Maintenance extends ServiceMethods implements intMaintenance {
     
     public function state() {
+        $this->zeroizeError();
         $confPath = MECCANO_SERVICE_PAGES.'/maintenance.json';
         if (!is_file($confPath)) {
             $this->setError(ERROR_NOT_FOUND, "readConf: configurational file [confPath] is not found");
@@ -90,6 +91,7 @@ class Maintenance extends ServiceMethods implements intMaintenance {
     }
     
     public function write($conf, $startpoint = 0) {
+        $this->zeroizeError();
         if (!is_object($conf)) {
             $this->setError(ERROR_INCORRECT_DATA, 'write: parameter [conf] must be object');
             return false;
@@ -138,6 +140,7 @@ class Maintenance extends ServiceMethods implements intMaintenance {
     }
     
     public function enable() {
+        $this->zeroizeError();
         $conf = $this->state();
         if (!$conf) {
             $this->setError($this->errid, 'enable -> '.$this->errexp);
@@ -155,6 +158,7 @@ class Maintenance extends ServiceMethods implements intMaintenance {
     }
     
     public function disable() {
+        $this->zeroizeError();
         $conf = $this->state();
         if (!$conf) {
             $this->setError($this->errid, 'disable -> '.$this->errexp);
@@ -172,6 +176,7 @@ class Maintenance extends ServiceMethods implements intMaintenance {
     }
     
     public function timeout($sec = 0) {
+        $this->zeroizeError();
         if (!is_integer($sec) || $sec < 0) {
             $this->setError(ERROR_INCORRECT_DATA, 'timeout: invalid type of got parameters');
             return false;
@@ -193,6 +198,7 @@ class Maintenance extends ServiceMethods implements intMaintenance {
     }
     
     public function prmsg($msg = 'The site is under maintenance') {
+        $this->zeroizeError();
         if (!is_string($msg)) {
             $this->setError(ERROR_INCORRECT_DATA, 'prmsg: invalid type of got parameters');
             return false;
@@ -214,6 +220,7 @@ class Maintenance extends ServiceMethods implements intMaintenance {
     }
     
     public function secmsg($msg = 'Please, be patient') {
+        $this->zeroizeError();
         if (!is_string($msg)) {
             $this->setError(ERROR_INCORRECT_DATA, 'secmsg: invalid type of got parameters');
             return false;
@@ -235,6 +242,7 @@ class Maintenance extends ServiceMethods implements intMaintenance {
     }
     
     public function reset() {
+        $this->zeroizeError();
         $conf = $this->state();
         if (!$conf) {
             $this->setError($this->errid, 'reset -> '.$this->errexp);
