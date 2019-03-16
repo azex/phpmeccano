@@ -28,6 +28,7 @@ namespace core;
 loadPHP('extclass');
 
 interface intMaintenance {
+    public function __construct(\mysqli $dbLink);
     public function write($conf);
     public function state();
     public function enable();
@@ -40,8 +41,16 @@ interface intMaintenance {
 
 class Maintenance extends ServiceMethods implements intMaintenance {
     
+    public function __construct(\mysqli $dbLink) {
+        $this->dbLink = $dbLink;
+    }
+    
     public function state() {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'maintenance_configure')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "state: restricted by the policy");
+            return false;
+        }
         $confPath = MECCANO_SERVICE_PAGES.'/maintenance.json';
         if (!is_file($confPath)) {
             $this->setError(ERROR_NOT_FOUND, "state: configurational file [confPath] is not found");
@@ -92,6 +101,10 @@ class Maintenance extends ServiceMethods implements intMaintenance {
     
     public function write($conf, $startpoint = 0) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'maintenance_configure')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "write: restricted by the policy");
+            return false;
+        }
         if (!is_object($conf)) {
             $this->setError(ERROR_INCORRECT_DATA, 'write: parameter [conf] must be object');
             return false;
@@ -141,6 +154,10 @@ class Maintenance extends ServiceMethods implements intMaintenance {
     
     public function enable() {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'maintenance_configure')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "enable: restricted by the policy");
+            return false;
+        }
         $conf = $this->state();
         if (!$conf) {
             $this->setError($this->errid, 'enable -> '.$this->errexp);
@@ -159,6 +176,10 @@ class Maintenance extends ServiceMethods implements intMaintenance {
     
     public function disable() {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'maintenance_configure')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "disable: restricted by the policy");
+            return false;
+        }
         $conf = $this->state();
         if (!$conf) {
             $this->setError($this->errid, 'disable -> '.$this->errexp);
@@ -177,6 +198,10 @@ class Maintenance extends ServiceMethods implements intMaintenance {
     
     public function timeout($sec = 0) {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'maintenance_configure')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "timeout: restricted by the policy");
+            return false;
+        }
         if (!is_integer($sec) || $sec < 0) {
             $this->setError(ERROR_INCORRECT_DATA, 'timeout: invalid type of got parameters');
             return false;
@@ -199,6 +224,10 @@ class Maintenance extends ServiceMethods implements intMaintenance {
     
     public function prmsg($msg = 'The site is under maintenance') {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'maintenance_configure')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "prmsg: restricted by the policy");
+            return false;
+        }
         if (!is_string($msg)) {
             $this->setError(ERROR_INCORRECT_DATA, 'prmsg: invalid type of got parameters');
             return false;
@@ -221,6 +250,10 @@ class Maintenance extends ServiceMethods implements intMaintenance {
     
     public function secmsg($msg = 'Please, be patient') {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'maintenance_configure')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "secmsg: restricted by the policy");
+            return false;
+        }
         if (!is_string($msg)) {
             $this->setError(ERROR_INCORRECT_DATA, 'secmsg: invalid type of got parameters');
             return false;
@@ -243,6 +276,10 @@ class Maintenance extends ServiceMethods implements intMaintenance {
     
     public function reset() {
         $this->zeroizeError();
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'maintenance_configure')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "reset: restricted by the policy");
+            return false;
+        }
         $conf = $this->state();
         if (!$conf) {
             $this->setError($this->errid, 'reset -> '.$this->errexp);
