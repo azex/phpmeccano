@@ -40,7 +40,7 @@ interface intShare {
     public function createMsg($userId, $title, $text);
     public function stageFile($file, $filename, $userId, $title, $comment);
     public function shareFile($fileId, $userId, $circles);
-    public function getFile($fileId, $contDisp = 'inline');
+    public function getFile($fileId, $disp = 'inline', $nocache = FALSE);
     public function attachFile($fileId, $msgId, $userId);
     public function unattachFile($fileId, $msgId, $userId);
     public function delFile($fileId, $userId, $force = FALSE);
