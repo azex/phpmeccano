@@ -29,11 +29,12 @@ loadPHP('extclass');
 
 interface intMaintenance {
     public function __construct(\mysqli $dbLink);
-    public function write($conf);
     public function state();
+    public function write($conf);
     public function enable();
     public function disable();
     public function timeout($sec = 0);
+    public function startpoint($sec = 0);
     public function prmsg($msg = 'The site is under maintenance');
     public function secmsg($msg = 'Please, be patient');
     public function reset();
@@ -220,6 +221,32 @@ class Maintenance extends ServiceMethods implements intMaintenance {
             }
         }
         return array('timeout' => $decoded->timeout);
+    }
+    
+    public function startpoint($sec = 0) {
+        $this->zeroizeError();
+        if ($this->usePolicy && !$this->checkFuncAccess('core', 'maintenance_configure')) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "startpoint: restricted by the policy");
+            return false;
+        }
+        if (!is_integer($sec) || $sec < 0) {
+            $this->setError(ERROR_INCORRECT_DATA, 'startpoint: invalid type of got parameters');
+            return false;
+        }
+        $conf = $this->state();
+        if (!$conf) {
+            $this->setError($this->errid, 'startpoint -> '.$this->errexp);
+            return false;
+        }
+        $decoded = (object) $conf;
+        if ($decoded->startpoint != $sec) {
+            $decoded->startpoint = $sec;
+            if (!$this->write($decoded)) {
+                $this->setError($this->errid, 'startpoint -> '.$this->errexp);
+                return false;
+            }
+        }
+        return array('startpoint' => $decoded->startpoint);
     }
     
     public function prmsg($msg = 'The site is under maintenance') {
