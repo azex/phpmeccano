@@ -316,6 +316,7 @@ class Maintenance extends ServiceMethods implements intMaintenance {
         $decoded->prmsg = 'The site is under maintenance';
         $decoded->secmsg = 'Please, be patient';
         $decoded->timeout = 0;
+        $decoded->startpoint = 0;
         if (!$this->write($decoded)) {
             $this->setError($this->errid, 'reset -> '.$this->errexp);
                 return false;
@@ -325,7 +326,7 @@ class Maintenance extends ServiceMethods implements intMaintenance {
                     'prmsg' => $decoded->prmsg,
                     'secmsg' => $decoded->secmsg,
                     'timeout' => $decoded->timeout,
-                    'startpoint' => 0,
+                    'startpoint' => $decoded->startpoint,
                     );
     }
 }
