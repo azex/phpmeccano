@@ -33,7 +33,7 @@ interface intMaintenance {
     public function write($conf);
     public function enable();
     public function disable();
-    public function timeout($sec = 0);
+    public function timeout($sec = 1800);
     public function startpoint($sec = 0);
     public function prmsg($msg = 'The site is under maintenance');
     public function secmsg($msg = 'Please, be patient');

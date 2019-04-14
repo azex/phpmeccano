@@ -23,27 +23,57 @@
  *     https://bitbucket.org/azexmail/phpmeccano
  */
 
-if (defined('MECCANO_SERVICE_PAGES')) {
-    $confPath = MECCANO_SERVICE_PAGES.'/maintenance.json';
-}
-else {
-    $confPath = 'maintenance.json';
+function state($confPath) { // get maintenance configurations
+    if (!is_file($confPath)) {
+        return false;
+    }
+    if (!is_readable($confPath)) {
+        return false;
+    }
+    $conf = file_get_contents($confPath);
+    // checking of recieved data
+    $decoded = json_decode($conf);
+    if (is_null($decoded)) {
+        return false;
+    }
+    if (!isset($decoded->enabled) || !is_bool($decoded->enabled)) {
+        return false;
+    }
+    if (!isset($decoded->timeout) || !is_integer($decoded->timeout) || $decoded->timeout<0) {
+        return false;
+    }
+    if (!isset($decoded->startpoint) || !is_integer($decoded->startpoint) || $decoded->startpoint<0) {
+        return false;
+    }
+    if (!isset($decoded->prmsg) || !is_string($decoded->prmsg)) {
+        return false;
+    }
+    if (!isset($decoded->secmsg) || !is_string($decoded->secmsg)) {
+        return false;
+    }
+    return $decoded;
 }
 
-if (!is_file($confPath) || !is_readable($confPath)) {
+if (defined('MECCANO_SERVICE_PAGES')) { // if framework configurations are loaded
+    $conf = state(MECCANO_SERVICE_PAGES.'/maintenance.json');
+}
+else { // if framework configurations aren't loaded
+    $conf = state('maintenance.json');
+}
+
+if (!$conf) { // if maintenance configurations can't be loaded
     $timeout = 1800;
     $prmsg = 'The site is under maintenance';
     $secmsg = 'Please, be patient';
 }
-else {
-    $conf = json_decode(file_get_contents($confPath));
+else { // if maintenance configurations can be loaded
     $prmsg = htmlspecialchars($conf->prmsg);
     $secmsg = htmlspecialchars($conf->secmsg);
-    if ($conf->timeout) {
+    if ($conf->timeout && $conf->startpoint) { // if maintenance start time is defined
         $timeout = gmdate('D, d M Y H:i:s T', $conf->startpoint + $conf->timeout);
     }
-    else {
-        $timeout = 1800;
+    else { // if maintenance start time is not defined
+        $timeout = $conf->timeout;
     }
 }
 
