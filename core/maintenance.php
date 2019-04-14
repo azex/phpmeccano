@@ -54,16 +54,20 @@ class Maintenance extends ServiceMethods implements intMaintenance {
         }
         $confPath = MECCANO_SERVICE_PAGES.'/maintenance.json';
         if (!is_file($confPath)) {
-            $this->setError(ERROR_NOT_FOUND, "state: configurational file [confPath] is not found");
+            $this->setError(ERROR_NOT_FOUND, "state: configuration file is not found");
             return false;
         }
         if (!is_readable($confPath)) {
-            $this->setError(ERROR_RESTRICTED_ACCESS, "state: configurational file [confPath] is not readable");
+            $this->setError(ERROR_RESTRICTED_ACCESS, "state: configuration file is not readable");
             return false;
         }
-        $conf = file_get_contents(MECCANO_SERVICE_PAGES.'/maintenance.json');
+        $conf = file_get_contents($confPath);
         // checking of recieved data
         $decoded = json_decode($conf);
+        if (is_null($decoded)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'state: configuration file contains error');
+            return false;
+        }
         if (!isset($decoded->enabled) || !is_bool($decoded->enabled)) {
             $this->setError(ERROR_INCORRECT_DATA, 'state: parameter [enabled] is incorrect or not exist');
             return false;
@@ -132,11 +136,11 @@ class Maintenance extends ServiceMethods implements intMaintenance {
         }
         $confPath = MECCANO_SERVICE_PAGES.'/maintenance.json';
         if (!is_file($confPath)) {
-            $this->setError(ERROR_NOT_FOUND, "write: configurational file [confPath] is not found");
+            $this->setError(ERROR_NOT_FOUND, "write: configuration file is not found");
             return false;
         }
         if (!is_writable($confPath)) {
-            $this->setError(ERROR_RESTRICTED_ACCESS, "write: configurational file [confPath] is not writable");
+            $this->setError(ERROR_RESTRICTED_ACCESS, "write: configuration file is not writable");
             return false;
         }
         file_put_contents(
