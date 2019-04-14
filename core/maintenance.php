@@ -100,7 +100,7 @@ class Maintenance extends ServiceMethods implements intMaintenance {
                     );
     }
     
-    public function write($conf, $startpoint = 0) {
+    public function write($conf) {
         $this->zeroizeError();
         if ($this->usePolicy && !$this->checkFuncAccess('core', 'maintenance_configure')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "write: restricted by the policy");
@@ -126,8 +126,8 @@ class Maintenance extends ServiceMethods implements intMaintenance {
             $this->setError(ERROR_INCORRECT_DATA, 'write: parameter [timeout] is incorrect or not exist');
             return false;
         }
-        if (!is_integer($startpoint) || $startpoint<0) {
-            $this->setError(ERROR_INCORRECT_DATA, 'write: parameter [startpoint] must be integer and not less than 0');
+        if (!isset($conf->startpoint) || !is_integer($conf->startpoint) || $conf->startpoint<0) {
+            $this->setError(ERROR_INCORRECT_DATA, 'write: parameter [startpoint] is incorrect or not exist');
             return false;
         }
         $confPath = MECCANO_SERVICE_PAGES.'/maintenance.json';
@@ -146,7 +146,7 @@ class Maintenance extends ServiceMethods implements intMaintenance {
                             'prmsg' => $conf->prmsg,
                             'secmsg' => $conf->secmsg,
                             'timeout' => $conf->timeout,
-                            'startpoint' => $startpoint
+                            'startpoint' => $conf->startpoint
                             )
                         )
                 );
@@ -167,7 +167,7 @@ class Maintenance extends ServiceMethods implements intMaintenance {
         $decoded = (object) $conf;
         if (!$decoded->enabled) {
             $decoded->enabled = true;
-            if (!$this->write($decoded, time())) {
+            if (!$this->write($decoded)) {
                 $this->setError($this->errid, 'enable -> '.$this->errexp);
                 return false;
             }
@@ -215,7 +215,7 @@ class Maintenance extends ServiceMethods implements intMaintenance {
         $decoded = (object) $conf;
         if ($decoded->timeout != $sec) {
             $decoded->timeout = $sec;
-            if (!$this->write($decoded, $decoded->startpoint)) {
+            if (!$this->write($decoded)) {
                 $this->setError($this->errid, 'timeout -> '.$this->errexp);
                 return false;
             }
@@ -267,7 +267,7 @@ class Maintenance extends ServiceMethods implements intMaintenance {
         $decoded = (object) $conf;
         if ($decoded->prmsg != $msg) {
             $decoded->prmsg = $msg;
-            if (!$this->write($decoded, $decoded->startpoint)) {
+            if (!$this->write($decoded)) {
                 $this->setError($this->errid, 'prmsg -> '.$this->errexp);
                 return false;
             }
@@ -293,7 +293,7 @@ class Maintenance extends ServiceMethods implements intMaintenance {
         $decoded = (object) $conf;
         if ($decoded->secmsg != $msg) {
             $decoded->secmsg = $msg;
-            if (!$this->write($decoded, $decoded->startpoint)) {
+            if (!$this->write($decoded)) {
                 $this->setError($this->errid, 'secmsg -> '.$this->errexp);
                 return false;
             }
