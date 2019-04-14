@@ -120,9 +120,9 @@ function loadDOC($doc, $plugin = "core", $disp = "inline", $nocache = FALSE) {
 
 function mntc() {
     $conf = json_decode(file_get_contents(MECCANO_SERVICE_PAGES.'/maintenance.json'));
-    if ($conf->enabled && !in_array($_SERVER['REMOTE_ADDR'], MECCANO_MNTC_IP, true)) {
+    if (is_object($conf) && isset($conf->enabled) && isset($conf->startpoint) && $conf->enabled && $conf->startpoint<=time() && !in_array($_SERVER['REMOTE_ADDR'], MECCANO_MNTC_IP, true)) {
         include MECCANO_SERVICE_PAGES.'/maintenance.php'; // Maintenance mode is enabled
         exit();
     }
-    return FALSE;
+    return FALSE; // Maintenance mode is disabled
 }
