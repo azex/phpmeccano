@@ -201,7 +201,7 @@ class Maintenance extends ServiceMethods implements intMaintenance {
         return array('enabled' => $decoded->enabled);
     }
     
-    public function timeout($sec = 0) {
+    public function timeout($sec = 1800) {
         $this->zeroizeError();
         if ($this->usePolicy && !$this->checkFuncAccess('core', 'maintenance_configure')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "timeout: restricted by the policy");
@@ -319,7 +319,7 @@ class Maintenance extends ServiceMethods implements intMaintenance {
         $decoded = (object) $conf;
         $decoded->prmsg = 'The site is under maintenance';
         $decoded->secmsg = 'Please, be patient';
-        $decoded->timeout = 0;
+        $decoded->timeout = 1800;
         $decoded->startpoint = 0;
         if (!$this->write($decoded)) {
             $this->setError($this->errid, 'reset -> '.$this->errexp);
