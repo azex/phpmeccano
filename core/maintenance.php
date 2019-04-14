@@ -36,7 +36,7 @@ interface intMaintenance {
     public function timeout($sec = 1800);
     public function startpoint($sec = 0);
     public function prmsg($msg = 'The site is under maintenance');
-    public function secmsg($msg = 'Please, be patient');
+    public function secmsg($msg = 'We will be back soon');
     public function reset();
 }
 
@@ -88,7 +88,7 @@ class Maintenance extends ServiceMethods implements intMaintenance {
             $this->setError(ERROR_INCORRECT_DATA, 'state: parameter [secmsg] is incorrect or not exist');
             return false;
         }
-        if ($decoded->enabled && $decoded->timeout && ($decoded->timeout + $decoded->startpoint)< time()) {
+        if ($decoded->enabled && ($decoded->timeout + $decoded->startpoint)< time()) {
             $expired = true;
         }
         else {
@@ -279,7 +279,7 @@ class Maintenance extends ServiceMethods implements intMaintenance {
         return array('prmsg' => $decoded->prmsg);
     }
     
-    public function secmsg($msg = 'Please, be patient') {
+    public function secmsg($msg = 'We will be back soon') {
         $this->zeroizeError();
         if ($this->usePolicy && !$this->checkFuncAccess('core', 'maintenance_configure')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "secmsg: restricted by the policy");
@@ -318,7 +318,7 @@ class Maintenance extends ServiceMethods implements intMaintenance {
         }
         $decoded = (object) $conf;
         $decoded->prmsg = 'The site is under maintenance';
-        $decoded->secmsg = 'Please, be patient';
+        $decoded->secmsg = 'We will be back soon';
         $decoded->timeout = 1800;
         $decoded->startpoint = 0;
         if (!$this->write($decoded)) {

@@ -51,6 +51,12 @@ function state($confPath) { // get maintenance configurations
     if (!isset($decoded->secmsg) || !is_string($decoded->secmsg)) {
         return false;
     }
+    if ($decoded->enabled && $decoded->timeout && $decoded->startpoint && ($decoded->timeout + $decoded->startpoint)< time()) {
+        $decoded->expired = true;
+    }
+    else {
+        $decoded->expired = false;
+    }
     return $decoded;
 }
 
@@ -64,11 +70,12 @@ else { // if framework configurations aren't loaded
 if (!$conf) { // if maintenance configurations can't be loaded
     $timeout = 1800;
     $prmsg = 'The site is under maintenance';
-    $secmsg = 'Please, be patient';
+    $expired = false;
 }
 else { // if maintenance configurations can be loaded
     $prmsg = htmlspecialchars($conf->prmsg);
     $secmsg = htmlspecialchars($conf->secmsg);
+    $expired = $conf->expired;
     if ($conf->timeout && $conf->startpoint) { // if maintenance start time is defined
         $timeout = gmdate('D, d M Y H:i:s T', $conf->startpoint + $conf->timeout);
     }
@@ -162,6 +169,10 @@ header('Content-Type: text/html; charset=utf-8');
 </svg>
         </p>
         <h2><?php echo $prmsg; ?></h2>
-        <h3><?php echo $secmsg; ?></h3>
+        <?php 
+            if ($expired) {
+                echo "<h3>$secmsg</h3>";
+            }
+        ?>
     </body>
 </html>
