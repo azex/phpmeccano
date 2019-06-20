@@ -969,7 +969,7 @@ class UserMan extends ServiceMethods implements intUserMan{
             $this->setError(ERROR_RESTRICTED_ACCESS, "userPasswords: restricted by the policy");
             return FALSE;
         }
-        $qPassw = $this->dbLink->query("SELECT `id`, `description`, `limited` "
+        $qPassw = $this->dbLink->query("SELECT `id`, `description`, `limited`, `doubleauth` "
                 . "FROM `".MECCANO_TPREF."_core_userman_userpass` "
                 . "WHERE `userid` = $userId "
                 . "ORDER BY `limited` ;");
@@ -994,6 +994,7 @@ class UserMan extends ServiceMethods implements intUserMan{
                 $passwNode->appendChild($xml->createElement('id', $row[0]));
                 $passwNode->appendChild($xml->createElement('description', $row[1]));
                 $passwNode->appendChild($xml->createElement('limited', $row[2]));
+                $passwNode->appendChild($xml->createElement('doubleauth', $row[3]));
             }
             return $xml;
         }
@@ -1005,7 +1006,8 @@ class UserMan extends ServiceMethods implements intUserMan{
                 $securityNode['passwords'][] = array(
                     'id' => $row[0],
                     'description' => $row[1],
-                    'limited' => (int) $row[2]
+                    'limited' => (int) $row[2],
+                    'doubleauth' => (int) $row[3]
                 );
             }
             if ($this->outputType == 'array') {
