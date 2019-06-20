@@ -60,6 +60,7 @@ interface intUserMan {
     public function getUsers($pageNumber, $totalUsers, $rpp = 20, $orderBy = array('id'), $ascent = FALSE);
     public function getAllUsers($orderBy = array('id'), $ascent = FALSE);
     public function setUserLang($userId, $code = MECCANO_DEF_LANG);
+    public function enableDoubleAuth($passwId, $userId);
 }
 
 class UserMan extends ServiceMethods implements intUserMan{
@@ -1642,6 +1643,33 @@ class UserMan extends ServiceMethods implements intUserMan{
                 . "WHERE `id`=$userId ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, "setUserLang: unable to set user language -> ".$this->dbLink->error);
+            return FALSE;
+        }
+        return TRUE;
+    }
+    
+    public function enableDoubleAuth($passwId, $userId) {
+        $this->zeroizeError();
+        if (!pregGuid($passwId) || !is_integer($userId)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'enableDoubleAuth: incorrect incoming parameters');
+            return FALSE;
+        }
+        if (!$this->checkFuncAccess('core', 'userman_change_password', $userId)) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "enableDoubleAuth: restricted by the policy");
+            return FALSE;
+        }
+        // enable double authentication
+        $this->dbLink->query(
+            "UPDATE `".MECCANO_TPREF."_core_userman_userpass` "
+            . "SET `doubleauth`=1 "
+            . "WHERE `id`='$passwId' "
+            . "AND `userid`=$userId ;"
+        );
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, "enableDoubleAuth: couldn't enable double authenication -> ".$this->dbLink->error);
+        }
+        if (!$this->dbLink->affected_rows) {
+            $this->setError(ERROR_NOT_FOUND, "enableDoubleAuth: double authentication was already enabled or password is not found");
             return FALSE;
         }
         return TRUE;
