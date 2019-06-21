@@ -60,6 +60,8 @@ interface intUserMan {
     public function getUsers($pageNumber, $totalUsers, $rpp = 20, $orderBy = array('id'), $ascent = FALSE);
     public function getAllUsers($orderBy = array('id'), $ascent = FALSE);
     public function setUserLang($userId, $code = MECCANO_DEF_LANG);
+    public function enable2FA($passwId, $userId);
+    public function disable2FA($passwId, $userId);
 }
 
 class UserMan extends ServiceMethods implements intUserMan{
@@ -967,7 +969,7 @@ class UserMan extends ServiceMethods implements intUserMan{
             $this->setError(ERROR_RESTRICTED_ACCESS, "userPasswords: restricted by the policy");
             return FALSE;
         }
-        $qPassw = $this->dbLink->query("SELECT `id`, `description`, `limited` "
+        $qPassw = $this->dbLink->query("SELECT `id`, `description`, `limited`, `doubleauth` "
                 . "FROM `".MECCANO_TPREF."_core_userman_userpass` "
                 . "WHERE `userid` = $userId "
                 . "ORDER BY `limited` ;");
@@ -992,6 +994,7 @@ class UserMan extends ServiceMethods implements intUserMan{
                 $passwNode->appendChild($xml->createElement('id', $row[0]));
                 $passwNode->appendChild($xml->createElement('description', $row[1]));
                 $passwNode->appendChild($xml->createElement('limited', $row[2]));
+                $passwNode->appendChild($xml->createElement('doubleauth', $row[3]));
             }
             return $xml;
         }
@@ -1003,7 +1006,8 @@ class UserMan extends ServiceMethods implements intUserMan{
                 $securityNode['passwords'][] = array(
                     'id' => $row[0],
                     'description' => $row[1],
-                    'limited' => (int) $row[2]
+                    'limited' => (int) $row[2],
+                    'doubleauth' => (int) $row[3]
                 );
             }
             if ($this->outputType == 'array') {
@@ -1642,6 +1646,60 @@ class UserMan extends ServiceMethods implements intUserMan{
                 . "WHERE `id`=$userId ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, "setUserLang: unable to set user language -> ".$this->dbLink->error);
+            return FALSE;
+        }
+        return TRUE;
+    }
+    
+    public function enable2FA($passwId, $userId) {
+        $this->zeroizeError();
+        if (!pregGuid($passwId) || !is_integer($userId)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'enable2FA: incorrect incoming parameters');
+            return FALSE;
+        }
+        if (!$this->checkFuncAccess('core', 'userman_change_password', $userId)) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "enable2FA: restricted by the policy");
+            return FALSE;
+        }
+        // enable double authentication
+        $this->dbLink->query(
+            "UPDATE `".MECCANO_TPREF."_core_userman_userpass` "
+            . "SET `doubleauth`=1 "
+            . "WHERE `id`='$passwId' "
+            . "AND `userid`=$userId ;"
+        );
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, "enable2FA: couldn't enable double authenication -> ".$this->dbLink->error);
+        }
+        if (!$this->dbLink->affected_rows) {
+            $this->setError(ERROR_NOT_FOUND, "enable2FA: double authentication was already enabled or password is not found");
+            return FALSE;
+        }
+        return TRUE;
+    }
+    
+    public function disable2FA($passwId, $userId) {
+        $this->zeroizeError();
+        if (!pregGuid($passwId) || !is_integer($userId)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'disable2FA: incorrect incoming parameters');
+            return FALSE;
+        }
+        if (!$this->checkFuncAccess('core', 'userman_change_password', $userId)) {
+            $this->setError(ERROR_RESTRICTED_ACCESS, "disable2FA: restricted by the policy");
+            return FALSE;
+        }
+        // enable double authentication
+        $this->dbLink->query(
+            "UPDATE `".MECCANO_TPREF."_core_userman_userpass` "
+            . "SET `doubleauth`=0 "
+            . "WHERE `id`='$passwId' "
+            . "AND `userid`=$userId ;"
+        );
+        if ($this->dbLink->errno) {
+            $this->setError(ERROR_NOT_EXECUTED, "disable2FA: couldn't disable double authenication -> ".$this->dbLink->error);
+        }
+        if (!$this->dbLink->affected_rows) {
+            $this->setError(ERROR_NOT_FOUND, "disable2FA: double authentication was already disabled or password is not found");
             return FALSE;
         }
         return TRUE;

@@ -447,6 +447,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
                 `password` char(40) NOT NULL DEFAULT '' DEFAULT 0 COMMENT 'Encrypted password',
                 `description` char(30) NOT NULL DEFAULT '' COMMENT 'Password description',
                 `limited` tinyint(1) UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Password type',
+                `doubleauth` tinyint(1) UNSIGNED NOT NULL DEFAULT 0 COMMENT '2-factor authentication',
                 FOREIGN KEY (`userid`) REFERENCES `{$tabPrefix}_core_userman_users` (`id`),
                 PRIMARY KEY (`id`),
                 KEY `userid` (`userid`),

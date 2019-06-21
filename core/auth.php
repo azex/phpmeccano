@@ -30,6 +30,7 @@ loadPHP('extclass');
 interface intAuth {
     public function __construct(\mysqli $dbLink);
     public function userLogin($username, $password, $useCookie = TRUE, $cookieTime = 'month', $log = TRUE, $blockBrute = FALSE, $cleanSessions = TRUE);
+    public function login2FA($code);
     public function isSession();
     public function userLogout();
     public function getSession($log = TRUE);
@@ -108,7 +109,7 @@ class Auth extends ServiceMethods implements intAuth {
         $passwEncoded = passwHash($password, $salt);
         // check whether password is valid
         if ($blockBrute) {
-            $checkPassw = "SELECT `u`.`username`, `p`.`id`, `p`.`limited` "
+            $checkPassw = "SELECT `u`.`username`, `p`.`id`, `p`.`limited`, `p`.`doubleauth` "
                     . "FROM `".MECCANO_TPREF."_core_userman_users` `u` "
                     . "JOIN `".MECCANO_TPREF."_core_userman_userpass` `p` "
                     . "ON `u`.`id`=`p`.`userid` "
@@ -119,7 +120,7 @@ class Auth extends ServiceMethods implements intAuth {
                     . "AND `b`.`tempblock` < CURRENT_TIMESTAMP ;";
         }
         else {
-            $checkPassw = "SELECT `u`.`username`, `p`.`id`, `p`.`limited` "
+            $checkPassw = "SELECT `u`.`username`, `p`.`id`, `p`.`limited`, `p`.`doubleauth` "
                     . "FROM `".MECCANO_TPREF."_core_userman_users` `u` "
                     . "JOIN `".MECCANO_TPREF."_core_userman_userpass` `p` "
                     . "ON `u`.`id`=`p`.`userid` "
@@ -190,7 +191,7 @@ class Auth extends ServiceMethods implements intAuth {
             $this->setError(ERROR_NOT_EXECUTED, 'userLogin: unable to reset blocking counter -> '.$this->dbLink->error);
             return FALSE;
         }
-        list($username, $passId, $limited) = $qResult->fetch_row();
+        list($username, $passId, $limited, $doubleauth) = $qResult->fetch_row();
         // new unique session id
         $usi = guid();
         // IP and user-agent of the user
@@ -249,6 +250,26 @@ class Auth extends ServiceMethods implements intAuth {
             $this->setError(ERROR_NOT_CRITICAL, "userLogin: -> ".$this->errExp());
         }
         
+        // if 2-factor authentication is enabled
+        if (((int) $doubleauth)) {
+            $code = genPassword(8, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE);
+            $_SESSION[AUTH_2FA_SWAP] = array(
+                $code => array(
+                    AUTH_USERNAME => $username,
+                    AUTH_USER_ID => (int) $userId,
+                    AUTH_LIMITED => (int) $limited,
+                    AUTH_LANGUAGE => $lang,
+                    AUTH_LANGUAGE_DIR => $direction,
+                    AUTH_UNIQUE_SESSION_ID => $usi,
+                    AUTH_PASSWORD_ID => $passId,
+                    AUTH_IP => $ipAddress,
+                    AUTH_USER_AGENT => $userAgent,
+                    AUTH_TOKEN => makeIdent($username),
+                )
+            );
+            return $code;
+        }
+        // if 2-factor authentication is disabled
         // record the session valiables //
         $_SESSION[AUTH_USERNAME] = $username;
         $_SESSION[AUTH_USER_ID] = (int) $userId;
@@ -264,12 +285,42 @@ class Auth extends ServiceMethods implements intAuth {
         return TRUE;
     }
     
+    public function login2FA($code) {
+        $this->zeroizeError();
+        if (is_string($code) && preg_match('/^[\d]{8}$/', $code)) {
+            if (isset($_SESSION[AUTH_2FA_SWAP]) && isset($_SESSION[AUTH_2FA_SWAP][$code])) {
+                // record the session valiables //
+                $_SESSION[AUTH_USERNAME] = $_SESSION[AUTH_2FA_SWAP][$code][AUTH_USERNAME];
+                $_SESSION[AUTH_USER_ID] = $_SESSION[AUTH_2FA_SWAP][$code][AUTH_USER_ID];
+                $_SESSION[AUTH_LIMITED] = $_SESSION[AUTH_2FA_SWAP][$code][AUTH_LIMITED];
+                $_SESSION[AUTH_LANGUAGE] = $_SESSION[AUTH_2FA_SWAP][$code][AUTH_LANGUAGE];
+                $_SESSION[AUTH_LANGUAGE_DIR] = $_SESSION[AUTH_2FA_SWAP][$code][AUTH_LANGUAGE_DIR];
+                // control parameters
+                $_SESSION[AUTH_UNIQUE_SESSION_ID] = $_SESSION[AUTH_2FA_SWAP][$code][AUTH_UNIQUE_SESSION_ID];
+                $_SESSION[AUTH_PASSWORD_ID] = $_SESSION[AUTH_2FA_SWAP][$code][AUTH_PASSWORD_ID];
+                $_SESSION[AUTH_IP] = $_SESSION[AUTH_2FA_SWAP][$code][AUTH_IP];
+                $_SESSION[AUTH_USER_AGENT] = $_SESSION[AUTH_2FA_SWAP][$code][AUTH_USER_AGENT];
+                $_SESSION[AUTH_TOKEN] = $_SESSION[AUTH_2FA_SWAP][$code][AUTH_TOKEN];
+                unset($_SESSION[AUTH_2FA_SWAP]);
+                return TRUE;
+            }
+            else {
+                $this->setError(ERROR_NOT_FOUND, 'login2FA: the code is not found');
+                return FALSE;
+            }
+        }
+        else {
+            $this->setError(ERROR_INCORRECT_DATA, 'login2FA: incorrect code format');
+            return FALSE;
+        }
+    }
+    
     public function isSession() {
         $this->zeroizeError();
         if (isset($_SESSION[AUTH_USER_ID])) {
             if ($_SESSION[AUTH_IP] != $_SERVER['REMOTE_ADDR'] || $_SESSION[AUTH_USER_AGENT] != $_SERVER['HTTP_USER_AGENT']) {
                 $this->userLogout();
-                $this->setError(ERROR_NOT_EXECUTED, 'isSession: session probably is stolen');
+                $this->setError(ERROR_NOT_EXECUTED, 'isSession: probably the session is stolen');
                 return FALSE;
             }
             $qResult = $this->dbLink->query("SELECT `l`.`code`, `l`.`dir`, `u`.`username`, `g`.`groupname`, `u`.`id`, `p`.`password` "
