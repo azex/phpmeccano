@@ -60,8 +60,8 @@ interface intUserMan {
     public function getUsers($pageNumber, $totalUsers, $rpp = 20, $orderBy = array('id'), $ascent = FALSE);
     public function getAllUsers($orderBy = array('id'), $ascent = FALSE);
     public function setUserLang($userId, $code = MECCANO_DEF_LANG);
-    public function enableDoubleAuth($passwId, $userId);
-    public function disableDoubleAuth($passwId, $userId);
+    public function enable2FA($passwId, $userId);
+    public function disable2FA($passwId, $userId);
 }
 
 class UserMan extends ServiceMethods implements intUserMan{
@@ -1651,14 +1651,14 @@ class UserMan extends ServiceMethods implements intUserMan{
         return TRUE;
     }
     
-    public function enableDoubleAuth($passwId, $userId) {
+    public function enable2FA($passwId, $userId) {
         $this->zeroizeError();
         if (!pregGuid($passwId) || !is_integer($userId)) {
-            $this->setError(ERROR_INCORRECT_DATA, 'enableDoubleAuth: incorrect incoming parameters');
+            $this->setError(ERROR_INCORRECT_DATA, 'enable2FA: incorrect incoming parameters');
             return FALSE;
         }
         if (!$this->checkFuncAccess('core', 'userman_change_password', $userId)) {
-            $this->setError(ERROR_RESTRICTED_ACCESS, "enableDoubleAuth: restricted by the policy");
+            $this->setError(ERROR_RESTRICTED_ACCESS, "enable2FA: restricted by the policy");
             return FALSE;
         }
         // enable double authentication
@@ -1669,23 +1669,23 @@ class UserMan extends ServiceMethods implements intUserMan{
             . "AND `userid`=$userId ;"
         );
         if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, "enableDoubleAuth: couldn't enable double authenication -> ".$this->dbLink->error);
+            $this->setError(ERROR_NOT_EXECUTED, "enable2FA: couldn't enable double authenication -> ".$this->dbLink->error);
         }
         if (!$this->dbLink->affected_rows) {
-            $this->setError(ERROR_NOT_FOUND, "enableDoubleAuth: double authentication was already enabled or password is not found");
+            $this->setError(ERROR_NOT_FOUND, "enable2FA: double authentication was already enabled or password is not found");
             return FALSE;
         }
         return TRUE;
     }
     
-    public function disableDoubleAuth($passwId, $userId) {
+    public function disable2FA($passwId, $userId) {
         $this->zeroizeError();
         if (!pregGuid($passwId) || !is_integer($userId)) {
-            $this->setError(ERROR_INCORRECT_DATA, 'disableDoubleAuth: incorrect incoming parameters');
+            $this->setError(ERROR_INCORRECT_DATA, 'disable2FA: incorrect incoming parameters');
             return FALSE;
         }
         if (!$this->checkFuncAccess('core', 'userman_change_password', $userId)) {
-            $this->setError(ERROR_RESTRICTED_ACCESS, "disableDoubleAuth: restricted by the policy");
+            $this->setError(ERROR_RESTRICTED_ACCESS, "disable2FA: restricted by the policy");
             return FALSE;
         }
         // enable double authentication
@@ -1696,10 +1696,10 @@ class UserMan extends ServiceMethods implements intUserMan{
             . "AND `userid`=$userId ;"
         );
         if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, "disableDoubleAuth: couldn't disable double authenication -> ".$this->dbLink->error);
+            $this->setError(ERROR_NOT_EXECUTED, "disable2FA: couldn't disable double authenication -> ".$this->dbLink->error);
         }
         if (!$this->dbLink->affected_rows) {
-            $this->setError(ERROR_NOT_FOUND, "disableDoubleAuth: double authentication was already disabled or password is not found");
+            $this->setError(ERROR_NOT_FOUND, "disable2FA: double authentication was already disabled or password is not found");
             return FALSE;
         }
         return TRUE;
