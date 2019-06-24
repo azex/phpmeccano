@@ -252,7 +252,7 @@ class Auth extends ServiceMethods implements intAuth {
         
         // if 2-factor authentication is enabled
         if (((int) $doubleauth)) {
-            $code = genPassword(8, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE);
+            $code = genPassword(8, FALSE, TRUE, TRUE, FALSE, FALSE, FALSE);
             $_SESSION[AUTH_2FA_SWAP] = array(
                 $code => array(
                     AUTH_USERNAME => $username,
@@ -287,7 +287,7 @@ class Auth extends ServiceMethods implements intAuth {
     
     public function login2FA($code) {
         $this->zeroizeError();
-        if (is_string($code) && preg_match('/^[\d]{8}$/', $code)) {
+        if (is_string($code) && preg_match('/^[A-Z\d]{8}$/', $code)) {
             if (isset($_SESSION[AUTH_2FA_SWAP]) && isset($_SESSION[AUTH_2FA_SWAP][$code])) {
                 // record the session valiables //
                 $_SESSION[AUTH_USERNAME] = $_SESSION[AUTH_2FA_SWAP][$code][AUTH_USERNAME];
