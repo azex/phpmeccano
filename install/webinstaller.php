@@ -63,6 +63,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
             "MECCANO_DOCUMENTS_DIR",
             "MECCANO_UNPACKED_PLUGINS",
             "MECCANO_UNINSTALL",
+            "MECCANO_SERVICE_PAGES",
             "MECCANO_SHARED_FILES",
             "MECCANO_SHARED_STDIR",
             "MECCANO_DEF_LANG",
@@ -145,6 +146,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
             'MECCANO_DOCUMENTS_DIR' => MECCANO_DOCUMENTS_DIR,
             'MECCANO_UNPACKED_PLUGINS' => MECCANO_UNPACKED_PLUGINS,
             'MECCANO_UNINSTALL' => MECCANO_UNINSTALL,
+            'MECCANO_SERVICE_PAGES' => MECCANO_SERVICE_PAGES,
             'MECCANO_SHARED_FILES' => MECCANO_SHARED_FILES
         );
         foreach ($sysPathes as $key => $value) {

@@ -163,6 +163,10 @@
                         MECCANO_UNINSTALL:
                         <span id="MECCANO_UNINSTALL"></span>
                     </p>
+                    <p>
+                        MECCANO_SERVICE_PAGES:
+                        <span id="MECCANO_SERVICE_PAGES"></span>
+                    </p>
                     <h2><xsl:value-of select="sharedfiles" /></h2>
                     <p>
                         MECCANO_SHARED_FILES:
