@@ -69,7 +69,8 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
             "MECCANO_DEF_LANG",
             "MECCANO_AUTH_LIMIT",
             "MECCANO_AUTH_BLOCK_PERIOD",
-            "MECCANO_SHOW_ERRORS"
+            "MECCANO_SHOW_ERRORS",
+            "MECCANO_MNTC_IP"
         );
         foreach ($_checkConst as $value) {
             if (!defined($value)) {
@@ -218,6 +219,37 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
         }
         else {
             $constStatus['MECCANO_SHOW_ERRORS'] = array(FALSE, "N/A");
+        }
+        // IP addresses that ignore maintenance mode
+        if (is_array(MECCANO_MNTC_IP) && count(MECCANO_MNTC_IP)) {
+            $ipList = "";
+            $i = 0;
+            $isError = FALSE;
+            foreach (MECCANO_MNTC_IP as $value) {
+                // validate element as IP address
+                if (!is_string($value) || !preg_match('/^((^\s*((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))\s*$)|(^\s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))(%.+)?\s*$))$/', $value)) {
+                    $isError = true;
+                    break;
+                }
+                // add element into output string
+                if ($i) { $ipList .= ", ".$value; }
+                else { $ipList = $value; }
+                $i += 1;
+            }
+            // if error is raised
+            if ($isError) {
+                $constStatus['MECCANO_MNTC_IP'] = array(FALSE, "FALSE: element #$i");
+            }
+            // if everything is alright
+            else {
+                $constStatus['MECCANO_MNTC_IP'] = array(TRUE, $ipList);
+            }
+        }
+        elseif (is_array(MECCANO_MNTC_IP) && !count(MECCANO_MNTC_IP)) {
+            $constStatus['MECCANO_MNTC_IP'] = array(TRUE, "NULL");
+        }
+        else {
+            $constStatus['MECCANO_MNTC_IP'] = array(FALSE, "N/A");
         }
         // return results of the validation
         return $constStatus;

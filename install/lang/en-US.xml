@@ -48,6 +48,7 @@
     <deflang>Default language</deflang>
     <blockauth>Temporary blocking of authentication</blockauth>
     <showerrors>Displaying of errors</showerrors>
+    <mntcip>IP addresses that ignore maintenance mode</mntcip>
     <instprogress>Installation in progress...</instprogress>
     <creatingdb>Creation of the database and the tables</creatingdb>
     <instpack>Installation of the package</instpack>

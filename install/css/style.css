@@ -74,12 +74,14 @@ input {
 
 input[type="submit"] {
     color: black;
+    border: 1px solid darkgreen;
     width: auto;
 }
 
 input[disabled=""] {
     color: grey;
     background: white;
+    border: 1px solid grey;
 }
 
 textarea {

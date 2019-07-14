@@ -195,6 +195,11 @@
                         MECCANO_SHOW_ERRORS:
                         <span id="MECCANO_SHOW_ERRORS"></span>
                     </p>
+                    <h2><xsl:value-of select="mntcip" /></h2>
+                    <p>
+                        MECCANO_MNTC_IP:
+                        <span id="MECCANO_MNTC_IP"></span>
+                    </p>
                 </div>
             </div>
             <div class="cut"></div>
