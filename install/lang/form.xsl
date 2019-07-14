@@ -148,6 +148,10 @@
                         <span id="MECCANO_JS_DIR"></span>
                     </p>
                     <p>
+                        MECCANO_CSS_DIR:
+                        <span id="MECCANO_CSS_DIR"></span>
+                    </p>
+                    <p>
                         MECCANO_DOCUMENTS_DIR:
                         <span id="MECCANO_DOCUMENTS_DIR"></span>
                     </p>
