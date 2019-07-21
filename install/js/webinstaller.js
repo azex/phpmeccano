@@ -27,6 +27,7 @@ var WebInstaller = {};
 
 WebInstaller.enableSubmitByConf = 0;
 WebInstaller.enableSubmitByUser = 0;
+WebInstaller.currentLanguage = "";
 WebInstaller.inputConfirm = {
     "groupname" : false,
     "username" : false,
@@ -110,6 +111,55 @@ WebInstaller.validateConf = function(respData) {
     WebInstaller.enableSubmitByConf = doEnabled;
     WebInstaller.enableSubmit();
     window.setTimeout("WebInstaller.sendRequest('valconf.php?' + Math.random(), WebInstaller.validateConf)", 2000);
+} ;
+
+WebInstaller.showLanguages = function(respData) {
+    var i, key, languages;
+    var respJSON = JSON.parse(respData);
+    var respKeys = Object.keys(respJSON);
+    var languages = document.getElementById("languages");
+    languages.innerHTML = "";
+    for (i = 0; i < respKeys.length; ++i) {
+        key = respKeys[i];
+        if (WebInstaller.currentLanguage != key) {
+            var langButton = document.createElement("span");
+            langButton.setAttribute("class", "lang");
+            langButton.setAttribute("onClick", "WebInstaller.requireLanguage('" + key + "')");
+            langButton.innerHTML = respJSON[key];
+            languages.appendChild(langButton);
+        }
+    }
+} ;
+
+WebInstaller.requireLanguage = function(code) {
+    var languages = document.getElementById("languages");
+    languages.innerHTML = '<iframe style="border: none;" src="svg/load-lang.svg" width="60" height="35"></iframe>';
+    WebInstaller.currentLanguage = code;
+    setTimeout("WebInstaller.sendRequest('lang/" + code + ".json?' + Math.random(), WebInstaller.loadLanguage)", 500);
+} ;
+
+WebInstaller.loadLanguage = function(respData) {
+    var i, key, uiElement;
+    var respJSON = JSON.parse(respData);
+    var respKeys = Object.keys(respJSON);
+    for (i = 0; i < respKeys.length; ++i) {
+        key = respKeys[i];
+        if (key === "metadata") { // language properties
+            uiElement = document.getElementById("main");
+            uiElement.setAttribute("dir", respJSON[key]["dir"]);
+            uiElement = document.getElementsByTagName("html")[0];
+            uiElement.setAttribute("lang", respJSON[key]["code"]);
+        }
+        else if (key === "runinst") { // run installation button
+            uiElement = document.getElementById(key);
+            uiElement.setAttribute("value", respJSON[key]);
+        }
+        else { // other ui elements
+            uiElement = document.getElementById(key);
+            uiElement.innerHTML = respJSON[key];
+        }
+    }
+    WebInstaller.sendRequest('langlist.php?' + Math.random(), WebInstaller.showLanguages);
 } ;
 
 WebInstaller.validateForm = function() {
@@ -222,7 +272,7 @@ WebInstaller.errorGears = function() {
 } ;
 
 WebInstaller.makeInstall = function(respData) {
-    var error = document.getElementById("error");
+    var error = document.getElementById("errormsg");
     error.setAttribute("class", "hidden");
     var respJSON = JSON.parse(respData);
     if (!respJSON["response"]) {
@@ -280,7 +330,7 @@ WebInstaller.selfRemoved = function(respData) {
         document.getElementById("removed").setAttribute("class", "center true");
     }
     else {
-        var error = document.getElementById("error");
+        var error = document.getElementById("errormsg");
         var errexp = document.getElementById("errexp");
         errexp.innerHTML = respJSON["error"];
         error.setAttribute("class", "center");

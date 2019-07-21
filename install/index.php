@@ -22,6 +22,20 @@
 -->
 
 <?php
+
+require_once 'getconf.php';
+
+if (defined("MECCANO_DEF_LANG") && is_string(MECCANO_DEF_LANG) && in_array(MECCANO_DEF_LANG, array("en-US", "ru-RU"))) {
+    $defLang = MECCANO_DEF_LANG;
+}
+else {
+    $defLang = "en-US";
+}
+
+if (!session_id()) {
+    session_start();
+}
+$_SESSION = array();
 header('Content-Type: text/html; charset=utf-8');
 ?>
 <!DOCTYPE html> 
@@ -38,32 +52,187 @@ header('Content-Type: text/html; charset=utf-8');
         <div class="logo">
             <embed height="46" width="320" src="svg/logo.svg" />
         </div>
-        <?php
-        require_once 'getconf.php';
-        require_once MECCANO_CORE_DIR . '/unifunctions.php';
-        
-        if (!session_id()) {
-            session_start();
-        }
-        $_SESSION = array();
-        
-        $code = MECCANO_DEF_LANG;
-        $rng = new DOMDocument();
-        $xml = core\openRead("lang/$code.xml");
-        if (!$xml || !@$rng->loadXML($xml) || !@$rng->relaxNGValidate("lang/schema.rng")) {
-            $xml = base64_decode("PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KCjwhLS0KICAgIHBocE1lY2Nhbm8gdjAuMS4wLiBXZWItZnJhbWV3b3JrIHdyaXR0ZW4gd2l0aCBwaHAgcHJvZ3JhbW1pbmcgbGFuZ3VhZ2UuIExvY2FsaXphdGlvbiBmaWxlIG9mIHRoZSB3ZWIgaW5zdGFsbGVyLgogICAgQ29weXJpZ2h0IChDKSAyMDE1LTIwMTYgIEFsZXhlaSBNdXphcm92CiAgICAKICAgIFRoaXMgcHJvZ3JhbSBpcyBmcmVlIHNvZnR3YXJlOyB5b3UgY2FuIHJlZGlzdHJpYnV0ZSBpdCBhbmQvb3IgbW9kaWZ5CiAgICBpdCB1bmRlciB0aGUgdGVybXMgb2YgdGhlIEdOVSBHZW5lcmFsIFB1YmxpYyBMaWNlbnNlIGFzIHB1Ymxpc2hlZCBieQogICAgdGhlIEZyZWUgU29mdHdhcmUgRm91bmRhdGlvbjsgZWl0aGVyIHZlcnNpb24gMiBvZiB0aGUgTGljZW5zZSwgb3IKICAgIChhdCB5b3VyIG9wdGlvbikgYW55IGxhdGVyIHZlcnNpb24uCgogICAgVGhpcyBwcm9ncmFtIGlzIGRpc3RyaWJ1dGVkIGluIHRoZSBob3BlIHRoYXQgaXQgd2lsbCBiZSB1c2VmdWwsCiAgICBidXQgV0lUSE9VVCBBTlkgV0FSUkFOVFk7IHdpdGhvdXQgZXZlbiB0aGUgaW1wbGllZCB3YXJyYW50eSBvZgogICAgTUVSQ0hBTlRBQklMSVRZIG9yIEZJVE5FU1MgRk9SIEEgUEFSVElDVUxBUiBQVVJQT1NFLiAgU2VlIHRoZQogICAgR05VIEdlbmVyYWwgUHVibGljIExpY2Vuc2UgZm9yIG1vcmUgZGV0YWlscy4KICAgIAogICAgWW91IHNob3VsZCBoYXZlIHJlY2VpdmVkIGEgY29weSBvZiB0aGUgR05VIEdlbmVyYWwgUHVibGljIExpY2Vuc2UgYWxvbmcKICAgIHdpdGggdGhpcyBwcm9ncmFtOyBpZiBub3QsIHdyaXRlIHRvIHRoZSBGcmVlIFNvZnR3YXJlIEZvdW5kYXRpb24sIEluYy4sCiAgICA1MSBGcmFua2xpbiBTdHJlZXQsIEZpZnRoIEZsb29yLCBCb3N0b24sIE1BIDAyMTEwLTEzMDEgVVNBLgogICAgCiAgICBlLW1haWw6IGF6ZXhtYWlsQGdtYWlsLmNvbQogICAgZS1tYWlsOiBhemV4bWFpbEBtYWlsLnJ1CiAgICBodHRwczovL2JpdGJ1Y2tldC5vcmcvYXpleG1haWwvcGhwbWVjY2FubwotLT4KCjxpbnRlcmZhY2UgY29kZT0iZW4tVVMiIG5hbWU9IkVuZ2xpc2ggKFVTQSkiIGRpcj0ibHRyIj4KICAgIDxsb2FkaW5nPkxvYWRpbmcuLi48L2xvYWRpbmc+CiAgICA8aGVhZD5JbnN0YWxsYXRpb248L2hlYWQ+CiAgICA8cm9vdGdyb3VwPlJvb3QgZ3JvdXA8L3Jvb3Rncm91cD4KICAgIDxncm91cG5hbWU+TmFtZTo8L2dyb3VwbmFtZT4KICAgIDxncm91cGRlc2M+RGVzY3JpcHRpb246PC9ncm91cGRlc2M+CiAgICA8cm9vdHVzZXI+Um9vdCB1c2VyPC9yb290dXNlcj4KICAgIDx1c2VybmFtZT5Vc2VybmFtZTo8L3VzZXJuYW1lPgogICAgPGVudHBhc3N3PkVudGVyIHBhc3N3b3JkIChhdCBsZWFzdCA4IHN5bWJvbHMpPC9lbnRwYXNzdz4KICAgIDxyZXBhc3N3PlJlcGVhdCBwYXNzd29yZDo8L3JlcGFzc3c+CiAgICA8ZW1haWw+RS1tYWlsIGFkZHJlc3M6PC9lbWFpbD4KICAgIDxydW5pbnN0PlJ1biBpbnN0YWxsYXRpb248L3J1bmluc3Q+CiAgICA8ZGJwYXJhbT5QYXJhbWV0ZXJzIG9mIHRoZSBkYXRhYmFzZTwvZGJwYXJhbT4KICAgIDxkYnNlbmdpbmU+U3RvcmFnZSBlbmdpbmU8L2Ric2VuZ2luZT4KICAgIDxkYmFuYW1lPlVzZXJuYW1lPC9kYmFuYW1lPgogICAgPGRiYXBhc3N3PlVzZXIgcGFzc3dvcmQ8L2RiYXBhc3N3PgogICAgPGRiaG9zdD5Ib3N0PC9kYmhvc3Q+CiAgICA8ZGJwb3J0PlBvcnQ8L2RicG9ydD4KICAgIDxkYm5hbWU+RGF0YWJhc2UgbmFtZTwvZGJuYW1lPgogICAgPHRwcmVmPlByZWZpeCBvZiB0aGUgdGFibGVzPC90cHJlZj4KICAgIDxzeXNwYXRocz5TeXN0ZW0gcGF0aHM8L3N5c3BhdGhzPgogICAgPHNoYXJlZGZpbGVzPlN0b3JhZ2Ugb2Ygc2hhcmVkIGZpbGVzPC9zaGFyZWRmaWxlcz4KICAgIDxkZWZsYW5nPkRlZmF1bHQgbGFuZ3VhZ2U8L2RlZmxhbmc+CiAgICA8YmxvY2thdXRoPlRlbXBvcmFyeSBibG9ja2luZyBvZiBhdXRoZW50aWNhdGlvbjwvYmxvY2thdXRoPgogICAgPHNob3dlcnJvcnM+RGlzcGxheWluZyBvZiBlcnJvcnM8L3Nob3dlcnJvcnM+CiAgICA8bW50Y2lwPklQIGFkZHJlc3NlcyB0aGF0IGlnbm9yZSBtYWludGVuYW5jZSBtb2RlPC9tbnRjaXA+CiAgICA8aW5zdHByb2dyZXNzPkluc3RhbGxhdGlvbiBpbiBwcm9ncmVzcy4uLjwvaW5zdHByb2dyZXNzPgogICAgPGNyZWF0aW5nZGI+Q3JlYXRpb24gb2YgdGhlIGRhdGFiYXNlIGFuZCB0aGUgdGFibGVzPC9jcmVhdGluZ2RiPgogICAgPGluc3RwYWNrPkluc3RhbGxhdGlvbiBvZiB0aGUgcGFja2FnZTwvaW5zdHBhY2s+CiAgICA8Y3JlYXRpbmdyb290PkNyZWF0aW9uIG9mIHRoZSByb290IGdyb3VwIGFuZCB1c2VyPC9jcmVhdGluZ3Jvb3Q+CiAgICA8ZXJyb3I+RXJyb3I6IDwvZXJyb3I+CiAgICA8Y29tcGxldGVkPkluc3RhbGxhdGlvbiBoYXMgYmVlbiBzdWNjZXNzZnVsbHkgY29tcGxldGVkLiBUaGUgZW5naW5lIHdlbnQgdG8gZnVsbCBzcGVlZCBhbmQgcmVhZHkgdG8gdXNlIGluIHlvdXIgcHJvamVjdC48L2NvbXBsZXRlZD4KICAgIDxzZWxmcmVtb3ZlPkl0IGlzIGhpZ2hseSByZWNvbW1lbmRlZCB0byByZW1vdmUgaW5zdGFsbGVyIHdoZW4gdGhlIGluc3RhbGxhdGlvbiBpcyBmaW5pc2hlZDwvc2VsZnJlbW92ZT4KICAgIDxyZW1vdmVkPkluc3RhbGxlciBoYXMgYmVlbiBzdWNjZXNzZnVsbHkgcmVtb3ZlZDwvcmVtb3ZlZD4KPC9pbnRlcmZhY2U+Cg==");
-        }
-        $xsl = core\openRead("lang/form.xsl");
-        echo core\xmlTransform($xml, $xsl)->saveHTML();
-        
-        ?>
+        <div id="languages" class="languages"></div>
+        <div id="main" class="main" dir="">
+            <div id="errormsg" class="hidden">
+                <h1 id="error"></h1>
+                <p id="errexp" class="false"></p>
+                <br>
+            </div>
+            <div id="progress" class="center">
+                <h1 id="loading"></h1>
+                <h1 id="instprogress" class="hidden"></h1>
+                <h1 id="completed" class="hidden"></h1>
+                <iframe style="border: none;" name="gears" src="svg/progress-gears-animated.svg" width="200" height="112"></iframe>
+                <p id="creatingdb" class="hidden"></p>
+                <p id="instpack" class="hidden"></p>
+                <p id="creatingroot" class="hidden"></p>
+                <br>
+                <p id="selfremove" class="hidden">
+                    <br>
+                    <span id="selfrmv"></span>
+                    <br>
+                    <iframe id="trash" name="trash" style="border: none;" src="svg/trash.svg" width="54" height="64"></iframe>
+                    <iframe id="waitgear" name="waitgear" class="hidden" style="border: none;" src="svg/wait-gear.svg" width="62" height="62"></iframe>
+                    <br>
+                    <br>
+                </p>
+                <p id="removed" class="hidden">
+                    <br>
+                    <span id="rmvd"></span>
+                    <br>
+                    <br>
+                </p>
+            </div>
+            <div id="settings" class="hidden">
+                <h1 id="head" class="center"></h1>
+                <div class="user">
+                    <form action="javascript:void(0)" method="POST" name="userconf">
+                        <h2 id="rootgroup"></h2>
+                        <p id="groupname"></p>
+                        <input type="text" name="groupname" value="" required="">
+                        <p id="groupdesc"></p>
+                        <textarea name="groupdesc"></textarea>
+                        <h2 id="rootuser"></h2>
+                        <p id="username"></p>
+                        <input type="text" name="username" value="" required="">
+                        <p id="entpassw"></p>
+                        <input type="password" name="passw" value="" required="">
+                        <p id="repassw"></p>
+                        <input type="password" name="repassw" value="" required="">
+                        <p id="email"></p>
+                        <input type="email" name="email" value="" required="">
+                        <p>
+                            <input id="runinst" type="submit" name="submit" disabled value="">
+                        </p>
+                    </form>
+                </div>
+                <div class="conf">
+                    <h2 id="dbparam"></h2>
+                    <p>
+                        <span id="dbsengine"></span> / MECCANO_DBSTORAGE_ENGINE:
+                        <span id="MECCANO_DBSTORAGE_ENGINE"></span>
+                    </p>
+                    <p>
+                        <span id="dbaname"></span> / MECCANO_DBANAME:
+                        <span id="MECCANO_DBANAME"></span>
+                    </p>
+                    <p>
+                        <span id="dbapassw"></span> / MECCANO_DBAPASS:
+                        <span id="MECCANO_DBAPASS"></span>
+                    </p>
+                    <p>
+                        <span id="dbhost"></span> / MECCANO_DBHOST:
+                        <span id="MECCANO_DBHOST"></span>
+                    </p>
+                    <p>
+                        <span id="dbport"></span> / MECCANO_DBPORT:
+                        <span id="MECCANO_DBPORT"></span>
+                    </p>
+                    <p>
+                        <span id="dbname"></span> / MECCANO_DBNAME:
+                        <span id="MECCANO_DBNAME"></span>
+                    </p>
+                    <p>
+                        <span id="tpref"></span> / MECCANO_TPREF:
+                        <span id="MECCANO_TPREF"></span>
+                    </p>
+                    <h2 id="syspaths"></h2>
+                    <p>
+                        MECCANO_CONF_FILE:
+                        <span id="MECCANO_CONF_FILE"></span>
+                    </p>
+                    <p>
+                        MECCANO_ROOT_DIR:
+                        <span id="MECCANO_ROOT_DIR"></span>
+                    </p>
+                    <p>
+                        MECCANO_CORE_DIR:
+                        <span id="MECCANO_CORE_DIR"></span>
+                    </p>
+                    <p>
+                        MECCANO_TMP_DIR:
+                        <span id="MECCANO_TMP_DIR"></span>
+                    </p>
+                    <p>
+                        MECCANO_PHP_DIR:
+                        <span id="MECCANO_PHP_DIR"></span>
+                    </p>
+                    <p>
+                        MECCANO_JS_DIR:
+                        <span id="MECCANO_JS_DIR"></span>
+                    </p>
+                    <p>
+                        MECCANO_CSS_DIR:
+                        <span id="MECCANO_CSS_DIR"></span>
+                    </p>
+                    <p>
+                        MECCANO_DOCUMENTS_DIR:
+                        <span id="MECCANO_DOCUMENTS_DIR"></span>
+                    </p>
+                    <p>
+                        MECCANO_UNPACKED_PLUGINS:
+                        <span id="MECCANO_UNPACKED_PLUGINS"></span>
+                    </p>
+                    <p>
+                        MECCANO_UNINSTALL:
+                        <span id="MECCANO_UNINSTALL"></span>
+                    </p>
+                    <p>
+                        MECCANO_SERVICE_PAGES:
+                        <span id="MECCANO_SERVICE_PAGES"></span>
+                    </p>
+                    <h2 id="sharedfiles"></h2>
+                    <p>
+                        MECCANO_SHARED_FILES:
+                        <span id="MECCANO_SHARED_FILES"></span>
+                    </p>
+                    <p>
+                        MECCANO_SHARED_STDIR:
+                        <span id="MECCANO_SHARED_STDIR"></span>
+                    </p>
+                    <h2 id="deflang"></h2>
+                    <p>
+                        MECCANO_DEF_LANG:
+                        <span id="MECCANO_DEF_LANG"></span>
+                    </p>
+                    <h2 id="blockauth"></h2>
+                    <p>
+                        MECCANO_AUTH_LIMIT:
+                        <span id="MECCANO_AUTH_LIMIT"></span>
+                    </p>
+                    <p>
+                        MECCANO_AUTH_BLOCK_PERIOD:
+                        <span id="MECCANO_AUTH_BLOCK_PERIOD"></span>
+                    </p>
+                    <h2 id="showerrors"></h2>
+                    <p>
+                        MECCANO_SHOW_ERRORS:
+                        <span id="MECCANO_SHOW_ERRORS"></span>
+                    </p>
+                    <h2 id="mntcip"></h2>
+                    <p>
+                        MECCANO_MNTC_IP:
+                        <span id="MECCANO_MNTC_IP"></span>
+                    </p>
+                </div>
+            </div>
+            <div class="cut"></div>
+            <p class="licence center">phpMeccano v0.2.0alpha</p>
+            <p class="licence center">Licensed under GNU GPLv2+. Copyright (C) 2015-2019 Alexei Muzarov</p>
+        </div>
         <script>
-            document.forms.userconf.onsubmit = function(value) { WebInstaller.submitForm('makeinstall.php?' + Math.random(), document.forms.userconf, WebInstaller.makeInstall); } ;
+            document.forms.userconf.onsubmit = function (value) {
+                WebInstaller.submitForm('makeinstall.php?' + Math.random(), document.forms.userconf, WebInstaller.makeInstall);
+            };
             document.forms.userconf.elements.groupname.oninput = WebInstaller.pregGroupName;
             document.forms.userconf.elements.username.oninput = WebInstaller.pregUserName;
             document.forms.userconf.elements.passw.oninput = WebInstaller.pregPassw;
             document.forms.userconf.elements.repassw.oninput = WebInstaller.pregRePassw;
             document.forms.userconf.elements.email.oninput = WebInstaller.pregMail;
+            WebInstaller.currentLanguage = "<?php echo $defLang; ?>";
+            WebInstaller.sendRequest('langlist.php?' + Math.random(), WebInstaller.showLanguages); // show list of available languages
+            WebInstaller.sendRequest('lang/<?php echo $defLang; ?>.json?' + Math.random(), WebInstaller.loadLanguage); 
             setTimeout("WebInstaller.sendRequest('valconf.php?' + Math.random(), WebInstaller.showMeForm)", 2000);
         </script>
     </body>

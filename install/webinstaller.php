@@ -25,7 +25,7 @@
 
 namespace core;
 
-require_once MECCANO_CORE_DIR.'/plugins.php';
+loadPHP('plugins');
 
 interface intWebInstaller {
     public function __construct();
