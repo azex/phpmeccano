@@ -49,16 +49,22 @@ header('Content-Type: text/html; charset=utf-8');
         <script type="text/javascript" src="js/webinstaller.js"></script>
     </head>
     <body>
+        <div id="errormsg" class="hidden" style="position: fixed; width: 100%; z-index: 1000; top: 0; left: 0; opacity: 0.8;">
+            <div class="false">
+                <h1 id="error"></h1>
+                <p id="errexp"></p>
+            </div>
+        </div>
         <div class="logo">
             <embed height="46" width="320" src="svg/logo.svg" />
         </div>
         <div id="languages" class="languages"></div>
         <div id="main" class="main" dir="">
-            <div id="errormsg" class="hidden">
+<!--            <div id="errormsg" class="hidden" style="position: fixed; width: 100%;">
                 <h1 id="error"></h1>
                 <p id="errexp" class="false"></p>
                 <br>
-            </div>
+            </div>-->
             <div id="progress" class="center">
                 <h1 id="loading"></h1>
                 <h1 id="instprogress" class="hidden"></h1>
@@ -234,6 +240,7 @@ header('Content-Type: text/html; charset=utf-8');
             WebInstaller.sendRequest('langlist.php?' + Math.random(), WebInstaller.showLanguages); // show list of available languages
             WebInstaller.sendRequest('lang/<?php echo $defLang; ?>.json?' + Math.random(), WebInstaller.loadLanguage); 
             setTimeout("WebInstaller.sendRequest('valconf.php?' + Math.random(), WebInstaller.showMeForm)", 2000);
+            window.onerror = WebInstaller.showError;
         </script>
     </body>
 </html>
