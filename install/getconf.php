@@ -23,4 +23,7 @@
  *     https://bitbucket.org/azexmail/phpmeccano
  */
 
-require_once dirname(dirname(__FILE__)) . "/conf.php";
+$confPath = dirname(dirname(__FILE__)) . "/conf.php";
+if (is_file($confPath) && is_readable($confPath)) {
+    require_once $confPath;
+}

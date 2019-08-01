@@ -117,109 +117,109 @@ header('Content-Type: text/html; charset=utf-8');
                     <h2 id="dbparam"></h2>
                     <p>
                         <span id="dbsengine"></span> / MECCANO_DBSTORAGE_ENGINE:
-                        <span id="MECCANO_DBSTORAGE_ENGINE"></span>
+                        <span id="MECCANO_DBSTORAGE_ENGINE" class="false">N/A</span>
                     </p>
                     <p>
                         <span id="dbaname"></span> / MECCANO_DBANAME:
-                        <span id="MECCANO_DBANAME"></span>
+                        <span id="MECCANO_DBANAME" class="false">N/A</span>
                     </p>
                     <p>
                         <span id="dbapassw"></span> / MECCANO_DBAPASS:
-                        <span id="MECCANO_DBAPASS"></span>
+                        <span id="MECCANO_DBAPASS" class="false">N/A</span>
                     </p>
                     <p>
                         <span id="dbhost"></span> / MECCANO_DBHOST:
-                        <span id="MECCANO_DBHOST"></span>
+                        <span id="MECCANO_DBHOST" class="false">N/A</span>
                     </p>
                     <p>
                         <span id="dbport"></span> / MECCANO_DBPORT:
-                        <span id="MECCANO_DBPORT"></span>
+                        <span id="MECCANO_DBPORT" class="false">N/A</span>
                     </p>
                     <p>
                         <span id="dbname"></span> / MECCANO_DBNAME:
-                        <span id="MECCANO_DBNAME"></span>
+                        <span id="MECCANO_DBNAME" class="false">N/A</span>
                     </p>
                     <p>
                         <span id="tpref"></span> / MECCANO_TPREF:
-                        <span id="MECCANO_TPREF"></span>
+                        <span id="MECCANO_TPREF" class="false">N/A</span>
                     </p>
                     <h2 id="syspaths"></h2>
                     <p>
                         MECCANO_CONF_FILE:
-                        <span id="MECCANO_CONF_FILE"></span>
+                        <span id="MECCANO_CONF_FILE" class="false">N/A</span>
                     </p>
                     <p>
                         MECCANO_ROOT_DIR:
-                        <span id="MECCANO_ROOT_DIR"></span>
+                        <span id="MECCANO_ROOT_DIR" class="false">N/A</span>
                     </p>
                     <p>
                         MECCANO_CORE_DIR:
-                        <span id="MECCANO_CORE_DIR"></span>
+                        <span id="MECCANO_CORE_DIR" class="false">N/A</span>
                     </p>
                     <p>
                         MECCANO_TMP_DIR:
-                        <span id="MECCANO_TMP_DIR"></span>
+                        <span id="MECCANO_TMP_DIR" class="false">N/A</span>
                     </p>
                     <p>
                         MECCANO_PHP_DIR:
-                        <span id="MECCANO_PHP_DIR"></span>
+                        <span id="MECCANO_PHP_DIR" class="false">N/A</span>
                     </p>
                     <p>
                         MECCANO_JS_DIR:
-                        <span id="MECCANO_JS_DIR"></span>
+                        <span id="MECCANO_JS_DIR" class="false">N/A</span>
                     </p>
                     <p>
                         MECCANO_CSS_DIR:
-                        <span id="MECCANO_CSS_DIR"></span>
+                        <span id="MECCANO_CSS_DIR" class="false">N/A</span>
                     </p>
                     <p>
                         MECCANO_DOCUMENTS_DIR:
-                        <span id="MECCANO_DOCUMENTS_DIR"></span>
+                        <span id="MECCANO_DOCUMENTS_DIR" class="false">N/A</span>
                     </p>
                     <p>
                         MECCANO_UNPACKED_PLUGINS:
-                        <span id="MECCANO_UNPACKED_PLUGINS"></span>
+                        <span id="MECCANO_UNPACKED_PLUGINS" class="false">N/A</span>
                     </p>
                     <p>
                         MECCANO_UNINSTALL:
-                        <span id="MECCANO_UNINSTALL"></span>
+                        <span id="MECCANO_UNINSTALL" class="false">N/A</span>
                     </p>
                     <p>
                         MECCANO_SERVICE_PAGES:
-                        <span id="MECCANO_SERVICE_PAGES"></span>
+                        <span id="MECCANO_SERVICE_PAGES" class="false">N/A</span>
                     </p>
                     <h2 id="sharedfiles"></h2>
                     <p>
                         MECCANO_SHARED_FILES:
-                        <span id="MECCANO_SHARED_FILES"></span>
+                        <span id="MECCANO_SHARED_FILES" class="false">N/A</span>
                     </p>
                     <p>
                         MECCANO_SHARED_STDIR:
-                        <span id="MECCANO_SHARED_STDIR"></span>
+                        <span id="MECCANO_SHARED_STDIR" class="false">N/A</span>
                     </p>
                     <h2 id="deflang"></h2>
                     <p>
                         MECCANO_DEF_LANG:
-                        <span id="MECCANO_DEF_LANG"></span>
+                        <span id="MECCANO_DEF_LANG" class="false">N/A</span>
                     </p>
                     <h2 id="blockauth"></h2>
                     <p>
                         MECCANO_AUTH_LIMIT:
-                        <span id="MECCANO_AUTH_LIMIT"></span>
+                        <span id="MECCANO_AUTH_LIMIT" class="false">N/A</span>
                     </p>
                     <p>
                         MECCANO_AUTH_BLOCK_PERIOD:
-                        <span id="MECCANO_AUTH_BLOCK_PERIOD"></span>
+                        <span id="MECCANO_AUTH_BLOCK_PERIOD" class="false">N/A</span>
                     </p>
                     <h2 id="showerrors"></h2>
                     <p>
                         MECCANO_SHOW_ERRORS:
-                        <span id="MECCANO_SHOW_ERRORS"></span>
+                        <span id="MECCANO_SHOW_ERRORS" class="false">N/A</span>
                     </p>
                     <h2 id="mntcip"></h2>
                     <p>
                         MECCANO_MNTC_IP:
-                        <span id="MECCANO_MNTC_IP"></span>
+                        <span id="MECCANO_MNTC_IP" class="false">N/A</span>
                     </p>
                 </div>
             </div>
