@@ -28,6 +28,7 @@ var WebInstaller = {};
 WebInstaller.enableSubmitByConf = 0;
 WebInstaller.enableSubmitByUser = 0;
 WebInstaller.stopValidating = 0;
+WebInstaller.isError = 0;
 WebInstaller.currentLanguage = "";
 WebInstaller.inputConfirm = {
     "groupname" : false,
@@ -63,7 +64,9 @@ WebInstaller.sendRequest = function(dataURL, execFunc) {
     request.onreadystatechange = function() {
         if (request.readyState === 4) {
             if (request.status === 200) {
-                WebInstaller.hideError();
+                if (!WebInstaller.stopValidating && WebInstaller.isError) {
+                    WebInstaller.hideError();
+                }
                 var response = request.responseText;
                 execFunc(response);
             }            
@@ -101,34 +104,33 @@ WebInstaller.submitForm = function (dataURL, form, execFunc) {
 } ;
 
 WebInstaller.validateConf = function(respData) {
-    if (WebInstaller.stopValidating) {
-        return;
-    }
-    var i, key, span;
-    try {
-        var respJSON = JSON.parse(respData);
-        var respKeys = Object.keys(respJSON);
-        var doEnabled = 1;
-        for (i = 0; i < respKeys.length; ++i) {
-            key = respKeys[i];
-            span = document.getElementById(key);
-            if (respJSON[key][0]) {
-                span.setAttribute("class", "true");
+    if (!WebInstaller.stopValidating) {
+        var i, key, span;
+        try {
+            var respJSON = JSON.parse(respData);
+            var respKeys = Object.keys(respJSON);
+            var doEnabled = 1;
+            for (i = 0; i < respKeys.length; ++i) {
+                key = respKeys[i];
+                span = document.getElementById(key);
+                if (respJSON[key][0]) {
+                    span.setAttribute("class", "true");
+                }
+                else {
+                    span.setAttribute("class", "false");
+                    doEnabled = 0;
+                }
+                span.innerHTML = respJSON[key][1];
             }
-            else {
-                span.setAttribute("class", "false");
-                doEnabled = 0;
-            }
-            span.innerHTML = respJSON[key][1];
+            WebInstaller.enableSubmitByConf = doEnabled;
+            WebInstaller.enableSubmit();
         }
-        WebInstaller.enableSubmitByConf = doEnabled;
-        WebInstaller.enableSubmit();
-    }
-    catch (e) {
-        WebInstaller.showError("validateConf: " + e);
-    }
-    finally {
-        window.setTimeout("WebInstaller.sendRequest('valconf.php?' + Math.random(), WebInstaller.validateConf)", 2000);
+        catch (e) {
+            WebInstaller.showError("validateConf: " + e);
+        }
+        finally {
+            window.setTimeout("WebInstaller.sendRequest('valconf.php?' + Math.random(), WebInstaller.validateConf)", 2000);
+        }
     }
 } ;
 
@@ -207,7 +209,7 @@ WebInstaller.validateForm = function() {
 
 WebInstaller.enableSubmit = function() {
     var submit = document.forms.userconf.elements.submit;
-    if (WebInstaller.enableSubmitByConf && WebInstaller.enableSubmitByUser) {
+    if (WebInstaller.enableSubmitByConf && WebInstaller.enableSubmitByUser && !WebInstaller.isError) {
         submit.removeAttribute("disabled");
     }
     else {
@@ -302,7 +304,6 @@ WebInstaller.errorGears = function() {
 
 WebInstaller.makeInstall = function(respData) {
     try {
-        WebInstaller.hideError();
         var respJSON = JSON.parse(respData);
         if (!respJSON["response"]) {
             if (typeof respJSON["response"] === "boolean") {
@@ -375,9 +376,12 @@ WebInstaller.showError = function(errorText) {
     var errexp = document.getElementById("errexp");
     errexp.innerHTML = errorText;
     error.setAttribute("class", "center");
+    WebInstaller.isError = 1;
+    WebInstaller.enableSubmit();
 } ;
 
 WebInstaller.hideError = function() {
     var error = document.getElementById("errormsg");
     error.setAttribute("class", "hidden");
+    WebInstaller.isError = 0;
 } ;
