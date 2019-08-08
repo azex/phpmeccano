@@ -25,7 +25,7 @@
 
 namespace core;
 
-require_once MECCANO_CORE_DIR.'/plugins.php';
+loadPHP('plugins');
 
 interface intWebInstaller {
     public function __construct();
@@ -59,15 +59,18 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
             "MECCANO_TMP_DIR",
             "MECCANO_PHP_DIR",
             "MECCANO_JS_DIR",
+            "MECCANO_CSS_DIR",
             "MECCANO_DOCUMENTS_DIR",
             "MECCANO_UNPACKED_PLUGINS",
             "MECCANO_UNINSTALL",
+            "MECCANO_SERVICE_PAGES",
             "MECCANO_SHARED_FILES",
             "MECCANO_SHARED_STDIR",
             "MECCANO_DEF_LANG",
             "MECCANO_AUTH_LIMIT",
             "MECCANO_AUTH_BLOCK_PERIOD",
-            "MECCANO_SHOW_ERRORS"
+            "MECCANO_SHOW_ERRORS",
+            "MECCANO_MNTC_IP"
         );
         foreach ($_checkConst as $value) {
             if (!defined($value)) {
@@ -140,9 +143,11 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
             'MECCANO_TMP_DIR' => MECCANO_TMP_DIR,
             'MECCANO_PHP_DIR' => MECCANO_PHP_DIR,
             'MECCANO_JS_DIR' => MECCANO_JS_DIR,
+            'MECCANO_CSS_DIR' => MECCANO_CSS_DIR,
             'MECCANO_DOCUMENTS_DIR' => MECCANO_DOCUMENTS_DIR,
             'MECCANO_UNPACKED_PLUGINS' => MECCANO_UNPACKED_PLUGINS,
             'MECCANO_UNINSTALL' => MECCANO_UNINSTALL,
+            'MECCANO_SERVICE_PAGES' => MECCANO_SERVICE_PAGES,
             'MECCANO_SHARED_FILES' => MECCANO_SHARED_FILES
         );
         foreach ($sysPathes as $key => $value) {
@@ -214,6 +219,37 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
         }
         else {
             $constStatus['MECCANO_SHOW_ERRORS'] = array(FALSE, "N/A");
+        }
+        // IP addresses that ignore maintenance mode
+        if (is_array(MECCANO_MNTC_IP) && count(MECCANO_MNTC_IP)) {
+            $ipList = "";
+            $i = 0;
+            $isError = FALSE;
+            foreach (MECCANO_MNTC_IP as $value) {
+                // validate element as IP address
+                if (!is_string($value) || !preg_match('/^((^\s*((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))\s*$)|(^\s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))(%.+)?\s*$))$/', $value)) {
+                    $isError = true;
+                    break;
+                }
+                // add element into output string
+                if ($i) { $ipList .= ", ".$value; }
+                else { $ipList = $value; }
+                $i += 1;
+            }
+            // if error is raised
+            if ($isError) {
+                $constStatus['MECCANO_MNTC_IP'] = array(FALSE, "FALSE: element #$i");
+            }
+            // if everything is alright
+            else {
+                $constStatus['MECCANO_MNTC_IP'] = array(TRUE, $ipList);
+            }
+        }
+        elseif (is_array(MECCANO_MNTC_IP) && !count(MECCANO_MNTC_IP)) {
+            $constStatus['MECCANO_MNTC_IP'] = array(TRUE, "NULL");
+        }
+        else {
+            $constStatus['MECCANO_MNTC_IP'] = array(FALSE, "N/A");
         }
         // return results of the validation
         return $constStatus;
@@ -442,7 +478,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
             
             // user passwords
             "CREATE TABLE `{$tabPrefix}_core_userman_userpass` (
-                `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+                `id` char(36) NOT NULL,
                 `userid` int(11) UNSIGNED NOT NULL COMMENT 'Identifier that points to user the password belongs',
                 `password` char(40) NOT NULL DEFAULT '' DEFAULT 0 COMMENT 'Encrypted password',
                 `description` char(30) NOT NULL DEFAULT '' COMMENT 'Password description',
@@ -467,13 +503,22 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
             
             // unique session identifier
             "CREATE TABLE `{$tabPrefix}_core_auth_usi` (
-                `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
-                `usi` char(40) NOT NULL DEFAULT '' COMMENT 'Unique session identifier',
+                `id` char(36) NOT NULL COMMENT 'Unique session identifier',
+                `pid` char(36) NOT NULL COMMENT 'Password identifier',
                 `endtime` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Time of the session expiration',
-                FOREIGN KEY (`id`) REFERENCES `{$tabPrefix}_core_userman_userpass` (`id`),
-                PRIMARY KEY (`id`),
-                UNIQUE KEY `usi` (`usi`)
+                FOREIGN KEY (`pid`) REFERENCES `{$tabPrefix}_core_userman_userpass` (`id`),
+                PRIMARY KEY (`id`)
             ) ENGINE=$sEngine DEFAULT CHARSET=utf8 COMMENT 'Data of the sessions' AUTO_INCREMENT=1 ;",
+
+            // information about sessions
+            "CREATE TABLE `{$tabPrefix}_core_auth_session_info` (
+                `id` char(36) NOT NULL COMMENT 'Match and related to session identifier',
+                `ip` varchar(45) NOT NULL COMMENT 'IP from which session was requested',
+                `useragent`  varchar(512) NOT NULL COMMENT 'User-agent from which session was requested',
+                `created` TIMESTAMP NOT NULL DEFAULT 0 COMMENT 'Time of creation',
+                FOREIGN KEY (`id`) REFERENCES `{$tabPrefix}_core_auth_usi` (`id`),
+                PRIMARY KEY (`id`)
+            ) ENGINE=$sEngine DEFAULT CHARSET=utf8 COMMENT 'Information about the existing sessions' AUTO_INCREMENT=1 ;",
             
             // temporary blocking of the user authentication
             "CREATE TABLE `{$tabPrefix}_core_userman_temp_block` (
@@ -568,7 +613,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
             
             // topics for discussions
             "CREATE TABLE `{$tabPrefix}_core_discuss_topics` (
-                `id` varchar(36) NOT NULL,
+                `id` char(36) NOT NULL,
                 `topic` varchar(100) NOT NULL DEFAULT '' COMMENT 'Name of topic',
                 PRIMARY KEY (`id`),
                 KEY `topic` (`topic`)
@@ -576,9 +621,9 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
             
             // comments to topics
             "CREATE TABLE `{$tabPrefix}_core_discuss_comments` (
-                `id` varchar(36) NOT NULL,
-                `tid` varchar(36) COMMENT 'Topic identifier',
-                `pcid` varchar(36) DEFAULT NULL COMMENT 'Identifier of parent comment',
+                `id` char(36) NOT NULL,
+                `tid` char(36) COMMENT 'Topic identifier',
+                `pcid` char(36) DEFAULT NULL COMMENT 'Identifier of parent comment',
                 `userid` int(11) UNSIGNED COMMENT 'User identifier',
                 `comment` varchar(1024) COMMENT 'Text of comment',
                 `time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Time of comment creation',
@@ -595,7 +640,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
             
             // social circles
             "CREATE TABLE `{$tabPrefix}_core_share_circles` (
-                `id` varchar(36) NOT NULL COMMENT 'Circle identifier',
+                `id` char(36) NOT NULL COMMENT 'Circle identifier',
                 `userid` int(11) UNSIGNED NOT NULL COMMENT 'User identifier',
                 `cname` varchar(50) NOT NULL COMMENT 'Circle name',
                 FOREIGN KEY (`userid`) REFERENCES `{$tabPrefix}_core_userman_users` (`id`),
@@ -606,8 +651,8 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
             
             // buddy lists of social circles
             "CREATE TABLE `{$tabPrefix}_core_share_buddy_list` (
-                `id` varchar(36) NOT NULL,
-                `cid` varchar(36) NOT NULL COMMENT 'Circle identifiers',
+                `id` char(36) NOT NULL,
+                `cid` char(36) NOT NULL COMMENT 'Circle identifiers',
                 `bid` int(11) UNSIGNED COMMENT 'Buddy (other user) identifier',
                 FOREIGN KEY (`cid`) REFERENCES `{$tabPrefix}_core_share_circles` (`id`),
                 FOREIGN KEY (`bid`) REFERENCES `{$tabPrefix}_core_userman_users` (`id`) ON DELETE SET NULL,
@@ -619,8 +664,8 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
             
             // user messages
             "CREATE TABLE `{$tabPrefix}_core_share_msgs` (
-                `id` varchar(36) NOT NULL COMMENT 'Message identifier',
-                `source` varchar(36) NOT NULL DEFAULT '' COMMENT 'Source message identifier',
+                `id` char(36) NOT NULL COMMENT 'Message identifier',
+                `source` char(36) NOT NULL DEFAULT '' COMMENT 'Source message identifier',
                 `userid` int(11) UNSIGNED NOT NULL COMMENT 'User identifier',
                 `title` varchar(250) NOT NULL COMMENT 'Title of the message',
                 `text` text NOT NULL COMMENT 'Text (comment) of the message',
@@ -634,7 +679,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
             
             // user files
             "CREATE TABLE `{$tabPrefix}_core_share_files` (
-                `id` varchar(36) NOT NULL,
+                `id` char(36) NOT NULL,
                 `userid` int(11) UNSIGNED NOT NULL COMMENT 'User identifier',
                 `title` varchar(255) NOT NULL COMMENT 'Title of the file',
                 `name` varchar(255) NOT NULL COMMENT 'Name of the file',
@@ -653,9 +698,9 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
             
             // message-file relations
             "CREATE TABLE `{$tabPrefix}_core_share_msgfile_relations` (
-                `id` varchar(36) NOT NULL,
-                `mid` varchar(36) NOT NULL COMMENT 'Message identifier',
-                `fid` varchar(36) NOT NULL COMMENT 'File identifier',
+                `id` char(36) NOT NULL,
+                `mid` char(36) NOT NULL COMMENT 'Message identifier',
+                `fid` char(36) NOT NULL COMMENT 'File identifier',
                 `userid` int(11) UNSIGNED NOT NULL COMMENT 'User identifier',
                 FOREIGN KEY (`mid`) REFERENCES `{$tabPrefix}_core_share_msgs` (`id`),
                 FOREIGN KEY (`fid`) REFERENCES `{$tabPrefix}_core_share_files` (`id`),
@@ -667,9 +712,9 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
             
             // accessibility to messages
             "CREATE TABLE `{$tabPrefix}_core_share_msg_accessibility` (
-                `id` varchar(36) NOT NULL,
-                `mid` varchar(36) NOT NULL COMMENT 'Message identifier',
-                `cid` varchar(36) COMMENT 'Identifier of the circle which has access to the message. If empty string - public access',
+                `id` char(36) NOT NULL,
+                `mid` char(36) NOT NULL COMMENT 'Message identifier',
+                `cid` char(36) COMMENT 'Identifier of the circle which has access to the message. If empty string - public access',
                 FOREIGN KEY (`mid`) REFERENCES `{$tabPrefix}_core_share_msgs` (`id`),
                 PRIMARY KEY (`id`),
                 UNIQUE KEY `access` (`mid`, `cid`),
@@ -679,9 +724,9 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
             
             // accessibility to files
             "CREATE TABLE `{$tabPrefix}_core_share_files_accessibility` (
-                `id` varchar(36) NOT NULL,
-                `fid` varchar(36) NOT NULL COMMENT 'File identifier',
-                `cid` varchar(36) NOT NULL COMMENT 'Identifier of the circle which has access to the message. If empty string - public access',
+                `id` char(36) NOT NULL,
+                `fid` char(36) NOT NULL COMMENT 'File identifier',
+                `cid` char(36) NOT NULL COMMENT 'Identifier of the circle which has access to the message. If empty string - public access',
                 FOREIGN KEY (`fid`) REFERENCES `{$tabPrefix}_core_share_files` (`id`),
                 PRIMARY KEY (`id`),
                 UNIQUE KEY `access` (`fid`, `cid`)
@@ -689,8 +734,8 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
             
             // messages-comments relations
             "CREATE TABLE `{$tabPrefix}_core_share_msg_topic_rel` (
-                `id` varchar(36) NOT NULL COMMENT 'Identifier of message',
-                `tid` varchar(36) NOT NULL COMMENT 'Identifier of topic associated with message',
+                `id` char(36) NOT NULL COMMENT 'Identifier of message',
+                `tid` char(36) NOT NULL COMMENT 'Identifier of topic associated with message',
                 FOREIGN KEY (`id`) REFERENCES `{$tabPrefix}_core_share_msgs` (`id`),
                 FOREIGN KEY (`tid`) REFERENCES `{$tabPrefix}_core_discuss_topics` (`id`),
                 PRIMARY KEY (`id`),

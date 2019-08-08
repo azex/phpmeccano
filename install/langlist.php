@@ -1,8 +1,8 @@
 <?php
 
 /*
- *     phpMeccano v0.1.0. Web-framework written with php programming language. Component of the web installer.
- *     Copyright (C) 2015-2016  Alexei Muzarov
+ *     phpMeccano v0.2.0. Web-framework written with php programming language. Component of the web installer.
+ *     Copyright (C) 2015-2019  Alexei Muzarov
  * 
  *     This program is free software; you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -23,7 +23,21 @@
  *     https://bitbucket.org/azexmail/phpmeccano
  */
 
-$confPath = dirname(dirname(__FILE__)) . "/conf.php";
-if (is_file($confPath) && is_readable($confPath)) {
-    require_once $confPath;
+header('Content-type: application/json; charset=utf-8');
+
+if (is_readable("lang")) {
+    $langList = array();
+    foreach (array_diff(scandir('lang'), array('.', '..')) as $value) {
+        if (preg_match('/^[a-z]{2}-[A-Z]{2}\.json$/', $value)) {
+            if (is_readable("lang/$value")) {
+                $langFile = file_get_contents("lang/$value");
+                $langData = json_decode($langFile);
+                $langList[$langData->metadata->code] = $langData->metadata->name;
+            }
+        }
+    }
+    echo json_encode($langList);
+}
+else {
+    echo json_encode((object) []);
 }

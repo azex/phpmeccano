@@ -31,7 +31,7 @@ require_once 'webinstaller.php';
 $webinst = new \core\WebInstaller();
 
 if (isset($_SESSION['webinstaller_step'])) {
-    // make step
+    // do the step
     if ($_SESSION['webinstaller_step'] == 1) {
         $webinst->createDbTables();
     }
