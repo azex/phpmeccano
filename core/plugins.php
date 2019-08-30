@@ -407,7 +407,6 @@ class Plugins extends ServiceMethods implements intPlugins {
             return FALSE;
         }
         if (!$this->dbLink->affected_rows) {
-            $this->setError(ERROR_NOT_FOUND, "pluginData: plugin not found");
             return FALSE;
         }
         list($id, $version) = $qPlugin->fetch_row();
