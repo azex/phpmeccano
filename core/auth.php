@@ -541,7 +541,7 @@ class Auth extends ServiceMethods implements intAuth {
             $this->setError(ERROR_INCORRECT_DATA, 'destroyAllSessions: user id must be integer and greater than zero');
             return FALSE;
         }
-        if (!$this->checkFuncAccess('core', 'auth_user_sessions', $userId)) {
+        if (!$this->checkFuncAccess('core', 'auth_destroy_sessions', $userId)) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "destroyAllSessions: restricted by the policy");
             return FALSE;
         }
@@ -582,7 +582,7 @@ class Auth extends ServiceMethods implements intAuth {
             $this->setError(ERROR_INCORRECT_DATA, 'destroySession: incorrect unique session identifier ');
             return FALSE;
         }
-        if (!$this->checkFuncAccess('core', 'auth_user_sessions', $userId)) {
+        if (!$this->checkFuncAccess('core', 'auth_destroy_sessions', $userId)) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "destroySession: restricted by the policy");
             return FALSE;
         }
