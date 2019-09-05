@@ -52,7 +52,7 @@ if (isset($_SESSION['webinstaller_step'])) {
         }
     }
     else {
-        echo json_encode(array("response" => FALSE, "error" => $webinst->errExp()));
+        echo json_encode(array("response" => false, "error" => $webinst->errExp()));
         $_SESSION = array();
     }
 }
