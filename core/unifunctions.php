@@ -29,12 +29,12 @@ require_once MECCANO_CORE_DIR.'/swconst.php';
 
 // it generates and returns unique password salt
 function makeSalt($prefix = '') {
-    return substr(base64_encode(sha1(uniqid().microtime(TRUE).mt_rand(1, PHP_INT_MAX).uniqid($prefix, TRUE))), 0, 22);
+    return substr(base64_encode(sha1(uniqid().microtime(true).mt_rand(1, PHP_INT_MAX).uniqid($prefix, true))), 0, 22);
 }
 
 // it generates and returns unique identifier for user, session etc.
 function makeIdent($prefix = '') {
-    return sha1(uniqid().microtime(TRUE).mt_rand(1, PHP_INT_MAX).uniqid($prefix, TRUE));
+    return sha1(uniqid().microtime(true).mt_rand(1, PHP_INT_MAX).uniqid($prefix, true));
 }
 
 // it calculates password hash
@@ -43,64 +43,64 @@ function passwHash($password, $salt) {
         return sha1(crypt($password, '$2y$10$'.$salt));
     }
     else {
-        return FALSE;
+        return false;
     }
 }
 
 // it checks database name
 function pregDbName($dbname) {
     if (is_string($dbname) && preg_match('/^[a-zA-Z\d_]{1,64}$/', $dbname)) {
-        return TRUE;
+        return true;
     }
-    return FALSE;
+    return false;
 }
 
 // it checks database prefix
 function pregPref($prefix) {
     if (is_string($prefix) && preg_match('/^[a-zA-Z\d]{1,10}$/', $prefix)) {
-        return TRUE;
+        return true;
     }
-    return FALSE;
+    return false;
 }
 
 // it checks user name
 function pregUName($username) {
     if (is_string($username) && preg_match('/^[a-zA-Z\d_]{3,20}$/', $username)) {
-        return TRUE;
+        return true;
     }
-    return FALSE;
+    return false;
 }
 
 // it checks group name
 function pregGName($groupname) {
     if (is_string($groupname) && preg_match('/^.{1,50}$/', $groupname) && preg_replace("/[\s\n\r\t]+/", "", $groupname)) {
-        return TRUE;
+        return true;
     }
-    return FALSE;
+    return false;
 }
 
 // it checks entered password
 function pregPassw($password) {
     if (is_string($password) && preg_match('/^[-+=_a-zA-Z\d@.,?!;:"\'~`|#*$%&^\][(){}<>\/\\\]{8,50}$/', $password)) {
-        return TRUE;
+        return true;
     }
-    return FALSE;
+    return false;
 }
 
 // it checks entered identifier
 function pregIdent($ident) {
     if (is_string($ident) && preg_match('/^[a-zA-Z\d]{40}$/', $ident)) {
-        return TRUE;
+        return true;
     }
-    return FALSE;
+    return false;
 }
 
 // it checks entered guid
 function pregGuid($guid) {
     if (is_string($guid) && preg_match('/^[a-z\d]{8}-[a-z\d]{4}-4[a-z\d]{3}-[a-z\d]{4}-[a-z\d]{12}$/', $guid)) {
-        return TRUE;
+        return true;
     }
-    return FALSE;
+    return false;
 }
 
 // guid generator
@@ -115,17 +115,17 @@ function guid() {
 // it checks entered language code
 function pregLang($code) {
     if (is_string($code) && preg_match('/^[a-z]{2}-[A-Z]{2}$/', $code)) {
-        return TRUE;
+        return true;
     }
-    return FALSE;
+    return false;
 }
 
 // it checks entered plugin name
 function pregPlugin($name) {
     if (is_string($name) && preg_match('/^[a-zA-Z\d_]{3,30}$/', $name)) {
-        return TRUE;
+        return true;
     }
-    return FALSE;
+    return false;
 }
 
 function pregMail($email) {
@@ -133,17 +133,17 @@ function pregMail($email) {
     // https://chromium.googlesource.com/chromium/blink/+/master/Source/core/html/forms/EmailInputType.cpp
     // line 48
     if (is_string($email) && preg_match("/^[a-z0-9!#$%&'*+\/=?^_`{|}~.-]+@[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)*$/", $email)) {
-        return TRUE;
+        return true;
     }
-    return FALSE;
+    return false;
 }
 
 // it checks name identifiers with length from 3 to 40 characters
 function pregName40($name) {
     if (is_string($name) && preg_match('/^[a-zA-Z\d_]{3,40}$/', $name)) {
-        return TRUE;
+        return true;
     }
-    return FALSE;
+    return false;
 }
 
 // it reads and returns content of defined file
@@ -153,13 +153,13 @@ function openRead($path) {
         $fileSize = filesize($path);
         if (!$fileSize) {
             fclose($handle);
-            return FALSE;
+            return false;
         }
         $data = fread($handle, $fileSize);
         fclose($handle);
         return $data;
     }
-    return FALSE;
+    return false;
 }
 
 // transform XML with XSLT
@@ -173,7 +173,7 @@ function xmlTransform($xml, $xsl) {
             return $transformed;
         }
     }
-    return FALSE;
+    return false;
 }
 
 // general information about session
@@ -181,7 +181,7 @@ function authUserId() {
     if (isset($_SESSION[AUTH_USER_ID])) {
         return $_SESSION[AUTH_USER_ID];
     }
-    return FALSE;
+    return false;
 }
 
 // returns username if there is active session
@@ -189,7 +189,7 @@ function authUName() {
     if (isset($_SESSION[AUTH_USERNAME])) {
         return $_SESSION[AUTH_USERNAME];
     }
-    return FALSE;
+    return false;
 }
 
 // returns session type if there is active session
@@ -197,7 +197,7 @@ function authLimited() {
     if (isset($_SESSION[AUTH_LIMITED])) {
         return $_SESSION[AUTH_LIMITED];
     }
-    return FALSE;
+    return false;
 }
 
 // returns language code if there is active session
@@ -205,7 +205,7 @@ function authLang() {
     if (isset($_SESSION[AUTH_LANGUAGE])) {
         return $_SESSION[AUTH_LANGUAGE];
     }
-    return FALSE;
+    return false;
 }
 
 // returns language code if there is active session
@@ -213,7 +213,7 @@ function authLangDir() {
     if (isset($_SESSION[AUTH_LANGUAGE_DIR])) {
         return $_SESSION[AUTH_LANGUAGE_DIR];
     }
-    return FALSE;
+    return false;
 }
 
 // returns session token if there is active session
@@ -221,13 +221,13 @@ function authToken() {
     if (isset($_SESSION[AUTH_TOKEN])) {
         return $_SESSION[AUTH_TOKEN];
     }
-    return FALSE;
+    return false;
 }
 
 // compares two versions
 function compareVersions($version1, $version2, $operator = ">=") {
     if (!is_string($version1) || !preg_match('/^[0-9]{1,2}\.[0-9]{1,2}\.[0-9]{1,2}$/', $version1) || !is_string($version2) || !preg_match('/^[0-9]{1,2}\.[0-9]{1,2}\.[0-9]{1,2}$/', $version2) || !in_array($operator, array(">=", "<=", "==", ">", "<", "!="))) {
-        return FALSE;
+        return false;
     }
     // calculate first summary version
     list($uv1, $mv1, $lv1) = explode(".", $version1);
@@ -237,30 +237,30 @@ function compareVersions($version1, $version2, $operator = ">=") {
     $sumVersion2 = 10000*$uv2 + 100*$mv2 + $lv2;
     // compare versions
     if ($operator == ">=" && $version1 >= $version2) {
-        return TRUE;
+        return true;
     }
     elseif ($operator == "<=" && $version1 <= $version2) {
-        return TRUE;
+        return true;
     }
     elseif ($operator == "==" && $version1 == $version2) {
-        return TRUE;
+        return true;
     }
     elseif ($operator == ">" && $version1 > $version2) {
-        return TRUE;
+        return true;
     }
     elseif ($operator == "<" && $version1 < $version2) {
-        return TRUE;
+        return true;
     }
     elseif ($operator == "!=" && $version1 != $version2) {
-        return TRUE;
+        return true;
     }
-    return FALSE;
+    return false;
 }
 
 // calculates summary version
 function calcSumVersion($version) {
     if (!is_string($version) || !preg_match('/^[0-9]{1,2}\.[0-9]{1,2}\.[0-9]{1,2}$/', $version)) {
-        return FALSE;
+        return false;
     }
     list($uv, $mv, $lv) = explode(".", $version);
     $sumVersion = 10000*$uv + 100*$mv + $lv;
@@ -268,9 +268,9 @@ function calcSumVersion($version) {
 }
 
 // password generator
-function genPassword($length = 8, $lower = TRUE, $upper = TRUE, $numbers = TRUE, $underline = TRUE, $minus = TRUE, $special = TRUE) {
+function genPassword($length = 8, $lower = true, $upper = true, $numbers = true, $underline = true, $minus = true, $special = true) {
     if (!is_integer($length) || !($length >= 8 && $length <= 50)) {
-        return FALSE;
+        return false;
     }
     // charachter groups
     $allGroups = array(
@@ -299,7 +299,7 @@ function genPassword($length = 8, $lower = TRUE, $upper = TRUE, $numbers = TRUE,
     }
     // check whether at least one group is used
     if (!count($groupsInUse)) {
-        return FALSE;
+        return false;
     }
     // temporary list of groups
     $tmpGroups = array();
