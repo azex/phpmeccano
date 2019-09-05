@@ -30,8 +30,8 @@ require_once MECCANO_CORE_DIR.'/extclass.php';
 interface intPolicy {
     function __construct(\mysqli $dbLink);
     public function delPolicy($plugin);
-    public function setFuncAccess($plugin, $func, $groupId, $access = TRUE); // old name [funcAccess]
-    public function installPolicy(\DOMDocument $policy, $validate = TRUE); // old name [install]
+    public function setFuncAccess($plugin, $func, $groupId, $access = true); // old name [funcAccess]
+    public function installPolicy(\DOMDocument $policy, $validate = true); // old name [install]
     public function groupPolicyList($plugin, $groupId, $code = MECCANO_DEF_LANG);
     public function getPolicyDescById($id);
 }
@@ -47,7 +47,7 @@ class Policy extends ServiceMethods implements intPolicy {
         $this->zeroizeError();
         if (!pregPlugin($plugin)) {
             $this->setError(ERROR_INCORRECT_DATA, 'delPolicy: incorrect plugin name');
-            return FALSE;
+            return false;
         }
         // checking if plugin exists
         $qPlugin = $this->dbLink->query("SELECT `id` "
@@ -55,11 +55,11 @@ class Policy extends ServiceMethods implements intPolicy {
                 . "WHERE `name`='$plugin' ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'delPolicy: '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'delPolicy: unable to find plugin');
-            return FALSE;
+            return false;
         }
         $queries = array(
             "DELETE `d` FROM `".MECCANO_TPREF."_core_policy_descriptions` `d` "
@@ -80,21 +80,21 @@ class Policy extends ServiceMethods implements intPolicy {
             $this->dbLink->query($value);
             if ($this->dbLink->errno) {
                 $this->setError(ERROR_NOT_EXECUTED, 'delPolicy: something went wrong -> '.$this->dbLink->error);
-                return FALSE;
+                return false;
             }
         }
-        return TRUE;
+        return true;
     }
     
-    public function setFuncAccess($plugin, $func, $groupId, $access = TRUE) {
+    public function setFuncAccess($plugin, $func, $groupId, $access = true) {
         $this->zeroizeError();
         if ($this->usePolicy && !$this->checkFuncAccess('core', 'policy_func_access')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "setFuncAccess: restricted by the policy");
-            return FALSE;
+            return false;
         }
         if (!is_integer($groupId) || !pregPlugin($plugin) || !pregPlugin($func)) {
             $this->setError(ERROR_NOT_EXECUTED, 'setFuncAccess: incorect type of incoming parameters');
-            return FALSE;
+            return false;
         }
         if (!$groupId) {
             if ($access) {
@@ -130,24 +130,24 @@ class Policy extends ServiceMethods implements intPolicy {
         }
         else {
             $this->setError(ERROR_SYSTEM_INTERVENTION, 'setFuncAccess: impossible to disable access for system group');
-            return FALSE;
+            return false;
         }
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'setFuncAccess: unable to change access -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'setFuncAccess: plugin name, function or group does not exist or access flag was not changed');
-            return FALSE;
+            return false;
         }
-        return TRUE;
+        return true;
     }
     
-    public function installPolicy(\DOMDocument $policy, $validate = TRUE) {
+    public function installPolicy(\DOMDocument $policy, $validate = true) {
         $this->zeroizeError();
         if ($validate && !@$policy->relaxNGValidate(MECCANO_CORE_DIR.'/validation-schemas/policy-v01.rng')) {
             $this->setError(ERROR_INCORRECT_DATA, 'installPolicy: incorrect structure of incoming data');
-            return FALSE;
+            return false;
         }
         $pluginName = $policy->getElementsByTagName('policy')->item(0)->getAttribute('plugin');
         // check whether plugin is installed
@@ -156,18 +156,18 @@ class Policy extends ServiceMethods implements intPolicy {
                 . "WHERE `name`='$pluginName' ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, "installPolicy: unable to check whether the plugin [$pluginName] is installed -> ".$this->dbLink->errno);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, "installPolicy: plugin [$pluginName] is not installed");
-            return FALSE;
+            return false;
         }
         // get list of available languages
         $qAvaiLang = $this->dbLink->query("SELECT `code`, `id` "
                 . "FROM `".MECCANO_TPREF."_core_langman_languages` ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'installPolicy: unable to get list of available languages: '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         // avaiable languages
         $avLangIds = array();
@@ -200,7 +200,7 @@ class Policy extends ServiceMethods implements intPolicy {
                 . "WHERE `name`='$pluginName' ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'installEvents: unable to get installed events -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         $installedPolicy = array();
         while ($row = $qPolicy->fetch_row()) {
@@ -224,7 +224,7 @@ class Policy extends ServiceMethods implements intPolicy {
                 $this->dbLink->query($dQuery);
                 if ($this->dbLink->errno) {
                     $this->setError(ERROR_NOT_EXECUTED, "installPolicy: unable to delete outdated policy -> ".$this->dbLink->error);
-                    return FALSE;
+                    return false;
                 }
             }
         }
@@ -233,7 +233,7 @@ class Policy extends ServiceMethods implements intPolicy {
                 . "FROM `".MECCANO_TPREF."_core_userman_groups` ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'installPolicy: unable to get group identifiers -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         $groupIds = array();
         while ($row = $qGroupIds->fetch_row()) {
@@ -262,7 +262,7 @@ class Policy extends ServiceMethods implements intPolicy {
                             . "AND `codeid`=$codeId ;");
                     if ($this->dbLink->errno) {
                         $this->setError(ERROR_NOT_EXECUTED, 'installPolicy: unable to update policy description -> '.$this->dbLink->error);
-                        return FALSE;
+                        return false;
                     }
                 }
             }
@@ -273,7 +273,7 @@ class Policy extends ServiceMethods implements intPolicy {
                         . "VALUES ('$pluginName', '$funcName') ;");
                 if ($this->dbLink->errno) {
                     $this->setError(ERROR_NOT_EXECUTED, 'installPolicy: unable to add policy into the summary list -> '.$this->dbLink->error);
-                    return FALSE;
+                    return false;
                 }
                 $insertId = $this->dbLink->insert_id;
                 // get default rules
@@ -283,7 +283,7 @@ class Policy extends ServiceMethods implements intPolicy {
                         . "VALUES ($insertId, $nonAuthRule) ;");
                 if ($this->dbLink->errno) {
                     $this->setError(ERROR_NOT_EXECUTED, 'installPolicy: unable to create policy for the inactive session -> '.$this->dbLink->error);
-                    return FALSE;
+                    return false;
                 }
                 // policy for the groups
                 foreach ($groupIds as $groupId) {
@@ -297,7 +297,7 @@ class Policy extends ServiceMethods implements intPolicy {
                             . "VALUES ($groupId, $insertId, $access) ;");
                     if ($this->dbLink->errno) {
                         $this->setError(ERROR_NOT_EXECUTED, 'installPolicy: unable to install group policy -> '.$this->dbLink->error);
-                        return FALSE;
+                        return false;
                     }
                 }
                 // create policy description
@@ -310,24 +310,24 @@ class Policy extends ServiceMethods implements intPolicy {
                             . "VALUES ($codeId, $insertId, '$insertShort', '$insertDetailed') ;");
                     if ($this->dbLink->errno) {
                         $this->setError(ERROR_NOT_EXECUTED, 'installPolicy: unable to install policy description -> '.$this->dbLink->error);
-                        return FALSE;
+                        return false;
                     }
                 }
                 
             }
         }
-        return TRUE;
+        return true;
     }
     
     public function groupPolicyList($plugin, $groupId, $code = MECCANO_DEF_LANG) {
         $this->zeroizeError();
         if ($this->usePolicy && !$this->checkFuncAccess('core', 'policy_list_about')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "groupPolicyList: restricted by the policy");
-            return FALSE;
+            return false;
         }
         if (!pregPlugin($plugin) || !(is_integer($groupId) || is_bool($groupId)) || !pregLang($code)) {
             $this->setError(ERROR_INCORRECT_DATA, 'groupPolicyList: incorect incoming parameters');
-            return FALSE;
+            return false;
         }
         if (!$groupId) {
             $qList = $this->dbLink->query("SELECT `d`.`id`, `d`.`short`, `s`.`func`, `n`.`access` "
@@ -356,11 +356,11 @@ class Policy extends ServiceMethods implements intPolicy {
         }
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'groupPolicyList: something went wrong -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'groupPolicyList: not found');
-            return FALSE;
+            return false;
         }
         if ($this->outputType == 'xml') {
             $xml = new \DOMDocument('1.0', 'utf-8');
@@ -408,22 +408,22 @@ class Policy extends ServiceMethods implements intPolicy {
         $this->zeroizeError();
         if ($this->usePolicy && !$this->checkFuncAccess('core', 'policy_list_about')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "getPolicyDescById: restricted by the policy");
-            return FALSE;
+            return false;
         }
         if (!is_integer($id)) {
             $this->setError(ERROR_INCORRECT_DATA, 'getPolicyDescById: identifier must be integer');
-            return FALSE;
+            return false;
         }
         $qDesc = $this->dbLink->query("SELECT `short`, `detailed` "
                 . "FROM `".MECCANO_TPREF."_core_policy_descriptions` "
                 . "WHERE `id`=$id ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'getPolicyDescById: unable to get description -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'getPolicyDescById: description was not found');
-            return FALSE;
+            return false;
         }
         list($short, $detailed) = $qDesc->fetch_row();
         if ($this->outputType == 'xml') {
