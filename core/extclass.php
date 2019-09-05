@@ -40,7 +40,7 @@ interface intServiceMethods {
 class ServiceMethods implements intServiceMethods {
     protected $errid = 0; // error's id
     protected $errexp = ''; // error's explanation
-    protected $usePolicy = TRUE; // flag of the policy application
+    protected $usePolicy = true; // flag of the policy application
     protected $outputType = 'json'; // format of the output data
     
     protected function setError($id, $exp, $errtype = E_USER_NOTICE) {
@@ -63,12 +63,12 @@ class ServiceMethods implements intServiceMethods {
         return $this->errexp;
     }
     
-    public function applyPolicy($flag = FALSE) {
+    public function applyPolicy($flag = false) {
         if ($flag) {
-            $this->usePolicy = TRUE;
+            $this->usePolicy = true;
         }
         else {
-            $this->usePolicy = FALSE;
+            $this->usePolicy = false;
         }
     }
     
@@ -93,7 +93,7 @@ class ServiceMethods implements intServiceMethods {
         $this->zeroizeError();
         if (!pregPlugin($plugin) || !pregPlugin($func)) {
             $this->setError(ERROR_INCORRECT_DATA, 'checkFuncAccess: check incoming parameters');
-            return FALSE;
+            return false;
         }
         // grant access if policy is disabled
         if (!$this->usePolicy) {
@@ -129,11 +129,11 @@ class ServiceMethods implements intServiceMethods {
         }
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'checkFuncAccess: something went wrong -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'checkFuncAccess: policy is not found');
-            return FALSE;
+            return false;
         }
         list($access) = $qAccess->fetch_row();
         return (int) $access;
@@ -144,7 +144,7 @@ class ServiceMethods implements intServiceMethods {
         $this->zeroizeError();
         if (!pregPlugin($plugin) || !pregPlugin($keyword) || !is_string($insertion)) {
             $this->setError(ERROR_INCORRECT_DATA, 'newLogRecord: check arguments');
-            return FALSE;
+            return false;
         }
         $keyword = $this->dbLink->real_escape_string($keyword);
         $insertion = $this->dbLink->real_escape_string($insertion);
@@ -157,11 +157,11 @@ class ServiceMethods implements intServiceMethods {
                 . "AND `p`.`name`='$plugin' ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'newLogRecord: unable to get event identifier -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'newLogRecord: plugin or event not found');
-            return FALSE;
+            return false;
         }
         list($eventId) = $qEvent->fetch_row();
         // make new record
@@ -175,8 +175,8 @@ class ServiceMethods implements intServiceMethods {
         }
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'newLogRecord: unable to make new record -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
-        return TRUE;
+        return true;
     }
 }
