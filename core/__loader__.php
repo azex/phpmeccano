@@ -28,53 +28,53 @@ namespace core;
 // a function to load PHP libraries of the core or any installed plugin
 function loadPHP($lib, $plugin = "core") {
     if (!is_string($lib) || preg_match('/.*\.\.\/*./', $lib) || !is_string($plugin) || preg_match('/.*\.\.\/*./', $plugin)) {
-        return NULL;
+        return null;
     }
     if ($plugin == "core") {
         $fullPath = realpath(MECCANO_CORE_DIR."/$lib.php");
         if ($fullPath && is_file($fullPath) && is_readable($fullPath)) {
             require_once $fullPath;
-            return TRUE;
+            return true;
         }
     }
     else {
         $fullPath = realpath(MECCANO_PHP_DIR."/$plugin/$lib.php");
         if ($fullPath && is_file($fullPath) && is_readable($fullPath)) {
             require_once $fullPath;
-            return TRUE;
+            return true;
         }
     }
-    return FALSE;
+    return false;
 }
 
 // a function to load JavaScript libraries of the core or any installed plugin
 function loadJS($lib, $plugin = "core") {
     if (!is_string($lib) || preg_match('/.*\.\.\/*./', $lib) || !is_string($plugin) || preg_match('/.*\.\.\/*./', $plugin)) {
-        return NULL;
+        return null;
     }
     $fullPath = realpath(MECCANO_JS_DIR."/$plugin/$lib.js");
     if ($fullPath && is_file($fullPath) && is_readable($fullPath)) {
         return file_get_contents($fullPath);
     }
-    return FALSE;
+    return false;
 }
 
 // a function to load CSS libraries of the core or any installed plugin
 function loadCSS($lib, $plugin = "core") {
     if (!is_string($lib) || preg_match('/.*\.\.\/*./', $lib) || !is_string($plugin) || preg_match('/.*\.\.\/*./', $plugin)) {
-        return NULL;
+        return null;
     }
     $fullPath = realpath(MECCANO_CSS_DIR."/$plugin/$lib.css");
     if ($fullPath && is_file($fullPath) && is_readable($fullPath)) {
         return file_get_contents($fullPath);
     }
-    return FALSE;
+    return false;
 }
 
 // a function to load documents and files of the core or any installed plugin
-function loadDOC($doc, $plugin = "core", $disp = "inline", $nocache = FALSE) {
+function loadDOC($doc, $plugin = "core", $disp = "inline", $nocache = false) {
     if (!isset($_SERVER['SERVER_SOFTWARE'])) {
-        return FALSE; // The function must be executed on a web server
+        return false; // The function must be executed on a web server
     }
     if (!is_string($doc) || preg_match('/.*\.\.\/*./', $doc) || !is_string($plugin) || preg_match('/.*\.\.\/*./', $plugin) || !in_array($disp, array('inline', 'attachment'))) {
         include MECCANO_SERVICE_PAGES.'/400.php'; // Bad Request
@@ -124,5 +124,5 @@ function mntc() {
         include MECCANO_SERVICE_PAGES.'/maintenance.php'; // Maintenance mode is enabled
         exit();
     }
-    return FALSE; // Maintenance mode is disabled
+    return false; // Maintenance mode is disabled
 }
