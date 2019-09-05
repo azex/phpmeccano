@@ -23,7 +23,7 @@
  *     https://bitbucket.org/azexmail/phpmeccano
  */
 
-header('Content-Type: text/plain; charset=utf-8');
+header('Content-type: application/json; charset=utf-8');
 
 require_once 'getconf.php';
 require_once MECCANO_CORE_DIR.'/files.php';
