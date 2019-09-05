@@ -29,15 +29,15 @@ require_once MECCANO_CORE_DIR.'/extclass.php';
 
 interface intLogMan {
     function __construct(\mysqli $dbLink);
-    public function installEvents(\DOMDocument $events, $validate = TRUE);
+    public function installEvents(\DOMDocument $events, $validate = true);
     public function delLogEvents($plugin); // old name [delEvents]
     public function clearLog();
     public function sumLogAllPlugins($rpp = 20);
-    public function getPageAllPlugins($pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE);
+    public function getPageAllPlugins($pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = false);
     public function sumLogByPlugin($plugin, $rpp = 20);
-    public function getPageByPlugin($plugin, $pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE);
-    public function getLogAllPlugins($code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE);
-    public function getLogByPlugin($plugin, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE);
+    public function getPageByPlugin($plugin, $pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = false);
+    public function getLogAllPlugins($code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = false);
+    public function getLogByPlugin($plugin, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = false);
 }
 
 class LogMan extends ServiceMethods implements intLogMan {
@@ -46,11 +46,11 @@ class LogMan extends ServiceMethods implements intLogMan {
         $this->dbLink = $dbLink;
     }
 
-    public function installEvents(\DOMDocument $events, $validate = TRUE) {
+    public function installEvents(\DOMDocument $events, $validate = true) {
         $this->zeroizeError();
         if ($validate && !@$events->relaxNGValidate(MECCANO_CORE_DIR.'/validation-schemas/logman-events-v01.rng')) {
             $this->setError(ERROR_INCORRECT_DATA, 'installEvents: incorrect structure of the events');
-            return FALSE;
+            return false;
         }
         $pluginName = $events->getElementsByTagName('log')->item(0)->getAttribute("plugin");
         // check whether plugin is installed
@@ -59,11 +59,11 @@ class LogMan extends ServiceMethods implements intLogMan {
                 . "WHERE `name`='$pluginName' ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, "installEvents: cannot check whether the plugin is installed -> ".$this->dbLink->errno);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, "installEvents: required plugin [$pluginName] is not installed");
-            return FALSE;
+            return false;
         }
         // plugin identifier
         list($pluginId) = $qPlugin->fetch_row();
@@ -72,7 +72,7 @@ class LogMan extends ServiceMethods implements intLogMan {
                 . "FROM `".MECCANO_TPREF."_core_langman_languages` ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'installEvents: cannot get list of available languages: '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         // avaiable languages
         $avLangIds = array();
@@ -101,7 +101,7 @@ class LogMan extends ServiceMethods implements intLogMan {
                 . "WHERE `plugid`=$pluginId");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'installEvents: unable to get installed events -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         $installedEvents = array();
         while ($row = $qEvents->fetch_row()) {
@@ -127,7 +127,7 @@ class LogMan extends ServiceMethods implements intLogMan {
                 $this->dbLink->query($dQuery);
                 if ($this->dbLink->errno) {
                     $this->setError(ERROR_NOT_EXECUTED, "installEvents: unable to delete outdated event -> ".$this->dbLink->error);
-                    return FALSE;
+                    return false;
                 }
             }
         }
@@ -152,7 +152,7 @@ class LogMan extends ServiceMethods implements intLogMan {
                             . "AND `codeid`=$codeId ;");
                     if ($this->dbLink->errno) {
                         $this->setError(ERROR_NOT_EXECUTED, 'installEvents: unable to update event description -> '.$this->dbLink->error);
-                        return FALSE;
+                        return false;
                     }
                 }
             }
@@ -163,7 +163,7 @@ class LogMan extends ServiceMethods implements intLogMan {
                         . "VALUES ('$keyword', $pluginId) ;");
                 if ($this->dbLink->errno) {
                     $this->setError(ERROR_NOT_EXECUTED, 'installEvents: unable add new event -> '.$this->dbLink->error);
-                    return FALSE;
+                    return false;
                 }
                 $eventId = $this->dbLink->insert_id;
                 foreach ($descriptions as $inCode => $desc) {
@@ -174,23 +174,23 @@ class LogMan extends ServiceMethods implements intLogMan {
                             . "VALUES ('$newDesc', $eventId, $codeId) ;");
                     if ($this->dbLink->errno) {
                         $this->setError(ERROR_NOT_EXECUTED, 'installEvents: unable to add new event description -> '.$this->dbLink->error);
-                        return FALSE;
+                        return false;
                     }
                 }
             }
         }
-        return TRUE;
+        return true;
     }
     
     public function delLogEvents($plugin) {
         $this->zeroizeError();
         if (!pregPlugin($plugin)) {
             $this->setError(ERROR_INCORRECT_DATA, "delLogEvents: incorrect plugin name");
-            return FALSE;
+            return false;
         }
         if ($plugin == "core") {
             $this->setError(ERROR_SYSTEM_INTERVENTION, "delLogEvents: unable to delete core events");
-            return FALSE;
+            return false;
         }
         $sql = array(
             "DELETE `r` "
@@ -217,36 +217,36 @@ class LogMan extends ServiceMethods implements intLogMan {
             $this->dbLink->query($value);
             if ($this->dbLink->errno) {
                 $this->setError(ERROR_NOT_EXECUTED, "delLogEvents: unable remove events -> ".$this->dbLink->error);
-                return FALSE;
+                return false;
             }
         }
-        return TRUE;
+        return true;
     }
     
     public function clearLog() {
         $this->zeroizeError();
         if ($this->usePolicy && !$this->checkFuncAccess('core', 'logman_clear_log')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "clearLog: restricted by the policy");
-            return FALSE;
+            return false;
         }
         if (isset($_SESSION[AUTH_LIMITED]) && $_SESSION[AUTH_LIMITED]) {
             $this->setError(ERROR_RESTRICTED_ACCESS, 'clearLog: function execution was terminated because of using of limited authentication');
-            return FALSE;
+            return false;
         }
         $this->dbLink->query("TRUNCATE TABLE `".MECCANO_TPREF."_core_logman_records` ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'clearLog: unable to clear log -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         $this->newLogRecord('core', 'logman_clear_log');
-        return TRUE;
+        return true;
     }
     
     public function sumLogAllPlugins($rpp = 20) { // rpp - records per page
         $this->zeroizeError();
         if (!is_integer($rpp)) {
             $this->setError(ERROR_INCORRECT_DATA, 'sumLog: rpp must be integer');
-            return FALSE;
+            return false;
         }
         if ($rpp < 1) {
             $rpp = 1;
@@ -254,7 +254,7 @@ class LogMan extends ServiceMethods implements intLogMan {
         $qResult = $this->dbLink->query("SELECT COUNT(`id`) FROM `".MECCANO_TPREF."_core_logman_records` ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'sumLog: unable to counted total records -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         list($totalRecs) = $qResult->fetch_row();
         $totalPages = $totalRecs/$rpp;
@@ -271,15 +271,15 @@ class LogMan extends ServiceMethods implements intLogMan {
         return array('records' => (int) $totalRecs, 'pages' => (int) $totalPages);
     }
     
-    public function getPageAllPlugins($pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE) {
+    public function getPageAllPlugins($pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = false) {
         $this->zeroizeError();
         if ($this->usePolicy && !$this->checkFuncAccess('core', 'logman_get_log')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "getPageAllPlugins: restricted by the policy");
-            return FALSE;
+            return false;
         }
         if (!pregLang($code) || !is_integer($pageNumber) || !is_integer($totalPages) || !is_integer($rpp)) {
             $this->setError(ERROR_INCORRECT_DATA, 'getPageAllPlugins: check arguments');
-            return FALSE;
+            return false;
         }
         $rightEntry = array('id', 'user', 'event', 'time');
         if (is_array($orderBy)) {
@@ -297,7 +297,7 @@ class LogMan extends ServiceMethods implements intLogMan {
         }
         else {
             $this->setError(ERROR_INCORRECT_DATA, 'getPageAllPlugins: check order parameters');
-            return FALSE;
+            return false;
         }
         if ($pageNumber < 1) {
             $pageNumber = 1;
@@ -311,10 +311,10 @@ class LogMan extends ServiceMethods implements intLogMan {
         if ($rpp < 1) {
             $rpp = 1;
         }
-        if ($ascent == TRUE) {
+        if ($ascent == true) {
             $direct = '';
         }
-        elseif ($ascent == FALSE) {
+        elseif ($ascent == false) {
             $direct = 'DESC';
         }
         $start = ($pageNumber - 1) * $rpp;
@@ -328,7 +328,7 @@ class LogMan extends ServiceMethods implements intLogMan {
                 . "ORDER BY `$orderBy` $direct LIMIT $start, $rpp;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'getPageAllPlugins: unable to get log page -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if ($this->outputType == 'xml') {
             $xml = new \DOMDocument('1.0', 'utf-8');
@@ -367,7 +367,7 @@ class LogMan extends ServiceMethods implements intLogMan {
         $this->zeroizeError();
         if (!pregPlugin($plugin) || !is_integer($rpp)) {
             $this->setError(ERROR_INCORRECT_DATA, 'sumLog: check arguments');
-            return FALSE;
+            return false;
         }
         if ($rpp < 1) {
             $rpp = 1;
@@ -381,7 +381,7 @@ class LogMan extends ServiceMethods implements intLogMan {
                 . "WHERE `p`.`name`='$plugin' ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'sumLog: unable to counted total records -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         list($totalRecs) = $qResult->fetch_row();
         $totalPages = $totalRecs/$rpp;
@@ -398,15 +398,15 @@ class LogMan extends ServiceMethods implements intLogMan {
         return array('records' => (int) $totalRecs, 'pages' => (int) $totalPages);
     }
     
-    public function getPageByPlugin($plugin, $pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE) {
+    public function getPageByPlugin($plugin, $pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = false) {
         $this->zeroizeError();
         if ($this->usePolicy && !$this->checkFuncAccess('core', 'logman_get_log')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "getPageByPlugin: restricted by the policy");
-            return FALSE;
+            return false;
         }
         if (!pregPlugin($plugin) || !pregLang($code) || !is_integer($pageNumber) || !is_integer($totalPages) || !is_integer($rpp)) {
             $this->setError(ERROR_INCORRECT_DATA, 'getPageByPlugin: check arguments');
-            return FALSE;
+            return false;
         }
         $rightEntry = array('id', 'user', 'event', 'time');
         if (is_array($orderBy)) {
@@ -424,7 +424,7 @@ class LogMan extends ServiceMethods implements intLogMan {
         }
         else {
             $this->setError(ERROR_INCORRECT_DATA, 'getPageByPlugin: check order parameters');
-            return FALSE;
+            return false;
         }
         if ($pageNumber < 1) {
             $pageNumber = 1;
@@ -438,10 +438,10 @@ class LogMan extends ServiceMethods implements intLogMan {
         if ($rpp < 1) {
             $rpp = 1;
         }
-        if ($ascent == TRUE) {
+        if ($ascent == true) {
             $direct = '';
         }
-        elseif ($ascent == FALSE) {
+        elseif ($ascent == false) {
             $direct = 'DESC';
         }
         $start = ($pageNumber - 1) * $rpp;
@@ -460,7 +460,7 @@ class LogMan extends ServiceMethods implements intLogMan {
                 . "ORDER BY `$orderBy` $direct LIMIT $start, $rpp;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'getPageByPlugin: unable to get log page -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if ($this->outputType == 'xml') {
             $xml = new \DOMDocument('1.0', 'utf-8');
@@ -499,15 +499,15 @@ class LogMan extends ServiceMethods implements intLogMan {
         }
     }
     
-    public function getLogAllPlugins($code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE) {
+    public function getLogAllPlugins($code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = false) {
         $this->zeroizeError();
         if ($this->usePolicy && !$this->checkFuncAccess('core', 'logman_get_log')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "getLogAllPlugins: restricted by the policy");
-            return FALSE;
+            return false;
         }
         if (!pregLang($code)) {
             $this->setError(ERROR_INCORRECT_DATA, 'getLogAllPlugins: check arguments');
-            return FALSE;
+            return false;
         }
         $rightEntry = array('id', 'user', 'event', 'time');
         if (is_array($orderBy)) {
@@ -525,12 +525,12 @@ class LogMan extends ServiceMethods implements intLogMan {
         }
         else {
             $this->setError(ERROR_INCORRECT_DATA, 'getLogAllPlugins: check order parameters');
-            return FALSE;
+            return false;
         }
-        if ($ascent == TRUE) {
+        if ($ascent == true) {
             $direct = '';
         }
-        elseif ($ascent == FALSE) {
+        elseif ($ascent == false) {
             $direct = 'DESC';
         }
         $qResult = $this->dbLink->query("SELECT `r`.`id` `id`, `r`.`time` `time`, REPLACE(`d`.`description`, '%d', `r`.`insertion`) `event`, `r`.`user` `user` "
@@ -543,7 +543,7 @@ class LogMan extends ServiceMethods implements intLogMan {
                 . "ORDER BY `$orderBy` $direct ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'getLogAllPlugins: unable to get log -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if ($this->outputType == 'xml') {
             $xml = new \DOMDocument('1.0', 'utf-8');
@@ -578,15 +578,15 @@ class LogMan extends ServiceMethods implements intLogMan {
         }
     }
     
-    public function getLogByPlugin($plugin, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE) {
+    public function getLogByPlugin($plugin, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = false) {
         $this->zeroizeError();
         if ($this->usePolicy && !$this->checkFuncAccess('core', 'logman_get_log')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "getLogByPlugin: restricted by the policy");
-            return FALSE;
+            return false;
         }
         if (!pregPlugin($plugin) || !pregLang($code)) {
             $this->setError(ERROR_INCORRECT_DATA, 'getLogByPlugin: check arguments');
-            return FALSE;
+            return false;
         }
         $rightEntry = array('id', 'user', 'event', 'time');
         if (is_array($orderBy)) {
@@ -604,12 +604,12 @@ class LogMan extends ServiceMethods implements intLogMan {
         }
         else {
             $this->setError(ERROR_INCORRECT_DATA, 'getLogByPlugin: check order parameters');
-            return FALSE;
+            return false;
         }
-        if ($ascent == TRUE) {
+        if ($ascent == true) {
             $direct = '';
         }
-        elseif ($ascent == FALSE) {
+        elseif ($ascent == false) {
             $direct = 'DESC';
         }
         $qResult = $this->dbLink->query("SELECT `r`.`id` `id`, `r`.`time` `time`, REPLACE(`d`.`description`, '%d', `r`.`insertion`) `event`, `r`.`user` `user` "
@@ -627,7 +627,7 @@ class LogMan extends ServiceMethods implements intLogMan {
                 . "ORDER BY `$orderBy` $direct ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'getLogByPlugin: unable to get log -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if ($this->outputType == 'xml') {
             $xml = new \DOMDocument('1.0', 'utf-8');
