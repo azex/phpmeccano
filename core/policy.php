@@ -61,7 +61,7 @@ class Policy extends ServiceMethods implements intPolicy {
             $this->setError(ERROR_NOT_FOUND, 'delPolicy: unable to find plugin');
             return false;
         }
-        $queries = array(
+        $queries = [
             "DELETE `d` FROM `".MECCANO_TPREF."_core_policy_descriptions` `d` "
             . "JOIN `".MECCANO_TPREF."_core_policy_summary_list` `s` "
             . "ON `s`.`id`=`d`.`policyid` "
@@ -75,7 +75,7 @@ class Policy extends ServiceMethods implements intPolicy {
             . "ON `s`.`id`=`n`.`funcid` "
             . "WHERE `s`.`name`='$plugin' ;",
             "DELETE FROM `".MECCANO_TPREF."_core_policy_summary_list` "
-            . "WHERE `name`='$plugin' ;");
+            . "WHERE `name`='$plugin' ;"];
         foreach ($queries as $value) {
             $this->dbLink->query($value);
             if ($this->dbLink->errno) {
@@ -170,21 +170,21 @@ class Policy extends ServiceMethods implements intPolicy {
             return false;
         }
         // avaiable languages
-        $avLangIds = array();
-        $avLangCodes = array();
+        $avLangIds = [];
+        $avLangCodes = [];
         while ($row = $qAvaiLang->fetch_row()) {
             $avLangIds[$row[0]] = $row[1];
             $avLangCodes[] = $row[0];
         }
-        $incomingPolicy = array();
-        $defaultRules = array();
+        $incomingPolicy = [];
+        $defaultRules = [];
         $funcNodes = $policy->getElementsByTagName('function');
         foreach ($funcNodes as $funcNode) {
             $funcName = $funcNode->getAttribute('name');
             $nonAuthRule = $funcNode->getAttribute('nonauth');
             $authRule = $funcNode->getAttribute('auth');
-            $defaultRules[$funcName] = array((int) $nonAuthRule, (int) $authRule);
-            $incomingPolicy[$funcName] = array();
+            $defaultRules[$funcName] = [(int) $nonAuthRule, (int) $authRule];
+            $incomingPolicy[$funcName] = [];
             $langNodes = $funcNode->getElementsByTagName('description');
             foreach ($langNodes as $langNode){
                 $code = $langNode->getAttribute('code');
@@ -202,7 +202,7 @@ class Policy extends ServiceMethods implements intPolicy {
             $this->setError(ERROR_NOT_EXECUTED, 'installEvents: unable to get installed events -> '.$this->dbLink->error);
             return false;
         }
-        $installedPolicy = array();
+        $installedPolicy = [];
         while ($row = $qPolicy->fetch_row()) {
             $installedPolicy[$row[0]] = $row[1];
         }
@@ -210,7 +210,7 @@ class Policy extends ServiceMethods implements intPolicy {
         $outdatedPolicy = array_diff(array_keys($installedPolicy), array_keys($incomingPolicy));
         foreach ($outdatedPolicy as $func) {
             $funcId = $installedPolicy[$func];
-            $sql = array(
+            $sql = [
                 "DELETE FROM `".MECCANO_TPREF."_core_policy_descriptions` "
                 . "WHERE `policyid`=$funcId ;",
                 "DELETE FROM `".MECCANO_TPREF."_core_policy_access` "
@@ -219,7 +219,7 @@ class Policy extends ServiceMethods implements intPolicy {
                 . "WHERE `funcid`=$funcId ;",
                 "DELETE FROM `".MECCANO_TPREF."_core_policy_summary_list` "
                 . "WHERE `id`=$funcId ;"
-            );
+            ];
             foreach ($sql as $dQuery) {
                 $this->dbLink->query($dQuery);
                 if ($this->dbLink->errno) {
@@ -235,7 +235,7 @@ class Policy extends ServiceMethods implements intPolicy {
             $this->setError(ERROR_NOT_EXECUTED, 'installPolicy: unable to get group identifiers -> '.$this->dbLink->error);
             return false;
         }
-        $groupIds = array();
+        $groupIds = [];
         while ($row = $qGroupIds->fetch_row()) {
             $groupIds[] = $row[0];
         }
@@ -383,17 +383,17 @@ class Policy extends ServiceMethods implements intPolicy {
             return $xml;
         }
         else {
-            $policyNode = array();
+            $policyNode = [];
             $policyNode['plugin'] = $plugin;
             $policyNode['group'] = $groupId;
-            $policyNode['functions'] = array();
+            $policyNode['functions'] = [];
             while ($row = $qList->fetch_row()) {
-                $policyNode['functions'][] = array(
+                $policyNode['functions'][] = [
                     'id' => (int) $row[0],
                     'short' => $row[1],
                     'name' => $row[2],
                     'access' => (int) $row[3]
-                );
+                ];
             }
             if ($this->outputType == 'array') {
                 return $policyNode;
@@ -440,10 +440,10 @@ class Policy extends ServiceMethods implements intPolicy {
         }
         else {
             if ($this->outputType == 'json') {
-                return json_encode(array('id' => $id, 'short' => $short, 'detailed' => $detailed));
+                return json_encode(['id' => $id, 'short' => $short, 'detailed' => $detailed]);
             }
             else {
-                return array('id' => $id, 'short' => $short, 'detailed' => $detailed);
+                return ['id' => $id, 'short' => $short, 'detailed' => $detailed];
             }
         }
         
