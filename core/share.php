@@ -56,17 +56,17 @@ interface intShare {
     public function delMsg($msgId, $userId, $keepFiles = true);
     public function repostFile($fileId, $userId, $hlink = true);
     public function sumUserMsgs($userId, $rpp = 20);
-    public function userMsgs($userId, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('time'), $ascent = false);
+    public function userMsgs($userId, $pageNumber, $totalPages, $rpp = 20, $orderBy = ['time'], $ascent = false);
     public function msgStripe($userId, $rpp = 20);
     public function appendMsgStripe($userId, $minMark, $rpp = 20);
     public function updateMsgStripe($userId, $maxMark);
     public function sumUserFiles($userId, $rpp = 20);
-    public function userFiles($userId, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('time'), $ascent = false);
+    public function userFiles($userId, $pageNumber, $totalPages, $rpp = 20, $orderBy = ['time'], $ascent = false);
     public function fileStripe($userId, $rpp = 20);
     public function appendFileStripe($userId, $minMark, $rpp = 20);
     public function updateFileStripe($userId, $maxMark);
     public function sumUserSubs($userId, $rpp = 20);
-    public function userSubs($userId, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('time'), $ascent = false);
+    public function userSubs($userId, $pageNumber, $totalPages, $rpp = 20, $orderBy = ['time'], $ascent = false);
     public function subStripe($userId, $rpp = 20);
     public function appendSubStripe($userId, $minMark, $rpp = 20);
     public function updateSubStripe($userId, $maxMark);
@@ -128,7 +128,7 @@ class Share extends Discuss implements intShare {
             return false;
         }
         else {
-            $sql = array(
+            $sql = [
                 // check for access shared with circles
                 "SELECT `a`.`id` "
                 . "FROM `".MECCANO_TPREF."_core_share_files_accessibility` `a` "
@@ -142,7 +142,7 @@ class Share extends Discuss implements intShare {
                 . "FROM `".MECCANO_TPREF."_core_share_files` "
                 . "WHERE `id`='$fileId' "
                 . "AND `userid`={$_SESSION[AUTH_USER_ID]} ;"
-            );
+            ];
             foreach ($sql as $value) {
                 $this->dbLink->query($value);
                 if ($this->dbLink->errno) {
@@ -197,7 +197,7 @@ class Share extends Discuss implements intShare {
             return false;
         }
         else {
-            $sql = array(
+            $sql = [
                 // check for access shared with circles
                 "SELECT `a`.`id` "
                 . "FROM `".MECCANO_TPREF."_core_share_msg_accessibility` `a` "
@@ -211,7 +211,7 @@ class Share extends Discuss implements intShare {
                 . "FROM `".MECCANO_TPREF."_core_share_msgs` "
                 . "WHERE `id`='$msgId' "
                 . "AND `userid`={$_SESSION[AUTH_USER_ID]} ;"
-            );
+            ];
             foreach ($sql as $value) {
                 $this->dbLink->query($value);
                 if ($this->dbLink->errno) {
@@ -292,9 +292,9 @@ class Share extends Discuss implements intShare {
             return $xml;
         }
         else {
-            $circlesNode = array();
+            $circlesNode = [];
             while ($row = $qCircles->fetch_row()) {
-                $circleNode = array();
+                $circleNode = [];
                 $circleNode['id'] = $row[0];
                 $circleNode['name'] = $row[1];
                 $circlesNode[] = $circleNode;
@@ -448,16 +448,16 @@ class Share extends Discuss implements intShare {
             return $xml;
         }
         else {
-            $rootNode = array();
+            $rootNode = [];
             $rootNode['cid'] = $circleId;
             $rootNode['cname'] = $circleName;
-            $rootNode['contacts'] = array();
+            $rootNode['contacts'] = [];
             while ($row = $qContacts->fetch_row()) {
-                $rootNode['contacts'][] = array(
+                $rootNode['contacts'][] = [
                     'id' => (int) $row[0],
                     'username' => $row[1],
                     'fullname' =>$row[2]
-                        );
+                        ];
             }
             if ($this->outputType == 'json') {
                 return json_encode($rootNode);
@@ -524,7 +524,7 @@ class Share extends Discuss implements intShare {
             $this->setError(ERROR_NOT_FOUND, 'createCircle: circle not found');
             return false;
         }
-        $sql = array(
+        $sql = [
             "DELETE FROM `".MECCANO_TPREF."_core_share_msg_accessibility` "
             . "WHERE `cid`='$circleId' ;",
             "DELETE FROM `".MECCANO_TPREF."_core_share_files_accessibility` "
@@ -533,7 +533,7 @@ class Share extends Discuss implements intShare {
             . "WHERE `cid`='$circleId' ;",
             "DELETE FROM `".MECCANO_TPREF."_core_share_circles` "
             . "WHERE `id`='$circleId' ;",
-        );
+        ];
         foreach ($sql as $value) {
             $this->dbLink->query($value);
             if ($this->dbLink->errno) {
@@ -739,7 +739,7 @@ class Share extends Discuss implements intShare {
             $this->setError(ERROR_NOT_EXECUTED, "getFile: the method must be executed on a web server");
             return false;
         }
-        if (!pregGuid($fileId) || !in_array($disp, array('inline', 'attachment'))) {
+        if (!pregGuid($fileId) || !in_array($disp, ['inline', 'attachment'])) {
             include MECCANO_SERVICE_PAGES.'/400.php'; // Bad Request
             exit();
         }
@@ -920,12 +920,12 @@ class Share extends Discuss implements intShare {
             $this->setError(Files::errId(), 'delFile -> '.Files::errExp());
             return false;
         }
-        $sql = array(
+        $sql = [
             "DELETE FROM `".MECCANO_TPREF."_core_share_files_accessibility` "
             . "WHERE `fid`='$fileId' ;",
             "DELETE FROM `".MECCANO_TPREF."_core_share_files` "
             . "WHERE `id`='$fileId' ;"
-        );
+        ];
         if ($force) { 
             array_unshift(
                     $sql, 
@@ -996,7 +996,7 @@ class Share extends Discuss implements intShare {
                 return $xml;
             }
             else {
-                $fileInfoNode = array();
+                $fileInfoNode = [];
                 //
                 $fileInfoNode['id'] = $fileInfo[0];
                 $fileInfoNode['username'] = $fileInfo[1];
@@ -1148,7 +1148,7 @@ class Share extends Discuss implements intShare {
                 return $xml;
             }
             else {
-                $msgNode = array();
+                $msgNode = [];
                 //
                 $msgNode['id'] = $msgId;
                 $msgNode['source'] = $msgSource;
@@ -1215,18 +1215,18 @@ class Share extends Discuss implements intShare {
                 return $xml;
             }
             else {
-                $filesNode = array();
+                $filesNode = [];
                 //
                 $filesNode['msgid'] = $msgId;
-                $filesNode['files'] = array();
+                $filesNode['files'] = [];
                 while ($fileInfo = $qFiles->fetch_row()) {
                     if ($this->checkFileAccess($fileInfo[0])) {
-                        $filesNode['files'][] = array(
+                        $filesNode['files'][] = [
                             'id' => $fileInfo[0],
                             'title' => $fileInfo[1],
                             'filename' => $fileInfo[2],
                             'mime' => $fileInfo[3]
-                        );
+                        ];
                     }
                 }
                 if ($this->outputType == 'json') {
@@ -1285,7 +1285,7 @@ class Share extends Discuss implements intShare {
             $this->setError(ERROR_NOT_EXECUTED, 'getFileShares: unable to get file shares -> '.$this->dbLink->error);
             return false;
         }
-        $fileShares = array();
+        $fileShares = [];
         while ($row = $qShares->fetch_row()) {
             $fileShares[] = $row[0];
         }
@@ -1300,11 +1300,11 @@ class Share extends Discuss implements intShare {
             $sharesNode->appendChild($fileIdAttribute);
         }
         else {
-            $sharesNode = array();
+            $sharesNode = [];
             $sharesNode['fileId'] = $fileId;
-            $sharesNode['circles'] = array();
+            $sharesNode['circles'] = [];
         }
-        $row = array('public', '');
+        $row = ['public', ''];
         do {
             // check access
             if (in_array($row[0], $fileShares, true)) {
@@ -1324,7 +1324,7 @@ class Share extends Discuss implements intShare {
                 $sharesNode->appendChild($circleNode);
             }
             else {
-                $sharesNode['circles'][] = array('id' => $row[0], 'name' => $row[1], 'access' => $access);
+                $sharesNode['circles'][] = ['id' => $row[0], 'name' => $row[1], 'access' => $access];
             }
         } while ($row = $qCircles->fetch_row());
         if ($this->outputType == 'xml') {
@@ -1376,7 +1376,7 @@ class Share extends Discuss implements intShare {
             $this->setError(ERROR_NOT_EXECUTED, 'getMsgShares: unable to get message shares -> '.$this->dbLink->error);
             return false;
         }
-        $fileShares = array();
+        $fileShares = [];
         while ($row = $qShares->fetch_row()) {
             $fileShares[] = $row[0];
         }
@@ -1391,11 +1391,11 @@ class Share extends Discuss implements intShare {
             $sharesNode->appendChild($msgIdAttribute);
         }
         else {
-            $sharesNode = array();
+            $sharesNode = [];
             $sharesNode['msgId'] = $msgId;
-            $sharesNode['circles'] = array();
+            $sharesNode['circles'] = [];
         }
-        $row = array('public', '');
+        $row = ['public', ''];
         do {
             // check access
             if (in_array($row[0], $fileShares, true)) {
@@ -1415,7 +1415,7 @@ class Share extends Discuss implements intShare {
                 $sharesNode->appendChild($circleNode);
             }
             else {
-                $sharesNode['circles'][] = array('id' => $row[0], 'name' => $row[1], 'access' => $access);
+                $sharesNode['circles'][] = ['id' => $row[0], 'name' => $row[1], 'access' => $access];
             }
         } while ($row = $qCircles->fetch_row());
         if ($this->outputType == 'xml') {
@@ -1515,8 +1515,8 @@ class Share extends Discuss implements intShare {
                     . "ON `f`.`id`=`r`.`fid` "
                     . "WHERE `r`.`mid`='$msgId' ;"
                     );
-            $relFiles = array();
-            $fileDirs = array();
+            $relFiles = [];
+            $fileDirs = [];
             if ($this->dbLink->errno) {
                 $this->setError(ERROR_NOT_EXECUTED, 'repostMsg: unable to get file identifiers -> '.$this->dbLink->error);
                 return false;
@@ -1596,7 +1596,7 @@ class Share extends Discuss implements intShare {
                 $stmtAdd->close();
                 $stmtRelate->close();
             }
-            return array('message' => $newMsgId, 'files' => array_values($relFiles));
+            return ['message' => $newMsgId, 'files' => array_values($relFiles)];
         }
         elseif ($this->errid) {
             $this->setError($this->errid, 'repostMsg -> '.$this->errexp);
@@ -1680,7 +1680,7 @@ class Share extends Discuss implements intShare {
             }
             if ($this->dbLink->affected_rows) {
                 // ids and storage dirs of related files
-                $relFiles = array();
+                $relFiles = [];
                 while (list($fileId, $storageDir) = $qFiles->fetch_row()) {
                     $relFiles[$fileId] = $storageDir;
                 }
@@ -1888,17 +1888,17 @@ class Share extends Discuss implements intShare {
         elseif ($totalPages == 0) {
             $totalPages = 1;
         }
-        return array('records' => (int) $totalRecs, 'pages' => (int) $totalPages);
+        return ['records' => (int) $totalRecs, 'pages' => (int) $totalPages];
     }
     
-    public function userMsgs($userId, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('time'), $ascent = false) {
+    public function userMsgs($userId, $pageNumber, $totalPages, $rpp = 20, $orderBy = ['time'], $ascent = false) {
         $this->zeroizeError();
         // validate parameters
         if (!is_integer($userId) || !is_integer($pageNumber) || !is_integer($totalPages) || !is_integer($rpp)) {
             $this->setError(ERROR_INCORRECT_DATA, 'userMsgs: incorrect parameters');
             return false;
         }
-        $rightEntry = array('time', 'title');
+        $rightEntry = ['time', 'title'];
         if (is_array($orderBy)) {
             $arrayLen = count($orderBy);
             if ($arrayLen && count(array_intersect($orderBy, $rightEntry)) == $arrayLen) {
@@ -2011,11 +2011,11 @@ class Share extends Discuss implements intShare {
             $msgsNode->appendChild($fnameAtt);
         }
         else {
-            $msgsNode = array();
+            $msgsNode = [];
             $msgsNode['username'] = $userName;
             $msgsNode['uid'] = $userId;
             $msgsNode['fullname'] = $fullName;
-            $msgsNode['messages'] = array();
+            $msgsNode['messages'] = [];
         }
         while ($msgData = $qResult->fetch_row()) {
             list($msgId, $source, $title, $text, $msgTime, $mtMark) = $msgData;
@@ -2029,13 +2029,13 @@ class Share extends Discuss implements intShare {
                 $msgsNode->appendChild($msgNode);
             }
             else {
-                $msgsNode['messages'][] = array(
+                $msgsNode['messages'][] = [
                     'id' => $msgId,
                     'source' => $source,
                     'title' => $title,
                     'text' => $text,
                     'time' => $msgTime
-                );
+                ];
             }
         }
         if ($this->outputType == 'xml') {
@@ -2131,11 +2131,11 @@ class Share extends Discuss implements intShare {
             $msgsNode->appendChild($fnameAtt);
         }
         else {
-            $msgsNode = array();
+            $msgsNode = [];
             $msgsNode['username'] = $userName;
             $msgsNode['uid'] = $userId;
             $msgsNode['fullname'] = $fullName;
-            $msgsNode['messages'] = array();
+            $msgsNode['messages'] = [];
         }
         // default values of min and max microtime marks
         $minMark = 0;
@@ -2156,13 +2156,13 @@ class Share extends Discuss implements intShare {
                 $msgsNode->appendChild($msgNode);
             }
             else {
-                $msgsNode['messages'][] = array(
+                $msgsNode['messages'][] = [
                     'id' => $msgId,
                     'source' => $source,
                     'title' => $title,
                     'text' => $text,
                     'time' => $msgTime
-                );
+                ];
             }
         }
         if ($maxMark && !$minMark) {
@@ -2274,11 +2274,11 @@ class Share extends Discuss implements intShare {
             $msgsNode->appendChild($fnameAtt);
         }
         else {
-            $msgsNode = array();
+            $msgsNode = [];
             $msgsNode['username'] = $userName;
             $msgsNode['uid'] = $userId;
             $msgsNode['fullname'] = $fullName;
-            $msgsNode['messages'] = array();
+            $msgsNode['messages'] = [];
         }
         // default value max microtime mark
         $maxMark = 0;
@@ -2298,13 +2298,13 @@ class Share extends Discuss implements intShare {
                 $msgsNode->appendChild($msgNode);
             }
             else {
-                $msgsNode['messages'][] = array(
+                $msgsNode['messages'][] = [
                     'id' => $msgId,
                     'source' => $source,
                     'title' => $title,
                     'text' => $text,
                     'time' => $msgTime
-                );
+                ];
             }
         }
         if ($maxMark) {
@@ -2412,11 +2412,11 @@ class Share extends Discuss implements intShare {
             $msgsNode->appendChild($fnameAtt);
         }
         else {
-            $msgsNode = array();
+            $msgsNode = [];
             $msgsNode['username'] = $userName;
             $msgsNode['uid'] = $userId;
             $msgsNode['fullname'] = $fullName;
-            $msgsNode['messages'] = array();
+            $msgsNode['messages'] = [];
         }
         // default value of max microtime mark
         $maxMarkBak = $maxMark;
@@ -2437,13 +2437,13 @@ class Share extends Discuss implements intShare {
                 $msgsNode->appendChild($msgNode);
             }
             else {
-                $msgsNode['messages'][] = array(
+                $msgsNode['messages'][] = [
                     'id' => $msgId,
                     'source' => $source,
                     'title' => $title,
                     'text' => $text,
                     'time' => $msgTime
-                );
+                ];
             }
         }
         // if there is not any new message
@@ -2528,17 +2528,17 @@ class Share extends Discuss implements intShare {
         elseif ($totalPages == 0) {
             $totalPages = 1;
         }
-        return array('records' => (int) $totalRecs, 'pages' => (int) $totalPages);
+        return ['records' => (int) $totalRecs, 'pages' => (int) $totalPages];
     }
     
-    public function userFiles($userId, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('time'), $ascent = false) {
+    public function userFiles($userId, $pageNumber, $totalPages, $rpp = 20, $orderBy = ['time'], $ascent = false) {
         $this->zeroizeError();
         // validate parameters
         if (!is_integer($userId) || !is_integer($pageNumber) || !is_integer($totalPages) || !is_integer($rpp)) {
             $this->setError(ERROR_INCORRECT_DATA, 'userFiles: incorrect parameters');
             return false;
         }
-        $rightEntry = array('time', 'title', 'mime');
+        $rightEntry = ['time', 'title', 'mime'];
         if (is_array($orderBy)) {
             $arrayLen = count($orderBy);
             if ($arrayLen && count(array_intersect($orderBy, $rightEntry)) == $arrayLen) {
@@ -2651,11 +2651,11 @@ class Share extends Discuss implements intShare {
             $filesNode->appendChild($fnameAtt);
         }
         else {
-            $filesNode = array();
+            $filesNode = [];
             $filesNode['username'] = $userName;
             $filesNode['uid'] = $userId;
             $filesNode['fullname'] = $fullName;
-            $filesNode['files'] = array();
+            $filesNode['files'] = [];
         }
         while ($fileData = $qResult->fetch_row()) {
             list($fileId, $title, $fileName, $comment, $mimeType, $fileSize, $fileTime, $mtMark) = $fileData;
@@ -2671,7 +2671,7 @@ class Share extends Discuss implements intShare {
                 $filesNode->appendChild($fileNode);
             }
             else {
-                $filesNode['files'][] = array(
+                $filesNode['files'][] = [
                     'id' => $fileId,
                     'title' => $title,
                     'filename' => $fileName,
@@ -2679,7 +2679,7 @@ class Share extends Discuss implements intShare {
                     'mime' => $mimeType,
                     'size' => (int) $fileSize,
                     'time' => $fileTime
-                );
+                ];
             }
         }
         if ($this->outputType == 'xml') {
@@ -2776,11 +2776,11 @@ class Share extends Discuss implements intShare {
             $filesNode->appendChild($fnameAtt);
         }
         else {
-            $filesNode = array();
+            $filesNode = [];
             $filesNode['username'] = $userName;
             $filesNode['uid'] = $userId;
             $filesNode['fullname'] = $fullName;
-            $filesNode['files'] = array();
+            $filesNode['files'] = [];
         }
         // default values of min and max microtime marks
         $minMark = 0;
@@ -2803,7 +2803,7 @@ class Share extends Discuss implements intShare {
                 $filesNode->appendChild($fileNode);
             }
             else {
-                $filesNode['files'][] = array(
+                $filesNode['files'][] = [
                     'id' => $fileId,
                     'title' => $title,
                     'filename' => $fileName,
@@ -2811,7 +2811,7 @@ class Share extends Discuss implements intShare {
                     'mime' => $mimeType,
                     'size' => (int) $fileSize,
                     'time' => $fileTime
-                );
+                ];
             }
         }
         if ($maxMark && !$minMark) {
@@ -2924,11 +2924,11 @@ class Share extends Discuss implements intShare {
             $filesNode->appendChild($fnameAtt);
         }
         else {
-            $filesNode = array();
+            $filesNode = [];
             $filesNode['username'] = $userName;
             $filesNode['uid'] = $userId;
             $filesNode['fullname'] = $fullName;
-            $filesNode['files'] = array();
+            $filesNode['files'] = [];
         }
         // default value max microtime mark
         $maxMark = 0;
@@ -2950,7 +2950,7 @@ class Share extends Discuss implements intShare {
                 $filesNode->appendChild($fileNode);
             }
             else {
-                $filesNode['files'][] = array(
+                $filesNode['files'][] = [
                     'id' => $fileId,
                     'title' => $title,
                     'filename' => $fileName,
@@ -2958,7 +2958,7 @@ class Share extends Discuss implements intShare {
                     'mime' => $mimeType,
                     'size' => (int) $fileSize,
                     'time' => $fileTime
-                );
+                ];
             }
         }
         if ($maxMark) {
@@ -3067,11 +3067,11 @@ class Share extends Discuss implements intShare {
             $filesNode->appendChild($fnameAtt);
         }
         else {
-            $filesNode = array();
+            $filesNode = [];
             $filesNode['username'] = $userName;
             $filesNode['uid'] = $userId;
             $filesNode['fullname'] = $fullName;
-            $filesNode['files'] = array();
+            $filesNode['files'] = [];
         }
         // default value of max microtime mark
         $maxMarkBak = $maxMark;
@@ -3094,7 +3094,7 @@ class Share extends Discuss implements intShare {
                 $filesNode->appendChild($fileNode);
             }
             else {
-                $filesNode['files'][] = array(
+                $filesNode['files'][] = [
                     'id' => $fileId,
                     'title' => $title,
                     'filename' => $fileName,
@@ -3102,7 +3102,7 @@ class Share extends Discuss implements intShare {
                     'mime' => $mimeType,
                     'size' => (int) $fileSize,
                     'time' => $fileTime
-                );
+                ];
             }
         }
         // if there is not any new file
@@ -3167,17 +3167,17 @@ class Share extends Discuss implements intShare {
         elseif ($totalPages == 0) {
             $totalPages = 1;
         }
-        return array('records' => (int) $totalRecs, 'pages' => (int) $totalPages);
+        return ['records' => (int) $totalRecs, 'pages' => (int) $totalPages];
     }
     
-    public function userSubs($userId, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('time'), $ascent = false) {
+    public function userSubs($userId, $pageNumber, $totalPages, $rpp = 20, $orderBy = ['time'], $ascent = false) {
         $this->zeroizeError();
         // validate parameters
         if (!is_integer($userId) || !is_integer($pageNumber) || !is_integer($totalPages) || !is_integer($rpp)) {
             $this->setError(ERROR_INCORRECT_DATA, 'userSubs: incorrect parameters');
             return false;
         }
-        $rightEntry = array('time', 'title');
+        $rightEntry = ['time', 'title'];
         if (is_array($orderBy)) {
             $arrayLen = count($orderBy);
             if ($arrayLen && count(array_intersect($orderBy, $rightEntry)) == $arrayLen) {
@@ -3246,7 +3246,7 @@ class Share extends Discuss implements intShare {
             $xml->appendChild($msgsNode);
         }
         else {
-            $msgsNode = array();
+            $msgsNode = [];
         }
         while ($msgData = $qResult->fetch_row()) {
             list($msgId, $source, $title, $text, $msgTime, $mtMark, $userId, $userName, $fullName) = $msgData;
@@ -3271,7 +3271,7 @@ class Share extends Discuss implements intShare {
                 $msgsNode->appendChild($msgNode);
             }
             else {
-                $msgsNode[] = array(
+                $msgsNode[] = [
                     'uid' => (int) $userId,
                     'username' => $userName,
                     'fullname' => $fullName,
@@ -3280,7 +3280,7 @@ class Share extends Discuss implements intShare {
                     'title' => $title,
                     'text' => $text,
                     'time' => $msgTime
-                );
+                ];
             }
         }
         if ($this->outputType == 'xml') {
@@ -3335,7 +3335,7 @@ class Share extends Discuss implements intShare {
             $xml->appendChild($msgsNode);
         }
         else {
-            $msgsNode = array('messages' => array());
+            $msgsNode = ['messages' => []];
         }
         // default values of min and max microtime marks
         $minMark = 0;
@@ -3367,7 +3367,7 @@ class Share extends Discuss implements intShare {
                 $msgsNode->appendChild($msgNode);
             }
             else {
-                $msgsNode['messages'][] = array(
+                $msgsNode['messages'][] = [
                     'uid' => (int) $userId,
                     'username' => $userName,
                     'fullname' => $fullName,
@@ -3376,7 +3376,7 @@ class Share extends Discuss implements intShare {
                     'title' => $title,
                     'text' => $text,
                     'time' => $msgTime
-                );
+                ];
             }
         }
         if ($maxMark && !$minMark) {
@@ -3443,7 +3443,7 @@ class Share extends Discuss implements intShare {
             $xml->appendChild($msgsNode);
         }
         else {
-            $msgsNode = array('messages' => array());
+            $msgsNode = ['messages' => []];
         }
         // default value max microtime mark
         $maxMark = 0;
@@ -3474,7 +3474,7 @@ class Share extends Discuss implements intShare {
                 $msgsNode->appendChild($msgNode);
             }
             else {
-                $msgsNode['messages'][] = array(
+                $msgsNode['messages'][] = [
                     'uid' => (int) $userId,
                     'username' => $userName,
                     'fullname' => $fullName,
@@ -3483,7 +3483,7 @@ class Share extends Discuss implements intShare {
                     'title' => $title,
                     'text' => $text,
                     'time' => $msgTime
-                );
+                ];
             }
         }
         if ($maxMark) {
@@ -3546,7 +3546,7 @@ class Share extends Discuss implements intShare {
             $xml->appendChild($msgsNode);
         }
         else {
-            $msgsNode = array('messages' => array());
+            $msgsNode = ['messages' => []];
         }
         // default value of max microtime mark
         $maxMarkBak = $maxMark;
@@ -3578,7 +3578,7 @@ class Share extends Discuss implements intShare {
                 $msgsNode->appendChild($msgNode);
             }
             else {
-                $msgsNode['messages'][] = array(
+                $msgsNode['messages'][] = [
                     'uid' => (int) $userId,
                     'username' => $userName,
                     'fullname' => $fullName,
@@ -3587,7 +3587,7 @@ class Share extends Discuss implements intShare {
                     'title' => $title,
                     'text' => $text,
                     'time' => $msgTime
-                );
+                ];
             }
         }
         // if there is not any new message
@@ -3940,7 +3940,7 @@ class Share extends Discuss implements intShare {
             $xml->appendChild($msgsNode);
         }
         else {
-            $msgsNode = array();
+            $msgsNode = [];
         }
         // default values of min and max microtime marks
         $minMark = 0;
@@ -3972,7 +3972,7 @@ class Share extends Discuss implements intShare {
                 $msgsNode->appendChild($msgNode);
             }
             else {
-                $msgsNode[] = array(
+                $msgsNode[] = [
                     'uid' => (int) $userId,
                     'username' => $userName,
                     'fullname' => $fullName,
@@ -3981,7 +3981,7 @@ class Share extends Discuss implements intShare {
                     'title' => $title,
                     'text' => $text,
                     'time' => $msgTime
-                );
+                ];
             }
         }
         if ($maxMark && !$minMark) {
@@ -4039,7 +4039,7 @@ class Share extends Discuss implements intShare {
             $xml->appendChild($msgsNode);
         }
         else {
-            $msgsNode = array();
+            $msgsNode = [];
         }
         // default value max microtime mark
         $maxMark = 0;
@@ -4070,7 +4070,7 @@ class Share extends Discuss implements intShare {
                 $msgsNode->appendChild($msgNode);
             }
             else {
-                $msgsNode[] = array(
+                $msgsNode[] = [
                     'uid' => (int) $userId,
                     'username' => $userName,
                     'fullname' => $fullName,
@@ -4079,7 +4079,7 @@ class Share extends Discuss implements intShare {
                     'title' => $title,
                     'text' => $text,
                     'time' => $msgTime
-                );
+                ];
             }
         }
         if ($maxMark) {
