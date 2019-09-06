@@ -226,7 +226,7 @@ function authToken() {
 
 // compares two versions
 function compareVersions($version1, $version2, $operator = ">=") {
-    if (!is_string($version1) || !preg_match('/^[0-9]{1,2}\.[0-9]{1,2}\.[0-9]{1,2}$/', $version1) || !is_string($version2) || !preg_match('/^[0-9]{1,2}\.[0-9]{1,2}\.[0-9]{1,2}$/', $version2) || !in_array($operator, array(">=", "<=", "==", ">", "<", "!="))) {
+    if (!is_string($version1) || !preg_match('/^[0-9]{1,2}\.[0-9]{1,2}\.[0-9]{1,2}$/', $version1) || !is_string($version2) || !preg_match('/^[0-9]{1,2}\.[0-9]{1,2}\.[0-9]{1,2}$/', $version2) || !in_array($operator, [">=", "<=", "==", ">", "<", "!="])) {
         return false;
     }
     // calculate first summary version
@@ -273,24 +273,24 @@ function genPassword($length = 8, $lower = true, $upper = true, $numbers = true,
         return false;
     }
     // charachter groups
-    $allGroups = array(
+    $allGroups = [
         'lower' => 'abcdefghijklmnopqrstuwxyz',
         'upper' => 'ABCDEFGHIJKLMNOPQRSTUWXYZ',
         'numbers' => '0123456789',
         'underline' => '_',
         'minus' => '-',
         'special' => '+=@.,?!;:"\'~`|#*$%&^][(){}<>/\\'
-    );
-    $parameters = array(
+    ];
+    $parameters = [
         "lower" => $lower,
         "upper" => $upper,
         "numbers" => $numbers,
         "underline" => $underline,
         "minus" => $minus,
         "special" => $special
-    );
-    $groupsInUse = array();
-    $groupLimits = array();
+    ];
+    $groupsInUse = [];
+    $groupLimits = [];
     foreach ($parameters as $key => $value) {
         if ($value) {
             $groupLimits[$key] = strlen($allGroups[$key]) - 1;
@@ -302,7 +302,7 @@ function genPassword($length = 8, $lower = true, $upper = true, $numbers = true,
         return false;
     }
     // temporary list of groups
-    $tmpGroups = array();
+    $tmpGroups = [];
     $password = '';
     for ($i = 0; $i < $length; $i++) {
         if (!count($tmpGroups)) {
