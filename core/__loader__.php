@@ -76,7 +76,7 @@ function loadDOC($doc, $plugin = "core", $disp = "inline", $nocache = false) {
     if (!isset($_SERVER['SERVER_SOFTWARE'])) {
         return false; // The function must be executed on a web server
     }
-    if (!is_string($doc) || preg_match('/.*\.\.\/*./', $doc) || !is_string($plugin) || preg_match('/.*\.\.\/*./', $plugin) || !in_array($disp, array('inline', 'attachment'))) {
+    if (!is_string($doc) || preg_match('/.*\.\.\/*./', $doc) || !is_string($plugin) || preg_match('/.*\.\.\/*./', $plugin) || !in_array($disp, ['inline', 'attachment'])) {
         include MECCANO_SERVICE_PAGES.'/400.php'; // Bad Request
         exit();
     }
