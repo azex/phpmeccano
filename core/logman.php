@@ -33,11 +33,11 @@ interface intLogMan {
     public function delLogEvents($plugin); // old name [delEvents]
     public function clearLog();
     public function sumLogAllPlugins($rpp = 20);
-    public function getPageAllPlugins($pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = false);
+    public function getPageAllPlugins($pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = ['id'], $ascent = false);
     public function sumLogByPlugin($plugin, $rpp = 20);
-    public function getPageByPlugin($plugin, $pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = false);
-    public function getLogAllPlugins($code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = false);
-    public function getLogByPlugin($plugin, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = false);
+    public function getPageByPlugin($plugin, $pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = ['id'], $ascent = false);
+    public function getLogAllPlugins($code = MECCANO_DEF_LANG, $orderBy = ['id'], $ascent = false);
+    public function getLogByPlugin($plugin, $code = MECCANO_DEF_LANG, $orderBy = ['id'], $ascent = false);
 }
 
 class LogMan extends ServiceMethods implements intLogMan {
@@ -75,18 +75,18 @@ class LogMan extends ServiceMethods implements intLogMan {
             return false;
         }
         // avaiable languages
-        $avLangIds = array();
-        $avLangCodes = array();
+        $avLangIds = [];
+        $avLangCodes = [];
         while ($row = $qAvaiLang->fetch_row()) {
             $avLangIds[$row[0]] = $row[1];
             $avLangCodes[] = $row[0];
         }
         // parse DOM tree
-        $incomingEvents = array();
+        $incomingEvents = [];
         $eventNodes = $events->getElementsByTagName('event');
         foreach ($eventNodes as $eventNode) {
             $keyword = $eventNode->getAttribute('keyword');
-            $incomingEvents[$keyword] = array();
+            $incomingEvents[$keyword] = [];
             $descNodes = $eventNode->getElementsByTagName('desc');
             foreach ($descNodes as $descNode){
                 $code = $descNode->getAttribute('code');
@@ -103,7 +103,7 @@ class LogMan extends ServiceMethods implements intLogMan {
             $this->setError(ERROR_NOT_EXECUTED, 'installEvents: unable to get installed events -> '.$this->dbLink->error);
             return false;
         }
-        $installedEvents = array();
+        $installedEvents = [];
         while ($row = $qEvents->fetch_row()) {
             $installedEvents[$row[0]] = $row[1];
         }
@@ -111,7 +111,7 @@ class LogMan extends ServiceMethods implements intLogMan {
         $outdatedEvents = array_diff(array_keys($installedEvents), array_keys($incomingEvents));
         foreach ($outdatedEvents as $keyword) {
             $eventId = $installedEvents[$keyword];
-            $sql = array(
+            $sql = [
                 "DELETE `r` FROM `".MECCANO_TPREF."_core_logman_records` `r` "
                 . "JOIN `".MECCANO_TPREF."_core_logman_events` `e` "
                 . "ON `e`.`id`=`r`.`eventid` "
@@ -122,7 +122,7 @@ class LogMan extends ServiceMethods implements intLogMan {
                 . "WHERE `e`.`id`=$eventId ;",
                 "DELETE  FROM `".MECCANO_TPREF."_core_logman_events` "
                 . "WHERE `id`=$eventId ;",
-            );
+            ];
             foreach ($sql as $dQuery) {
                 $this->dbLink->query($dQuery);
                 if ($this->dbLink->errno) {
@@ -192,7 +192,7 @@ class LogMan extends ServiceMethods implements intLogMan {
             $this->setError(ERROR_SYSTEM_INTERVENTION, "delLogEvents: unable to delete core events");
             return false;
         }
-        $sql = array(
+        $sql = [
             "DELETE `r` "
             . "FROM `".MECCANO_TPREF."_core_logman_records` `r` "
             . "JOIN `".MECCANO_TPREF."_core_logman_events` `e` "
@@ -212,7 +212,7 @@ class LogMan extends ServiceMethods implements intLogMan {
             . "JOIN `".MECCANO_TPREF."_core_plugins_installed` `p` "
             . "ON `p`.`id`=`e`.`plugid` "
             . "WHERE `p`.`name`='$plugin' ;"
-        );
+        ];
         foreach ($sql as $value) {
             $this->dbLink->query($value);
             if ($this->dbLink->errno) {
@@ -268,10 +268,10 @@ class LogMan extends ServiceMethods implements intLogMan {
         elseif ($totalPages == 0) {
             $totalPages = 1;
         }
-        return array('records' => (int) $totalRecs, 'pages' => (int) $totalPages);
+        return ['records' => (int) $totalRecs, 'pages' => (int) $totalPages];
     }
     
-    public function getPageAllPlugins($pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = false) {
+    public function getPageAllPlugins($pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = ['id'], $ascent = false) {
         $this->zeroizeError();
         if ($this->usePolicy && !$this->checkFuncAccess('core', 'logman_get_log')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "getPageAllPlugins: restricted by the policy");
@@ -281,7 +281,7 @@ class LogMan extends ServiceMethods implements intLogMan {
             $this->setError(ERROR_INCORRECT_DATA, 'getPageAllPlugins: check arguments');
             return false;
         }
-        $rightEntry = array('id', 'user', 'event', 'time');
+        $rightEntry = ['id', 'user', 'event', 'time'];
         if (is_array($orderBy)) {
             $arrayLen = count($orderBy);
             if ($arrayLen && count(array_intersect($orderBy, $rightEntry)) == $arrayLen) {
@@ -345,14 +345,14 @@ class LogMan extends ServiceMethods implements intLogMan {
             return $xml;
         }
         else {
-            $log = array();
+            $log = [];
             while ($row = $qResult->fetch_row()) {
-                $log[] = array(
+                $log[] = [
                     'id' => (int) $row[0],
                     'time' => $row[1],
                     'event' => $row[2],
                     'user' => $row[3]
-                );
+                ];
             }
             if ($this->outputType == 'json') {
                 return json_encode($log);
@@ -395,10 +395,10 @@ class LogMan extends ServiceMethods implements intLogMan {
         elseif ($totalPages == 0) {
             $totalPages = 1;
         }
-        return array('records' => (int) $totalRecs, 'pages' => (int) $totalPages);
+        return ['records' => (int) $totalRecs, 'pages' => (int) $totalPages];
     }
     
-    public function getPageByPlugin($plugin, $pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = false) {
+    public function getPageByPlugin($plugin, $pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = ['id'], $ascent = false) {
         $this->zeroizeError();
         if ($this->usePolicy && !$this->checkFuncAccess('core', 'logman_get_log')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "getPageByPlugin: restricted by the policy");
@@ -408,7 +408,7 @@ class LogMan extends ServiceMethods implements intLogMan {
             $this->setError(ERROR_INCORRECT_DATA, 'getPageByPlugin: check arguments');
             return false;
         }
-        $rightEntry = array('id', 'user', 'event', 'time');
+        $rightEntry = ['id', 'user', 'event', 'time'];
         if (is_array($orderBy)) {
             $arrayLen = count($orderBy);
             if ($arrayLen && count(array_intersect($orderBy, $rightEntry)) == $arrayLen) {
@@ -480,15 +480,15 @@ class LogMan extends ServiceMethods implements intLogMan {
             return $xml;
         }
         else {
-            $log = array();
+            $log = [];
             $log['plugin'] = $plugin;
             while ($row = $qResult->fetch_row()) {
-                $log['records'][] = array(
+                $log['records'][] = [
                     'id' => (int) $row[0],
                     'time' => $row[1],
                     'event' => $row[2],
                     'user' => $row[3]
-                );
+                ];
             }
             if ($this->outputType == 'json') {
                 return json_encode($log);
@@ -499,7 +499,7 @@ class LogMan extends ServiceMethods implements intLogMan {
         }
     }
     
-    public function getLogAllPlugins($code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = false) {
+    public function getLogAllPlugins($code = MECCANO_DEF_LANG, $orderBy = ['id'], $ascent = false) {
         $this->zeroizeError();
         if ($this->usePolicy && !$this->checkFuncAccess('core', 'logman_get_log')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "getLogAllPlugins: restricted by the policy");
@@ -509,7 +509,7 @@ class LogMan extends ServiceMethods implements intLogMan {
             $this->setError(ERROR_INCORRECT_DATA, 'getLogAllPlugins: check arguments');
             return false;
         }
-        $rightEntry = array('id', 'user', 'event', 'time');
+        $rightEntry = ['id', 'user', 'event', 'time'];
         if (is_array($orderBy)) {
             $arrayLen = count($orderBy);
             if ($arrayLen && count(array_intersect($orderBy, $rightEntry)) == $arrayLen) {
@@ -560,14 +560,14 @@ class LogMan extends ServiceMethods implements intLogMan {
             return $xml;
         }
         else {
-            $log = array();
+            $log = [];
             while ($row = $qResult->fetch_row()) {
-                $log[] = array(
+                $log[] = [
                     'id' => (int) $row[0],
                     'time' => $row[1],
                     'event' => $row[2],
                     'user' => $row[3]
-                );
+                ];
             }
             if ($this->outputType == 'json') {
                 return json_encode($log);
@@ -578,7 +578,7 @@ class LogMan extends ServiceMethods implements intLogMan {
         }
     }
     
-    public function getLogByPlugin($plugin, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = false) {
+    public function getLogByPlugin($plugin, $code = MECCANO_DEF_LANG, $orderBy = ['id'], $ascent = false) {
         $this->zeroizeError();
         if ($this->usePolicy && !$this->checkFuncAccess('core', 'logman_get_log')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "getLogByPlugin: restricted by the policy");
@@ -588,7 +588,7 @@ class LogMan extends ServiceMethods implements intLogMan {
             $this->setError(ERROR_INCORRECT_DATA, 'getLogByPlugin: check arguments');
             return false;
         }
-        $rightEntry = array('id', 'user', 'event', 'time');
+        $rightEntry = ['id', 'user', 'event', 'time'];
         if (is_array($orderBy)) {
             $arrayLen = count($orderBy);
             if ($arrayLen && count(array_intersect($orderBy, $rightEntry)) == $arrayLen) {
@@ -647,15 +647,15 @@ class LogMan extends ServiceMethods implements intLogMan {
             return $xml;
         }
         else {
-            $log = array();
+            $log = [];
             $log['plugin'] = $plugin;
             while ($row = $qResult->fetch_row()) {
-                $log['records'][] = array(
+                $log['records'][] = [
                     'id' => (int) $row[0],
                     'time' => $row[1],
                     'event' => $row[2],
                     'user' => $row[3]
-                );
+                ];
             }
             if ($this->outputType == 'json') {
                 return json_encode($log);
