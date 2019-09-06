@@ -172,7 +172,7 @@ class Discuss extends ServiceMethods implements intDiscuss {
             $xml->appendChild($comsNode);
         }
         else {
-            $comsNode['comments'] = array();
+            $comsNode['comments'] = [];
         }
         // default values of min and max microtime marks
         $minMark = 0;
@@ -202,14 +202,14 @@ class Discuss extends ServiceMethods implements intDiscuss {
                 $comNode->appendChild($timeNode);
             }
             else {
-                $comsNode['comments'][] = array(
+                $comsNode['comments'][] = [
                     'username' => $userName,
                     'fullname' => $fullName,
                     'cid' => $comId,
                     'pcid' => $parId,
                     'text' => $text,
                     'time' => $comTime
-                );
+                ];
             }
         }
         if ($maxMark && !$minMark) {
@@ -287,7 +287,7 @@ class Discuss extends ServiceMethods implements intDiscuss {
             $xml->appendChild($comsNode);
         }
         else {
-            $comsNode['comments'] = array();
+            $comsNode['comments'] = [];
         }
         // default values of min and max microtime marks
         $minMark = 0;
@@ -317,14 +317,14 @@ class Discuss extends ServiceMethods implements intDiscuss {
                 $comNode->appendChild($timeNode);
             }
             else {
-                $comsNode['comments'][] = array(
+                $comsNode['comments'][] = [
                     'username' => $userName,
                     'fullname' => $fullName,
                     'cid' => $comId,
                     'pcid' => $parId,
                     'text' => $text,
                     'time' => $comTime
-                );
+                ];
             }
         }
         if ($maxMark && !$minMark) {
@@ -390,7 +390,7 @@ class Discuss extends ServiceMethods implements intDiscuss {
             $xml->appendChild($comsNode);
         }
         else {
-            $comsNode['comments'] = array();
+            $comsNode['comments'] = [];
         }
         // default values of max microtime mark
         $maxMark = 0;
@@ -419,14 +419,14 @@ class Discuss extends ServiceMethods implements intDiscuss {
                 $comNode->appendChild($timeNode);
             }
             else {
-                $comsNode['comments'][] = array(
+                $comsNode['comments'][] = [
                     'username' => $userName,
                     'fullname' => $fullName,
                     'cid' => $comId,
                     'pcid' => $parId,
                     'text' => $text,
                     'time' => $comTime
-                );
+                ];
             }
         }
         if ($maxMark) {
@@ -477,7 +477,7 @@ class Discuss extends ServiceMethods implements intDiscuss {
             $xml->appendChild($comsNode);
         }
         else {
-            $comsNode['comments'] = array();
+            $comsNode['comments'] = [];
         }
         // default value of max microtime mark
         $maxMarkBak = $maxMark;
@@ -507,14 +507,14 @@ class Discuss extends ServiceMethods implements intDiscuss {
                 $comNode->appendChild($timeNode);
             }
             else {
-                $comsNode['comments'][] = array(
+                $comsNode['comments'][] = [
                     'username' => $userName,
                     'fullname' => $fullName,
                     'cid' => $comId,
                     'pcid' => $parId,
                     'text' => $text,
                     'time' => $comTime
-                );
+                ];
             }
         }
         // if there is not any new comment
@@ -605,12 +605,12 @@ class Discuss extends ServiceMethods implements intDiscuss {
             return $xml;
         }
         else {
-            $comment = array(
+            $comment = [
                 'uid' => $userId, 
                 'username' => $userName, 
                 'fullname' => $fullName, 
                 'cid' => $commentId, 
-                'text' => $text);
+                'text' => $text];
             if ($this->outputType == 'json') {
                 return json_encode($comment);
             }
