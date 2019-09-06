@@ -63,13 +63,13 @@ class Auth extends ServiceMethods implements intAuth {
             return false;
         }
         $curTime = time();
-        $terms = array('hour' => $curTime+3600,
+        $terms = ['hour' => $curTime+3600,
             'day' => $curTime+86400,
             'week' => $curTime+604800,
             'two-weeks' => $curTime+1209600,
             'month' => $curTime+2592000,
             'half-year' => $curTime+15552000,
-            'year' => $curTime+31536000);
+            'year' => $curTime+31536000];
         if (!isset($terms[$cookieTime])) {
             $useCookie = false;
         }
@@ -205,12 +205,12 @@ class Auth extends ServiceMethods implements intAuth {
             setcookie(COOKIE_UNIQUE_SESSION_ID, $usi, $term, '/');
         }
         // record data about the session term
-        $sql = array(
+        $sql = [
             "INSERT INTO `".MECCANO_TPREF."_core_auth_usi` (`id`, `pid`, `endtime`) "
             . "VALUES('$usi', '$passId', FROM_UNIXTIME($term)) ;",
             "INSERT INTO `".MECCANO_TPREF."_core_auth_session_info` (`id`, `ip`, `useragent`, `created`) "
             . "VALUES('$usi', '$ipAddress', '$userAgent', CURRENT_TIMESTAMP) ;"
-        );
+        ];
         foreach ($sql as $key => $value) {
             $this->dbLink->query($value);
             if ($this->dbLink->errno) {
@@ -220,7 +220,7 @@ class Auth extends ServiceMethods implements intAuth {
         }
         if ($cleanSessions) {
             // delete expired sessions of the user
-            $sql = array(
+            $sql = [
                 "DELETE `si` FROM `".MECCANO_TPREF."_core_auth_session_info` `si` "
                 . "JOIN `".MECCANO_TPREF."_core_auth_usi` `s` "
                 . "ON `si`.`id`=`s`.`id` "
@@ -237,7 +237,7 @@ class Auth extends ServiceMethods implements intAuth {
                 . "ON `p`.`userid`=`u`.`id` "
                 . "WHERE `u`.`id`=$userId "
                 . "AND `s`.`endtime`<NOW() ;"
-            );
+            ];
             foreach ($sql as $key => $value) {
                 $this->dbLink->query($value);
                 if ($this->dbLink->errno) {
@@ -253,8 +253,8 @@ class Auth extends ServiceMethods implements intAuth {
         // if 2-factor authentication is enabled
         if (((int) $doubleauth)) {
             $code = genPassword(8, false, true, true, false, false, false);
-            $_SESSION[AUTH_2FA_SWAP] = array(
-                $code => array(
+            $_SESSION[AUTH_2FA_SWAP] = [
+                $code => [
                     AUTH_USERNAME => $username,
                     AUTH_USER_ID => (int) $userId,
                     AUTH_LIMITED => (int) $limited,
@@ -265,8 +265,8 @@ class Auth extends ServiceMethods implements intAuth {
                     AUTH_IP => $ipAddress,
                     AUTH_USER_AGENT => $userAgent,
                     AUTH_TOKEN => makeIdent($username),
-                )
-            );
+                ]
+            ];
             return $code;
         }
         // if 2-factor authentication is disabled
@@ -366,12 +366,12 @@ class Auth extends ServiceMethods implements intAuth {
                 return false;
             }
             if ($this->dbLink->affected_rows) {
-                $sql = array(
+                $sql = [
                     "DELETE FROM `".MECCANO_TPREF."_core_auth_session_info` "
                     . "WHERE `id`='".$_SESSION[AUTH_UNIQUE_SESSION_ID]."' ;", 
                     "DELETE FROM `".MECCANO_TPREF."_core_auth_usi` "
                     . "WHERE `id`='".$_SESSION[AUTH_UNIQUE_SESSION_ID]."' ;"
-                );
+                ];
                 foreach ($sql as $key => $value) {
                     $this->dbLink->query($value);
                     if ($this->dbLink->errno) {
@@ -452,7 +452,7 @@ class Auth extends ServiceMethods implements intAuth {
             return false;
         }
         // delete expired sessions of the user
-        $sql = array(
+        $sql = [
             "DELETE `si` FROM `".MECCANO_TPREF."_core_auth_session_info` `si` "
             . "JOIN `".MECCANO_TPREF."_core_auth_usi` `s` "
             . "ON `si`.`id`=`s`.`id` "
@@ -469,7 +469,7 @@ class Auth extends ServiceMethods implements intAuth {
             . "ON `p`.`userid`=`u`.`id` "
             . "WHERE `u`.`id`=$userId "
             . "AND `s`.`endtime`<NOW() ;"
-            );
+            ];
         foreach ($sql as $key => $value) {
             $this->dbLink->query($value);
             if ($this->dbLink->errno) {
@@ -513,18 +513,18 @@ class Auth extends ServiceMethods implements intAuth {
             return $xml;
         }
         else {
-            $listNode = array();
+            $listNode = [];
             $listNode['uid'] = $userId;
-            $listNode['sessions'] = array();
+            $listNode['sessions'] = [];
             while ($row = $qResult->fetch_row()) {
-                $listNode['sessions'][] = array(
+                $listNode['sessions'][] = [
                     'usi' => $row[0],
                     'ip' => $row[1],
                     'useragent' => $row[2],
                     'created' => $row[3],
                     'endtime' => $row[4],
                     'info' => $row[5]
-                );
+                ];
             }
             if ($this->outputType == 'array') {
                 return $listNode;
@@ -546,7 +546,7 @@ class Auth extends ServiceMethods implements intAuth {
             return false;
         }
         // delete expired sessions of the user
-        $sql = array(
+        $sql = [
             "DELETE `si` FROM `".MECCANO_TPREF."_core_auth_session_info` `si` "
             . "JOIN `".MECCANO_TPREF."_core_auth_usi` `s` "
             . "ON `si`.`id`=`s`.`id` "
@@ -561,7 +561,7 @@ class Auth extends ServiceMethods implements intAuth {
             . "JOIN  `".MECCANO_TPREF."_core_userman_users` `u` "
             . "ON `p`.`userid`=`u`.`id` "
             . "WHERE `u`.`id`=$userId ;"
-            );
+            ];
         foreach ($sql as $key => $value) {
             $this->dbLink->query($value);
             if ($this->dbLink->errno) {
@@ -587,7 +587,7 @@ class Auth extends ServiceMethods implements intAuth {
             return false;
         }
         // delete expired sessions of the user
-        $sql = array(
+        $sql = [
             "DELETE `si` FROM `".MECCANO_TPREF."_core_auth_session_info` `si` "
             . "JOIN `".MECCANO_TPREF."_core_auth_usi` `s` "
             . "ON `si`.`id`=`s`.`id` "
@@ -604,7 +604,7 @@ class Auth extends ServiceMethods implements intAuth {
             . "ON `p`.`userid`=`u`.`id` "
             . "WHERE `s`.`id` = '$sesId' "
             . "AND `u`.`id`=$userId ;"
-            );
+            ];
         foreach ($sql as $key => $value) {
             $this->dbLink->query($value);
             if ($this->dbLink->errno) {
