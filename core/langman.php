@@ -53,23 +53,23 @@ interface intLangMan {
     public function getTitle($name, $section, $plugin, $code = MECCANO_DEF_LANG);
     public function getText($name, $section, $plugin, $code = MECCANO_DEF_LANG);
     public function getTitles($section, $plugin, $code = MECCANO_DEF_LANG);
-    public function getAllTextsList($section, $plugin, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = false);
+    public function getAllTextsList($section, $plugin, $code = MECCANO_DEF_LANG, $orderBy = ['id'], $ascent = false);
     public function getTextById($id);
     public function sumTexts($section, $plugin, $code = MECCANO_DEF_LANG, $rpp = 20);
-    public function getTextsList($section, $plugin, $pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = false);
+    public function getTextsList($section, $plugin, $pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = ['id'], $ascent = false);
     public function getTexts($section, $plugin, $code = MECCANO_DEF_LANG);
     public function sumTitles($section, $plugin, $code = MECCANO_DEF_LANG, $rpp = 20);
-    public function getTitlesList($section, $plugin, $pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = false);
-    public function getAllTitlesList($section, $plugin, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = false);
+    public function getTitlesList($section, $plugin, $pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = ['id'], $ascent = false);
+    public function getAllTitlesList($section, $plugin, $code = MECCANO_DEF_LANG, $orderBy = ['id'], $ascent = false);
     public function getTitleById($id);
     public function sumTextSections($plugin, $rpp = 20);
-    public function getTextSectionsList($plugin, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('id'), $ascent = false);
+    public function getTextSectionsList($plugin, $pageNumber, $totalPages, $rpp = 20, $orderBy = ['id'], $ascent = false);
     public function sumTitleSections($plugin, $rpp = 20);
-    public function getTitleSectionsList($plugin, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('id'), $ascent = false);
+    public function getTitleSectionsList($plugin, $pageNumber, $totalPages, $rpp = 20, $orderBy = ['id'], $ascent = false);
     public function sumTextNames($plugin, $section, $rpp = 20);
-    public function getTextNamesList($plugin, $section, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('id'), $ascent = false);
+    public function getTextNamesList($plugin, $section, $pageNumber, $totalPages, $rpp = 20, $orderBy = ['id'], $ascent = false);
     public function sumTitleNames($plugin, $section, $rpp = 20);
-    public function getTitleNamesList($plugin, $section, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('id'), $ascent = false);
+    public function getTitleNamesList($plugin, $section, $pageNumber, $totalPages, $rpp = 20, $orderBy = ['id'], $ascent = false);
 }
 
 class LangMan extends ServiceMethods implements intLangMan{
@@ -90,7 +90,7 @@ class LangMan extends ServiceMethods implements intLangMan{
             $this->setError(ERROR_NOT_EXECUTED, 'installLang: unable to get list of available languages -> '.$this->dbLink->error);
             return false;
         }
-        $avaiLang = array();
+        $avaiLang = [];
         while ($row = $qAvaiLang->fetch_row()) {
             $avaiLang[] = $row[0];
         }
@@ -103,7 +103,7 @@ class LangMan extends ServiceMethods implements intLangMan{
             $this->setError(ERROR_NOT_EXECUTED, 'installLang: unable to get list of available policies -> '.$this->dbLink->error);
             return false;
         }
-        $policy = array();
+        $policy = [];
         while ($row = $qPolicy->fetch_row()) {
             $policy[$row[0]] = $row[1];
         }
@@ -114,7 +114,7 @@ class LangMan extends ServiceMethods implements intLangMan{
             $this->setError(ERROR_NOT_EXECUTED, 'installLang: unable to get list of available policies -> '.$this->dbLink->error);
             return false;
         }
-        $events = array();
+        $events = [];
         while ($row = $qLog->fetch_row()) {
             $events[$row[0]] = $row[1];
         }
@@ -169,7 +169,7 @@ class LangMan extends ServiceMethods implements intLangMan{
             $this->setError(ERROR_RESTRICTED_ACCESS, "addLang: restricted by the policy");
             return false;
         }
-        if (!pregLang($code) || !is_string($name) || !in_array($dir, array('ltr', 'rtl'))) {
+        if (!pregLang($code) || !is_string($name) || !in_array($dir, ['ltr', 'rtl'])) {
             $this->setError(ERROR_INCORRECT_DATA, 'addLang: incorrect incoming parameters');
             return false;
         }
@@ -188,7 +188,7 @@ class LangMan extends ServiceMethods implements intLangMan{
             $this->setError(ERROR_NOT_EXECUTED, 'addLang: unable to get list of available policies -> '.$this->dbLink->error);
             return false;
         }
-        $policy = array();
+        $policy = [];
         while ($row = $qPolicy->fetch_row()) {
             $policy[$row[0]] = $row[1];
         }
@@ -199,7 +199,7 @@ class LangMan extends ServiceMethods implements intLangMan{
             $this->setError(ERROR_NOT_EXECUTED, 'addLang: unable to get list of available policies -> '.$this->dbLink->error);
             return false;
         }
-        $events = array();
+        $events = [];
         while ($row = $qLog->fetch_row()) {
             $events[$row[0]] = $row[1];
         }
@@ -268,7 +268,7 @@ class LangMan extends ServiceMethods implements intLangMan{
             return false;
         }
         list($defLangId) = $qDefLang->fetch_row();
-        $sql = array(
+        $sql = [
             "DELETE FROM `".MECCANO_TPREF."_core_langman_titles` "
             . "WHERE `codeid`=$codeId ;",
             "DELETE FROM `".MECCANO_TPREF."_core_langman_texts` "
@@ -279,7 +279,7 @@ class LangMan extends ServiceMethods implements intLangMan{
             . "WHERE `codeid`=$codeId ;",
             "UPDATE `".MECCANO_TPREF."_core_userman_users` "
             . "SET `langid`=$defLangId "
-            . "WHERE `langid`=$codeId ;");
+            . "WHERE `langid`=$codeId ;"];
         foreach ($sql as $value) {
             $this->dbLink->query($value);
             if ($this->dbLink->errno) {
@@ -327,14 +327,14 @@ class LangMan extends ServiceMethods implements intLangMan{
             return $xml;
         }
         else {
-            $languages = array();
+            $languages = [];
             while ($row = $qLang->fetch_row()) {
-                $languages[] = array(
+                $languages[] = [
                     'id' => (int) $row[0],
                     'code' => $row[1],
                     'name' => $row[2],
                     'dir' => $row[3]
-                );
+                ];
             }
             if ($this->outputType == 'array') {
                 return $languages;
@@ -357,7 +357,7 @@ class LangMan extends ServiceMethods implements intLangMan{
             $this->setError(ERROR_NOT_EXECUTED, 'installPolicyDesc: unable to get list of available languages -> '.$this->dbLink->error);
             return false;
         }
-        $avaiLang = array();
+        $avaiLang = [];
         while ($row = $qAvaiLang->fetch_row()) {
             $avaiLang[$row[1]] = $row[0];
         }
@@ -377,13 +377,13 @@ class LangMan extends ServiceMethods implements intLangMan{
         }
         list($plugId) = $qPlugin->fetch_row();
         //parsing the DOM tree
-        $sections = array();
-        $sectionTypes = array();
+        $sections = [];
+        $sectionTypes = [];
         $sectionNodes = $titles->getElementsByTagName('section');
         foreach ($sectionNodes as $sectionNode) {
             $sectionName = $sectionNode->getAttribute('name');
             $static = $sectionNode->getAttribute('static');
-            $sections[$sectionName] = array();
+            $sections[$sectionName] = [];
             $sectionTypes[$sectionName] = $static;
             // renaming of the section
             if ($sectionOldName = $sectionNode->getAttribute('oldname')) {
@@ -416,8 +416,8 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "JOIN `".MECCANO_TPREF."_core_plugins_installed` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `p`.`name`='$plugName' ;");
-        $dbSectionTypes = array();
-        $dbSectionIds = array();
+        $dbSectionTypes = [];
+        $dbSectionIds = [];
         while ($row = $qSections->fetch_row()) {
             $dbSectionTypes[$row[0]] = $row[1];
             $dbSectionIds[$row[0]] = $row[2];
@@ -425,7 +425,7 @@ class LangMan extends ServiceMethods implements intLangMan{
         // deleting outdated sections
         $outdatedSections = array_diff(array_keys($dbSectionTypes), array_keys($sectionTypes));
         foreach ($outdatedSections as $value) {
-            $sql = array(
+            $sql = [
                 "DELETE `t` FROM `".MECCANO_TPREF."_core_langman_titles` `t`"
                 . "JOIN `".MECCANO_TPREF."_core_langman_title_names` `n` "
                 . "ON `n`.`id`=`t`.`nameid` "
@@ -438,7 +438,7 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "WHERE `s`.`section`='$value' ;", 
                 "DELETE FROM `".MECCANO_TPREF."_core_langman_title_sections` "
                 . "WHERE `section`='$value' ;"
-            );
+            ];
             foreach ($sql as $dQuery) {
                 $this->dbLink->query($dQuery);
                 if ($this->dbLink->errno) {
@@ -454,7 +454,7 @@ class LangMan extends ServiceMethods implements intLangMan{
             if (isset($dbSectionTypes[$sectionName])) {
                 // section
                 if ($sectionTypes[$sectionName]) {
-                    $sql = array(
+                    $sql = [
                         "DELETE `t` FROM `".MECCANO_TPREF."_core_langman_titles` `t`"
                         . "JOIN `".MECCANO_TPREF."_core_langman_title_names` `n` "
                         . "ON `n`.`id`=`t`.`nameid` "
@@ -468,7 +468,7 @@ class LangMan extends ServiceMethods implements intLangMan{
                         "UPDATE `".MECCANO_TPREF."_core_langman_title_sections` "
                         . "SET `static`=1 "
                         . "WHERE `section`='$sectionName' ;"
-                    );
+                    ];
                     foreach ($sql as $value) {
                         $this->dbLink->query($value);
                         if ($this->dbLink->errno) {
@@ -565,7 +565,7 @@ class LangMan extends ServiceMethods implements intLangMan{
             $this->setError(ERROR_NOT_EXECUTED, 'installPolicyDesc: unable to get list of available languages -> '.$this->dbLink->error);
             return false;
         }
-        $avaiLang = array();
+        $avaiLang = [];
         while ($row = $qAvaiLang->fetch_row()) {
             $avaiLang[$row[1]] = $row[0];
         }
@@ -585,13 +585,13 @@ class LangMan extends ServiceMethods implements intLangMan{
         }
         list($plugId) = $qPlugin->fetch_row();
         //parsing the DOM tree
-        $sections = array();
-        $sectionTypes = array();
+        $sections = [];
+        $sectionTypes = [];
         $sectionNodes = $texts->getElementsByTagName('section');
         foreach ($sectionNodes as $sectionNode) {
             $sectionName = $sectionNode->getAttribute('name');
             $static = $sectionNode->getAttribute('static');
-            $sections[$sectionName] = array();
+            $sections[$sectionName] = [];
             $sectionTypes[$sectionName] = $static;
             // renaming of the section
             if ($sectionOldName = $sectionNode->getAttribute('oldname')) {
@@ -615,7 +615,7 @@ class LangMan extends ServiceMethods implements intLangMan{
                     if (isset($avaiLang[$langCode])) {
                         $title = $langNode->getElementsByTagName('title')->item(0)->nodeValue;
                         $document = $langNode->getElementsByTagName('document')->item(0)->nodeValue;
-                        $sections[$sectionName][$textName][$langCode] = array($title, $document);
+                        $sections[$sectionName][$textName][$langCode] = [$title, $document];
                     }
                 }
             }
@@ -626,8 +626,8 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "JOIN `".MECCANO_TPREF."_core_plugins_installed` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `p`.`name`='$plugName' ;");
-        $dbSectionTypes = array();
-        $dbSectionIds = array();
+        $dbSectionTypes = [];
+        $dbSectionIds = [];
         while ($row = $qSections->fetch_row()) {
             $dbSectionTypes[$row[0]] = $row[1];
             $dbSectionIds[$row[0]] = $row[2];
@@ -635,7 +635,7 @@ class LangMan extends ServiceMethods implements intLangMan{
         // deleting outdated sections
         $outdatedSections = array_diff(array_keys($dbSectionTypes), array_keys($sectionTypes));
         foreach ($outdatedSections as $value) {
-            $sql = array(
+            $sql = [
                 "DELETE `t` FROM `".MECCANO_TPREF."_core_langman_texts` `t`"
                 . "JOIN `".MECCANO_TPREF."_core_langman_text_names` `n` "
                 . "ON `n`.`id`=`t`.`nameid` "
@@ -648,7 +648,7 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "WHERE `s`.`section`='$value' ;", 
                 "DELETE FROM `".MECCANO_TPREF."_core_langman_text_sections` "
                 . "WHERE `section`='$value' ;"
-            );
+            ];
             foreach ($sql as $dQuery) {
                 $this->dbLink->query($dQuery);
                 if ($this->dbLink->errno) {
@@ -664,7 +664,7 @@ class LangMan extends ServiceMethods implements intLangMan{
             if (isset($dbSectionTypes[$sectionName])) {
                 // section
                 if ($sectionTypes[$sectionName]) {
-                    $sql = array(
+                    $sql = [
                         "DELETE `t` FROM `".MECCANO_TPREF."_core_langman_texts` `t`"
                         . "JOIN `".MECCANO_TPREF."_core_langman_text_names` `n` "
                         . "ON `n`.`id`=`t`.`nameid` "
@@ -678,7 +678,7 @@ class LangMan extends ServiceMethods implements intLangMan{
                         "UPDATE `".MECCANO_TPREF."_core_langman_text_sections` "
                         . "SET `static`=1 "
                         . "WHERE `section`='$sectionName' ;"
-                    );
+                    ];
                     foreach ($sql as $value) {
                         $this->dbLink->query($value);
                         if ($this->dbLink->errno) {
@@ -784,7 +784,7 @@ class LangMan extends ServiceMethods implements intLangMan{
             return false;
         }
         // deleting all the data related to plugin
-        $sql = array(
+        $sql = [
             "DELETE `t` FROM `".MECCANO_TPREF."_core_langman_titles` `t` "
             . "JOIN `".MECCANO_TPREF."_core_langman_title_names` `n` "
             . "ON `n`.`id`=`t`.`nameid` "
@@ -821,7 +821,7 @@ class LangMan extends ServiceMethods implements intLangMan{
             . "JOIN `".MECCANO_TPREF."_core_plugins_installed` `p` "
             . "ON `p`.`id`=`s`.`plugid` "
             . "WHERE `p`.`name`='$plugin' ;"
-        );
+        ];
         foreach ($sql as $key => $value) {
             $this->dbLink->query($value);
             if ($this->dbLink->errno) {
@@ -879,7 +879,7 @@ class LangMan extends ServiceMethods implements intLangMan{
             $this->setError(ERROR_INCORRECT_DATA, 'delTitleSection: incorrect identifier');
             return false;
         }
-        $sql=array(
+        $sql = [
             "DELETE `t` FROM `".MECCANO_TPREF."_core_langman_titles` `t` "
             . "JOIN `".MECCANO_TPREF."_core_langman_title_names` `n`"
             . "ON `n`.`id`=`t`.`nameid` "
@@ -895,7 +895,7 @@ class LangMan extends ServiceMethods implements intLangMan{
             "DELETE FROM `".MECCANO_TPREF."_core_langman_title_sections` "
             . "WHERE `id`='$sid' "
                 . "AND `static`=0;"
-        );
+        ];
         foreach ($sql as $key => $value) {
             $this->dbLink->query($value);
             if ($this->dbLink->errno) {
@@ -960,7 +960,7 @@ class LangMan extends ServiceMethods implements intLangMan{
             $this->setError(ERROR_INCORRECT_DATA, 'delTextSection: incorrect identifier');
             return false;
         }
-        $sql=array(
+        $sql = [
             "DELETE `t` FROM `".MECCANO_TPREF."_core_langman_texts` `t` "
             . "JOIN `".MECCANO_TPREF."_core_langman_text_names` `n`"
             . "ON `n`.`id`=`t`.`nameid` "
@@ -976,7 +976,7 @@ class LangMan extends ServiceMethods implements intLangMan{
             "DELETE FROM `".MECCANO_TPREF."_core_langman_text_sections` "
             . "WHERE `id`='$sid' "
                 . "AND `static`=0;"
-        );
+        ];
         foreach ($sql as $key => $value) {
             $this->dbLink->query($value);
             if ($this->dbLink->errno) {
@@ -1044,7 +1044,7 @@ class LangMan extends ServiceMethods implements intLangMan{
             $this->setError(ERROR_INCORRECT_DATA, 'delTitleName: incorrect identifier');
             return false;
         }
-        $sql=array(
+        $sql = [
             "DELETE `t` FROM `".MECCANO_TPREF."_core_langman_titles` `t` "
             . "JOIN `".MECCANO_TPREF."_core_langman_title_names` `n`"
             . "ON `n`.`id`=`t`.`nameid` "
@@ -1057,7 +1057,7 @@ class LangMan extends ServiceMethods implements intLangMan{
             . "ON `s`.`id`=`n`.`sid` "
             . "WHERE `n`.`id`=$nameid "
                 . "AND `s`.`static`=0;"
-        );
+        ];
         foreach ($sql as $key => $value) {
             $this->dbLink->query($value);
             if ($this->dbLink->errno) {
@@ -1125,7 +1125,7 @@ class LangMan extends ServiceMethods implements intLangMan{
             $this->setError(ERROR_INCORRECT_DATA, 'delTextName: incorrect identifier');
             return false;
         }
-        $sql=array(
+        $sql = [
             "DELETE `t` FROM `".MECCANO_TPREF."_core_langman_texts` `t` "
             . "JOIN `".MECCANO_TPREF."_core_langman_text_names` `n`"
             . "ON `n`.`id`=`t`.`nameid` "
@@ -1138,7 +1138,7 @@ class LangMan extends ServiceMethods implements intLangMan{
             . "ON `s`.`id`=`n`.`sid` "
             . "WHERE `n`.`id`=$nameid "
                 . "AND `s`.`static`=0;"
-        );
+        ];
         foreach ($sql as $key => $value) {
             $this->dbLink->query($value);
             if ($this->dbLink->errno) {
@@ -1439,7 +1439,7 @@ class LangMan extends ServiceMethods implements intLangMan{
             return $xml;
         }
         else {
-            $stringNode = array('title' => $title, 'dir' => $direction);
+            $stringNode = ['title' => $title, 'dir' => $direction];
             if ($this->outputType == 'json') {
                 return json_encode($stringNode);
             }
@@ -1496,7 +1496,7 @@ class LangMan extends ServiceMethods implements intLangMan{
             return $xml;
         }
         else {
-            $textNode = array('title' => $title, 'document' => $document, 'created' => $created, 'edited' => $edited, 'dir' => $direction);
+            $textNode = ['title' => $title, 'document' => $document, 'created' => $created, 'edited' => $edited, 'dir' => $direction];
             if ($this->outputType == 'json') {
                 return json_encode($textNode);
             }
@@ -1547,7 +1547,7 @@ class LangMan extends ServiceMethods implements intLangMan{
             return $xml;
         }
         else {
-            $titlesNodes = array();
+            $titlesNodes = [];
             while ($result = $qTitles->fetch_row()) {
                 $titlesNodes[$result[0]] = $result[1];
             }
@@ -1560,13 +1560,13 @@ class LangMan extends ServiceMethods implements intLangMan{
         }
     }
     
-    public function getAllTextsList($section, $plugin, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = false) {
+    public function getAllTextsList($section, $plugin, $code = MECCANO_DEF_LANG, $orderBy = ['id'], $ascent = false) {
         $this->zeroizeError();
         if (!pregName40($section) || !pregName40($plugin) || !pregLang($code)) {
             $this->setError(ERROR_INCORRECT_DATA, 'getAllTextsList: incorrect incoming parameters');
             return false;
         }
-        $rightEntry = array('id', 'title', 'name', 'created', 'edited');
+        $rightEntry = ['id', 'title', 'name', 'created', 'edited'];
         if (is_array($orderBy)) {
             $arrayLen = count($orderBy);
             if ($arrayLen && count(array_intersect($orderBy, $rightEntry)) == $arrayLen) {
@@ -1641,18 +1641,18 @@ class LangMan extends ServiceMethods implements intLangMan{
             return $xml;
         }
         else {
-            $textsNode = array();
+            $textsNode = [];
             $textsNode['code'] = $code;
             $textsNode['dir'] = $direction;
-            $textsNode['texts'] = array();
+            $textsNode['texts'] = [];
             while ($row = $qTexts->fetch_row()) {
-                $textsNode['texts'][] = array(
+                $textsNode['texts'][] = [
                     'id' => (int) $row[0],
                     'title' => $row[1],
                     'name' => $row[2],
                     'created' => $row[3],
                     'edited' => $row[4]
-                );
+                ];
             }
             if ($this->outputType == 'array') {
                 return $textsNode;
@@ -1701,7 +1701,7 @@ class LangMan extends ServiceMethods implements intLangMan{
             return $xml;
         }
         else {
-            $textNode = array('title' => $title, 'document' => $document, 'created' => $created, 'edited' => $edited, 'dir' => $direction);
+            $textNode = ['title' => $title, 'document' => $document, 'created' => $created, 'edited' => $edited, 'dir' => $direction];
             if ($this->outputType == 'json') {
                 return json_encode($textNode);
             }
@@ -1753,10 +1753,10 @@ class LangMan extends ServiceMethods implements intLangMan{
         elseif ($totalPages == 0) {
             $totalPages = 1;
         }
-        return array('records' => (int) $totalTexts, 'pages' => (int) $totalPages);
+        return ['records' => (int) $totalTexts, 'pages' => (int) $totalPages];
     }
     
-    public function getTextsList($section, $plugin, $pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = false) {
+    public function getTextsList($section, $plugin, $pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = ['id'], $ascent = false) {
         $this->zeroizeError();
         if (!pregName40($section) || 
                 !pregName40($plugin) || 
@@ -1767,7 +1767,7 @@ class LangMan extends ServiceMethods implements intLangMan{
             $this->setError(ERROR_INCORRECT_DATA, 'getTextsList: incorrect incoming parameters');
             return false;
         }
-        $rightEntry = array('id', 'title', 'name', 'created', 'edited');
+        $rightEntry = ['id', 'title', 'name', 'created', 'edited'];
         if (is_array($orderBy)) {
             $arrayLen = count($orderBy);
             if ($arrayLen && count(array_intersect($orderBy, $rightEntry)) == $arrayLen) {
@@ -1855,18 +1855,18 @@ class LangMan extends ServiceMethods implements intLangMan{
             return $xml;
         }
         else {
-            $textsNode = array();
+            $textsNode = [];
             $textsNode['code'] = $code;
             $textsNode['dir'] = $direction;
-            $textsNode['texts'] = array();
+            $textsNode['texts'] = [];
             while ($row = $qTexts->fetch_row()) {
-                $textsNode['texts'][] = array(
+                $textsNode['texts'][] = [
                     'id' => (int) $row[0],
                     'title' => $row[1],
                     'name' => $row[2],
                     'created' => $row[3],
                     'edited' => $row[4]
-                );
+                ];
             }
             if ($this->outputType == 'array') {
                 return $textsNode;
@@ -1922,9 +1922,9 @@ class LangMan extends ServiceMethods implements intLangMan{
             return $xml;
         }
         else {
-            $texts = array();
+            $texts = [];
             while ($result = $qTexts->fetch_row()) {
-                $texts[$result[0]] = array('title' => $result[1], 'document' => $result[2]);
+                $texts[$result[0]] = ['title' => $result[1], 'document' => $result[2]];
             }
             if ($this->outputType == 'json') {
                 return json_encode($texts);
@@ -1977,10 +1977,10 @@ class LangMan extends ServiceMethods implements intLangMan{
         elseif ($totalPages == 0) {
             $totalPages = 1;
         }
-        return array('records' => (int) $totalTitles, 'pages' => (int) $totalPages);
+        return ['records' => (int) $totalTitles, 'pages' => (int) $totalPages];
     }
     
-    public function getTitlesList($section, $plugin, $pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = false) {
+    public function getTitlesList($section, $plugin, $pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = ['id'], $ascent = false) {
         $this->zeroizeError();
         if (!pregName40($section) || 
                 !pregName40($plugin) || 
@@ -1991,7 +1991,7 @@ class LangMan extends ServiceMethods implements intLangMan{
             $this->setError(ERROR_INCORRECT_DATA, 'getTitlesList: incorrect incoming parameters');
             return false;
         }
-        $rightEntry = array('id', 'title', 'name');
+        $rightEntry = ['id', 'title', 'name'];
         if (is_array($orderBy)) {
             $arrayLen = count($orderBy);
             if ($arrayLen && count(array_intersect($orderBy, $rightEntry)) == $arrayLen) {
@@ -2077,16 +2077,16 @@ class LangMan extends ServiceMethods implements intLangMan{
             return $xml;
         }
         else {
-            $titlesNode = array();
+            $titlesNode = [];
             $titlesNode['code'] = $code;
             $titlesNode['dir'] = $direction;
-            $titlesNode['titles'] = array();
+            $titlesNode['titles'] = [];
             while ($row = $qTitles->fetch_row()) {
-                $titlesNode['titles'][] = array(
+                $titlesNode['titles'][] = [
                     'id' => (int) $row[0],
                     'title' => $row[1],
                     'name' => $row[2]
-                );
+                ];
             }
             if ($this->outputType == 'array') {
                 return $titlesNode;
@@ -2097,13 +2097,13 @@ class LangMan extends ServiceMethods implements intLangMan{
         }
     }
     
-    public function getAllTitlesList($section, $plugin, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = false) {
+    public function getAllTitlesList($section, $plugin, $code = MECCANO_DEF_LANG, $orderBy = ['id'], $ascent = false) {
         $this->zeroizeError();
         if (!pregName40($section) || !pregName40($plugin) || !pregLang($code)) {
             $this->setError(ERROR_INCORRECT_DATA, 'getAllTitlesList: incorrect incoming parameters');
             return false;
         }
-        $rightEntry = array('id', 'title', 'name');
+        $rightEntry = ['id', 'title', 'name'];
         if (is_array($orderBy)) {
             $arrayLen = count($orderBy);
             if ($arrayLen && count(array_intersect($orderBy, $rightEntry)) == $arrayLen) {
@@ -2176,16 +2176,16 @@ class LangMan extends ServiceMethods implements intLangMan{
             return $xml;
         }
         else {
-            $titlesNode = array();
+            $titlesNode = [];
             $titlesNode['code'] = $code;
             $titlesNode['dir'] = $direction;
-            $titlesNode['titles'] = array();
+            $titlesNode['titles'] = [];
             while ($row = $qTitles->fetch_row()) {
-                $titlesNode['titles'][] = array(
+                $titlesNode['titles'][] = [
                     'id' => (int) $row[0],
                     'title' => $row[1],
                     'name' => $row[2]
-                );
+                ];
             }
             if ($this->outputType == 'array') {
                 return $titlesNode;
@@ -2228,7 +2228,7 @@ class LangMan extends ServiceMethods implements intLangMan{
             return $xml;
         }
         else {
-            $stringNode = array('title' => $title, 'dir' => $direction);
+            $stringNode = ['title' => $title, 'dir' => $direction];
             if ($this->outputType == 'json') {
                 return json_encode($stringNode);
             }
@@ -2272,16 +2272,16 @@ class LangMan extends ServiceMethods implements intLangMan{
         elseif ($totalPages == 0) {
             $totalPages = 1;
         }
-        return array('records' => (int) $totalSections, 'pages' => (int) $totalPages);
+        return ['records' => (int) $totalSections, 'pages' => (int) $totalPages];
     }
     
-    public function getTextSectionsList($plugin, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('id'), $ascent = false) {
+    public function getTextSectionsList($plugin, $pageNumber, $totalPages, $rpp = 20, $orderBy = ['id'], $ascent = false) {
         $this->zeroizeError();
         if (!pregPlugin($plugin) || !is_integer($pageNumber) || !is_integer($totalPages) || !is_integer($rpp)) {
             $this->setError(ERROR_INCORRECT_DATA, 'getTextSectionsList: incorrect incoming parameters');
             return false;
         }
-        $rightEntry = array('id', 'name', 'static');
+        $rightEntry = ['id', 'name', 'static'];
         if (is_array($orderBy)) {
             $arrayLen = count($orderBy);
             if ($arrayLen && count(array_intersect($orderBy, $rightEntry)) == $arrayLen) {
@@ -2337,16 +2337,16 @@ class LangMan extends ServiceMethods implements intLangMan{
             return $xml;
         }
         else {
-            $sectionsNode = array();
+            $sectionsNode = [];
             $sectionsNode['plugin'] = $plugin;
-            $sectionsNode['sections'] = array();
+            $sectionsNode['sections'] = [];
             while ($row = $qSections->fetch_row()) {
-                $sectionsNode['sections'][] = array(
+                $sectionsNode['sections'][] = [
                     'id' => (int) $row[0],
                     'name' => $row[1],
                     'static' => (int) $row[2],
                     'contains' => (int) $row[3]
-                );
+                ];
             }
             if ($this->outputType == 'array') {
                 return $sectionsNode;
@@ -2391,16 +2391,16 @@ class LangMan extends ServiceMethods implements intLangMan{
         elseif ($totalPages == 0) {
             $totalPages = 1;
         }
-        return array('records' => (int) $totalSections, 'pages' => (int) $totalPages);
+        return ['records' => (int) $totalSections, 'pages' => (int) $totalPages];
     }
     
-    public function getTitleSectionsList($plugin, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('id'), $ascent = false) {
+    public function getTitleSectionsList($plugin, $pageNumber, $totalPages, $rpp = 20, $orderBy = ['id'], $ascent = false) {
         $this->zeroizeError();
         if (!pregPlugin($plugin) || !is_integer($pageNumber) || !is_integer($totalPages) || !is_integer($rpp)) {
             $this->setError(ERROR_INCORRECT_DATA, 'getTitleSectionsList: incorrect incoming parameters');
             return false;
         }
-        $rightEntry = array('id', 'name', 'static');
+        $rightEntry = ['id', 'name', 'static'];
         if (is_array($orderBy)) {
             $arrayLen = count($orderBy);
             if ($arrayLen && count(array_intersect($orderBy, $rightEntry)) == $arrayLen) {
@@ -2456,16 +2456,16 @@ class LangMan extends ServiceMethods implements intLangMan{
             return $xml;
         }
         else {
-            $sectionsNode = array();
+            $sectionsNode = [];
             $sectionsNode['plugin'] = $plugin;
-            $sectionsNode['sections'] = array();
+            $sectionsNode['sections'] = [];
             while ($row = $qSections->fetch_row()) {
-                $sectionsNode['sections'][] = array(
+                $sectionsNode['sections'][] = [
                     'id' => (int) $row[0],
                     'name' => $row[1],
                     'static' => (int) $row[2],
                     'contains' => (int) $row[3]
-                );
+                ];
             }
             if ($this->outputType == 'array') {
                 return $sectionsNode;
@@ -2513,16 +2513,16 @@ class LangMan extends ServiceMethods implements intLangMan{
         elseif ($totalPages == 0) {
             $totalPages = 1;
         }
-        return array('records' => (int) $totalNames, 'pages' => (int) $totalPages);
+        return ['records' => (int) $totalNames, 'pages' => (int) $totalPages];
     }
     
-    public function getTextNamesList($plugin, $section, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('id'), $ascent = false) {
+    public function getTextNamesList($plugin, $section, $pageNumber, $totalPages, $rpp = 20, $orderBy = ['id'], $ascent = false) {
         $this->zeroizeError();
         if (!pregPlugin($plugin) || !pregName40($section) || !is_integer($pageNumber) || !is_integer($totalPages) || !is_integer($rpp)) {
             $this->setError(ERROR_INCORRECT_DATA, 'getTextNamesList: incorrect incoming parameters');
             return false;
         }
-        $rightEntry = array('id', 'name');
+        $rightEntry = ['id', 'name'];
         if (is_array($orderBy)) {
             $arrayLen = count($orderBy);
             if ($arrayLen && count(array_intersect($orderBy, $rightEntry)) == $arrayLen) {
@@ -2591,21 +2591,21 @@ class LangMan extends ServiceMethods implements intLangMan{
             return $xml;
         }
         else {
-            $pageNode = array();
+            $pageNode = [];
             $pageNode['plugin'] = $plugin;
             $pageNode['section'] = $section;
-            $pageNode['texts'] = array();
+            $pageNode['texts'] = [];
             while ($row = $qNames->fetch_row()) {
                 $languagesArray = explode(";", $row[2]);
-                $lCodes = array();
+                $lCodes = [];
                 foreach ($languagesArray as $langCode) {
                     $lCodes[] = $langCode;
                 }
-                $pageNode['texts'][] = array(
+                $pageNode['texts'][] = [
                     'id' => (int) $row[0],
                     'name' => $row[1],
                     'languages' => $lCodes
-                );
+                ];
             }
             if ($this->outputType == 'array') {
                 return $pageNode;
@@ -2653,16 +2653,16 @@ class LangMan extends ServiceMethods implements intLangMan{
         elseif ($totalPages == 0) {
             $totalPages = 1;
         }
-        return array('records' => (int) $totalNames, 'pages' => (int) $totalPages);
+        return ['records' => (int) $totalNames, 'pages' => (int) $totalPages];
     }
     
-    public function getTitleNamesList($plugin, $section, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('id'), $ascent = false) {
+    public function getTitleNamesList($plugin, $section, $pageNumber, $totalPages, $rpp = 20, $orderBy = ['id'], $ascent = false) {
         $this->zeroizeError();
         if (!pregPlugin($plugin) || !pregName40($section) || !is_integer($pageNumber) || !is_integer($totalPages) || !is_integer($rpp)) {
             $this->setError(ERROR_INCORRECT_DATA, 'getTitleNamesList: incorrect incoming parameters');
             return false;
         }
-        $rightEntry = array('id', 'name');
+        $rightEntry = ['id', 'name'];
         if (is_array($orderBy)) {
             $arrayLen = count($orderBy);
             if ($arrayLen && count(array_intersect($orderBy, $rightEntry)) == $arrayLen) {
@@ -2731,21 +2731,21 @@ class LangMan extends ServiceMethods implements intLangMan{
             return $xml;
         }
         else {
-            $pageNode = array();
+            $pageNode = [];
             $pageNode['plugin'] = $plugin;
             $pageNode['section'] = $section;
-            $pageNode['titles'] = array();
+            $pageNode['titles'] = [];
             while ($row = $qNames->fetch_row()) {
                 $languagesArray = explode(";", $row[2]);
-                $lCodes = array();
+                $lCodes = [];
                 foreach ($languagesArray as $langCode) {
                     $lCodes[] = $langCode;
                 }
-                $pageNode['titles'][] = array(
+                $pageNode['titles'][] = [
                     'id' => (int) $row[0],
                     'name' => $row[1],
                     'languages' => $lCodes
-                );
+                ];
             }
             if ($this->outputType == 'array') {
                 return $pageNode;
