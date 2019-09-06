@@ -194,13 +194,13 @@ class Files implements intFiles {
                 self::setError(ERROR_NOT_EXECUTED, "copy: unable to copy directory [$sourcePath] into itself");
                 return false;
             }
-            $stack = array($sourcePath);
+            $stack = [$sourcePath];
             $divPosition = strlen($sourcePath) + 1;
             while (count($stack)) {
                 $sourceDirPath = array_pop($stack);
                 $destDirPath = rtrim("$destPath/".substr($sourceDirPath, $divPosition), "/");
                 $destDirWriteStatus = is_writable($destDirPath);
-                $sourceDirContent = array_diff(scandir($sourceDirPath), array('.', '..'));
+                $sourceDirContent = array_diff(scandir($sourceDirPath), ['.', '..']);
                 foreach ($sourceDirContent as $sourceItemName) {
                     $sourceFullPath = "$sourceDirPath/$sourceItemName";
                     $destFullPath = "$destDirPath/$sourceItemName";
@@ -343,7 +343,7 @@ class Files implements intFiles {
                         return false;
                     }
                     else {
-                        $sourceDirContent = array();
+                        $sourceDirContent = [];
                     }
                 }
             }
@@ -437,7 +437,7 @@ class Files implements intFiles {
                 self::setError(ERROR_NOT_EXECUTED, "move: unable to move directory [$sourcePath] into itself");
                 return false;
             }
-            $stack = array($sourcePath);
+            $stack = [$sourcePath];
             $divPosition = strlen($sourcePath) + 1;
             while (count($stack)) {
                 $sourceDirPath = array_pop($stack);
@@ -445,7 +445,7 @@ class Files implements intFiles {
                 $dirTree[] = $sourceDirPath;
                 $destDirPath = rtrim("$destPath/".substr($sourceDirPath, $divPosition), "/");
                 $destDirWriteStatus = is_writable($destDirPath);
-                foreach (array_diff(scandir($sourceDirPath), array('.', '..')) as $sourceItemName) {
+                foreach (array_diff(scandir($sourceDirPath), ['.', '..']) as $sourceItemName) {
                     $sourceFullPath = "$sourceDirPath/$sourceItemName";
                     $destFullPath = "$destDirPath/$sourceItemName";
                     if ((is_file($sourceFullPath) || is_link($sourceFullPath))) {
@@ -527,7 +527,7 @@ class Files implements intFiles {
             foreach ($dirTree as $dirPath) {
                 $parentDir = dirname($dirPath);
                 $parentDirWriteStatus = is_writable($parentDir);
-                $dirIsNotEmpty = array_diff(scandir($dirPath), array('.', '..'));
+                $dirIsNotEmpty = array_diff(scandir($dirPath), ['.', '..']);
                 if ($dirIsNotEmpty && !$skipConflicts) {
                     self::setError(ERROR_NOT_EXECUTED, "move: source directory [$dirPath] is not empty");
                     return  false;
@@ -567,13 +567,13 @@ class Files implements intFiles {
                 self::setError(ERROR_RESTRICTED_ACCESS, "remove: source directory [$sourcePath] is not readable");
                 return false;
             }
-            $stack = array($sourcePath);
+            $stack = [$sourcePath];
             $divPosition = strlen($sourcePath) + 1;
             while (count($stack)) {
                 $sourceDirPath = array_pop($stack);
                 $sourceDirWriteStatus = is_writable($sourceDirPath);
                 $dirTree[] = $sourceDirPath;
-                foreach (array_diff(scandir($sourceDirPath), array('.', '..')) as $sourceItemName) {
+                foreach (array_diff(scandir($sourceDirPath), ['.', '..']) as $sourceItemName) {
                     $sourceFullPath = "$sourceDirPath/$sourceItemName";
                     if ((is_file($sourceFullPath) || is_link($sourceFullPath))) {
                         $sourceIsNotDir = 1;
@@ -605,7 +605,7 @@ class Files implements intFiles {
             foreach ($dirTree as $dirPath) {
                 $parentDir = dirname($dirPath);
                 $parentDirWriteStatus = is_writable($parentDir);
-                $dirIsNotEmpty = array_diff(scandir($dirPath), array('.', '..'));
+                $dirIsNotEmpty = array_diff(scandir($dirPath), ['.', '..']);
                 if ($dirIsNotEmpty && !$skipConflicts) {
                     self::setError(ERROR_NOT_EXECUTED, "remove: source directory [$dirPath] is not empty");
                     return  false;
