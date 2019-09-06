@@ -95,7 +95,7 @@ class Plugins extends ServiceMethods implements intPlugins {
             $zip->close();
             // validate xml components
             $serviceData = new \DOMDocument();
-            $xmlComponents = array(
+            $xmlComponents = [
                 "languages.xml" => "langman-language-v01.rng",
                 "policy.xml" => "policy-v01.rng",
                 "log.xml" => "logman-events-v01.rng",
@@ -103,7 +103,7 @@ class Plugins extends ServiceMethods implements intPlugins {
                 "titles.xml" => "langman-title-v01.rng",
                 "depends.xml" => "plugins-package-depends-v01.rng",
                 "metainfo.xml" => "plugins-package-metainfo-v01.rng"
-                );
+                ];
             foreach ($xmlComponents as $valComponent=> $valSchema) {
                 $xmlComponent = openRead($tmpPath."/$valComponent");
                 if (!$xmlComponent) {
@@ -112,7 +112,7 @@ class Plugins extends ServiceMethods implements intPlugins {
                     unlink(MECCANO_TMP_DIR."/core_plugins_lock");
                     return false;
                 }
-                if (!in_array(mime_content_type($tmpPath."/$valComponent"), array("application/xml", "text/xml"))) {
+                if (!in_array(mime_content_type($tmpPath."/$valComponent"), ["application/xml", "text/xml"])) {
                     Files::remove($tmpPath);
                     $this->setError(ERROR_NOT_EXECUTED, "unpack: [$valComponent] is not XML-structured");
                     unlink(MECCANO_TMP_DIR."/core_plugins_lock");
@@ -155,7 +155,7 @@ class Plugins extends ServiceMethods implements intPlugins {
             $insertColumns = "`short`, `full`, `version`, `spec`, `dirname`";
             $insertValues = "'$shortName', '$fullName', '$version', '$packVersion', '$tmpName'";
             // get optional data
-            $optionalData = array('about', 'credits', 'url', 'email', 'license');
+            $optionalData = ['about', 'credits', 'url', 'email', 'license'];
             foreach ($optionalData as $optNode) {
                 if ($optional = $serviceData->getElementsByTagName("$optNode")->item(0)->nodeValue) {
                     $optional = $this->dbLink->real_escape_string($optional);
@@ -283,7 +283,7 @@ class Plugins extends ServiceMethods implements intPlugins {
             return $xml;
         }
         else {
-            $unpacked = array();
+            $unpacked = [];
             while ($row = $qUncpacked->fetch_row()) {
                 if ($curVersion = $this->pluginData($row[0])) {
                     $curSumVersion = calcSumVersion($curVersion["version"]);
@@ -301,12 +301,12 @@ class Plugins extends ServiceMethods implements intPlugins {
                 else {
                     $action = "install";
                 }
-                $unpacked[] = array(
+                $unpacked[] = [
                     'short' => $row[0],
                     'full' => $row[1],
                     'version' => $row[2],
                     'action' => $action
-                );
+                ];
             }
             if ($this->outputType == 'json') {
                 return json_encode($unpacked);
@@ -372,7 +372,7 @@ class Plugins extends ServiceMethods implements intPlugins {
             return $xml;
         }
         else {
-            $unpacked = array(
+            $unpacked = [
                 'short' => $shortName,
                 'full' => $fullName,
                 'version' => $version,
@@ -383,7 +383,7 @@ class Plugins extends ServiceMethods implements intPlugins {
                 'license' => $license,
                 'depends' => $depends,
                 'action' => $action
-            );
+            ];
             if ($this->outputType == 'json'){
                 return json_encode($unpacked);
             }
@@ -410,7 +410,7 @@ class Plugins extends ServiceMethods implements intPlugins {
             return false;
         }
         list($id, $version) = $qPlugin->fetch_row();
-        return array("id" => (int) $id, "version" => $version);
+        return ["id" => (int) $id, "version" => $version];
     }
     
     public function install($plugin, $reset = false, $log = true) {
@@ -449,14 +449,14 @@ class Plugins extends ServiceMethods implements intPlugins {
         // revalidate xml components
         $plugPath = MECCANO_UNPACKED_PLUGINS."/$plugDir";
         $serviceData = new \DOMDocument();
-        $xmlComponents = array(
+        $xmlComponents = [
             "languages.xml" => "langman-language-v01.rng",
             "policy.xml" => "policy-v01.rng",
             "log.xml" => "logman-events-v01.rng",
             "texts.xml" => "langman-text-v01.rng",
             "titles.xml" => "langman-title-v01.rng",
             "depends.xml" => "plugins-package-depends-v01.rng"
-            );
+            ];
         foreach ($xmlComponents as $valComponent=> $valSchema) {
             $xmlComponent = openRead($plugPath."/$valComponent");
             if (!$xmlComponent) {
@@ -464,7 +464,7 @@ class Plugins extends ServiceMethods implements intPlugins {
                 unlink(MECCANO_TMP_DIR."/core_plugins_lock");
                 return false;
             }
-            if (!in_array(mime_content_type($plugPath."/$valComponent"), array("application/xml", "text/xml"))) {
+            if (!in_array(mime_content_type($plugPath."/$valComponent"), ["application/xml", "text/xml"])) {
                 $this->setError(ERROR_NOT_EXECUTED, "unpack: [$valComponent] is not XML-structured");
                 unlink(MECCANO_TMP_DIR."/core_plugins_lock");
                 return false;
@@ -490,7 +490,7 @@ class Plugins extends ServiceMethods implements intPlugins {
             }
         }
         // check existence of the required files and directories
-        $requiredFiles = array("inst.php", "rm.php");
+        $requiredFiles = ["inst.php", "rm.php"];
         foreach ($requiredFiles as $fileName) {
             if (!is_file($plugPath."/$fileName")) {
                 $this->setError(ERROR_NOT_FOUND, "install: file [$fileName] is required");
@@ -498,7 +498,7 @@ class Plugins extends ServiceMethods implements intPlugins {
                 return false;
             }
         }
-        $requiredDirs = array($plugPath."/documents", $plugPath."/js", $plugPath."/css", $plugPath."/php", MECCANO_DOCUMENTS_DIR, MECCANO_JS_DIR, MECCANO_PHP_DIR);
+        $requiredDirs = [$plugPath."/documents", $plugPath."/js", $plugPath."/css", $plugPath."/php", MECCANO_DOCUMENTS_DIR, MECCANO_JS_DIR, MECCANO_PHP_DIR];
         foreach ($requiredDirs as $dirName) {
             if (!is_dir($dirName)) {
                 $this->setError(ERROR_NOT_FOUND, "install: directory [$dirName] is required");
@@ -527,7 +527,7 @@ class Plugins extends ServiceMethods implements intPlugins {
         }
         // insert or update information about plugin
         if ($existVersion) {
-            $sql = array(
+            $sql = [
                 "UPDATE `".MECCANO_TPREF."_core_plugins_installed` "
                 . "SET `version`='$version' "
                 . "WHERE `id`=$existId ;",
@@ -539,14 +539,14 @@ class Plugins extends ServiceMethods implements intPlugins {
                 . "`email`='$email', "
                 . "`license`='$license' "
                 . "WHERE `id`=$existId"
-            );
+            ];
         }
         else {
-            $sql = array(
+            $sql = [
                 "INSERT INTO `".MECCANO_TPREF."_core_plugins_installed_about` "
                 . "(`id`, `full`, `about`, `credits`, `url`, `email`, `license`) "
                 . "VALUES ($existId, '$fullName', '$about', '$credits', '$url', '$email', '$license') ;"
-            );
+            ];
         }
         foreach ($sql as $value) {
             $this->dbLink->query($value);
@@ -606,13 +606,13 @@ class Plugins extends ServiceMethods implements intPlugins {
         else {
             $docDest = MECCANO_PHP_DIR."/$shortName";
         }
-        $beingCopied = array(
+        $beingCopied = [
             "documents" => MECCANO_DOCUMENTS_DIR."/$shortName",
             "php" => $docDest,
             "js" => MECCANO_JS_DIR."/$shortName",
             "css" => MECCANO_CSS_DIR."/$shortName",
             "rm.php" => MECCANO_UNINSTALL."/$shortName.php"
-        );
+        ];
         foreach ($beingCopied as $source => $dest) {
             if (!Files::copy($plugPath."/$source", $dest, true, true, false, false, false, false, true)) {
                 $this->setError(Files::errId(), "install -> ".Files::errExp());
@@ -707,12 +707,12 @@ class Plugins extends ServiceMethods implements intPlugins {
             return false;
         }
         // remove files and directories of the plugin
-        $beingRemoved = array(
+        $beingRemoved = [
             "php" => MECCANO_PHP_DIR."/$shortName",
             "js" => MECCANO_JS_DIR."/$shortName",
             "css" => MECCANO_CSS_DIR."/$shortName",
             "rm.php" => MECCANO_UNINSTALL."/$shortName.php"
-        );
+        ];
         if (!$keepData) {
             $beingRemoved["documents"] = MECCANO_DOCUMENTS_DIR."/$shortName";
         }
@@ -724,12 +724,12 @@ class Plugins extends ServiceMethods implements intPlugins {
             }
         }
         // delete information about plugin
-        $sql = array(
+        $sql = [
             "DELETE FROM `".MECCANO_TPREF."_core_plugins_installed_about` "
             . "WHERE `id`=$id",
             "DELETE FROM `".MECCANO_TPREF."_core_plugins_installed` "
             . "WHERE `id`=$id",
-        );
+        ];
         foreach ($sql as $value) {
             $this->dbLink->query($value);
             if ($this->dbLink->errno) {
@@ -775,14 +775,14 @@ class Plugins extends ServiceMethods implements intPlugins {
             return $xml;
         }
         else {
-            $installed = array();
+            $installed = [];
             while ($row = $qInstalled->fetch_row()) {
-                $installed[] = array(
+                $installed[] = [
                     "short" => $row[0],
                     "full" => $row[1],
                     "version" => $row[2],
                     "time" => $row[3]
-                );
+                ];
             }
             if ($this->outputType == 'json') {
                 return json_encode($installed);
@@ -833,7 +833,7 @@ class Plugins extends ServiceMethods implements intPlugins {
             return $xml;
         }
         else {
-            $installed = array(
+            $installed = [
                 "short" => $shortName,
                 "full" => $fullName,
                 "version" => $version,
@@ -843,7 +843,7 @@ class Plugins extends ServiceMethods implements intPlugins {
                 "url" => $url,
                 "email" => $email,
                 "license" => $license
-            );
+            ];
             if ($this->outputType == 'json') {
                 return json_encode($installed);
             }
