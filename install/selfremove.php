@@ -35,11 +35,12 @@ if (!session_id()) {
 if (isset($_GET['rid']) && isset($_SESSION['rid']) && (isset($_GET['rid']) == isset($_SESSION['rid']))) {
     $path = dirname(__FILE__);
     if (\core\Files::remove($path)) {
-        echo json_encode(array("response" => true));
+        echo json_encode(["response" => true]);
     }
     else {
-        echo json_encode(array("response" => false, "error" => \core\Files::errExp()));    }
+        echo json_encode(["response" => false, "error" => \core\Files::errExp()]);
+    }
 }
 else {
-    echo json_encode(array("response" => false, "error" => "unauthorized request for self-removing"));
+    echo json_encode(["response" => false, "error" => "unauthorized request for self-removing"]);
 }
