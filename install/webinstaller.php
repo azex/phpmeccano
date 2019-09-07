@@ -45,7 +45,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
     }
     
     public function validateConstants() {
-        $_checkConst = array(
+        $_checkConst = [
             "MECCANO_DBSTORAGE_ENGINE",
             "MECCANO_DBANAME",
             "MECCANO_DBAPASS",
@@ -71,72 +71,72 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
             "MECCANO_AUTH_BLOCK_PERIOD",
             "MECCANO_SHOW_ERRORS",
             "MECCANO_MNTC_IP"
-        );
+        ];
         foreach ($_checkConst as $value) {
             if (!defined($value)) {
                 define($value, "N/A");
             }
         }
-        $constStatus = array();
+        $constStatus = [];
         // validate type of the database storage engine
-        if (in_array(MECCANO_DBSTORAGE_ENGINE, array('MyISAM', 'InnoDB'))) {
-            $constStatus['MECCANO_DBSTORAGE_ENGINE'] = array(true, MECCANO_DBSTORAGE_ENGINE);
+        if (in_array(MECCANO_DBSTORAGE_ENGINE, ['MyISAM', 'InnoDB'])) {
+            $constStatus['MECCANO_DBSTORAGE_ENGINE'] = [true, MECCANO_DBSTORAGE_ENGINE];
         }
         elseif (!is_string(MECCANO_DBSTORAGE_ENGINE) || !preg_replace("/[\s\n\r\t]+/", "", MECCANO_DBSTORAGE_ENGINE)) {
-            $constStatus['MECCANO_DBSTORAGE_ENGINE'] = array(false, "N/A");
+            $constStatus['MECCANO_DBSTORAGE_ENGINE'] = [false, "N/A"];
         }
         else {
-            $constStatus['MECCANO_DBSTORAGE_ENGINE'] = array(false, htmlspecialchars(MECCANO_DBSTORAGE_ENGINE));
+            $constStatus['MECCANO_DBSTORAGE_ENGINE'] = [false, htmlspecialchars(MECCANO_DBSTORAGE_ENGINE)];
         }
         // validate database settings
-        $dbConf = array(
+        $dbConf = [
             'MECCANO_DBANAME' => MECCANO_DBANAME,
             'MECCANO_DBAPASS' => MECCANO_DBAPASS,
             'MECCANO_DBHOST' => MECCANO_DBHOST,
             'MECCANO_DBPORT' => MECCANO_DBPORT
-            );
+            ];
         $mysqlTest = new \mysqli();
         $isValid = @$mysqlTest->real_connect(MECCANO_DBHOST, MECCANO_DBANAME, MECCANO_DBAPASS, '', MECCANO_DBPORT);
         foreach ($dbConf as $key => $value) {
             if (!is_string($value) || !preg_replace("/[\s\n\r\t]+/", "", $value)) {
                 if ($key == 'MECCANO_DBAPASS') {
-                    $constStatus[$key] = array(true, "N/A");
+                    $constStatus[$key] = [true, "N/A"];
                 }
                 else {
-                    $constStatus[$key] = array(false, "N/A");
+                    $constStatus[$key] = [false, "N/A"];
                 }
             }
             else {
                 if ($key == 'MECCANO_DBAPASS') {
                     $pass = preg_replace("/./", "*", $value);
-                    $constStatus[$key] = array($isValid, $pass);
+                    $constStatus[$key] = [$isValid, $pass];
                 }
                 else {
-                    $constStatus[$key] = array($isValid, htmlspecialchars($value));
+                    $constStatus[$key] = [$isValid, htmlspecialchars($value)];
                 }
             }
         }
         // validate database name and table prefix
-        $dbConf2 = array(
+        $dbConf2 = [
             'MECCANO_DBNAME' => MECCANO_DBNAME,
             'MECCANO_TPREF' => MECCANO_TPREF
-        );
+        ];
         foreach ($dbConf2 as $key => $value) {
             if ($key == 'MECCANO_DBNAME' && pregDbName($value)) {
-                $constStatus[$key] = array(true, $value);
+                $constStatus[$key] = [true, $value];
             }
             elseif ($key == 'MECCANO_TPREF' && pregPref($value)) {
-                $constStatus[$key] = array(true, $value);
+                $constStatus[$key] = [true, $value];
             }
             elseif (!is_string($value) || !preg_replace("/[\s\n\r\t]+/", "", $value)) {
-                $constStatus[$key] = array(false, "N/A");
+                $constStatus[$key] = [false, "N/A"];
             }
             else {
-                $constStatus[$key] = array(false, htmlspecialchars($value));
+                $constStatus[$key] = [false, htmlspecialchars($value)];
             }
         }
         // validate system pathes and path to folder of shared files
-        $sysPathes = array(
+        $sysPathes = [
             'MECCANO_CONF_FILE' => MECCANO_CONF_FILE,
             'MECCANO_ROOT_DIR' => MECCANO_ROOT_DIR,
             'MECCANO_CORE_DIR' => MECCANO_CORE_DIR,
@@ -149,76 +149,76 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
             'MECCANO_UNINSTALL' => MECCANO_UNINSTALL,
             'MECCANO_SERVICE_PAGES' => MECCANO_SERVICE_PAGES,
             'MECCANO_SHARED_FILES' => MECCANO_SHARED_FILES
-        );
+        ];
         foreach ($sysPathes as $key => $value) {
             if ($key == 'MECCANO_CONF_FILE' && is_file($value) && is_readable($value)) {
-                $constStatus[$key] = array(true, $value);
+                $constStatus[$key] = [true, $value];
             }
             elseif (is_dir($value) && is_writable($value)) {
-                $constStatus[$key] = array(true, $value);
+                $constStatus[$key] = [true, $value];
             }
             elseif (!is_string($value) || !preg_replace("/[\s\n\r\t]+/", "", $value)) {
-                $constStatus[$key] = array(false, "N/A");
+                $constStatus[$key] = [false, "N/A"];
             }
             else {
-                $constStatus[$key] = array(false, htmlspecialchars($value));
+                $constStatus[$key] = [false, htmlspecialchars($value)];
             }
         }
         //  validate sub-folder of shared files
         if (is_string(MECCANO_SHARED_STDIR) && preg_match("/^[-a-zA-Z0-9_]{5,40}$/", MECCANO_SHARED_STDIR)) {
-            $constStatus['MECCANO_SHARED_STDIR'] = array(true, MECCANO_SHARED_STDIR);
+            $constStatus['MECCANO_SHARED_STDIR'] = [true, MECCANO_SHARED_STDIR];
         }
         elseif (!is_string(MECCANO_SHARED_STDIR) || !preg_replace("/[\s\n\r\t]+/", "", MECCANO_SHARED_STDIR)) {
-            $constStatus['MECCANO_SHARED_STDIR'] = array(false, "N/A");
+            $constStatus['MECCANO_SHARED_STDIR'] = [false, "N/A"];
         }
         else {
-            $constStatus['MECCANO_SHARED_STDIR'] = array(false, htmlspecialchars(MECCANO_SHARED_STDIR));
+            $constStatus['MECCANO_SHARED_STDIR'] = [false, htmlspecialchars(MECCANO_SHARED_STDIR)];
         }
         //validate default language
-        if (in_array(MECCANO_DEF_LANG, array("en-US", "ru-RU"))) {
-            $constStatus['MECCANO_DEF_LANG'] = array(true, MECCANO_DEF_LANG);
+        if (in_array(MECCANO_DEF_LANG, ["en-US", "ru-RU"])) {
+            $constStatus['MECCANO_DEF_LANG'] = [true, MECCANO_DEF_LANG];
         }
         elseif (!is_string(MECCANO_DEF_LANG) || !preg_replace("/[\s\n\r\t]+/", "", MECCANO_DEF_LANG)) {
-            $constStatus['MECCANO_DEF_LANG'] = array(false, "N/A");
+            $constStatus['MECCANO_DEF_LANG'] = [false, "N/A"];
         }
         else {
-            $constStatus['MECCANO_DEF_LANG'] = array(false, htmlspecialchars(MECCANO_DEF_LANG));
+            $constStatus['MECCANO_DEF_LANG'] = [false, htmlspecialchars(MECCANO_DEF_LANG)];
         }
         // validate temporary blocking data
         // authentication limit
         if (is_integer(MECCANO_AUTH_LIMIT) && MECCANO_AUTH_LIMIT > -1) {
-            $constStatus['MECCANO_AUTH_LIMIT'] = array(true, MECCANO_AUTH_LIMIT);
+            $constStatus['MECCANO_AUTH_LIMIT'] = [true, MECCANO_AUTH_LIMIT];
         }
         elseif (is_numeric(MECCANO_AUTH_LIMIT)) {
-                $constStatus['MECCANO_AUTH_LIMIT'] = array(false, MECCANO_AUTH_LIMIT);
+                $constStatus['MECCANO_AUTH_LIMIT'] = [false, MECCANO_AUTH_LIMIT];
         }
         elseif (!is_string(MECCANO_AUTH_LIMIT) || !preg_replace("/[\s\n\r\t]+/", "", MECCANO_AUTH_LIMIT)) {
-                $constStatus['MECCANO_AUTH_LIMIT'] = array(false, "N/A");
+                $constStatus['MECCANO_AUTH_LIMIT'] = [false, "N/A"];
         }
         else {
-            $constStatus['MECCANO_AUTH_LIMIT'] = array(false, htmlspecialchars(MECCANO_AUTH_LIMIT));
+            $constStatus['MECCANO_AUTH_LIMIT'] = [false, htmlspecialchars(MECCANO_AUTH_LIMIT)];
         }
         // authentication blocking period
         if (is_string(MECCANO_AUTH_BLOCK_PERIOD) && preg_match('/^([0-1]{1}[0-9]{1}|[2]{1}[0-3]{1}):[0-5]{1}[0-9]{1}:[0-5]{1}[0-9]{1}$/', MECCANO_AUTH_BLOCK_PERIOD)) {
-            $constStatus['MECCANO_AUTH_BLOCK_PERIOD'] = array(true, MECCANO_AUTH_BLOCK_PERIOD);
+            $constStatus['MECCANO_AUTH_BLOCK_PERIOD'] = [true, MECCANO_AUTH_BLOCK_PERIOD];
         }
         elseif (!is_string(MECCANO_AUTH_BLOCK_PERIOD) || !preg_replace("/[\s\n\r\t]+/", "", MECCANO_AUTH_BLOCK_PERIOD)) {
-                $constStatus['MECCANO_AUTH_BLOCK_PERIOD'] = array(false, "N/A");
+                $constStatus['MECCANO_AUTH_BLOCK_PERIOD'] = [false, "N/A"];
         }
         else {
-            $constStatus['MECCANO_AUTH_BLOCK_PERIOD'] = array(false, htmlspecialchars(MECCANO_AUTH_BLOCK_PERIOD));
+            $constStatus['MECCANO_AUTH_BLOCK_PERIOD'] = [false, htmlspecialchars(MECCANO_AUTH_BLOCK_PERIOD)];
         }
         // displaying of errors
         if (is_bool(MECCANO_SHOW_ERRORS)) {
             if (MECCANO_SHOW_ERRORS) {
-                $constStatus['MECCANO_SHOW_ERRORS'] = array(false, "true");
+                $constStatus['MECCANO_SHOW_ERRORS'] = [false, "true"];
             }
             else {
-                $constStatus['MECCANO_SHOW_ERRORS'] = array(true, "false");
+                $constStatus['MECCANO_SHOW_ERRORS'] = [true, "false"];
             }
         }
         else {
-            $constStatus['MECCANO_SHOW_ERRORS'] = array(false, "N/A");
+            $constStatus['MECCANO_SHOW_ERRORS'] = [false, "N/A"];
         }
         // IP addresses that ignore maintenance mode
         if (is_array(MECCANO_MNTC_IP) && count(MECCANO_MNTC_IP)) {
@@ -238,18 +238,18 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
             }
             // if error is raised
             if ($isError) {
-                $constStatus['MECCANO_MNTC_IP'] = array(false, "false: element #$i");
+                $constStatus['MECCANO_MNTC_IP'] = [false, "false: element #$i"];
             }
             // if everything is alright
             else {
-                $constStatus['MECCANO_MNTC_IP'] = array(true, $ipList);
+                $constStatus['MECCANO_MNTC_IP'] = [true, $ipList];
             }
         }
         elseif (is_array(MECCANO_MNTC_IP) && !count(MECCANO_MNTC_IP)) {
-            $constStatus['MECCANO_MNTC_IP'] = array(true, "null");
+            $constStatus['MECCANO_MNTC_IP'] = [true, "null"];
         }
         else {
-            $constStatus['MECCANO_MNTC_IP'] = array(false, "N/A");
+            $constStatus['MECCANO_MNTC_IP'] = [false, "N/A"];
         }
         // return results of the validation
         return $constStatus;
@@ -263,14 +263,14 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
             $this->setError(ERROR_INCORRECT_DATA, "step #0: incorrect type of the argument");
             return false;
         }
-        $required_keys = array(
+        $required_keys = [
             'groupname',
             'groupdesc',
             'username',
             'passw',
             'repassw',
             'email'
-        );
+        ];
         if (array_diff($required_keys, array_keys($post))) {
             $this->setError(ERROR_INCORRECT_DATA, "step #0: incomplete user parameters");
             return false;
@@ -312,7 +312,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
         $sql = new \mysqli(MECCANO_DBHOST, MECCANO_DBANAME, MECCANO_DBAPASS, '', MECCANO_DBPORT);
         $sql->set_charset('utf8');
         $sql->query("DROP DATABASE `$dbName` ;");
-        $queries = array(
+        $queries = [
             // disable errors while installation on newer MySQL versions
             "SET SQL_MODE='NO_AUTO_VALUE_ON_ZERO';",
 
@@ -741,7 +741,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
                 PRIMARY KEY (`id`),
                 UNIQUE KEY `tid` (`tid`)
             ) ENGINE=$sEngine DEFAULT CHARSET=utf8 COMMENT 'Relations between messages and commented topics' ;"
-        );
+        ];
         foreach ($queries as $query) {
             $sql->query($query);
             if ($sql->errno) {
