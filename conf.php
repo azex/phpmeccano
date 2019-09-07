@@ -59,9 +59,9 @@ define('MECCANO_AUTH_LIMIT', 5);
 define('MECCANO_AUTH_BLOCK_PERIOD', '00:05:00');
 
 // displaying of errors
-define('MECCANO_SHOW_ERRORS', FALSE);
+define('MECCANO_SHOW_ERRORS', false);
 
 // IP addresses that will ignore maintenance mode
-define('MECCANO_MNTC_IP', array());
+define('MECCANO_MNTC_IP', []);
 
 require_once MECCANO_CORE_DIR.'/__loader__.php';

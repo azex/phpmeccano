@@ -45,24 +45,24 @@ if (isset($_SESSION['webinstaller_step'])) {
     if (!$webinst->errId()) {
         $_SESSION['webinstaller_step'] += 1;
         $removeId = core\makeIdent();
-        echo json_encode(array("response" => $_SESSION['webinstaller_step'], "rid" => $removeId));
+        echo json_encode(["response" => $_SESSION['webinstaller_step'], "rid" => $removeId]);
         if ($_SESSION['webinstaller_step'] == 4) {
-            $_SESSION = array();
+            $_SESSION = [];
             $_SESSION['rid'] = $removeId;
         }
     }
     else {
-        echo json_encode(array("response" => FALSE, "error" => $webinst->errExp()));
-        $_SESSION = array();
+        echo json_encode(["response" => false, "error" => $webinst->errExp()]);
+        $_SESSION = [];
     }
 }
 else {
     if ($webinst->revalidateAll($_POST)) {
         $_SESSION['webinstaller_step'] = 1;
         $_SESSION['user_param'] = $_POST;
-        echo json_encode(array("response" => $_SESSION['webinstaller_step']));
+        echo json_encode(["response" => $_SESSION['webinstaller_step']]);
     }
     else {
-        echo json_encode(array("response" => 0, "error" => $webinst->errExp()));
+        echo json_encode(["response" => 0, "error" => $webinst->errExp()]);
     }
 }

@@ -26,8 +26,8 @@
 header('Content-type: application/json; charset=utf-8');
 
 if (is_readable("lang")) {
-    $langList = array();
-    foreach (array_diff(scandir('lang'), array('.', '..')) as $value) {
+    $langList = [];
+    foreach (array_diff(scandir('lang'), ['.', '..']) as $value) {
         if (preg_match('/^[a-z]{2}-[A-Z]{2}\.json$/', $value)) {
             if (is_readable("lang/$value")) {
                 $langFile = file_get_contents("lang/$value");

@@ -94,14 +94,14 @@ class Maintenance extends ServiceMethods implements intMaintenance {
         else {
             $expired = false;
         }
-        return array(
-                    'enabled' => $decoded->enabled,
-                    'prmsg' => $decoded->prmsg,
-                    'secmsg' => $decoded->secmsg,
-                    'timeout' => $decoded->timeout,
-                    'startpoint' => $decoded->startpoint,
-                    'expired' => $expired
-                    );
+        return [
+                'enabled' => $decoded->enabled,
+                'prmsg' => $decoded->prmsg,
+                'secmsg' => $decoded->secmsg,
+                'timeout' => $decoded->timeout,
+                'startpoint' => $decoded->startpoint,
+                'expired' => $expired
+                ];
     }
     
     public function write($conf) {
@@ -145,13 +145,13 @@ class Maintenance extends ServiceMethods implements intMaintenance {
         }
         file_put_contents(
                 $confPath, json_encode(
-                        array(
-                            'enabled' => $conf->enabled,
-                            'prmsg' => $conf->prmsg,
-                            'secmsg' => $conf->secmsg,
-                            'timeout' => $conf->timeout,
-                            'startpoint' => $conf->startpoint
-                            )
+                        [
+                        'enabled' => $conf->enabled,
+                        'prmsg' => $conf->prmsg,
+                        'secmsg' => $conf->secmsg,
+                        'timeout' => $conf->timeout,
+                        'startpoint' => $conf->startpoint
+                        ]
                         )
                 );
         return true;
@@ -176,7 +176,7 @@ class Maintenance extends ServiceMethods implements intMaintenance {
                 return false;
             }
         }
-        return array('enabled' => $decoded->enabled);
+        return ['enabled' => $decoded->enabled];
     }
     
     public function disable() {
@@ -198,7 +198,7 @@ class Maintenance extends ServiceMethods implements intMaintenance {
                 return false;
             }
         }
-        return array('enabled' => $decoded->enabled);
+        return ['enabled' => $decoded->enabled];
     }
     
     public function timeout($sec = 1800) {
@@ -224,7 +224,7 @@ class Maintenance extends ServiceMethods implements intMaintenance {
                 return false;
             }
         }
-        return array('timeout' => $decoded->timeout);
+        return ['timeout' => $decoded->timeout];
     }
     
     public function startpoint($sec = 0) {
@@ -250,7 +250,7 @@ class Maintenance extends ServiceMethods implements intMaintenance {
                 return false;
             }
         }
-        return array('startpoint' => $decoded->startpoint);
+        return ['startpoint' => $decoded->startpoint];
     }
     
     public function prmsg($msg = 'The site is under maintenance') {
@@ -276,7 +276,7 @@ class Maintenance extends ServiceMethods implements intMaintenance {
                 return false;
             }
         }
-        return array('prmsg' => $decoded->prmsg);
+        return ['prmsg' => $decoded->prmsg];
     }
     
     public function secmsg($msg = 'We will be back soon') {
@@ -302,7 +302,7 @@ class Maintenance extends ServiceMethods implements intMaintenance {
                 return false;
             }
         }
-        return array('secmsg' => $decoded->secmsg);
+        return ['secmsg' => $decoded->secmsg];
     }
     
     public function reset() {
@@ -325,12 +325,12 @@ class Maintenance extends ServiceMethods implements intMaintenance {
             $this->setError($this->errid, 'reset -> '.$this->errexp);
                 return false;
         }
-        return array(
-                    'enabled' => $decoded->enabled,
-                    'prmsg' => $decoded->prmsg,
-                    'secmsg' => $decoded->secmsg,
-                    'timeout' => $decoded->timeout,
-                    'startpoint' => $decoded->startpoint,
-                    );
+        return [
+                'enabled' => $decoded->enabled,
+                'prmsg' => $decoded->prmsg,
+                'secmsg' => $decoded->secmsg,
+                'timeout' => $decoded->timeout,
+                'startpoint' => $decoded->startpoint,
+                ];
     }
 }
