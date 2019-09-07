@@ -25,7 +25,7 @@
 
 require_once 'getconf.php';
 
-if (defined("MECCANO_DEF_LANG") && is_string(MECCANO_DEF_LANG) && in_array(MECCANO_DEF_LANG, array("en-US", "ru-RU"))) {
+if (defined("MECCANO_DEF_LANG") && is_string(MECCANO_DEF_LANG) && in_array(MECCANO_DEF_LANG, ["en-US", "ru-RU"])) {
     $defLang = MECCANO_DEF_LANG;
 }
 else {
@@ -35,7 +35,7 @@ else {
 if (!session_id()) {
     session_start();
 }
-$_SESSION = array();
+$_SESSION = [];
 header('Content-Type: text/html; charset=utf-8');
 ?>
 <!DOCTYPE html> 
