@@ -38,8 +38,8 @@ interface intUserMan {
     public function setGroupDesc($groupId, $description, $log = true);
     public function delGroup($groupId, $log = true);
     public function sumGroups($rpp = 20);
-    public function getGroups($pageNumber, $totalGroups, $rpp = 20, $orderBy = array('id'), $ascent = false);
-    public function getAllGroups($orderBy = array('id'), $ascent = false);
+    public function getGroups($pageNumber, $totalGroups, $rpp = 20, $orderBy = ['id'], $ascent = false);
+    public function getAllGroups($orderBy = ['id'], $ascent = false);
     public function createUser($username, $password, $email, $groupId, $active = true, $langCode = MECCANO_DEF_LANG, $log = true);
     public function userExists($username);
     public function mailExists($email);
@@ -57,8 +57,8 @@ interface intUserMan {
     public function setFullName($userId, $name, $log = true);
     public function changePassword($passwId, $userId, $oldPassw, $newPassw, $log = true);
     public function sumUsers($rpp = 20);
-    public function getUsers($pageNumber, $totalUsers, $rpp = 20, $orderBy = array('id'), $ascent = false);
-    public function getAllUsers($orderBy = array('id'), $ascent = false);
+    public function getUsers($pageNumber, $totalUsers, $rpp = 20, $orderBy = ['id'], $ascent = false);
+    public function getAllUsers($orderBy = ['id'], $ascent = false);
     public function setUserLang($userId, $code = MECCANO_DEF_LANG);
     public function enable2FA($passwId, $userId);
     public function disable2FA($passwId, $userId);
@@ -287,14 +287,14 @@ class UserMan extends ServiceMethods implements intUserMan{
             return $xml;
         }
         else {
-            $aboutNode = array(
+            $aboutNode = [
                             'id' => $groupId,
                             'name' => $about[0],
                             'description' => $about[1],
                             'time' => $about[2],
                             'active' => (int) $about[3],
                             'usum' => (int) $sum[0]
-                            );
+                            ];
             if ($this->outputType == 'array') {
                 return $aboutNode;
             }
@@ -389,17 +389,17 @@ class UserMan extends ServiceMethods implements intUserMan{
             $this->setError(ERROR_SYSTEM_INTERVENTION, 'delGroup: the group contains users');
             return false;
         }
-        if (!$this->delPolicyFromGroup($groupId) && !in_array($this->errId(), array(ERROR_NOT_FOUND, ''))) {
+        if (!$this->delPolicyFromGroup($groupId) && !in_array($this->errId(), [ERROR_NOT_FOUND, ''])) {
             $this->setError(ERROR_INCORRECT_DATA, $this->errExp());
             return false;
         }
-        $sql = array(
+        $sql = [
             "SELECT `groupname` "
             . "FROM `".MECCANO_TPREF."_core_userman_groups` "
             . "WHERE `id`=$groupId ;", 
             "DELETE FROM `".MECCANO_TPREF."_core_userman_groups` "
             . "WHERE `id`=$groupId ;"
-        );
+        ];
         foreach ($sql as $key => $value) {
             $qGroup = $this->dbLink->query($value);
             if ($this->dbLink->errno) {
@@ -467,10 +467,10 @@ class UserMan extends ServiceMethods implements intUserMan{
         elseif ($totalPages == 0) {
             $totalPages = 1;
         }
-        return array('records' => (int) $totalRecs, 'pages' => (int) $totalPages);
+        return ['records' => (int) $totalRecs, 'pages' => (int) $totalPages];
     }
     
-    public function getGroups($pageNumber, $totalGroups, $rpp = 20, $orderBy = array('id'), $ascent = false) {
+    public function getGroups($pageNumber, $totalGroups, $rpp = 20, $orderBy = ['id'], $ascent = false) {
         $this->zeroizeError();
         if (!$this->checkFuncAccess('core', 'userman_get_groups')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "getGroups: restricted by the policy");
@@ -480,7 +480,7 @@ class UserMan extends ServiceMethods implements intUserMan{
             $this->setError(ERROR_INCORRECT_DATA, 'getGroups: values of $pageNumber, $totalGroups, $gpp must be integers');
             return false;
         }
-        $rightEntry = array('id', 'name', 'time', 'active');
+        $rightEntry = ['id', 'name', 'time', 'active'];
         if (is_array($orderBy)) {
             $arrayLen = count($orderBy);
             if ($arrayLen && count(array_intersect($orderBy, $rightEntry)) == $arrayLen) {
@@ -539,14 +539,14 @@ class UserMan extends ServiceMethods implements intUserMan{
             return $xml;
         }
         else {
-            $groupsNode = array();
+            $groupsNode = [];
             while ($row = $qResult->fetch_row()) {
-                $groupsNode[] = array(
+                $groupsNode[] = [
                     'id' => (int) $row[0],
                     'name' => $row[1],
                     'time' => $row[2],
                     'active' => (int) $row[3]
-                );
+                ];
             }
             if ($this->outputType == 'array') {
                 return $groupsNode;
@@ -557,13 +557,13 @@ class UserMan extends ServiceMethods implements intUserMan{
         }
     }
     
-    public function getAllGroups($orderBy = array('id'), $ascent = false) {
+    public function getAllGroups($orderBy = ['id'], $ascent = false) {
         $this->zeroizeError();
         if (!$this->checkFuncAccess('core', 'userman_get_groups')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "getAllGroups: restricted by the policy");
             return false;
         }
-        $rightEntry = array('id', 'name', 'time', 'active');
+        $rightEntry = ['id', 'name', 'time', 'active'];
         if (is_array($orderBy)) {
             $arrayLen = count($orderBy);
             if ($arrayLen && count(array_intersect($orderBy, $rightEntry)) == $arrayLen) {
@@ -609,14 +609,14 @@ class UserMan extends ServiceMethods implements intUserMan{
             return $xml;
         }
         else {
-            $groupsNode = array();
+            $groupsNode = [];
             while ($row = $qResult->fetch_row()) {
-                $groupsNode[] = array(
+                $groupsNode[] = [
                     'id' => (int) $row[0],
                     'name' => $row[1],
                     'time' => $row[2],
                     'active' => (int) $row[3]
-                );
+                ];
             }
             if ($this->outputType == 'array') {
                 return $groupsNode;
@@ -684,7 +684,7 @@ class UserMan extends ServiceMethods implements intUserMan{
         if ($active) { $active = 1; }
         else { $active = 0; }
         $passId = guid();
-        $sql = array(
+        $sql = [
             'userid' => "INSERT INTO `".MECCANO_TPREF."_core_userman_users` (`username`, `groupid`, `salt`, `active`, `langid`) "
             . "VALUES ('$username', '$groupId', '$salt', $active, $langId) ;",
             'mail' => "INSERT INTO `".MECCANO_TPREF."_core_userman_userinfo` (`id`, `email`) "
@@ -693,7 +693,7 @@ class UserMan extends ServiceMethods implements intUserMan{
             . "VALUES (LAST_INSERT_ID()) ;",
             'passw' => "INSERT INTO `".MECCANO_TPREF."_core_userman_userpass` (`id`, `userid`, `password`, `limited`) "
             . "VALUES ('$passId', LAST_INSERT_ID(), '$passw', 0) ;"
-            );
+            ];
         foreach ($sql as $key => $value) {
             $this->dbLink->query($value);
             if ($this->dbLink->errno) {
@@ -861,7 +861,7 @@ class UserMan extends ServiceMethods implements intUserMan{
             $this->setError(ERROR_NOT_FOUND, 'delUser: user not found');
             return false;
         }
-        $sql = array(
+        $sql = [
             "DELETE `si` FROM `".MECCANO_TPREF."_core_auth_session_info` `si` "
             . "JOIN `".MECCANO_TPREF."_core_auth_usi` `s` "
             . "ON `si`.`id`=`s`.`id` "
@@ -884,7 +884,7 @@ class UserMan extends ServiceMethods implements intUserMan{
             . "WHERE `id`=$userId ;",
             "DELETE FROM `".MECCANO_TPREF."_core_userman_users` "
             . "WHERE `id`=$userId ;"
-        );
+        ];
         foreach ($sql as $value) {
             $this->dbLink->query($value);
             if ($this->dbLink->errno) {
@@ -940,7 +940,7 @@ class UserMan extends ServiceMethods implements intUserMan{
             return $xml;
         }
         else {
-            $aboutNode = array(
+            $aboutNode = [
                         'id' => $userId,
                         'username' => $about[0],
                         'fullname' => $about[1],
@@ -949,7 +949,7 @@ class UserMan extends ServiceMethods implements intUserMan{
                         'active' => (int) $about[4],
                         'gid' => (int) $about[5],
                         'group' => $about[6]
-                        );
+                        ];
             if ($this->outputType == 'array') {
                 return $aboutNode;
             }
@@ -999,16 +999,16 @@ class UserMan extends ServiceMethods implements intUserMan{
             return $xml;
         }
         else {
-            $securityNode = array();
+            $securityNode = [];
             $securityNode['uid'] = $userId;
-            $securityNode['passwords'] = array();
+            $securityNode['passwords'] = [];
             while ($row = $qPassw->fetch_row()) {
-                $securityNode['passwords'][] = array(
+                $securityNode['passwords'][] = [
                     'id' => $row[0],
                     'description' => $row[1],
                     'limited' => (int) $row[2],
                     'doubleauth' => (int) $row[3]
-                );
+                ];
             }
             if ($this->outputType == 'array') {
                 return $securityNode;
@@ -1165,7 +1165,7 @@ class UserMan extends ServiceMethods implements intUserMan{
             $this->setError(ERROR_SYSTEM_INTERVENTION, 'delPassword: impossible to delete primary password');
             return false;
         }
-        $sql = array(
+        $sql = [
             "DELETE `si` FROM `".MECCANO_TPREF."_core_auth_session_info` `si` "
             . "JOIN `".MECCANO_TPREF."_core_auth_usi` `s` "
             . "ON `si`.`id`=`s`.`id` "
@@ -1174,7 +1174,7 @@ class UserMan extends ServiceMethods implements intUserMan{
             . "WHERE `pid`='$passwId' ;",
             "DELETE FROM `".MECCANO_TPREF."_core_userman_userpass` "
             . "WHERE `id`='$passwId' ;"
-                );
+                ];
         foreach ($sql as $value) {
             $this->dbLink->query($value);
             if ($this->dbLink->errno) {
@@ -1427,10 +1427,10 @@ class UserMan extends ServiceMethods implements intUserMan{
         elseif ($totalPages == 0) {
             $totalPages = 1;
         }
-        return array('records' => (int) $totalUsers, 'pages' => (int) $totalPages);
+        return ['records' => (int) $totalUsers, 'pages' => (int) $totalPages];
     }
     
-    public function getUsers($pageNumber, $totalUsers, $rpp = 20, $orderBy = array('id'), $ascent = false) {
+    public function getUsers($pageNumber, $totalUsers, $rpp = 20, $orderBy = ['id'], $ascent = false) {
         $this->zeroizeError();
         if (!$this->checkFuncAccess('core', 'userman_get_users')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "getUsers: restricted by the policy");
@@ -1440,7 +1440,7 @@ class UserMan extends ServiceMethods implements intUserMan{
             $this->setError(ERROR_INCORRECT_DATA, 'getUsers: values of $pageNumber, $totalUsers, $upp must be integers');
             return false;
         }
-        $rightEntry = array('id', 'username', 'time', 'fullname', 'email', 'group', 'gid', 'active');
+        $rightEntry = ['id', 'username', 'time', 'fullname', 'email', 'group', 'gid', 'active'];
         if (is_array($orderBy)) {
             $arrayLen = count($orderBy);
             if ($arrayLen && count(array_intersect($orderBy, $rightEntry)) == $arrayLen) {
@@ -1507,9 +1507,9 @@ class UserMan extends ServiceMethods implements intUserMan{
             return $xml;
         }
         else {
-            $usersNode = array();
+            $usersNode = [];
             while ($row = $qResult->fetch_row()) {
-                $usersNode[] = array(
+                $usersNode[] = [
                     'id' => (int) $row[0],
                     'username' => $row[1],
                     'fullname' => $row[2],
@@ -1518,7 +1518,7 @@ class UserMan extends ServiceMethods implements intUserMan{
                     'gid' => (int) $row[5],
                     'time' => $row[6],
                     'active' => (int) $row[7]
-                );
+                ];
             }
             if ($this->outputType == 'array') {
                 return $usersNode;
@@ -1529,13 +1529,13 @@ class UserMan extends ServiceMethods implements intUserMan{
         }
     }
     
-    public function getAllUsers($orderBy = array('id'), $ascent = false) {
+    public function getAllUsers($orderBy = ['id'], $ascent = false) {
         $this->zeroizeError();
         if (!$this->checkFuncAccess('core', 'userman_get_users')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "getAllUsers: restricted by the policy");
             return false;
         }
-        $rightEntry = array('id', 'username', 'time', 'fullname', 'email', 'group', 'gid', 'active');
+        $rightEntry = ['id', 'username', 'time', 'fullname', 'email', 'group', 'gid', 'active'];
         if (is_array($orderBy)) {
             $arrayLen = count($orderBy);
             if ($arrayLen && count(array_intersect($orderBy, $rightEntry)) == $arrayLen) {
@@ -1589,9 +1589,9 @@ class UserMan extends ServiceMethods implements intUserMan{
             return $xml;
         }
         else {
-            $usersNode = array();
+            $usersNode = [];
             while ($row = $qResult->fetch_row()) {
-                $usersNode[] = array(
+                $usersNode[] = [
                     'id' => (int) $row[0],
                     'username' => $row[1],
                     'fullname' => $row[2],
@@ -1600,7 +1600,7 @@ class UserMan extends ServiceMethods implements intUserMan{
                     'gid' => (int) $row[5],
                     'time' => $row[6],
                     'active' => (int) $row[7]
-                );
+                ];
             }
             if ($this->outputType == 'array') {
                 return $usersNode;
@@ -1621,14 +1621,14 @@ class UserMan extends ServiceMethods implements intUserMan{
             $this->setError(ERROR_RESTRICTED_ACCESS, "setUserLang: restricted by the policy");
             return false;
         }
-        $sql = array(
+        $sql = [
             "user" => "SELECT `username` "
             . "FROM `".MECCANO_TPREF."_core_userman_users` "
             . "WHERE `id` = $userId ;",
             "language" => "SELECT `id` "
             . "FROM `".MECCANO_TPREF."_core_langman_languages` "
             . "WHERE `code` = '$code' ;"
-        );
+        ];
         foreach ($sql as $key => $value) {
             $qCheck = $this->dbLink->query($value);
             if ($this->dbLink->errno) {
