@@ -221,11 +221,14 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
             $constStatus['MECCANO_SHOW_ERRORS'] = [false, "N/A"];
         }
         // IP addresses that ignore maintenance mode
-        if (is_array(MECCANO_MNTC_IP) && count(MECCANO_MNTC_IP)) {
+        if (is_string(MECCANO_MNTC_IP) && MECCANO_MNTC_IP === '') {
+            $constStatus['MECCANO_MNTC_IP'] = [true, "null"];
+        }
+        elseif (is_string(MECCANO_MNTC_IP) && count(preg_split('/\s*,\s*/', preg_replace('/\s\s+/', ' ', MECCANO_MNTC_IP)))) {
             $ipList = "";
             $i = 0;
             $isError = false;
-            foreach (MECCANO_MNTC_IP as $value) {
+            foreach (preg_split('/\s*,\s*/', MECCANO_MNTC_IP) as $value) {
                 // validate element as IP address
                 if (!is_string($value) || !preg_match('/^((^\s*((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))\s*$)|(^\s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))(%.+)?\s*$))$/', $value)) {
                     $isError = true;
@@ -238,15 +241,12 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
             }
             // if error is raised
             if ($isError) {
-                $constStatus['MECCANO_MNTC_IP'] = [false, "false: element #$i"];
+                $constStatus['MECCANO_MNTC_IP'] = [false, "error: address #$i '$value'"];
             }
             // if everything is alright
             else {
                 $constStatus['MECCANO_MNTC_IP'] = [true, $ipList];
             }
-        }
-        elseif (is_array(MECCANO_MNTC_IP) && !count(MECCANO_MNTC_IP)) {
-            $constStatus['MECCANO_MNTC_IP'] = [true, "null"];
         }
         else {
             $constStatus['MECCANO_MNTC_IP'] = [false, "N/A"];

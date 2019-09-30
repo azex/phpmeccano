@@ -51,7 +51,7 @@ class Auth extends ServiceMethods implements intAuth {
     public function userLogin($username, $password, $useCookie = true, $cookieTime = 'month', $log = true, $blockBrute = false, $cleanSessions = true) {
         $this->zeroizeError();
         if (isset($_SESSION[AUTH_USER_ID])) {
-            $this->setError(ERROR_NOT_EXECUTED, 'userLogin: close current session before to start new');
+            $this->setError(ERROR_NOT_EXECUTED, 'userLogin: close the current session before starting new one');
             return false;
         }
         if (!pregUName($username) && !pregMail($username)) {
