@@ -97,7 +97,7 @@ header('Content-Type: text/html; charset=utf-8');
 require_once 'conf.php';
 \core\loadPHP('auth');
 
-$db = new mysqli(MECCANO_DBHOST, MECCANO_DBANAME, MECCANO_DBAPASS, MECCANO_DBNAME, MECCANO_DBPORT);
+$db = \core\dbLink();
 $auth = new \core\Auth($db);
 
 $auth_code = $auth->userLogin("your_username", "your_password");
