@@ -126,3 +126,9 @@ function mntc() {
     }
     return false; // Maintenance mode is disabled
 }
+
+function dbLink() {
+    $db = new \mysqli(MECCANO_DBHOST, MECCANO_DBANAME, MECCANO_DBAPASS, MECCANO_DBNAME, MECCANO_DBPORT);
+    $db->set_charset("utf8mb4");
+    return $db;
+}
