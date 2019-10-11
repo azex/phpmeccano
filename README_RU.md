@@ -98,6 +98,7 @@ require_once 'conf.php';
 \core\loadPHP('auth');
 
 $db = new mysqli(MECCANO_DBHOST, MECCANO_DBANAME, MECCANO_DBAPASS, MECCANO_DBNAME, MECCANO_DBPORT);
+$db->set_charset("utf8mb4");
 $auth = new \core\Auth($db);
 
 $auth_code = $auth->userLogin("your_username", "your_password");
