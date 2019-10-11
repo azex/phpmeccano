@@ -310,14 +310,14 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
         $tabPrefix = MECCANO_TPREF;
         $sEngine = MECCANO_DBSTORAGE_ENGINE;
         $sql = new \mysqli(MECCANO_DBHOST, MECCANO_DBANAME, MECCANO_DBAPASS, '', MECCANO_DBPORT);
-        $sql->set_charset('utf8');
+        $sql->set_charset("utf8mb4");
         $sql->query("DROP DATABASE `$dbName` ;");
         $queries = [
             // disable errors while installation on newer MySQL versions
             "SET SQL_MODE='NO_AUTO_VALUE_ON_ZERO';",
 
             // create database
-            "CREATE DATABASE `$dbName` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci ;",
+            "CREATE DATABASE `$dbName` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci ;",
             
             // select database
             "USE `$dbName` ;",
@@ -330,7 +330,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
                 `time` TIMESTAMP NOT null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 PRIMARY KEY (`id`),
                 UNIQUE KEY `name` (`name`)
-            ) ENGINE=$sEngine DEFAULT CHARSET=utf8 COMMENT 'Installed plug-ins' AUTO_INCREMENT=1 ;",
+            ) ENGINE=$sEngine DEFAULT CHARSET=utf8mb4 COMMENT 'Installed plug-ins' AUTO_INCREMENT=1 ;",
             
             // about installed plugin
             "CREATE TABLE `{$tabPrefix}_core_plugins_installed_about` (
@@ -343,7 +343,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
                 `license` text NOT null DEFAULT '' COMMENT 'License agreement',
                 FOREIGN KEY (`id`) REFERENCES `{$tabPrefix}_core_plugins_installed` (`id`),
                 PRIMARY KEY (`id`)
-            ) ENGINE=$sEngine DEFAULT CHARSET=utf8 COMMENT 'Information about installed plug-ins' AUTO_INCREMENT=1 ;",
+            ) ENGINE=$sEngine DEFAULT CHARSET=utf8mb4 COMMENT 'Information about installed plug-ins' AUTO_INCREMENT=1 ;",
             
             // about unpacked plugins
             "CREATE TABLE `{$tabPrefix}_core_plugins_unpacked` (
@@ -361,7 +361,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
                 `depends` text NOT null DEFAULT '' COMMENT 'Dependences needed for the plugin',
                 PRIMARY KEY (`id`),
                 UNIQUE KEY `short` (`short`)
-            ) ENGINE=$sEngine DEFAULT CHARSET=utf8 COMMENT 'Information about unpacked but not installed plug-ins' AUTO_INCREMENT=1 ;",
+            ) ENGINE=$sEngine DEFAULT CHARSET=utf8mb4 COMMENT 'Information about unpacked but not installed plug-ins' AUTO_INCREMENT=1 ;",
             
             // system languages
             "CREATE TABLE `{$tabPrefix}_core_langman_languages` (
@@ -371,7 +371,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
                 `dir` enum('ltr', 'rtl') NOT null DEFAULT 'ltr' COMMENT 'Text direction',
                 PRIMARY KEY (`id`),
                 UNIQUE KEY `code` (`code`)
-            ) ENGINE=$sEngine DEFAULT CHARSET=utf8 COMMENT 'List of language codes' AUTO_INCREMENT=1 ;",
+            ) ENGINE=$sEngine DEFAULT CHARSET=utf8mb4 COMMENT 'List of language codes' AUTO_INCREMENT=1 ;",
             
             // title sections
             "CREATE TABLE `{$tabPrefix}_core_langman_title_sections` (
@@ -384,7 +384,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
                 UNIQUE KEY `section` (`plugid`, `section`),
                 KEY `plugin` (`plugid`),
                 KEY `static` (`static`)
-            ) ENGINE=$sEngine DEFAULT CHARSET=utf8 COMMENT 'List of title sections' AUTO_INCREMENT=1 ;",
+            ) ENGINE=$sEngine DEFAULT CHARSET=utf8mb4 COMMENT 'List of title sections' AUTO_INCREMENT=1 ;",
             
             // title names
             "CREATE TABLE `{$tabPrefix}_core_langman_title_names` (
@@ -394,7 +394,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
                 FOREIGN KEY (`sid`) REFERENCES `{$tabPrefix}_core_langman_title_sections` (`id`),
                 PRIMARY KEY (`id`),
                 UNIQUE KEY `title` (`sid`, `name`)
-            ) ENGINE=$sEngine DEFAULT CHARSET=utf8 COMMENT 'List of title names' AUTO_INCREMENT=1 ;",
+            ) ENGINE=$sEngine DEFAULT CHARSET=utf8mb4 COMMENT 'List of title names' AUTO_INCREMENT=1 ;",
             
             // titles
             "CREATE TABLE `{$tabPrefix}_core_langman_titles` (
@@ -406,7 +406,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
                 FOREIGN KEY (`nameid`) REFERENCES `{$tabPrefix}_core_langman_title_names` (`id`),
                 PRIMARY KEY (`id`),
                 UNIQUE KEY `index` (`codeid`, `nameid`)
-            ) ENGINE=$sEngine DEFAULT CHARSET=utf8 COMMENT 'Titles written in different languages' AUTO_INCREMENT=1 ;",
+            ) ENGINE=$sEngine DEFAULT CHARSET=utf8mb4 COMMENT 'Titles written in different languages' AUTO_INCREMENT=1 ;",
             
             // text sections
             "CREATE TABLE `{$tabPrefix}_core_langman_text_sections` (
@@ -419,7 +419,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
                 UNIQUE KEY `section` (`plugid`, `section`),
                 KEY `plugin` (`plugid`),
                 KEY `static` (`static`)
-            ) ENGINE='$sEngine' DEFAULT CHARSET=utf8 COMMENT 'List of text sections' AUTO_INCREMENT=1 ;",
+            ) ENGINE='$sEngine' DEFAULT CHARSET=utf8mb4 COMMENT 'List of text sections' AUTO_INCREMENT=1 ;",
             
             // text names
             "CREATE TABLE `{$tabPrefix}_core_langman_text_names` (
@@ -429,7 +429,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
                 FOREIGN KEY (`sid`) REFERENCES `{$tabPrefix}_core_langman_text_sections` (`id`),
                 PRIMARY KEY (`id`),
                 UNIQUE KEY `title` (`sid`, `name`)
-            ) ENGINE=$sEngine DEFAULT CHARSET=utf8 COMMENT 'List of text names' AUTO_INCREMENT=1 ;",
+            ) ENGINE=$sEngine DEFAULT CHARSET=utf8mb4 COMMENT 'List of text names' AUTO_INCREMENT=1 ;",
             
             // texts
             "CREATE TABLE `{$tabPrefix}_core_langman_texts` (
@@ -446,7 +446,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
                 UNIQUE KEY `index` (`codeid`, `nameid`),
                 KEY `created` (`created`),
                 KEY `edited` (`edited`)
-            ) ENGINE=$sEngine DEFAULT CHARSET=utf8 COMMENT 'Text written in different languages' AUTO_INCREMENT=1 ;",
+            ) ENGINE=$sEngine DEFAULT CHARSET=utf8mb4 COMMENT 'Text written in different languages' AUTO_INCREMENT=1 ;",
             
             // groups
             "CREATE TABLE `{$tabPrefix}_core_userman_groups` (
@@ -457,7 +457,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
                 `active` tinyint(1) UNSIGNED NOT null DEFAULT 1 COMMENT 'Flag that shows a group status (active/not active)',
                 PRIMARY KEY (`id`),
                 UNIQUE KEY `groupname` (`groupname`)
-            ) ENGINE=$sEngine DEFAULT CHARSET=utf8 COMMENT 'List of user groups' AUTO_INCREMENT=1 ;",
+            ) ENGINE=$sEngine DEFAULT CHARSET=utf8mb4 COMMENT 'List of user groups' AUTO_INCREMENT=1 ;",
             
             // users
             "CREATE TABLE `{$tabPrefix}_core_userman_users` (
@@ -474,7 +474,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
                 UNIQUE KEY `username` (`username`),
                 KEY `salt` (`salt`),
                 KEY `groupid` (`groupid`)
-            ) ENGINE=$sEngine DEFAULT CHARSET=utf8 COMMENT 'List of the users' AUTO_INCREMENT=1 ;",
+            ) ENGINE=$sEngine DEFAULT CHARSET=utf8mb4 COMMENT 'List of the users' AUTO_INCREMENT=1 ;",
             
             // user passwords
             "CREATE TABLE `{$tabPrefix}_core_userman_userpass` (
@@ -488,7 +488,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
                 PRIMARY KEY (`id`),
                 KEY `userid` (`userid`),
                 UNIQUE KEY `password` (`userid`, `password`)
-            ) ENGINE=$sEngine DEFAULT CHARSET=utf8 COMMENT 'List of passwords' AUTO_INCREMENT=1 ;",
+            ) ENGINE=$sEngine DEFAULT CHARSET=utf8mb4 COMMENT 'List of passwords' AUTO_INCREMENT=1 ;",
             
             // user info
             "CREATE TABLE `{$tabPrefix}_core_userman_userinfo` (
@@ -499,7 +499,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
                 PRIMARY KEY (`id`),
                 KEY `fullname` (`fullname`),
                 UNIQUE KEY `email` (`email`)
-            ) ENGINE=$sEngine DEFAULT CHARSET=utf8 COMMENT 'Information about users' AUTO_INCREMENT=1 ;",
+            ) ENGINE=$sEngine DEFAULT CHARSET=utf8mb4 COMMENT 'Information about users' AUTO_INCREMENT=1 ;",
             
             // unique session identifier
             "CREATE TABLE `{$tabPrefix}_core_auth_usi` (
@@ -508,7 +508,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
                 `endtime` TIMESTAMP NOT null DEFAULT CURRENT_TIMESTAMP COMMENT 'Time of the session expiration',
                 FOREIGN KEY (`pid`) REFERENCES `{$tabPrefix}_core_userman_userpass` (`id`),
                 PRIMARY KEY (`id`)
-            ) ENGINE=$sEngine DEFAULT CHARSET=utf8 COMMENT 'Data of the sessions' AUTO_INCREMENT=1 ;",
+            ) ENGINE=$sEngine DEFAULT CHARSET=utf8mb4 COMMENT 'Data of the sessions' AUTO_INCREMENT=1 ;",
 
             // information about sessions
             "CREATE TABLE `{$tabPrefix}_core_auth_session_info` (
@@ -518,7 +518,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
                 `created` TIMESTAMP NOT null DEFAULT 0 COMMENT 'Time of creation',
                 FOREIGN KEY (`id`) REFERENCES `{$tabPrefix}_core_auth_usi` (`id`),
                 PRIMARY KEY (`id`)
-            ) ENGINE=$sEngine DEFAULT CHARSET=utf8 COMMENT 'Information about the existing sessions' AUTO_INCREMENT=1 ;",
+            ) ENGINE=$sEngine DEFAULT CHARSET=utf8mb4 COMMENT 'Information about the existing sessions' AUTO_INCREMENT=1 ;",
             
             // temporary blocking of the user authentication
             "CREATE TABLE `{$tabPrefix}_core_userman_temp_block` (
@@ -528,7 +528,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
                 FOREIGN KEY (`id`) REFERENCES `{$tabPrefix}_core_userman_users` (`id`),
                 KEY `tempblock` (`tempblock`),
                 PRIMARY KEY (`id`)
-            ) ENGINE=$sEngine DEFAULT CHARSET=utf8 COMMENT 'Information about users' AUTO_INCREMENT=1 ;",
+            ) ENGINE=$sEngine DEFAULT CHARSET=utf8mb4 COMMENT 'Information about users' AUTO_INCREMENT=1 ;",
             
             // summary list of the policies
             "CREATE TABLE `{$tabPrefix}_core_policy_summary_list` (
@@ -538,7 +538,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
                 FOREIGN KEY (`name`) REFERENCES `{$tabPrefix}_core_plugins_installed` (`name`),
                 PRIMARY KEY (`id`),
                 UNIQUE KEY `function` (`name`, `func`)
-            ) ENGINE=$sEngine DEFAULT CHARSET=utf8 COMMENT 'Summary of the policies' AUTO_INCREMENT=1 ;",
+            ) ENGINE=$sEngine DEFAULT CHARSET=utf8mb4 COMMENT 'Summary of the policies' AUTO_INCREMENT=1 ;",
             
             // descriptions of the policies
             "CREATE TABLE `{$tabPrefix}_core_policy_descriptions` (
@@ -551,7 +551,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
                 FOREIGN KEY (`policyid`) REFERENCES `{$tabPrefix}_core_policy_summary_list` (`id`),
                 PRIMARY KEY (`id`),
                 UNIQUE KEY `code` (`codeid`, `policyid`)
-            ) ENGINE=$sEngine DEFAULT CHARSET=utf8 COMMENT 'Description of policies' AUTO_INCREMENT=1 ;",
+            ) ENGINE=$sEngine DEFAULT CHARSET=utf8mb4 COMMENT 'Description of policies' AUTO_INCREMENT=1 ;",
             
             // group policies
             "CREATE TABLE `{$tabPrefix}_core_policy_access` (
@@ -563,7 +563,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
                 FOREIGN KEY (`groupid`) REFERENCES `{$tabPrefix}_core_userman_groups` (`id`),
                 PRIMARY KEY (`id`),
                 UNIQUE KEY `policy` (`groupid`, `funcid`)
-            ) ENGINE=$sEngine DEFAULT CHARSET=utf8 COMMENT 'Access policies' AUTO_INCREMENT=1 ;",
+            ) ENGINE=$sEngine DEFAULT CHARSET=utf8mb4 COMMENT 'Access policies' AUTO_INCREMENT=1 ;",
             
             // policies for non-authorized users
             "CREATE TABLE `{$tabPrefix}_core_policy_nosession` (
@@ -573,7 +573,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
                 FOREIGN KEY (`funcid`) REFERENCES `{$tabPrefix}_core_policy_summary_list` (`id`),
                 PRIMARY KEY (`id`),
                 UNIQUE KEY `policy` (`funcid`)
-            ) ENGINE=$sEngine DEFAULT CHARSET=utf8 COMMENT 'Access policies for inactive session' AUTO_INCREMENT=1 ;",
+            ) ENGINE=$sEngine DEFAULT CHARSET=utf8mb4 COMMENT 'Access policies for inactive session' AUTO_INCREMENT=1 ;",
             
             // keywords of the log events
             "CREATE TABLE `{$tabPrefix}_core_logman_events` (
@@ -583,7 +583,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
                 FOREIGN KEY (`plugid`) REFERENCES `{$tabPrefix}_core_plugins_installed` (`id`),
                 PRIMARY KEY (`id`),
                 UNIQUE KEY `event` (`keyword`, `plugid`)
-            ) ENGINE=$sEngine DEFAULT CHARSET=utf8 COMMENT 'List of events' AUTO_INCREMENT=1 ;",
+            ) ENGINE=$sEngine DEFAULT CHARSET=utf8mb4 COMMENT 'List of events' AUTO_INCREMENT=1 ;",
             
             // event descriptions
             "CREATE TABLE `{$tabPrefix}_core_logman_descriptions` (
@@ -595,7 +595,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
                 FOREIGN KEY (`codeid`) REFERENCES `{$tabPrefix}_core_langman_languages` (`id`),
                 PRIMARY KEY (`id`),
                 UNIQUE KEY `event` (`eventid`, `codeid`)
-            ) ENGINE=$sEngine DEFAULT CHARSET=utf8 COMMENT 'List of events' AUTO_INCREMENT=1 ;",
+            ) ENGINE=$sEngine DEFAULT CHARSET=utf8mb4 COMMENT 'List of events' AUTO_INCREMENT=1 ;",
             
             // log records
             "CREATE TABLE `{$tabPrefix}_core_logman_records` (
@@ -609,7 +609,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
                 KEY `event` (`eventid`),
                 KEY `time` (`time`),
                 KEY `user` (`user`)
-            ) ENGINE=$sEngine DEFAULT CHARSET=utf8 COMMENT 'Log records' AUTO_INCREMENT=1 ;",
+            ) ENGINE=$sEngine DEFAULT CHARSET=utf8mb4 COMMENT 'Log records' AUTO_INCREMENT=1 ;",
             
             // topics for discussions
             "CREATE TABLE `{$tabPrefix}_core_discuss_topics` (
@@ -617,7 +617,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
                 `topic` varchar(100) NOT null DEFAULT '' COMMENT 'Name of topic',
                 PRIMARY KEY (`id`),
                 KEY `topic` (`topic`)
-            ) ENGINE=$sEngine DEFAULT CHARSET=utf8 COMMENT 'List of topics for discussions' ;",
+            ) ENGINE=$sEngine DEFAULT CHARSET=utf8mb4 COMMENT 'List of topics for discussions' ;",
             
             // comments to topics
             "CREATE TABLE `{$tabPrefix}_core_discuss_comments` (
@@ -636,7 +636,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
                 KEY `userid` (`userid`),
                 KEY `comment` (`comment`),
                 KEY `microtime` (`microtime`)
-            ) ENGINE=$sEngine DEFAULT CHARSET=utf8 COMMENT 'List of topic comments' ;",
+            ) ENGINE=$sEngine DEFAULT CHARSET=utf8mb4 COMMENT 'List of topic comments' ;",
             
             // social circles
             "CREATE TABLE `{$tabPrefix}_core_share_circles` (
@@ -647,7 +647,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
                 PRIMARY KEY (`id`),
                 UNIQUE KEY `ucircle` (`userid`, `cname`),
                 KEY `userid` (`userid`)
-            ) ENGINE=$sEngine DEFAULT CHARSET=utf8 COMMENT 'User circles for sharing of records' ;",
+            ) ENGINE=$sEngine DEFAULT CHARSET=utf8mb4 COMMENT 'User circles for sharing of records' ;",
             
             // buddy lists of social circles
             "CREATE TABLE `{$tabPrefix}_core_share_buddy_list` (
@@ -660,7 +660,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
                 UNIQUE KEY `cbuddy` (`cid`, `bid`),
                 KEY `cid` (`cid`),
                 KEY `bid` (`bid`)
-            ) ENGINE=$sEngine DEFAULT CHARSET=utf8 COMMENT 'Buddy list which is associated with circles' ;",
+            ) ENGINE=$sEngine DEFAULT CHARSET=utf8mb4 COMMENT 'Buddy list which is associated with circles' ;",
             
             // user messages
             "CREATE TABLE `{$tabPrefix}_core_share_msgs` (
@@ -675,7 +675,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
                 KEY `userid` (`userid`),
                 KEY `microtime` (`microtime`),
                 PRIMARY KEY (`id`)
-            ) ENGINE=$sEngine DEFAULT CHARSET=utf8 COMMENT 'User messages' ;",
+            ) ENGINE=$sEngine DEFAULT CHARSET=utf8mb4 COMMENT 'User messages' ;",
             
             // user files
             "CREATE TABLE `{$tabPrefix}_core_share_files` (
@@ -694,7 +694,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
                 KEY `microtime` (`microtime`),
                 KEY `userid` (`userid`),
                 PRIMARY KEY (`id`)
-            ) ENGINE=$sEngine DEFAULT CHARSET=utf8 COMMENT 'User files' ;",
+            ) ENGINE=$sEngine DEFAULT CHARSET=utf8mb4 COMMENT 'User files' ;",
             
             // message-file relations
             "CREATE TABLE `{$tabPrefix}_core_share_msgfile_relations` (
@@ -708,7 +708,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
                 UNIQUE KEY `relation` (`mid`, `fid`),
                 KEY `mid` (`mid`),
                 KEY `fid` (`fid`)
-            ) ENGINE=$sEngine DEFAULT CHARSET=utf8 COMMENT 'Relations between files and messages' ;",
+            ) ENGINE=$sEngine DEFAULT CHARSET=utf8mb4 COMMENT 'Relations between files and messages' ;",
             
             // accessibility to messages
             "CREATE TABLE `{$tabPrefix}_core_share_msg_accessibility` (
@@ -720,7 +720,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
                 UNIQUE KEY `access` (`mid`, `cid`),
                 KEY `cid` (`cid`),
                 KEY `mid` (`mid`)
-            ) ENGINE=$sEngine DEFAULT CHARSET=utf8 COMMENT 'Accessibility of messages' ;",
+            ) ENGINE=$sEngine DEFAULT CHARSET=utf8mb4 COMMENT 'Accessibility of messages' ;",
             
             // accessibility to files
             "CREATE TABLE `{$tabPrefix}_core_share_files_accessibility` (
@@ -730,7 +730,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
                 FOREIGN KEY (`fid`) REFERENCES `{$tabPrefix}_core_share_files` (`id`),
                 PRIMARY KEY (`id`),
                 UNIQUE KEY `access` (`fid`, `cid`)
-            ) ENGINE=$sEngine DEFAULT CHARSET=utf8 COMMENT 'Accessibility of the shared files' ;",
+            ) ENGINE=$sEngine DEFAULT CHARSET=utf8mb4 COMMENT 'Accessibility of the shared files' ;",
             
             // messages-comments relations
             "CREATE TABLE `{$tabPrefix}_core_share_msg_topic_rel` (
@@ -740,7 +740,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
                 FOREIGN KEY (`tid`) REFERENCES `{$tabPrefix}_core_discuss_topics` (`id`),
                 PRIMARY KEY (`id`),
                 UNIQUE KEY `tid` (`tid`)
-            ) ENGINE=$sEngine DEFAULT CHARSET=utf8 COMMENT 'Relations between messages and commented topics' ;"
+            ) ENGINE=$sEngine DEFAULT CHARSET=utf8mb4 COMMENT 'Relations between messages and commented topics' ;"
         ];
         foreach ($queries as $query) {
             $sql->query($query);
@@ -761,7 +761,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
             return false;
         }
         $sql = new \mysqli(MECCANO_DBHOST, MECCANO_DBANAME, MECCANO_DBAPASS, MECCANO_DBNAME, MECCANO_DBPORT);
-        $sql->set_charset('utf8');
+        $sql->set_charset("utf8mb4");
         $plugin = new Plugins($sql);
         $plugin->applyPolicy(false);
         if(!$plugin->unpack($packPath)) {
@@ -780,7 +780,7 @@ class WebInstaller extends ServiceMethods implements intWebInstaller {
         $this->zeroizeError();
         require_once MECCANO_CORE_DIR . '/userman.php';
         $sql = new \mysqli(MECCANO_DBHOST, MECCANO_DBANAME, MECCANO_DBAPASS, MECCANO_DBNAME, MECCANO_DBPORT);
-        $sql->set_charset("utf8");
+        $sql->set_charset("utf8mb4");
         $userman = new UserMan($sql);
         $userman->applyPolicy(false);
         if (!$groupId = $userman->createGroup($userParam['groupname'], $userParam['groupdesc'])) {
