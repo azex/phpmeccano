@@ -71,9 +71,9 @@
 10) In configuration file *conf.php*:
 
 * added new constant **MECCANO_CSS_DIR** to define a path to the folder storing CSS-styles of the installed plug-ins;
-* added new constant **MECCANO_SERVICE_PAGES** to define a path to the folder storing pages of the HTTP-statuses, a stub-page of the maintenance mode and a file with the settings of the maintenance mode;
+* added new constant **MECCANO_SERVICE_PAGES** to define a path to the folder that stores pages of the HTTP-statuses, a stub-page of the maintenance mode and a file with the settings of the maintenance mode;
 * added new constant **MECCANO_MNTC_IP** to define IP addresses which aren't affected by the maintenance mode;
-* core module **__loader__.php** is loaded with the configuration file.
+* core module **__loader__.php** is loaded with the configuration file itself.
 
 11) In module *extclass.php* in class **ServiceMethods**:
 

@@ -62,6 +62,6 @@ define('MECCANO_AUTH_BLOCK_PERIOD', '00:05:00');
 define('MECCANO_SHOW_ERRORS', false);
 
 // IP addresses that will ignore maintenance mode
-define('MECCANO_MNTC_IP', '');
+define('MECCANO_MNTC_IP', '127.0.0.1');
 
 require_once MECCANO_CORE_DIR.'/__loader__.php';
