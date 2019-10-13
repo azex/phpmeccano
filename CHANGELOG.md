@@ -54,7 +54,7 @@
 * function **loadCSS** to load CSS libraries of the core or any other installed plug-in;
 * function **loadDOC** to get files from the core documents or any other installed plug-in with the help of *mod_xsendfile* (for *Apache2*) or *X-Accel-Redirect* (for *NGINX*) or *X-LIGHTTPD-send-file* (for *lighttpd*);
 * function **mntc** to replace a requested page by the maintenance mode stub-page of the web service;
-* function **dbLink** to get database link simpler.
+* function **dbLink** for easy getting of the database link based on parameters of configuration file *conf.php*.
 
 9) New core module *maintenance.php* with class **Maintenance** to manage the maintenance mode contains:
 * method **state** to get settings of the maintenance mode;
