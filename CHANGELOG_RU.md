@@ -89,8 +89,8 @@
     * **getAllTitlesXML** => **getAllTitlesList**;
     * **getTextSectionsXML** => **getTextSectionsList**;
     * **getTextNamesXML** => **getTextNamesList**;
-    * **getTextsXML** => **getTextNamesList**;
-    * **getAllTextsXML** => **getTextNamesList**.
+    * **getTextsXML** => **getTextsList**;
+    * **getAllTextsXML** => **getAllTextsList**.
 
 13) Для возможности сохранения эмоджи, в качестве кодировки таблиц базы данных используется *'utf8mb4'*.
 

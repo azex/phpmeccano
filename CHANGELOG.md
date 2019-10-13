@@ -89,8 +89,8 @@
     * **getAllTitlesXML** => **getAllTitlesList**;
     * **getTextSectionsXML** => **getTextSectionsList**;
     * **getTextNamesXML** => **getTextNamesList**;
-    * **getTextsXML** => **getTextNamesList**;
-    * **getAllTextsXML** => **getTextNamesList**.
+    * **getTextsXML** => **getTextsList**;
+    * **getAllTextsXML** => **getAllTextsList**.
 
 13) *'utf8mb4'* is used as encoding of the database tables to provide storage of emoji.
 
