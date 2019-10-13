@@ -16,7 +16,7 @@ Plug-in system allows to extend capabilities and to add new features. Current fr
 
 ## Requirements ##
 
-phpMeccano requires web server (*Apache*, *NGINX* or *lighttpd*) with installed and configured PHP and MySQL/MariaDB.
+phpMeccano requires web server (*Apache*, *NGINX* or *lighttpd*) with installed and configured PHP and MySQL/MariaDB.  
 phpMeccano was tested with the following environments:
 
 * **Debian 10**
