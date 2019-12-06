@@ -110,7 +110,7 @@ if (is_string($auth_code)) {
     }
 }
 elseif ($auth_code) {
-    echo "You have passed a simple authentication";
+    echo "You have passed single-factor authentication";
 }
 else {
     echo $auth->errExp();
