@@ -1,56 +1,62 @@
-# phpMeccano web programming framework #
+# phpMeccano - a framework for development of web services #
 
-phpMeccano is the open-source module-structured PHP framework. Framework phpMeccano gives API next abilities:
+phpMeccano is an open-source module-structured PHP framework. Framework phpMeccano gives APIs with the following abilities:
 
-* to create and to manage user groups;
-* to authenticate the user;
-* to control access to functions through group policy;
-* to create the multilingual interface;
-* to copy, to move and to remove local files and folders;
-* to log events;
-* to create and to share messages and files between contacts of the user like in simple social network;
-* to create topics to discuss and to comment them.
+* creation and management of the user groups;
+* authentication of the users, including 2FA;
+* control of access to functions through the group policy;
+* creation of the multilingual interface;
+* copying, moving and removing of the local files and folders;
+* logging of the events;
+* creation and sharing of the messages and files between contacts of the user like in simple social network;
+* creation of the topics to discuss and to comment them;
+* management of the web service's maintenance mode.
 
-Plug-in system allows to extend capacity and to add new features. Current version 0.1.0 is the second alpha version.
+Plug-in system allows to extend capabilities and to add new features. Current framework version is the third alpha version.
 
 ## Requirements ##
 
-phpMeccano requires web server (*Apache*, *NGINX* or *lighttpd*) with installed and configured PHP and MySQL/MariaDB.
-phpMeccano has been tested with the following environments:
+phpMeccano requires web server (*Apache*, *NGINX* or *lighttpd*) with installed and configured PHP and MySQL/MariaDB.  
+phpMeccano was tested with the following environments:
 
-* Apache 2.2.15 (Red Hat)
-* PHP 5.3.3/ 5.4.40
-* MySQL 5.1.73/ 5.5.50
+* **Debian 10**
+* Apache 2.4.38
+* PHP 7.3.9 
+* MariaDB 10.3.17
 
-==================================================
+===================================
 
-* Apache 2.4.7 (Ubuntu)
-* PHP 5.5.9
-* MariaDB 10.0.26
+* **CentOS Linux 7**
+* Apache 2.4.6
+* PHP 5.4.16 
+* MariaDB 5.5.64
 
-==================================================
+===================================
 
-* Apache 2.4.18 (Ubuntu)
-* PHP 7.0.8
-* MariaDB 10.0.26
+* **Ubuntu 18.04**
+* Apache 2.4.29
+* PHP 7.2.19
+* MySQL 5.7.27
 
-==================================================
+===================================
 
-* nginx/1.10.0 (Ubuntu)
-* PHP 7.0.8
-* MySQL 5.7.13
+* **Ubuntu 18.04**
+* nginx/1.14.0
+* PHP 7.2.19
+* MySQL 8.0.17
 
-==================================================
+===================================
 
-* lighttpd/1.4.35 (Ubuntu)
-* PHP 7.0.8
-* MySQL 5.7.13
+* **Ubuntu 18.04**
+* lighttpd/1.4.45
+* PHP 7.2.19
+* MySQL 8.0.17
 
-To run web installer you should use recent versions of Firefox, any WebKit based browser (Chromium, Google Chrome, Yandex Browser, Opera etc.) or IE10+. Web installer has been tested with desktop, iOS and Android versions of browsers.
+To run web installer you should use the recent versions of Firefox or Pale Moon; any WebKit/Blink based browser (Chromium, Google Chrome, Yandex Browser, Opera, Safari etc.); or Microsoft Edge. Web installer has been tested with desktop, iOS and Android versions of browsers.
 
 ## Installation ##
 
-Make sure that framework is placed into the web-accessible directory. Then edit file *conf.php* and set the database parameters:
+Make sure that framework components are placed into the web-accessible directory. Then edit file *conf.php* and set the database parameters:
 
 * **MECCANO_DBSTORAGE_ENGINE** - database storage engine. Available values are "*MyISAM*" and "*InnoDB*";
 * **MECCANO_DBANAME** - name of the database administrator;
@@ -64,11 +70,14 @@ Also you may edit system paths at your opinion. Make sure that web server has re
 
 By editing value of **MECCANO_DEF_LANG** you can set default language. Initially available values are "*en-US*" (English) and "*ru-RU*" (Russian).
 
+*Refer to the documentation to get more info.*
+
 Save changes.
 
 Now open web browser and go to address ```http://hostname/install/``` to run web installer.
 
 ## API Reference ##
+
 Please, follow the wiki to get the API reference. There are available English and Russian versions.
 
 [Bitbucket](https://bitbucket.org/azexmail/phpmeccano/wiki)  
@@ -76,8 +85,7 @@ Please, follow the wiki to get the API reference. There are available English an
 
 ## Code example ##
 
-To pass authentication write:
-
+Write the following code to pass an authentication:
 
 ```
 #!php
@@ -87,19 +95,27 @@ To pass authentication write:
 header('Content-Type: text/html; charset=utf-8');
 
 require_once 'conf.php';
-require_once MECCANO_CORE_DIR . '/auth.php';
+\core\loadPHP('auth');
 
-$db = new mysqli(MECCANO_DBHOST, MECCANO_DBANAME, MECCANO_DBAPASS, MECCANO_DBNAME, MECCANO_DBPORT);
-$auth = new core\Auth($db);
+$db = \core\dbLink();
+$auth = new \core\Auth($db);
 
-if ($auth->userLogin("your_username", "your_password")) {
-    echo "You have passed authentication";
+$auth_code = $auth->userLogin("your_username", "your_password");
+if (is_string($auth_code)) {
+    if ($auth->login2FA($auth_code)) {
+        echo "You have passed two-factor authentication";
+    }
+    else {
+        echo $auth->errExp();
+    }
+}
+elseif ($auth_code) {
+    echo "You have passed single-factor authentication";
 }
 else {
     echo $auth->errExp();
 }
 ```
-
 
 ## License ##
 

@@ -23,7 +23,21 @@
  *     https://bitbucket.org/azexmail/phpmeccano
  */
 
-$confPath = dirname(dirname(__FILE__)) . "/conf.php";
-if (is_file($confPath) && is_readable($confPath)) {
-    require_once $confPath;
+header('Content-type: application/json; charset=utf-8');
+
+if (is_readable("lang")) {
+    $langList = [];
+    foreach (array_diff(scandir('lang'), ['.', '..']) as $value) {
+        if (preg_match('/^[a-z]{2}-[A-Z]{2}\.json$/', $value)) {
+            if (is_readable("lang/$value")) {
+                $langFile = file_get_contents("lang/$value");
+                $langData = json_decode($langFile);
+                $langList[$langData->metadata->code] = $langData->metadata->name;
+            }
+        }
+    }
+    echo json_encode($langList);
+}
+else {
+    echo json_encode((object) []);
 }

@@ -1,8 +1,8 @@
 <?php
 
 /*
- *     phpMeccano v0.1.0. Web-framework written with php programming language. Component of the web installer.
- *     Copyright (C) 2015-2016  Alexei Muzarov
+ *     phpMeccano v0.2.0. Web-framework written with php programming language. Component of the web installer.
+ *     Copyright (C) 2015-2019  Alexei Muzarov
  * 
  *     This program is free software; you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  *     https://bitbucket.org/azexmail/phpmeccano
  */
 
-header('Content-Type: text/plain; charset=utf-8');
+header('Content-type: application/json; charset=utf-8');
 
 require_once 'getconf.php';
 require_once MECCANO_CORE_DIR.'/files.php';
@@ -35,11 +35,12 @@ if (!session_id()) {
 if (isset($_GET['rid']) && isset($_SESSION['rid']) && (isset($_GET['rid']) == isset($_SESSION['rid']))) {
     $path = dirname(__FILE__);
     if (\core\Files::remove($path)) {
-        echo json_encode(array("response" => true));
+        echo json_encode(["response" => true]);
     }
     else {
-        echo json_encode(array("response" => false, "error" => \core\Files::errExp()));    }
+        echo json_encode(["response" => false, "error" => \core\Files::errExp()]);
+    }
 }
 else {
-    echo json_encode(array("response" => false, "error" => "unauthorized request for self-removing"));
+    echo json_encode(["response" => false, "error" => "unauthorized request for self-removing"]);
 }

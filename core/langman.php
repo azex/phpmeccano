@@ -1,8 +1,8 @@
 <?php
 
 /*
- *     phpMeccano v0.1.0. Web-framework written with php programming language. Core module [langman.php].
- *     Copyright (C) 2015-2016  Alexei Muzarov
+ *     phpMeccano v0.2.0. Web-framework written with php programming language. Core module [langman.php].
+ *     Copyright (C) 2015-2019  Alexei Muzarov
  * 
  *     This program is free software; you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -29,47 +29,47 @@ require_once MECCANO_CORE_DIR.'/extclass.php';
 
 interface intLangMan {
     public function __construct(\mysqli $dbLink);
-    public function installLang(\DOMDocument $langs, $validate = TRUE);
-    public function addLang($code, $name, $log = TRUE);
-    public function delLang($code, $log = TRUE);
+    public function installLang(\DOMDocument $langs, $validate = true);
+    public function addLang($code, $name, $log = true);
+    public function delLang($code, $log = true);
     public function langList();
-    public function installTitles(\DOMDocument $titles, $validate = TRUE);
-    public function installTexts(\DOMDocument $texts, $validate = TRUE);
+    public function installTitles(\DOMDocument $titles, $validate = true);
+    public function installTexts(\DOMDocument $texts, $validate = true);
     public function delPlugin($plugin);
-    public function addTitleSection($section, $plugin, $log = TRUE);
-    public function delTitleSection($sid, $log = TRUE);
-    public function addTextSection($section, $plugin, $log = TRUE);
-    public function delTextSection($sid, $log = TRUE);
-    public function addTitleName($name, $section, $plugin, $log = TRUE);
-    public function delTitleName($nameid, $log = TRUE);
-    public function addTextName($name, $section, $plugin, $log = TRUE);
-    public function delTextName($nameid, $log = TRUE);
-    public function addTitle($title, $name, $section, $plugin, $code = MECCANO_DEF_LANG, $log = TRUE);
-    public function delTitle($tid, $log = TRUE);
-    public function addText($title, $document, $name, $section, $plugin, $code = MECCANO_DEF_LANG, $log = TRUE);
-    public function delText($tid, $log = TRUE);
-    public function updateTitle($id, $title, $log = TRUE);
-    public function updateText($id, $title, $document, $log = TRUE);
+    public function addTitleSection($section, $plugin, $log = true);
+    public function delTitleSection($sid, $log = true);
+    public function addTextSection($section, $plugin, $log = true);
+    public function delTextSection($sid, $log = true);
+    public function addTitleName($name, $section, $plugin, $log = true);
+    public function delTitleName($nameid, $log = true);
+    public function addTextName($name, $section, $plugin, $log = true);
+    public function delTextName($nameid, $log = true);
+    public function addTitle($title, $name, $section, $plugin, $code = MECCANO_DEF_LANG, $log = true);
+    public function delTitle($tid, $log = true);
+    public function addText($title, $document, $name, $section, $plugin, $code = MECCANO_DEF_LANG, $log = true);
+    public function delText($tid, $log = true);
+    public function updateTitle($id, $title, $log = true);
+    public function updateText($id, $title, $document, $log = true);
     public function getTitle($name, $section, $plugin, $code = MECCANO_DEF_LANG);
     public function getText($name, $section, $plugin, $code = MECCANO_DEF_LANG);
     public function getTitles($section, $plugin, $code = MECCANO_DEF_LANG);
-    public function getAllTextsXML($section, $plugin, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE);
+    public function getAllTextsList($section, $plugin, $code = MECCANO_DEF_LANG, $orderBy = ['id'], $ascent = false);
     public function getTextById($id);
     public function sumTexts($section, $plugin, $code = MECCANO_DEF_LANG, $rpp = 20);
-    public function getTextsXML($section, $plugin, $pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE);
+    public function getTextsList($section, $plugin, $pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = ['id'], $ascent = false);
     public function getTexts($section, $plugin, $code = MECCANO_DEF_LANG);
     public function sumTitles($section, $plugin, $code = MECCANO_DEF_LANG, $rpp = 20);
-    public function getTitlesXML($section, $plugin, $pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE);
-    public function getAllTitlesXML($section, $plugin, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE);
+    public function getTitlesList($section, $plugin, $pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = ['id'], $ascent = false);
+    public function getAllTitlesList($section, $plugin, $code = MECCANO_DEF_LANG, $orderBy = ['id'], $ascent = false);
     public function getTitleById($id);
     public function sumTextSections($plugin, $rpp = 20);
-    public function getTextSectionsXML($plugin, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('id'), $ascent = FALSE);
+    public function getTextSectionsList($plugin, $pageNumber, $totalPages, $rpp = 20, $orderBy = ['id'], $ascent = false);
     public function sumTitleSections($plugin, $rpp = 20);
-    public function getTitleSectionsXML($plugin, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('id'), $ascent = FALSE);
+    public function getTitleSectionsList($plugin, $pageNumber, $totalPages, $rpp = 20, $orderBy = ['id'], $ascent = false);
     public function sumTextNames($plugin, $section, $rpp = 20);
-    public function getTextNamesXML($plugin, $section, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('id'), $ascent = FALSE);
+    public function getTextNamesList($plugin, $section, $pageNumber, $totalPages, $rpp = 20, $orderBy = ['id'], $ascent = false);
     public function sumTitleNames($plugin, $section, $rpp = 20);
-    public function getTitleNamesXML($plugin, $section, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('id'), $ascent = FALSE);
+    public function getTitleNamesList($plugin, $section, $pageNumber, $totalPages, $rpp = 20, $orderBy = ['id'], $ascent = false);
 }
 
 class LangMan extends ServiceMethods implements intLangMan{
@@ -78,19 +78,19 @@ class LangMan extends ServiceMethods implements intLangMan{
         $this->dbLink = $dbLink;
     }
     
-    public function installLang(\DOMDocument $langs, $validate = TRUE) {
+    public function installLang(\DOMDocument $langs, $validate = true) {
         $this->zeroizeError() ;
         if ($validate && !@$langs->relaxNGValidate(MECCANO_CORE_DIR.'/validation-schemas/langman-language-v01.rng')) {
             $this->setError(ERROR_INCORRECT_DATA, 'installLang: incorrect structure of language');
-            return FALSE;
+            return false;
         }
         // get available system langeages
         $qAvaiLang = $this->dbLink->query("SELECT `code` FROM `".MECCANO_TPREF."_core_langman_languages` ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'installLang: unable to get list of available languages -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
-        $avaiLang = array();
+        $avaiLang = [];
         while ($row = $qAvaiLang->fetch_row()) {
             $avaiLang[] = $row[0];
         }
@@ -101,9 +101,9 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "FROM `".MECCANO_TPREF."_core_policy_summary_list` ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'installLang: unable to get list of available policies -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
-        $policy = array();
+        $policy = [];
         while ($row = $qPolicy->fetch_row()) {
             $policy[$row[0]] = $row[1];
         }
@@ -112,9 +112,9 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "FROM `".MECCANO_TPREF."_core_logman_events` ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'installLang: unable to get list of available policies -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
-        $events = array();
+        $events = [];
         while ($row = $qLog->fetch_row()) {
             $events[$row[0]] = $row[1];
         }
@@ -135,7 +135,7 @@ class LangMan extends ServiceMethods implements intLangMan{
                             . "VALUES($codeId, $policyId, '$policyKey', '$policyKey') ;");
                     if ($this->dbLink->errno) {
                         $this->setError(ERROR_NOT_EXECUTED, "installLang: unable to add language [$code] into policies -> ".$this->dbLink->error);
-                        return FALSE;
+                        return false;
                     }
                 }
                 // add new language into log
@@ -145,7 +145,7 @@ class LangMan extends ServiceMethods implements intLangMan{
                             . "VALUES('$eventKey: [%d]', $eventId, $codeId) ;");
                     if ($this->dbLink->errno) {
                         $this->setError(ERROR_NOT_EXECUTED, "installLang: unable to add language [$code] into policies -> ".$this->dbLink->error);
-                        return FALSE;
+                        return false;
                     }
                 }
             }
@@ -157,28 +157,28 @@ class LangMan extends ServiceMethods implements intLangMan{
             }
             if ($this->dbLink->errno) {
                 $this->setError(ERROR_NOT_EXECUTED, 'installLang: unable to install/update language -> '.$this->dbLink->error);
-                return FALSE;
+                return false;
             }
         }
-        return TRUE;
+        return true;
     }
 
-        public function addLang($code, $name, $dir = 'ltr', $log = TRUE) {
+        public function addLang($code, $name, $dir = 'ltr', $log = true) {
         $this->zeroizeError();
         if ($this->usePolicy && !$this->checkFuncAccess('core', 'langman_syswide_lang')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "addLang: restricted by the policy");
-            return FALSE;
+            return false;
         }
-        if (!pregLang($code) || !is_string($name) || !in_array($dir, array('ltr', 'rtl'))) {
+        if (!pregLang($code) || !is_string($name) || !in_array($dir, ['ltr', 'rtl'])) {
             $this->setError(ERROR_INCORRECT_DATA, 'addLang: incorrect incoming parameters');
-            return FALSE;
+            return false;
         }
         $name = $this->dbLink->real_escape_string($name);
         $this->dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_languages` (`code`, `name`, `dir`) "
                 . "VALUES('$code', '$name', '$dir') ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'addLang: '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         $codeId = $this->dbLink->insert_id;
         //get available policies
@@ -186,9 +186,9 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "FROM `".MECCANO_TPREF."_core_policy_summary_list` ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'addLang: unable to get list of available policies -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
-        $policy = array();
+        $policy = [];
         while ($row = $qPolicy->fetch_row()) {
             $policy[$row[0]] = $row[1];
         }
@@ -197,9 +197,9 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "FROM `".MECCANO_TPREF."_core_logman_events` ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'addLang: unable to get list of available policies -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
-        $events = array();
+        $events = [];
         while ($row = $qLog->fetch_row()) {
             $events[$row[0]] = $row[1];
         }
@@ -210,7 +210,7 @@ class LangMan extends ServiceMethods implements intLangMan{
                     . "VALUES($codeId, $policyId, '$policyKey', '$policyKey') ;");
             if ($this->dbLink->errno) {
                 $this->setError(ERROR_NOT_EXECUTED, "addLang: unable to add language [$code] into policies -> ".$this->dbLink->error);
-                return FALSE;
+                return false;
             }
         }
         // add new language into log
@@ -220,39 +220,39 @@ class LangMan extends ServiceMethods implements intLangMan{
                     . "VALUES('$eventKey: [%d]', $eventId, $codeId) ;");
             if ($this->dbLink->errno) {
                 $this->setError(ERROR_NOT_EXECUTED, "addLang: unable to add language [$code] into policies -> ".$this->dbLink->error);
-                return FALSE;
+                return false;
             }
         }
         if ($log && !$this->newLogRecord('core', 'langman_add_lang', "$name; code: $code; DIR: $dir; ID: $codeId")) {
             $this->setError(ERROR_NOT_CRITICAL, "addLang -> ".$this->errExp());
         }
-        return TRUE;
+        return true;
     }
     
-    public function delLang($code, $log = TRUE) {
+    public function delLang($code, $log = true) {
         $this->zeroizeError();
         if ($this->usePolicy && !$this->checkFuncAccess('core', 'langman_syswide_lang')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "delLang: restricted by the policy");
-            return FALSE;
+            return false;
         }
         if (!pregLang($code)) {
             $this->setError(ERROR_INCORRECT_DATA, 'delLang: incorrect incoming parameter');
-            return FALSE;
+            return false;
         }
         if ($code == MECCANO_DEF_LANG) {
             $this->setError(ERROR_SYSTEM_INTERVENTION, 'delLang: it is impossible to delete default language');
-            return FALSE;
+            return false;
         }
         $qLang = $this->dbLink->query("SELECT `id`, `name`, `dir` "
                 . "FROM `".MECCANO_TPREF."_core_langman_languages` "
                 . "WHERE `code`='$code' ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'delLang: unable to get language identifier |'.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, "delLang: language [$code] is not found");
-            return FALSE;
+            return false;
         }
         list($codeId, $name, $dir) = $qLang->fetch_row();
         $defLang = MECCANO_DEF_LANG;
@@ -261,14 +261,14 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "WHERE `code`='$defLang' ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'delLang: unable to get default language identifier |'.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, "delLang:  default language [$defLang] is not found");
-            return FALSE;
+            return false;
         }
         list($defLangId) = $qDefLang->fetch_row();
-        $sql = array(
+        $sql = [
             "DELETE FROM `".MECCANO_TPREF."_core_langman_titles` "
             . "WHERE `codeid`=$codeId ;",
             "DELETE FROM `".MECCANO_TPREF."_core_langman_texts` "
@@ -279,24 +279,24 @@ class LangMan extends ServiceMethods implements intLangMan{
             . "WHERE `codeid`=$codeId ;",
             "UPDATE `".MECCANO_TPREF."_core_userman_users` "
             . "SET `langid`=$defLangId "
-            . "WHERE `langid`=$codeId ;");
+            . "WHERE `langid`=$codeId ;"];
         foreach ($sql as $value) {
             $this->dbLink->query($value);
             if ($this->dbLink->errno) {
                 $this->setError(ERROR_NOT_EXECUTED, 'delLang: '.$this->dbLink->error);
-                return FALSE;
+                return false;
             }
         }
         $this->dbLink->query("DELETE FROM `".MECCANO_TPREF."_core_langman_languages` "
                 . "WHERE `code`='$code' ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'delLang: '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if ($log && !$this->newLogRecord('core', 'langman_del_lang', "$name; code: $code; DIR: $dir; ID: $codeId")) {
             $this->setError(ERROR_NOT_CRITICAL, "delLang -> ".$this->errExp());
         }
-        return TRUE;
+        return true;
     }
 
     public function langList() {
@@ -306,11 +306,11 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "ORDER BY `code` ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'langList: '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'langList: there was not found any language');
-            return FALSE;
+            return false;
         }
         if ($this->outputType == 'xml') {
             $xml = new \DOMDocument('1.0', 'utf-8');
@@ -327,32 +327,37 @@ class LangMan extends ServiceMethods implements intLangMan{
             return $xml;
         }
         else {
-            $languages = array();
+            $languages = [];
             while ($row = $qLang->fetch_row()) {
-                $languages[] = array(
+                $languages[] = [
                     'id' => (int) $row[0],
                     'code' => $row[1],
                     'name' => $row[2],
                     'dir' => $row[3]
-                );
+                ];
             }
-            return json_encode($languages);
+            if ($this->outputType == 'array') {
+                return $languages;
+            }
+            else {
+                return json_encode($languages);
+            }
         }
     }
     
-    public function installTitles(\DOMDocument $titles, $validate = TRUE) {
+    public function installTitles(\DOMDocument $titles, $validate = true) {
         $this->zeroizeError();
         if ($validate && !@$titles->relaxNGValidate(MECCANO_CORE_DIR.'/validation-schemas/langman-title-v01.rng')) {
             $this->setError(ERROR_INCORRECT_DATA, 'installTitles: incorrect structure of titles');
-            return FALSE;
+            return false;
         }
         //getting list of available languages
         $qAvaiLang = $this->dbLink->query("SELECT `id`, `code` FROM `".MECCANO_TPREF."_core_langman_languages` ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'installPolicyDesc: unable to get list of available languages -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
-        $avaiLang = array();
+        $avaiLang = [];
         while ($row = $qAvaiLang->fetch_row()) {
             $avaiLang[$row[1]] = $row[0];
         }
@@ -364,21 +369,21 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "WHERE `name`='$plugName' ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'installTitles: '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'installTitles: unable to find plugin');
-            return FALSE;
+            return false;
         }
         list($plugId) = $qPlugin->fetch_row();
         //parsing the DOM tree
-        $sections = array();
-        $sectionTypes = array();
+        $sections = [];
+        $sectionTypes = [];
         $sectionNodes = $titles->getElementsByTagName('section');
         foreach ($sectionNodes as $sectionNode) {
             $sectionName = $sectionNode->getAttribute('name');
             $static = $sectionNode->getAttribute('static');
-            $sections[$sectionName] = array();
+            $sections[$sectionName] = [];
             $sectionTypes[$sectionName] = $static;
             // renaming of the section
             if ($sectionOldName = $sectionNode->getAttribute('oldname')) {
@@ -390,7 +395,7 @@ class LangMan extends ServiceMethods implements intLangMan{
                         . "AND `s`.`section`='$sectionOldName' ;");
                 if ($this->dbLink->errno) {
                     $this->setError(ERROR_NOT_EXECUTED, 'installTitles: unable to rename section -> '.$this->dbLink->error);
-                    return FALSE;
+                    return false;
                 }
             }
             $titleNodes = $sectionNode->getElementsByTagName('title');
@@ -411,8 +416,8 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "JOIN `".MECCANO_TPREF."_core_plugins_installed` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `p`.`name`='$plugName' ;");
-        $dbSectionTypes = array();
-        $dbSectionIds = array();
+        $dbSectionTypes = [];
+        $dbSectionIds = [];
         while ($row = $qSections->fetch_row()) {
             $dbSectionTypes[$row[0]] = $row[1];
             $dbSectionIds[$row[0]] = $row[2];
@@ -420,7 +425,7 @@ class LangMan extends ServiceMethods implements intLangMan{
         // deleting outdated sections
         $outdatedSections = array_diff(array_keys($dbSectionTypes), array_keys($sectionTypes));
         foreach ($outdatedSections as $value) {
-            $sql = array(
+            $sql = [
                 "DELETE `t` FROM `".MECCANO_TPREF."_core_langman_titles` `t`"
                 . "JOIN `".MECCANO_TPREF."_core_langman_title_names` `n` "
                 . "ON `n`.`id`=`t`.`nameid` "
@@ -433,12 +438,12 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "WHERE `s`.`section`='$value' ;", 
                 "DELETE FROM `".MECCANO_TPREF."_core_langman_title_sections` "
                 . "WHERE `section`='$value' ;"
-            );
+            ];
             foreach ($sql as $dQuery) {
                 $this->dbLink->query($dQuery);
                 if ($this->dbLink->errno) {
                     $this->errId(ERROR_NOT_EXECUTED);                    $this->errExp('installTitles: unable to delete outdated data -> '.$this->dbLink->error);
-                    return FALSE;
+                    return false;
                 }
             }
             
@@ -449,7 +454,7 @@ class LangMan extends ServiceMethods implements intLangMan{
             if (isset($dbSectionTypes[$sectionName])) {
                 // section
                 if ($sectionTypes[$sectionName]) {
-                    $sql = array(
+                    $sql = [
                         "DELETE `t` FROM `".MECCANO_TPREF."_core_langman_titles` `t`"
                         . "JOIN `".MECCANO_TPREF."_core_langman_title_names` `n` "
                         . "ON `n`.`id`=`t`.`nameid` "
@@ -463,12 +468,12 @@ class LangMan extends ServiceMethods implements intLangMan{
                         "UPDATE `".MECCANO_TPREF."_core_langman_title_sections` "
                         . "SET `static`=1 "
                         . "WHERE `section`='$sectionName' ;"
-                    );
+                    ];
                     foreach ($sql as $value) {
                         $this->dbLink->query($value);
                         if ($this->dbLink->errno) {
                             $this->setError(ERROR_NOT_EXECUTED, 'installTitles: unable to clear data before updating titles -> '.$this->dbLink->error);
-                            return FALSE;
+                            return false;
                         }
                     }
                     $sectionId = $dbSectionIds[$sectionName];
@@ -477,7 +482,7 @@ class LangMan extends ServiceMethods implements intLangMan{
                                 . "VALUES ($sectionId, '$titleName') ;");
                         if ($this->dbLink->errno) {
                             $this->setError(ERROR_NOT_EXECUTED, 'installTitles: unable to update name -> '.$this->dbLink->error);
-                            return FALSE;
+                            return false;
                         }
                         $nameId = $this->dbLink->insert_id;
                         foreach ($langPool as $langCode => $title) {
@@ -487,7 +492,7 @@ class LangMan extends ServiceMethods implements intLangMan{
                                     . "VALUES ($codeId, $nameId, '$title') ;");
                             if ($this->dbLink->errno) {
                                 $this->setError(ERROR_NOT_EXECUTED, 'installTitles: unable to update title -> '.$this->dbLink->error);
-                                return FALSE;
+                                return false;
                             }
                         }
                     }
@@ -499,7 +504,7 @@ class LangMan extends ServiceMethods implements intLangMan{
                             . "WHERE `section`='$sectionName' ;");
                     if ($this->dbLink->errno) {
                         $this->setError(ERROR_NOT_EXECUTED, 'installTitles: '.$this->dbLink->error);
-                        return FALSE;
+                        return false;
                     }
                 }
             }
@@ -511,7 +516,7 @@ class LangMan extends ServiceMethods implements intLangMan{
                             . "VALUES ('$sectionName', $plugId, 1) ;");
                     if ($this->dbLink->errno) {
                         $this->setError(ERROR_NOT_EXECUTED, 'installTitles: unable to create section -> '.$this->dbLink->error);
-                        return FALSE;
+                        return false;
                     }
                     $sectionId = $this->dbLink->insert_id;
                     foreach ($titlePool as $titleName => $langPool) {
@@ -519,7 +524,7 @@ class LangMan extends ServiceMethods implements intLangMan{
                                 . "VALUES ($sectionId, '$titleName') ;");
                         if ($this->dbLink->errno) {
                             $this->setError(ERROR_NOT_EXECUTED, 'installTitles: unable to create title name -> '.$this->dbLink->error);
-                            return FALSE;
+                            return false;
                         }
                         $nameId = $this->dbLink->insert_id;
                         foreach ($langPool as $langCode => $title) {
@@ -529,7 +534,7 @@ class LangMan extends ServiceMethods implements intLangMan{
                                     . "VALUES ($codeId, $nameId, '$title') ;");
                             if ($this->dbLink->errno) {
                                 $this->setError(ERROR_NOT_EXECUTED, 'installTitles: unable to create title -> '.$this->dbLink->error);
-                                return FALSE;
+                                return false;
                             }
                         }
                     }
@@ -540,27 +545,27 @@ class LangMan extends ServiceMethods implements intLangMan{
                             . "VALUES ('$sectionName', $plugId, 0) ;");
                     if ($this->dbLink->errno) {
                         $this->setError(ERROR_NOT_EXECUTED, 'installTitles: '.$this->dbLink->error);
-                        return FALSE;
+                        return false;
                     }
                 }
             }
         }
-        return TRUE;
+        return true;
     }
     
-    public function installTexts(\DOMDocument $texts, $validate = TRUE) {
+    public function installTexts(\DOMDocument $texts, $validate = true) {
         $this->zeroizeError();
         if ($validate && !@$texts->relaxNGValidate(MECCANO_CORE_DIR.'/validation-schemas/langman-text-v01.rng')) {
             $this->setError(ERROR_INCORRECT_DATA, 'installTexts: incorrect structure of titles');
-            return FALSE;
+            return false;
         }
         //getting list of available languages
         $qAvaiLang = $this->dbLink->query("SELECT `id`, `code` FROM `".MECCANO_TPREF."_core_langman_languages` ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'installPolicyDesc: unable to get list of available languages -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
-        $avaiLang = array();
+        $avaiLang = [];
         while ($row = $qAvaiLang->fetch_row()) {
             $avaiLang[$row[1]] = $row[0];
         }
@@ -572,21 +577,21 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "WHERE `name`='$plugName' ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'installTexts: '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'installTexts: unable to find plugin');
-            return FALSE;
+            return false;
         }
         list($plugId) = $qPlugin->fetch_row();
         //parsing the DOM tree
-        $sections = array();
-        $sectionTypes = array();
+        $sections = [];
+        $sectionTypes = [];
         $sectionNodes = $texts->getElementsByTagName('section');
         foreach ($sectionNodes as $sectionNode) {
             $sectionName = $sectionNode->getAttribute('name');
             $static = $sectionNode->getAttribute('static');
-            $sections[$sectionName] = array();
+            $sections[$sectionName] = [];
             $sectionTypes[$sectionName] = $static;
             // renaming of the section
             if ($sectionOldName = $sectionNode->getAttribute('oldname')) {
@@ -598,7 +603,7 @@ class LangMan extends ServiceMethods implements intLangMan{
                         . "AND `s`.`section`='$sectionOldName' ;");
                 if ($this->dbLink->errno) {
                     $this->setError(ERROR_NOT_EXECUTED, 'installTexts: unable to rename section -> '.$this->dbLink->error);
-                    return FALSE;
+                    return false;
                 }
             }
             $textNodes = $sectionNode->getElementsByTagName('text');
@@ -610,7 +615,7 @@ class LangMan extends ServiceMethods implements intLangMan{
                     if (isset($avaiLang[$langCode])) {
                         $title = $langNode->getElementsByTagName('title')->item(0)->nodeValue;
                         $document = $langNode->getElementsByTagName('document')->item(0)->nodeValue;
-                        $sections[$sectionName][$textName][$langCode] = array($title, $document);
+                        $sections[$sectionName][$textName][$langCode] = [$title, $document];
                     }
                 }
             }
@@ -621,8 +626,8 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "JOIN `".MECCANO_TPREF."_core_plugins_installed` `p` "
                 . "ON `p`.`id`=`s`.`plugid` "
                 . "WHERE `p`.`name`='$plugName' ;");
-        $dbSectionTypes = array();
-        $dbSectionIds = array();
+        $dbSectionTypes = [];
+        $dbSectionIds = [];
         while ($row = $qSections->fetch_row()) {
             $dbSectionTypes[$row[0]] = $row[1];
             $dbSectionIds[$row[0]] = $row[2];
@@ -630,7 +635,7 @@ class LangMan extends ServiceMethods implements intLangMan{
         // deleting outdated sections
         $outdatedSections = array_diff(array_keys($dbSectionTypes), array_keys($sectionTypes));
         foreach ($outdatedSections as $value) {
-            $sql = array(
+            $sql = [
                 "DELETE `t` FROM `".MECCANO_TPREF."_core_langman_texts` `t`"
                 . "JOIN `".MECCANO_TPREF."_core_langman_text_names` `n` "
                 . "ON `n`.`id`=`t`.`nameid` "
@@ -643,12 +648,12 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "WHERE `s`.`section`='$value' ;", 
                 "DELETE FROM `".MECCANO_TPREF."_core_langman_text_sections` "
                 . "WHERE `section`='$value' ;"
-            );
+            ];
             foreach ($sql as $dQuery) {
                 $this->dbLink->query($dQuery);
                 if ($this->dbLink->errno) {
                     $this->errId(ERROR_NOT_EXECUTED);                    $this->errExp('installTexts: unable to delete outdated data -> '.$this->dbLink->error);
-                    return FALSE;
+                    return false;
                 }
             }
             
@@ -659,7 +664,7 @@ class LangMan extends ServiceMethods implements intLangMan{
             if (isset($dbSectionTypes[$sectionName])) {
                 // section
                 if ($sectionTypes[$sectionName]) {
-                    $sql = array(
+                    $sql = [
                         "DELETE `t` FROM `".MECCANO_TPREF."_core_langman_texts` `t`"
                         . "JOIN `".MECCANO_TPREF."_core_langman_text_names` `n` "
                         . "ON `n`.`id`=`t`.`nameid` "
@@ -673,12 +678,12 @@ class LangMan extends ServiceMethods implements intLangMan{
                         "UPDATE `".MECCANO_TPREF."_core_langman_text_sections` "
                         . "SET `static`=1 "
                         . "WHERE `section`='$sectionName' ;"
-                    );
+                    ];
                     foreach ($sql as $value) {
                         $this->dbLink->query($value);
                         if ($this->dbLink->errno) {
                             $this->setError(ERROR_NOT_EXECUTED, 'installTexts: unable to clear data before updating texts -> '.$this->dbLink->error);
-                            return FALSE;
+                            return false;
                         }
                     }
                     $sectionId = $dbSectionIds[$sectionName];
@@ -687,7 +692,7 @@ class LangMan extends ServiceMethods implements intLangMan{
                                 . "VALUES ($sectionId, '$textName') ;");
                         if ($this->dbLink->errno) {
                             $this->setError(ERROR_NOT_EXECUTED, 'installTexts: unable to update name -> '.$this->dbLink->error);
-                            return FALSE;
+                            return false;
                         }
                         $nameId = $this->dbLink->insert_id;
                         foreach ($langPool as $langCode => $text) {
@@ -698,7 +703,7 @@ class LangMan extends ServiceMethods implements intLangMan{
                                     . "VALUES ($codeId, $nameId, '$title', '$document', CURRENT_TIMESTAMP) ;");
                             if ($this->dbLink->errno) {
                                 $this->setError(ERROR_NOT_EXECUTED, 'installTexts: unable to update text -> '.$this->dbLink->error);
-                                return FALSE;
+                                return false;
                             }
                         }
                     }
@@ -710,7 +715,7 @@ class LangMan extends ServiceMethods implements intLangMan{
                             . "WHERE `section`='$sectionName' ;");
                     if ($this->dbLink->errno) {
                         $this->setError(ERROR_NOT_EXECUTED, 'installTexts: '.$this->dbLink->error);
-                        return FALSE;
+                        return false;
                     }
                 }
             }
@@ -722,7 +727,7 @@ class LangMan extends ServiceMethods implements intLangMan{
                             . "VALUES ('$sectionName', $plugId, 1) ;");
                     if ($this->dbLink->errno) {
                         $this->setError(ERROR_NOT_EXECUTED, 'installTexts: unable to create section -> '.$this->dbLink->error);
-                        return FALSE;
+                        return false;
                     }
                     $sectionId = $this->dbLink->insert_id;
                     foreach ($textPool as $textName => $langPool) {
@@ -730,7 +735,7 @@ class LangMan extends ServiceMethods implements intLangMan{
                                 . "VALUES ($sectionId, '$textName') ;");
                         if ($this->dbLink->errno) {
                             $this->setError(ERROR_NOT_EXECUTED, 'installTexts: unable to create text name -> '.$this->dbLink->error);
-                            return FALSE;
+                            return false;
                         }
                         $nameId = $this->dbLink->insert_id;
                         foreach ($langPool as $langCode => $text) {
@@ -741,7 +746,7 @@ class LangMan extends ServiceMethods implements intLangMan{
                                     . "VALUES ($codeId, $nameId, '$title', '$document', CURRENT_TIMESTAMP) ;");
                             if ($this->dbLink->errno) {
                                 $this->setError(ERROR_NOT_EXECUTED, 'installTexts: unable to create text -> '.$this->dbLink->error);
-                                return FALSE;
+                                return false;
                             }
                         }
                     }
@@ -752,19 +757,19 @@ class LangMan extends ServiceMethods implements intLangMan{
                             . "VALUES ('$sectionName', $plugId, 0) ;");
                     if ($this->dbLink->errno) {
                         $this->setError(ERROR_NOT_EXECUTED, 'installTexts: '.$this->dbLink->error);
-                        return FALSE;
+                        return false;
                     }
                 }
             }
         }
-        return TRUE;
+        return true;
     }
     
     public function delPlugin($plugin) {
         $this->zeroizeError();
         if (!pregPlugin($plugin)) {
             $this->setError(ERROR_INCORRECT_DATA, 'delPlugin: incorrect plugin name');
-            return FALSE;
+            return false;
         }
         // checking if plugin exists
         $qPlugin = $this->dbLink->query("SELECT `id` "
@@ -772,14 +777,14 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "WHERE `name`='$plugin' ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'delPlugin: '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'delPlugin: unable to find plugin');
-            return FALSE;
+            return false;
         }
         // deleting all the data related to plugin
-        $sql = array(
+        $sql = [
             "DELETE `t` FROM `".MECCANO_TPREF."_core_langman_titles` `t` "
             . "JOIN `".MECCANO_TPREF."_core_langman_title_names` `n` "
             . "ON `n`.`id`=`t`.`nameid` "
@@ -816,26 +821,26 @@ class LangMan extends ServiceMethods implements intLangMan{
             . "JOIN `".MECCANO_TPREF."_core_plugins_installed` `p` "
             . "ON `p`.`id`=`s`.`plugid` "
             . "WHERE `p`.`name`='$plugin' ;"
-        );
+        ];
         foreach ($sql as $key => $value) {
             $this->dbLink->query($value);
             if ($this->dbLink->errno) {
                 $this->setError(ERROR_NOT_EXECUTED, "delPlugin: query #$key ".$this->dbLink->error);
-                return FALSE;
+                return false;
             }
         }
-        return TRUE;
+        return true;
     }
     
-    public function addTitleSection($section, $plugin, $log = TRUE) {
+    public function addTitleSection($section, $plugin, $log = true) {
         $this->zeroizeError();
         if ($this->usePolicy && !$this->checkFuncAccess('core', 'langman_add_title_sec')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "addTitleSection: restricted by the policy");
-            return FALSE;
+            return false;
         }
         if (!pregName40($section) || !pregPlugin($plugin)) {
             $this->setError(ERROR_INCORRECT_DATA, 'addTitleSection: incorrect incoming parameters');
-            return FALSE;
+            return false;
         }
         // checking if plugin exists
         $qPlugin = $this->dbLink->query("SELECT `id` "
@@ -843,11 +848,11 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "WHERE `name`='$plugin' ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'delPlugin: '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'addTitleSection: unable to find plugin');
-            return FALSE;
+            return false;
         }
         list($plugid) = $qPlugin->fetch_row();
         // creation of the new section
@@ -855,7 +860,7 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "VALUES ($plugid, '$section', 0) ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'addTitleSection: '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         $sectionId = (int) $this->dbLink->insert_id;
         if ($log && !$this->newLogRecord('core', 'langman_add_title_sec', "$section; plugin: $plugin; ID: $sectionId")) {
@@ -864,17 +869,17 @@ class LangMan extends ServiceMethods implements intLangMan{
         return $sectionId;
     }
     
-    public function delTitleSection($sid, $log = TRUE) {
+    public function delTitleSection($sid, $log = true) {
         $this->zeroizeError();
         if ($this->usePolicy && !$this->checkFuncAccess('core', 'langman_del_title_sec')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "delTitleSection: restricted by the policy");
-            return FALSE;
+            return false;
         }
         if (!is_integer($sid)) {
             $this->setError(ERROR_INCORRECT_DATA, 'delTitleSection: incorrect identifier');
-            return FALSE;
+            return false;
         }
-        $sql=array(
+        $sql = [
             "DELETE `t` FROM `".MECCANO_TPREF."_core_langman_titles` `t` "
             . "JOIN `".MECCANO_TPREF."_core_langman_title_names` `n`"
             . "ON `n`.`id`=`t`.`nameid` "
@@ -890,33 +895,33 @@ class LangMan extends ServiceMethods implements intLangMan{
             "DELETE FROM `".MECCANO_TPREF."_core_langman_title_sections` "
             . "WHERE `id`='$sid' "
                 . "AND `static`=0;"
-        );
+        ];
         foreach ($sql as $key => $value) {
             $this->dbLink->query($value);
             if ($this->dbLink->errno) {
                 $this->setError(ERROR_NOT_EXECUTED, "delTitleSection: query #$key ".$this->dbLink->error);
-                return FALSE;
+                return false;
             }
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'delTitleSection: defined section does not exist or your are trying to delete static section');
-            return FALSE;
+            return false;
         }
         if ($log && !$this->newLogRecord('core', 'langman_del_title_sec', "ID: $sid")) {
             $this->setError(ERROR_NOT_CRITICAL, "delTitleSection -> ".$this->errExp());
         }
-        return TRUE;
+        return true;
     }
     
-    public function addTextSection($section, $plugin, $log = TRUE) {
+    public function addTextSection($section, $plugin, $log = true) {
         $this->zeroizeError();
         if ($this->usePolicy && !$this->checkFuncAccess('core', 'langman_add_text_sec')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "addTextSection: restricted by the policy");
-            return FALSE;
+            return false;
         }
         if (!pregName40($section) || !pregPlugin($plugin)) {
             $this->setError(ERROR_INCORRECT_DATA, 'addTextSection: incorrect incoming parameters');
-            return FALSE;
+            return false;
         }
         // checking if plugin exists
         $qPlugin = $this->dbLink->query("SELECT `id` "
@@ -924,11 +929,11 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "WHERE `name`='$plugin' ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'delPlugin: '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'addTextSection: unable to find plugin');
-            return FALSE;
+            return false;
         }
         list($plugid) = $qPlugin->fetch_row();
         // creation of the new section
@@ -936,7 +941,7 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "VALUES ($plugid, '$section', 0) ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'addTextSection: '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         $sectionId = (int) $this->dbLink->insert_id;
         if ($log && !$this->newLogRecord('core', 'langman_add_text_sec', "$section; plugin: $plugin; ID: $sectionId")) {
@@ -945,17 +950,17 @@ class LangMan extends ServiceMethods implements intLangMan{
         return $sectionId;
     }
     
-    public function delTextSection($sid, $log = TRUE) {
+    public function delTextSection($sid, $log = true) {
         $this->zeroizeError();
         if ($this->usePolicy && !$this->checkFuncAccess('core', 'langman_del_text_sec')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "delTextSection: restricted by the policy");
-            return FALSE;
+            return false;
         }
         if (!is_integer($sid)) {
             $this->setError(ERROR_INCORRECT_DATA, 'delTextSection: incorrect identifier');
-            return FALSE;
+            return false;
         }
-        $sql=array(
+        $sql = [
             "DELETE `t` FROM `".MECCANO_TPREF."_core_langman_texts` `t` "
             . "JOIN `".MECCANO_TPREF."_core_langman_text_names` `n`"
             . "ON `n`.`id`=`t`.`nameid` "
@@ -971,33 +976,33 @@ class LangMan extends ServiceMethods implements intLangMan{
             "DELETE FROM `".MECCANO_TPREF."_core_langman_text_sections` "
             . "WHERE `id`='$sid' "
                 . "AND `static`=0;"
-        );
+        ];
         foreach ($sql as $key => $value) {
             $this->dbLink->query($value);
             if ($this->dbLink->errno) {
                 $this->setError(ERROR_NOT_EXECUTED, "delTextSection: query #$key ".$this->dbLink->error);
-                return FALSE;
+                return false;
             }
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'delTextSection: defined section does not exist or your are trying to delete static section');
-            return FALSE;
+            return false;
         }
         if ($log && !$this->newLogRecord('core', 'langman_del_text_sec', "ID: $sid")) {
             $this->setError(ERROR_NOT_CRITICAL, "delTitleSection -> ".$this->errExp());
         }
-        return TRUE;
+        return true;
     }
     
-    public function addTitleName($name, $section, $plugin, $log = TRUE) {
+    public function addTitleName($name, $section, $plugin, $log = true) {
         $this->zeroizeError();
         if ($this->usePolicy && !$this->checkFuncAccess('core', 'langman_add_title')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "addTitleName: restricted by the policy");
-            return FALSE;
+            return false;
         }
         if (!pregName40($name) || !pregName40($section) || !pregPlugin($plugin)) {
             $this->setError(ERROR_INCORRECT_DATA, 'addTitleName: incorrect incoming parameters');
-            return FALSE;
+            return false;
         }
         $qIdentifiers = $this->dbLink->query("SELECT `s`.`id` "
                 . "FROM `".MECCANO_TPREF."_core_langman_title_sections` `s` "
@@ -1008,11 +1013,11 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "AND `p`.`name`='$plugin' ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'addTitleName: unable to check section and plugin -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'addTitleName: unable to find matchable section and plugin or you are trying to create name in section');
-            return FALSE;
+            return false;
         }
         list($sid) = $qIdentifiers->fetch_row();
         $this->dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_title_names` "
@@ -1020,7 +1025,7 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "VALUES ($sid, '$name') ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'addTitleName: unable to create name -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         $nameId = (int) $this->dbLink->insert_id;
         if ($log && !$this->newLogRecord('core', 'langman_add_title_name', "$name; section: $section; plugin: $plugin; ID: $nameId")) {
@@ -1029,17 +1034,17 @@ class LangMan extends ServiceMethods implements intLangMan{
         return $nameId;
     }
     
-    public function delTitleName($nameid, $log = TRUE) {
+    public function delTitleName($nameid, $log = true) {
         $this->zeroizeError();
         if ($this->usePolicy && !$this->checkFuncAccess('core', 'langman_del_title')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "delTitleName: restricted by the policy");
-            return FALSE;
+            return false;
         }
         if (!is_integer($nameid)) {
             $this->setError(ERROR_INCORRECT_DATA, 'delTitleName: incorrect identifier');
-            return FALSE;
+            return false;
         }
-        $sql=array(
+        $sql = [
             "DELETE `t` FROM `".MECCANO_TPREF."_core_langman_titles` `t` "
             . "JOIN `".MECCANO_TPREF."_core_langman_title_names` `n`"
             . "ON `n`.`id`=`t`.`nameid` "
@@ -1052,33 +1057,33 @@ class LangMan extends ServiceMethods implements intLangMan{
             . "ON `s`.`id`=`n`.`sid` "
             . "WHERE `n`.`id`=$nameid "
                 . "AND `s`.`static`=0;"
-        );
+        ];
         foreach ($sql as $key => $value) {
             $this->dbLink->query($value);
             if ($this->dbLink->errno) {
                 $this->setError(ERROR_NOT_EXECUTED, "delTitleName: query #$key ".$this->dbLink->error);
-                return FALSE;
+                return false;
             }
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'delTitleName: defined tile name does not exist or your are trying to delete name from section');
-            return FALSE;
+            return false;
         }
         if ($log && !$this->newLogRecord('core', 'langman_del_title_name', "ID: $nameid")) {
             $this->setError(ERROR_NOT_CRITICAL, "delTitleName -> ".$this->errExp());
         }
-        return TRUE;
+        return true;
     }
     
-    public function addTextName($name, $section, $plugin, $log = TRUE) {
+    public function addTextName($name, $section, $plugin, $log = true) {
         $this->zeroizeError();
         if ($this->usePolicy && !$this->checkFuncAccess('core', 'langman_add_text')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "addTextName: restricted by the policy");
-            return FALSE;
+            return false;
         }
         if (!pregName40($name) || !pregName40($section) || !pregPlugin($plugin)) {
             $this->setError(ERROR_INCORRECT_DATA, 'addTextName: incorrect incoming parameters');
-            return FALSE;
+            return false;
         }
         $qIdentifiers = $this->dbLink->query("SELECT `s`.`id` "
                 . "FROM `".MECCANO_TPREF."_core_langman_text_sections` `s` "
@@ -1089,11 +1094,11 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "AND `p`.`name`='$plugin' ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'addTextName: unable to check section and plugin -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'addTextName: unable to find matchable section and plugin or you are trying to create name in section');
-            return FALSE;
+            return false;
         }
         list($sid) = $qIdentifiers->fetch_row();
         $this->dbLink->query("INSERT INTO `".MECCANO_TPREF."_core_langman_text_names` "
@@ -1101,7 +1106,7 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "VALUES ($sid, '$name') ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'addTextName: unable to create name -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         $nameId = (int) $this->dbLink->insert_id;
         if ($log && !$this->newLogRecord('core', 'langman_add_text_name', "$name; section: $section; plugin: $plugin; ID: $nameId")) {
@@ -1110,17 +1115,17 @@ class LangMan extends ServiceMethods implements intLangMan{
         return $nameId;
     }
     
-    public function delTextName($nameid, $log = TRUE) {
+    public function delTextName($nameid, $log = true) {
         $this->zeroizeError();
         if ($this->usePolicy && !$this->checkFuncAccess('core', 'langman_del_text')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "delTextName: restricted by the policy");
-            return FALSE;
+            return false;
         }
         if (!is_integer($nameid)) {
             $this->setError(ERROR_INCORRECT_DATA, 'delTextName: incorrect identifier');
-            return FALSE;
+            return false;
         }
-        $sql=array(
+        $sql = [
             "DELETE `t` FROM `".MECCANO_TPREF."_core_langman_texts` `t` "
             . "JOIN `".MECCANO_TPREF."_core_langman_text_names` `n`"
             . "ON `n`.`id`=`t`.`nameid` "
@@ -1133,33 +1138,33 @@ class LangMan extends ServiceMethods implements intLangMan{
             . "ON `s`.`id`=`n`.`sid` "
             . "WHERE `n`.`id`=$nameid "
                 . "AND `s`.`static`=0;"
-        );
+        ];
         foreach ($sql as $key => $value) {
             $this->dbLink->query($value);
             if ($this->dbLink->errno) {
                 $this->setError(ERROR_NOT_EXECUTED, "delTextName: query #$key ".$this->dbLink->error);
-                return FALSE;
+                return false;
             }
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'delTextName: defined tile name does not exist or your are trying to delete name from section');
-            return FALSE;
+            return false;
         }
         if ($log && !$this->newLogRecord('core', 'langman_del_text_name', "ID: $nameid")) {
             $this->setError(ERROR_NOT_CRITICAL, "delTexteName -> ".$this->errExp());
         }
-        return TRUE;
+        return true;
     }
     
-    public function addTitle($title, $name, $section, $plugin, $code = MECCANO_DEF_LANG, $log = TRUE) {
+    public function addTitle($title, $name, $section, $plugin, $code = MECCANO_DEF_LANG, $log = true) {
         $this->zeroizeError();
         if ($this->usePolicy && !$this->checkFuncAccess('core', 'langman_add_title')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "addTitle: restricted by the policy");
-            return FALSE;
+            return false;
         }
         if (!is_string($title) || !pregName40($name) || !pregName40($section) || !pregPlugin($plugin) || !pregLang($code)) {
             $this->setError(ERROR_INCORRECT_DATA, 'addTitle: incorrect incoming parameters');
-            return FALSE;
+            return false;
         }
         $qTitle = $this->dbLink->query("SELECT `n`.`id` "
                 . "FROM `".MECCANO_TPREF."_core_langman_title_names` `n` "
@@ -1173,11 +1178,11 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "AND `p`.`name`='$plugin' ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'addTitle: unable to get name identifier -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'addTitle: unable to find name, section or plugin');
-            return FALSE;
+            return false;
         }
         list($nameId) = $qTitle->fetch_row();
         $qLang = $this->dbLink->query("SELECT `id` "
@@ -1185,11 +1190,11 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "WHERE `code`='$code' ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'addTitle: unable to get language code identifier -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'addTitle: defined language was not found');
-            return FALSE;
+            return false;
         }
         list($codeId) = $qLang->fetch_row();
         $title = $this->dbLink->real_escape_string($title);
@@ -1198,7 +1203,7 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "VALUES ('$title', $nameId, $codeId) ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'addTitle: unable to insert title -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         $titleId = (int) $this->dbLink->insert_id;
         if ($log && !$this->newLogRecord('core', 'langman_add_title', "name: $name; section: $section; plugin: $plugin; code: $code; ID: $titleId")) {
@@ -1207,15 +1212,15 @@ class LangMan extends ServiceMethods implements intLangMan{
         return $titleId;
     }
     
-    public function delTitle($tid, $log = TRUE) {
+    public function delTitle($tid, $log = true) {
         $this->zeroizeError();
         if ($this->usePolicy && !$this->checkFuncAccess('core', 'langman_del_title')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "delTitle: restricted by the policy");
-            return FALSE;
+            return false;
         }
         if (!is_integer($tid)) {
             $this->setError(ERROR_INCORRECT_DATA, 'delTitle: incorrect title identifier');
-            return FALSE;
+            return false;
         }
         $this->dbLink->query("DELETE `t` FROM `".MECCANO_TPREF."_core_langman_titles` `t` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_title_names` `n` "
@@ -1226,27 +1231,27 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "AND `s`.`static`=0 ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'delTitle: unable to delete defined title -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'delTitle: unable to find defined title');
-            return FALSE;
+            return false;
         }
         if ($log && !$this->newLogRecord('core', 'langman_del_title', "ID: $tid")) {
             $this->setError(ERROR_NOT_CRITICAL, "delTitle -> ".$this->errExp());
         }
-        return TRUE;
+        return true;
     }
     
-    public function addText($title, $document, $name, $section, $plugin, $code = MECCANO_DEF_LANG, $log = TRUE) {
+    public function addText($title, $document, $name, $section, $plugin, $code = MECCANO_DEF_LANG, $log = true) {
         $this->zeroizeError();
         if ($this->usePolicy && !$this->checkFuncAccess('core', 'langman_add_text')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "addText: restricted by the policy");
-            return FALSE;
+            return false;
         }
         if (!is_string($title) || !is_string($document) || !pregName40($name) || !pregName40($section) || !pregPlugin($plugin) || !pregLang($code)) {
             $this->setError(ERROR_INCORRECT_DATA, 'addText: incorrect incoming parameters');
-            return FALSE;
+            return false;
         }
         $qText = $this->dbLink->query("SELECT `n`.`id` "
                 . "FROM `".MECCANO_TPREF."_core_langman_text_names` `n` "
@@ -1260,11 +1265,11 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "AND `p`.`name`='$plugin' ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'addText: unable to get name identifier -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'addText: unable to find name, section or plugin');
-            return FALSE;
+            return false;
         }
         list($nameId) = $qText->fetch_row();
         $qLang = $this->dbLink->query("SELECT `id` "
@@ -1272,11 +1277,11 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "WHERE `code`='$code' ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'addText: unable to get language code identifier -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'addText: defined language was not found');
-            return FALSE;
+            return false;
         }
         list($codeId) = $qLang->fetch_row();
         $title = $this->dbLink->real_escape_string($title);
@@ -1286,7 +1291,7 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "VALUES ('$title', '$document', $nameId, $codeId, CURRENT_TIMESTAMP) ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'addText: unable to insert text -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         $textId = (int) $this->dbLink->insert_id;
         if ($log && !$this->newLogRecord('core', 'langman_add_text', "name: $name; section: $section; plugin: $plugin; code: $code; ID: $textId")) {
@@ -1295,15 +1300,15 @@ class LangMan extends ServiceMethods implements intLangMan{
         return $textId;
     }
     
-    public function delText($tid, $log = TRUE) {
+    public function delText($tid, $log = true) {
         $this->zeroizeError();
         if ($this->usePolicy && !$this->checkFuncAccess('core', 'langman_del_text')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "delText: restricted by the policy");
-            return FALSE;
+            return false;
         }
         if (!is_integer($tid)) {
             $this->setError(ERROR_INCORRECT_DATA, 'delText: incorrect text identifier');
-            return FALSE;
+            return false;
         }
         $this->dbLink->query("DELETE `t` FROM `".MECCANO_TPREF."_core_langman_texts` `t` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_text_names` `n` "
@@ -1314,27 +1319,27 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "AND `s`.`static`=0 ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'delText: unable to delete defined text');
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'delText: unable to find defined text');
-            return FALSE;
+            return false;
         }
         if ($log && !$this->newLogRecord('core', 'langman_del_text', "ID: $tid")) {
             $this->setError(ERROR_NOT_CRITICAL, "delText -> ".$this->errExp());
         }
-        return TRUE;
+        return true;
     }
     
-    public function updateTitle($id, $title, $log = TRUE) {
+    public function updateTitle($id, $title, $log = true) {
         $this->zeroizeError();
         if ($this->usePolicy && !$this->checkFuncAccess('core', 'langman_update_title')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "updateTitle: restricted by the policy");
-            return FALSE;
+            return false;
         }
         if (!is_integer($id) || !is_string($title)) {
             $this->setError(ERROR_INCORRECT_DATA, 'updateTitle: incorrect incoming parameters');
-            return FALSE;
+            return false;
         }
         $title = $this->dbLink->real_escape_string($title);
         $this->dbLink->query("UPDATE `".MECCANO_TPREF."_core_langman_titles` `t` "
@@ -1347,27 +1352,27 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "AND `s`.`static`=0 ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'updateTitle: unable to update title -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'updateTitle: unable to find defined title');
-            return FALSE;
+            return false;
         }
         if ($log && !$this->newLogRecord('core', 'langman_update_title', "ID: $id")) {
             $this->setError(ERROR_NOT_CRITICAL, "updateTitle -> ".$this->errExp());
         }
-        return TRUE;
+        return true;
     }
     
-    public function updateText($id, $title, $document, $log = TRUE) {
+    public function updateText($id, $title, $document, $log = true) {
         $this->zeroizeError();
         if ($this->usePolicy && !$this->checkFuncAccess('core', 'langman_update_text')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, "updateText: restricted by the policy");
-            return FALSE;
+            return false;
         }
         if (!is_integer($id) || !is_string($title) || !is_string($document)) {
             $this->setError(ERROR_INCORRECT_DATA, 'updateText: incorrect incoming parameters');
-            return FALSE;
+            return false;
         }
         $title = $this->dbLink->real_escape_string($title);
         $document = $this->dbLink->real_escape_string($document);
@@ -1381,23 +1386,23 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "AND `s`.`static`=0 ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'updateText: unable to update text -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'updateText: unable to find defined text');
-            return FALSE;
+            return false;
         }
         if ($log && !$this->newLogRecord('core', 'langman_update_text', "ID: $id")) {
             $this->setError(ERROR_NOT_CRITICAL, " -> ".$this->errExp());
         }
-        return TRUE;
+        return true;
     }
     
     public function getTitle($name, $section, $plugin, $code = MECCANO_DEF_LANG) {
         $this->zeroizeError();
         if (!pregName40($name) || !pregName40($section) || !pregPlugin($plugin) || !pregLang($code)) {
             $this->setError(ERROR_INCORRECT_DATA, 'getTitle: incorrect incoming parameters');
-            return FALSE;
+            return false;
         }
         $qTitle = $this->dbLink->query("SELECT `t`.`title`, `l`.`dir` "
                 . "FROM `".MECCANO_TPREF."_core_langman_titles` `t` "
@@ -1415,21 +1420,40 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "AND `p`.`name`='$plugin' ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'getTitle: unable to get title -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'getTitle: unable to find defined title');
-            return FALSE;
+            return false;
         }
         list($title, $direction) = $qTitle->fetch_row();
-        return array('title' => $title, 'dir' => $direction);
+        if ($this->outputType == 'xml') {
+            // create DOM
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $stringNode = $xml->createElement('string');
+            $titleNode = $xml->createElement('title', $title);
+            $dirNode = $xml->createElement('dir', $direction);
+            $stringNode->appendChild($titleNode);
+            $stringNode->appendChild($dirNode);
+            $xml->appendChild($stringNode);
+            return $xml;
+        }
+        else {
+            $stringNode = ['title' => $title, 'dir' => $direction];
+            if ($this->outputType == 'json') {
+                return json_encode($stringNode);
+            }
+            else {
+                return $stringNode;
+            }
+        }
     }
     
     public function getText($name, $section, $plugin, $code = MECCANO_DEF_LANG) {
         $this->zeroizeError();
         if (!pregName40($name) || !pregName40($section) || !pregPlugin($plugin) || !pregLang($code)) {
             $this->setError(ERROR_INCORRECT_DATA, 'getText: incorrect incoming parameters');
-            return FALSE;
+            return false;
         }
         $qText = $this->dbLink->query("SELECT `t`.`title`, `t`.`document`, `t`.`created`, `t`.`edited`, `l`.`dir` "
                 . "FROM `".MECCANO_TPREF."_core_langman_texts` `t` "
@@ -1447,21 +1471,46 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "AND `p`.`name`='$plugin' ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'getText: unable to get text -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'getText: unable to find defined text');
-            return FALSE;
+            return false;
         }
         list($title, $document, $created, $edited, $direction) = $qText->fetch_row();
-        return array('title' => $title, 'document' => $document, 'created' => $created, 'edited' => $edited, 'dir' => $direction);
+        if ($this->outputType == 'xml') {
+            // create DOM
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $textNode = $xml->createElement('text');
+            $titleNode = $xml->createElement('title', $title);
+            $documentNode = $xml->createElement('document', $document);
+            $createdNode = $xml->createElement('created', $created);
+            $editedNode = $xml->createElement('edited', $edited);
+            $dirNode = $xml->createElement('dir', $direction);
+            $textNode->appendChild($titleNode);
+            $textNode->appendChild($documentNode);
+            $textNode->appendChild($createdNode);
+            $textNode->appendChild($editedNode);
+            $textNode->appendChild($dirNode);
+            $xml->appendChild($textNode);
+            return $xml;
+        }
+        else {
+            $textNode = ['title' => $title, 'document' => $document, 'created' => $created, 'edited' => $edited, 'dir' => $direction];
+            if ($this->outputType == 'json') {
+                return json_encode($textNode);
+            }
+            else {
+                return $textNode;
+            }
+        }
     }
     
     public function getTitles($section, $plugin, $code = MECCANO_DEF_LANG) {
         $this->zeroizeError();
         if (!pregName40($section) || !pregName40($plugin) || !pregLang($code)) {
             $this->setError(ERROR_INCORRECT_DATA, 'getTitles: incorrect incoming parameters');
-            return FALSE;
+            return false;
         }
         $qTitles = $this->dbLink->query("SELECT `n`.`name`, `t`.`title` "
                 . "FROM `".MECCANO_TPREF."_core_langman_titles` `t` "
@@ -1478,26 +1527,46 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "AND `l`.`code`='$code' ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'getTitles: unable to get section -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'getTitles: unable to find defined section');
-            return FALSE;
+            return false;
         }
-        $titles = array();
-        while ($result = $qTitles->fetch_row()) {
-            $titles[$result[0]] = $result[1];
+        if ($this->outputType == 'xml') {
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $titlesNode = $xml->createElement('titles');
+            $xml->appendChild($titlesNode);
+            while ($result = $qTitles->fetch_row()) {
+                $nameAttribute = $xml->createAttribute('name');
+                $nameAttribute->value = $result[0];
+                $titleNode = $xml->createElement('title', $result[1]);
+                $titleNode->appendChild($nameAttribute);
+                $titlesNode->appendChild($titleNode);
+            }
+            return $xml;
         }
-        return $titles;
+        else {
+            $titlesNodes = [];
+            while ($result = $qTitles->fetch_row()) {
+                $titlesNodes[$result[0]] = $result[1];
+            }
+            if ($this->outputType == 'json') {
+                return json_encode($titlesNodes);
+            }
+            else {
+                return $titlesNodes;
+            }
+        }
     }
     
-    public function getAllTextsXML($section, $plugin, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE) {
+    public function getAllTextsList($section, $plugin, $code = MECCANO_DEF_LANG, $orderBy = ['id'], $ascent = false) {
         $this->zeroizeError();
         if (!pregName40($section) || !pregName40($plugin) || !pregLang($code)) {
-            $this->setError(ERROR_INCORRECT_DATA, 'getAllTextsXML: incorrect incoming parameters');
-            return FALSE;
+            $this->setError(ERROR_INCORRECT_DATA, 'getAllTextsList: incorrect incoming parameters');
+            return false;
         }
-        $rightEntry = array('id', 'title', 'name', 'created', 'edited');
+        $rightEntry = ['id', 'title', 'name', 'created', 'edited'];
         if (is_array($orderBy)) {
             $arrayLen = count($orderBy);
             if ($arrayLen && count(array_intersect($orderBy, $rightEntry)) == $arrayLen) {
@@ -1512,13 +1581,13 @@ class LangMan extends ServiceMethods implements intLangMan{
             }
         }
         else {
-            $this->setError(ERROR_INCORRECT_DATA, 'getAllTextsXML: orderBy must be array');
-            return FALSE;
+            $this->setError(ERROR_INCORRECT_DATA, 'getAllTextsList: orderBy must be array');
+            return false;
         }
-        if ($ascent == TRUE) {
+        if ($ascent == true) {
             $direct = '';
         }
-        elseif ($ascent == FALSE) {
+        elseif ($ascent == false) {
             $direct = 'DESC';
         }
         // get section texts
@@ -1537,12 +1606,12 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "AND `l`.`code`='$code' "
                 . "ORDER BY `$orderBy` $direct ;");
         if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'getAllTextsXML: unable to get section -> '.$this->dbLink->error);
-            return FALSE;
+            $this->setError(ERROR_NOT_EXECUTED, 'getAllTextsList: unable to get section -> '.$this->dbLink->error);
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
-            $this->setError(ERROR_NOT_FOUND, 'getAllTextsXML: unable to find defined section');
-            return FALSE;
+            $this->setError(ERROR_NOT_FOUND, 'getAllTextsList: unable to find defined section');
+            return false;
         }
         // get text direction for defined language
         $qDirection = $this->dbLink->query("SELECT `dir` "
@@ -1572,20 +1641,25 @@ class LangMan extends ServiceMethods implements intLangMan{
             return $xml;
         }
         else {
-            $textsNode = array();
+            $textsNode = [];
             $textsNode['code'] = $code;
             $textsNode['dir'] = $direction;
-            $textsNode['texts'] = array();
+            $textsNode['texts'] = [];
             while ($row = $qTexts->fetch_row()) {
-                $textsNode['texts'][] = array(
+                $textsNode['texts'][] = [
                     'id' => (int) $row[0],
                     'title' => $row[1],
                     'name' => $row[2],
                     'created' => $row[3],
                     'edited' => $row[4]
-                );
+                ];
             }
-            return json_encode($textsNode);
+            if ($this->outputType == 'array') {
+                return $textsNode;
+            }
+            else {
+                return json_encode($textsNode);
+            }
         }
     }
     
@@ -1593,28 +1667,55 @@ class LangMan extends ServiceMethods implements intLangMan{
         $this->zeroizeError();
         if (!is_integer($id)) {
             $this->setError(ERROR_INCORRECT_DATA, 'getTextById: identifier must be integer');
-            return FALSE;
+            return false;
         }
-        $qText = $this->dbLink->query("SELECT `title`, `document`, `created`, `edited` "
-                . "FROM `".MECCANO_TPREF."_core_langman_texts` "
-                . "WHERE `id`=$id ;");
+        $qText = $this->dbLink->query("SELECT `t`.`title`, `t`.`document`, `t`.`created`, `t`.`edited`, `l`.`dir` "
+                . "FROM `".MECCANO_TPREF."_core_langman_texts` `t` "
+                . "JOIN `".MECCANO_TPREF."_core_langman_languages` `l` "
+                . "ON `t`.`codeid`=`l`.`id` "
+                . "WHERE `t`.`id`=$id ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'getTextById: unable to get text -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'getTextById: unable to find defined text');
-            return FALSE;
+            return false;
         }
-        list($title, $document, $created, $edited) = $qText->fetch_row();
-        return array('title' => $title, 'document' => $document, 'created' => $created, 'edited' => $edited);
+        list($title, $document, $created, $edited, $direction) = $qText->fetch_row();
+        if ($this->outputType == 'xml') {
+            // create DOM
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $textNode = $xml->createElement('text');
+            $titleNode = $xml->createElement('title', $title);
+            $documentNode = $xml->createElement('document', $document);
+            $createdNode = $xml->createElement('created', $created);
+            $editedNode = $xml->createElement('edited', $edited);
+            $dirNode = $xml->createElement('dir', $direction);
+            $textNode->appendChild($titleNode);
+            $textNode->appendChild($documentNode);
+            $textNode->appendChild($createdNode);
+            $textNode->appendChild($editedNode);
+            $textNode->appendChild($dirNode);
+            $xml->appendChild($textNode);
+            return $xml;
+        }
+        else {
+            $textNode = ['title' => $title, 'document' => $document, 'created' => $created, 'edited' => $edited, 'dir' => $direction];
+            if ($this->outputType == 'json') {
+                return json_encode($textNode);
+            }
+            else {
+                return $textNode;
+            }
+        }
     }
     
     public function sumTexts($section, $plugin, $code = MECCANO_DEF_LANG, $rpp = 20) {
         $this->zeroizeError();
         if (!pregName40($section) || !pregName40($plugin) || !is_integer($rpp) || !pregLang($code)) {
             $this->setError(ERROR_INCORRECT_DATA, 'getTexts: incorrect incoming parameters');
-            return FALSE;
+            return false;
         }
         if ($rpp < 1) {
             $rpp = 1;
@@ -1634,11 +1735,11 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "AND `s`.`section`='$section' ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'sumTexts: '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'sumTexts: no one text was found');
-            return FALSE;
+            return false;
         }
         list($totalTexts) = $qTexts->fetch_row();
         $totalPages = $totalTexts/$rpp;
@@ -1652,10 +1753,10 @@ class LangMan extends ServiceMethods implements intLangMan{
         elseif ($totalPages == 0) {
             $totalPages = 1;
         }
-        return array('records' => (int) $totalTexts, 'pages' => (int) $totalPages);
+        return ['records' => (int) $totalTexts, 'pages' => (int) $totalPages];
     }
     
-    public function getTextsXML($section, $plugin, $pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE) {
+    public function getTextsList($section, $plugin, $pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = ['id'], $ascent = false) {
         $this->zeroizeError();
         if (!pregName40($section) || 
                 !pregName40($plugin) || 
@@ -1663,10 +1764,10 @@ class LangMan extends ServiceMethods implements intLangMan{
                 !is_integer($totalPages) || 
                 !is_integer($rpp) || 
                 !pregLang($code)) {
-            $this->setError(ERROR_INCORRECT_DATA, 'getTextsXML: incorrect incoming parameters');
-            return FALSE;
+            $this->setError(ERROR_INCORRECT_DATA, 'getTextsList: incorrect incoming parameters');
+            return false;
         }
-        $rightEntry = array('id', 'title', 'name', 'created', 'edited');
+        $rightEntry = ['id', 'title', 'name', 'created', 'edited'];
         if (is_array($orderBy)) {
             $arrayLen = count($orderBy);
             if ($arrayLen && count(array_intersect($orderBy, $rightEntry)) == $arrayLen) {
@@ -1681,8 +1782,8 @@ class LangMan extends ServiceMethods implements intLangMan{
             }
         }
         else {
-            $this->setError(ERROR_INCORRECT_DATA, 'getTextsXML: orderBy must be array');
-            return FALSE;
+            $this->setError(ERROR_INCORRECT_DATA, 'getTextsList: orderBy must be array');
+            return false;
         }
         if ($pageNumber < 1) {
             $pageNumber = 1;
@@ -1696,10 +1797,10 @@ class LangMan extends ServiceMethods implements intLangMan{
         if ($rpp < 1) {
             $rpp = 1;
         }
-        if ($ascent == TRUE) {
+        if ($ascent == true) {
             $direct = '';
         }
-        elseif ($ascent == FALSE) {
+        elseif ($ascent == false) {
             $direct = 'DESC';
         }
         $start = ($pageNumber - 1) * $rpp;
@@ -1719,12 +1820,12 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "AND `l`.`code`='$code' "
                 . "ORDER BY `$orderBy` $direct LIMIT $start, $rpp ;");
         if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'getTextsXML: unable to get section -> '.$this->dbLink->error);
-            return FALSE;
+            $this->setError(ERROR_NOT_EXECUTED, 'getTextsList: unable to get section -> '.$this->dbLink->error);
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
-            $this->setError(ERROR_NOT_FOUND, 'getTextsXML: unable to find defined section');
-            return FALSE;
+            $this->setError(ERROR_NOT_FOUND, 'getTextsList: unable to find defined section');
+            return false;
         }
         // get text direction for defined language
         $qDirection = $this->dbLink->query("SELECT `dir` "
@@ -1754,20 +1855,25 @@ class LangMan extends ServiceMethods implements intLangMan{
             return $xml;
         }
         else {
-            $textsNode = array();
+            $textsNode = [];
             $textsNode['code'] = $code;
             $textsNode['dir'] = $direction;
-            $textsNode['texts'] = array();
+            $textsNode['texts'] = [];
             while ($row = $qTexts->fetch_row()) {
-                $textsNode['texts'][] = array(
+                $textsNode['texts'][] = [
                     'id' => (int) $row[0],
                     'title' => $row[1],
                     'name' => $row[2],
                     'created' => $row[3],
                     'edited' => $row[4]
-                );
+                ];
             }
-            return json_encode($textsNode);
+            if ($this->outputType == 'array') {
+                return $textsNode;
+            }
+            else {
+                return json_encode($textsNode);
+            }
         }
     }
     
@@ -1775,9 +1881,9 @@ class LangMan extends ServiceMethods implements intLangMan{
         $this->zeroizeError();
         if (!pregName40($section) || !pregName40($plugin) || !pregLang($code)) {
             $this->setError(ERROR_INCORRECT_DATA, 'getTexts: incorrect incoming parameters');
-            return FALSE;
+            return false;
         }
-        $qTexts = $this->dbLink->query("SELECT `n`.`name`, `t`.`title` "
+        $qTexts = $this->dbLink->query("SELECT `n`.`name`, `t`.`title`, `t`.`document` "
                 . "FROM `".MECCANO_TPREF."_core_langman_texts` `t` "
                 . "JOIN `".MECCANO_TPREF."_core_langman_text_names` `n` "
                 . "ON `n`.`id`=`t`.`nameid` "
@@ -1792,24 +1898,48 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "AND `l`.`code`='$code' ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'getTexts: unable to get section -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'getTexts: unable to find defined section');
-            return FALSE;
+            return false;
         }
-        $texts = array();
-        while ($result = $qTexts->fetch_row()) {
-            $texts[$result[0]] = $result[1];
+        if ($this->outputType == 'xml') {
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $textsNode = $xml->createElement('texts');
+            $xml->appendChild($textsNode);
+            while ($result = $qTexts->fetch_row()) {
+                $textNode = $xml->createElement('text');
+                $nameAttribute = $xml->createAttribute('name');
+                $nameAttribute->value = $result[0];
+                $textNode->appendChild($nameAttribute);
+                $titleNode = $xml->createElement('title', $result[1]);
+                $documentNode = $xml->createElement('document', $result[2]);
+                $textNode->appendChild($titleNode);
+                $textNode->appendChild($documentNode);
+                $textsNode->appendChild($textNode);
+            }
+            return $xml;
         }
-        return $texts;
+        else {
+            $texts = [];
+            while ($result = $qTexts->fetch_row()) {
+                $texts[$result[0]] = ['title' => $result[1], 'document' => $result[2]];
+            }
+            if ($this->outputType == 'json') {
+                return json_encode($texts);
+            }
+            else {
+                return $texts;
+            }
+        }
     }
     
     public function sumTitles($section, $plugin, $code = MECCANO_DEF_LANG, $rpp = 20) {
         $this->zeroizeError();
         if (!pregName40($section) || !pregName40($plugin) || !is_integer($rpp) || !pregLang($code)) {
             $this->setError(ERROR_INCORRECT_DATA, 'getTitles: incorrect incoming parameters');
-            return FALSE;
+            return false;
         }
         if ($rpp < 1) {
             $rpp = 1;
@@ -1829,11 +1959,11 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "AND `s`.`section`='$section' ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'sumTitles: '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'sumTitles: no one title was found');
-            return FALSE;
+            return false;
         }
         list($totalTitles) = $qTitles->fetch_row();
         $totalPages = $totalTitles/$rpp;
@@ -1847,10 +1977,10 @@ class LangMan extends ServiceMethods implements intLangMan{
         elseif ($totalPages == 0) {
             $totalPages = 1;
         }
-        return array('records' => (int) $totalTitles, 'pages' => (int) $totalPages);
+        return ['records' => (int) $totalTitles, 'pages' => (int) $totalPages];
     }
     
-    public function getTitlesXML($section, $plugin, $pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE) {
+    public function getTitlesList($section, $plugin, $pageNumber, $totalPages, $rpp = 20, $code = MECCANO_DEF_LANG, $orderBy = ['id'], $ascent = false) {
         $this->zeroizeError();
         if (!pregName40($section) || 
                 !pregName40($plugin) || 
@@ -1858,10 +1988,10 @@ class LangMan extends ServiceMethods implements intLangMan{
                 !is_integer($totalPages) || 
                 !is_integer($rpp) || 
                 !pregLang($code)) {
-            $this->setError(ERROR_INCORRECT_DATA, 'getTitlesXML: incorrect incoming parameters');
-            return FALSE;
+            $this->setError(ERROR_INCORRECT_DATA, 'getTitlesList: incorrect incoming parameters');
+            return false;
         }
-        $rightEntry = array('id', 'title', 'name');
+        $rightEntry = ['id', 'title', 'name'];
         if (is_array($orderBy)) {
             $arrayLen = count($orderBy);
             if ($arrayLen && count(array_intersect($orderBy, $rightEntry)) == $arrayLen) {
@@ -1876,8 +2006,8 @@ class LangMan extends ServiceMethods implements intLangMan{
             }
         }
         else {
-            $this->setError(ERROR_INCORRECT_DATA, 'getTitlesXML: orderBy must be array');
-            return FALSE;
+            $this->setError(ERROR_INCORRECT_DATA, 'getTitlesList: orderBy must be array');
+            return false;
         }
         if ($pageNumber < 1) {
             $pageNumber = 1;
@@ -1891,10 +2021,10 @@ class LangMan extends ServiceMethods implements intLangMan{
         if ($rpp < 1) {
             $rpp = 1;
         }
-        if ($ascent == TRUE) {
+        if ($ascent == true) {
             $direct = '';
         }
-        elseif ($ascent == FALSE) {
+        elseif ($ascent == false) {
             $direct = 'DESC';
         }
         // get section titles
@@ -1914,12 +2044,12 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "AND `l`.`code`='$code' "
                 . "ORDER BY `$orderBy` $direct LIMIT $start, $rpp ;");
         if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'getTitlesXML: unable to get section -> '.$this->dbLink->error);
-            return FALSE;
+            $this->setError(ERROR_NOT_EXECUTED, 'getTitlesList: unable to get section -> '.$this->dbLink->error);
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
-            $this->setError(ERROR_NOT_FOUND, 'getTitlesXML: unable to find defined section');
-            return FALSE;
+            $this->setError(ERROR_NOT_FOUND, 'getTitlesList: unable to find defined section');
+            return false;
         }
         // get text direction for defined language
         $qDirection = $this->dbLink->query("SELECT `dir` "
@@ -1947,28 +2077,33 @@ class LangMan extends ServiceMethods implements intLangMan{
             return $xml;
         }
         else {
-            $titlesNode = array();
+            $titlesNode = [];
             $titlesNode['code'] = $code;
             $titlesNode['dir'] = $direction;
-            $titlesNode['titles'] = array();
+            $titlesNode['titles'] = [];
             while ($row = $qTitles->fetch_row()) {
-                $titlesNode['titles'][] = array(
+                $titlesNode['titles'][] = [
                     'id' => (int) $row[0],
                     'title' => $row[1],
                     'name' => $row[2]
-                );
+                ];
             }
-            return json_encode($titlesNode);
+            if ($this->outputType == 'array') {
+                return $titlesNode;
+            }
+            else {
+                return json_encode($titlesNode);
+            }
         }
     }
     
-    public function getAllTitlesXML($section, $plugin, $code = MECCANO_DEF_LANG, $orderBy = array('id'), $ascent = FALSE) {
+    public function getAllTitlesList($section, $plugin, $code = MECCANO_DEF_LANG, $orderBy = ['id'], $ascent = false) {
         $this->zeroizeError();
         if (!pregName40($section) || !pregName40($plugin) || !pregLang($code)) {
-            $this->setError(ERROR_INCORRECT_DATA, 'getAllTitlesXML: incorrect incoming parameters');
-            return FALSE;
+            $this->setError(ERROR_INCORRECT_DATA, 'getAllTitlesList: incorrect incoming parameters');
+            return false;
         }
-        $rightEntry = array('id', 'title', 'name');
+        $rightEntry = ['id', 'title', 'name'];
         if (is_array($orderBy)) {
             $arrayLen = count($orderBy);
             if ($arrayLen && count(array_intersect($orderBy, $rightEntry)) == $arrayLen) {
@@ -1983,13 +2118,13 @@ class LangMan extends ServiceMethods implements intLangMan{
             }
         }
         else {
-            $this->setError(ERROR_INCORRECT_DATA, 'getAllTitlesXML: value of $orderBy must be string or array');
-            return FALSE;
+            $this->setError(ERROR_INCORRECT_DATA, 'getAllTitlesList: value of $orderBy must be string or array');
+            return false;
         }
-        if ($ascent == TRUE) {
+        if ($ascent == true) {
             $direct = '';
         }
-        elseif ($ascent == FALSE) {
+        elseif ($ascent == false) {
             $direct = 'DESC';
         }
         // get section titles
@@ -2008,12 +2143,12 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "AND `l`.`code`='$code' "
                 . "ORDER BY `$orderBy` $direct ;");
         if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'getAllTitlesXML: unable to get section -> '.$this->dbLink->error);
-            return FALSE;
+            $this->setError(ERROR_NOT_EXECUTED, 'getAllTitlesList: unable to get section -> '.$this->dbLink->error);
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
-            $this->setError(ERROR_NOT_FOUND, 'getAllTitlesXML: unable to find defined section');
-            return FALSE;
+            $this->setError(ERROR_NOT_FOUND, 'getAllTitlesList: unable to find defined section');
+            return false;
         }
         // get text direction for defined language
         $qDirection = $this->dbLink->query("SELECT `dir` "
@@ -2041,18 +2176,23 @@ class LangMan extends ServiceMethods implements intLangMan{
             return $xml;
         }
         else {
-            $titlesNode = array();
+            $titlesNode = [];
             $titlesNode['code'] = $code;
             $titlesNode['dir'] = $direction;
-            $titlesNode['titles'] = array();
+            $titlesNode['titles'] = [];
             while ($row = $qTitles->fetch_row()) {
-                $titlesNode['titles'][] = array(
+                $titlesNode['titles'][] = [
                     'id' => (int) $row[0],
                     'title' => $row[1],
                     'name' => $row[2]
-                );
+                ];
             }
-            return json_encode($titlesNode);
+            if ($this->outputType == 'array') {
+                return $titlesNode;
+            }
+            else {
+                return json_encode($titlesNode);
+            }
         }
     }
     
@@ -2060,28 +2200,49 @@ class LangMan extends ServiceMethods implements intLangMan{
         $this->zeroizeError();
         if (!is_integer($id)) {
             $this->setError(ERROR_INCORRECT_DATA, 'getTitleById: identifier must be integer');
-            return FALSE;
+            return false;
         }
-        $qTitle = $this->dbLink->query("SELECT `title` "
-                . "FROM `".MECCANO_TPREF."_core_langman_titles` "
-                . "WHERE `id`=$id ;");
+        $qTitle = $this->dbLink->query("SELECT `t`.`title`, `l`.`dir` "
+                . "FROM `".MECCANO_TPREF."_core_langman_titles` `t` "
+                . "JOIN `".MECCANO_TPREF."_core_langman_languages` `l` "
+                . "ON `t`.`codeid`=`l`.`id` "
+                . "WHERE `t`.`id`=$id ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'getTitleById: unable to get title -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'getTitleById: unable to find defined title');
-            return FALSE;
+            return false;
         }
-        list($title) = $qTitle->fetch_row();
-        return $title;
+        list($title, $direction) = $qTitle->fetch_row();
+        if ($this->outputType == 'xml') {
+            // create DOM
+            $xml = new \DOMDocument('1.0', 'utf-8');
+            $stringNode = $xml->createElement('string');
+            $titleNode = $xml->createElement('title', $title);
+            $dirNode = $xml->createElement('dir', $direction);
+            $stringNode->appendChild($titleNode);
+            $stringNode->appendChild($dirNode);
+            $xml->appendChild($stringNode);
+            return $xml;
+        }
+        else {
+            $stringNode = ['title' => $title, 'dir' => $direction];
+            if ($this->outputType == 'json') {
+                return json_encode($stringNode);
+            }
+            else {
+                return $stringNode;
+            }
+        }
     }
     
     public function sumTextSections($plugin, $rpp = 20) {
         $this->zeroizeError();
         if (!pregPlugin($plugin) || !is_integer($rpp)) {
             $this->setError(ERROR_INCORRECT_DATA, 'sumTextSections: incorrect incoming parameters');
-            return FALSE;
+            return false;
         }
         if ($rpp < 1) {
             $rpp = 1;
@@ -2093,11 +2254,11 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "WHERE `p`.`name`='$plugin' ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'sumTextSections: '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'sumTextSections: no one section was found');
-            return FALSE;
+            return false;
         }
         list($totalSections) = $qSections->fetch_row();
         $totalPages = $totalSections/$rpp;
@@ -2111,16 +2272,16 @@ class LangMan extends ServiceMethods implements intLangMan{
         elseif ($totalPages == 0) {
             $totalPages = 1;
         }
-        return array('records' => (int) $totalSections, 'pages' => (int) $totalPages);
+        return ['records' => (int) $totalSections, 'pages' => (int) $totalPages];
     }
     
-    public function getTextSectionsXML($plugin, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('id'), $ascent = FALSE) {
+    public function getTextSectionsList($plugin, $pageNumber, $totalPages, $rpp = 20, $orderBy = ['id'], $ascent = false) {
         $this->zeroizeError();
         if (!pregPlugin($plugin) || !is_integer($pageNumber) || !is_integer($totalPages) || !is_integer($rpp)) {
-            $this->setError(ERROR_INCORRECT_DATA, 'getTextSectionsXML: incorrect incoming parameters');
-            return FALSE;
+            $this->setError(ERROR_INCORRECT_DATA, 'getTextSectionsList: incorrect incoming parameters');
+            return false;
         }
-        $rightEntry = array('id', 'name', 'static');
+        $rightEntry = ['id', 'name', 'static'];
         if (is_array($orderBy)) {
             $arrayLen = count($orderBy);
             if ($arrayLen && count(array_intersect($orderBy, $rightEntry)) == $arrayLen) {
@@ -2135,13 +2296,13 @@ class LangMan extends ServiceMethods implements intLangMan{
             }
         }
         else {
-            $this->setError(ERROR_INCORRECT_DATA, 'getTextSectionsXML: value of $orderBy must be string or array');
-            return FALSE;
+            $this->setError(ERROR_INCORRECT_DATA, 'getTextSectionsList: value of $orderBy must be string or array');
+            return false;
         }
-        if ($ascent == TRUE) {
+        if ($ascent == true) {
             $direct = '';
         }
-        elseif ($ascent == FALSE) {
+        elseif ($ascent == false) {
             $direct = 'DESC';
         }
         $qSections = $this->dbLink->query("SELECT `s`.`id` `id`, `s`.`section` `name`, `s`.`static` `static`, (SELECT COUNT(`id`) FROM `".MECCANO_TPREF."_core_langman_text_names` WHERE `sid`=`s`.`id`) `contains` "
@@ -2151,12 +2312,12 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "WHERE `p`.`name`='$plugin' "
                 . "ORDER BY `$orderBy` $direct ;");
         if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'getTextSectionsXML: unable to get sections -> '.$this->dbLink->error);
-            return FALSE;
+            $this->setError(ERROR_NOT_EXECUTED, 'getTextSectionsList: unable to get sections -> '.$this->dbLink->error);
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
-            $this->setError(ERROR_NOT_FOUND, 'getTextSectionsXML: unable to find defined plugin');
-            return FALSE;
+            $this->setError(ERROR_NOT_FOUND, 'getTextSectionsList: unable to find defined plugin');
+            return false;
         }
         if ($this->outputType == 'xml') {
             $xml = new \DOMDocument('1.0', 'utf-8');
@@ -2176,18 +2337,23 @@ class LangMan extends ServiceMethods implements intLangMan{
             return $xml;
         }
         else {
-            $sectionsNode = array();
+            $sectionsNode = [];
             $sectionsNode['plugin'] = $plugin;
-            $sectionsNode['sections'] = array();
+            $sectionsNode['sections'] = [];
             while ($row = $qSections->fetch_row()) {
-                $sectionsNode['sections'][] = array(
+                $sectionsNode['sections'][] = [
                     'id' => (int) $row[0],
                     'name' => $row[1],
                     'static' => (int) $row[2],
                     'contains' => (int) $row[3]
-                );
+                ];
             }
-            return json_encode($sectionsNode);
+            if ($this->outputType == 'array') {
+                return $sectionsNode;
+            }
+            else {
+                return json_encode($sectionsNode);
+            }
         }
     }
     
@@ -2195,7 +2361,7 @@ class LangMan extends ServiceMethods implements intLangMan{
         $this->zeroizeError();
         if (!pregPlugin($plugin) || !is_integer($rpp)) {
             $this->setError(ERROR_INCORRECT_DATA, 'sumTitleSections: incorrect incoming parameters');
-            return FALSE;
+            return false;
         }
         if ($rpp < 1) {
             $rpp = 1;
@@ -2207,11 +2373,11 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "WHERE `p`.`name`='$plugin' ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'sumTitleSections: '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'sumTitleSections: no one section was found');
-            return FALSE;
+            return false;
         }
         list($totalSections) = $qSections->fetch_row();
         $totalPages = $totalSections/$rpp;
@@ -2225,16 +2391,16 @@ class LangMan extends ServiceMethods implements intLangMan{
         elseif ($totalPages == 0) {
             $totalPages = 1;
         }
-        return array('records' => (int) $totalSections, 'pages' => (int) $totalPages);
+        return ['records' => (int) $totalSections, 'pages' => (int) $totalPages];
     }
     
-    public function getTitleSectionsXML($plugin, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('id'), $ascent = FALSE) {
+    public function getTitleSectionsList($plugin, $pageNumber, $totalPages, $rpp = 20, $orderBy = ['id'], $ascent = false) {
         $this->zeroizeError();
         if (!pregPlugin($plugin) || !is_integer($pageNumber) || !is_integer($totalPages) || !is_integer($rpp)) {
-            $this->setError(ERROR_INCORRECT_DATA, 'getTitleSectionsXML: incorrect incoming parameters');
-            return FALSE;
+            $this->setError(ERROR_INCORRECT_DATA, 'getTitleSectionsList: incorrect incoming parameters');
+            return false;
         }
-        $rightEntry = array('id', 'name', 'static');
+        $rightEntry = ['id', 'name', 'static'];
         if (is_array($orderBy)) {
             $arrayLen = count($orderBy);
             if ($arrayLen && count(array_intersect($orderBy, $rightEntry)) == $arrayLen) {
@@ -2249,13 +2415,13 @@ class LangMan extends ServiceMethods implements intLangMan{
             }
         }
         else {
-            $this->setError(ERROR_INCORRECT_DATA, 'getTitleSectionsXML: value of $orderBy must be string or array');
-            return FALSE;
+            $this->setError(ERROR_INCORRECT_DATA, 'getTitleSectionsList: value of $orderBy must be string or array');
+            return false;
         }
-        if ($ascent == TRUE) {
+        if ($ascent == true) {
             $direct = '';
         }
-        elseif ($ascent == FALSE) {
+        elseif ($ascent == false) {
             $direct = 'DESC';
         }
         $qSections = $this->dbLink->query("SELECT `s`.`id` `id`, `s`.`section` `name`, `s`.`static` `static`, (SELECT COUNT(`id`) FROM `".MECCANO_TPREF."_core_langman_title_names` WHERE `sid`=`s`.`id`) `contains` "
@@ -2265,12 +2431,12 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "WHERE `p`.`name`='$plugin' "
                 . "ORDER BY `$orderBy` $direct ;");
         if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'getTitleSectionsXML: unable to get sections -> '.$this->dbLink->error);
-            return FALSE;
+            $this->setError(ERROR_NOT_EXECUTED, 'getTitleSectionsList: unable to get sections -> '.$this->dbLink->error);
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
-            $this->setError(ERROR_NOT_FOUND, 'getTitleSectionsXML: unable to find defined plugin');
-            return FALSE;
+            $this->setError(ERROR_NOT_FOUND, 'getTitleSectionsList: unable to find defined plugin');
+            return false;
         }
         if ($this->outputType == 'xml') {
             $xml = new \DOMDocument('1.0', 'utf-8');
@@ -2290,18 +2456,23 @@ class LangMan extends ServiceMethods implements intLangMan{
             return $xml;
         }
         else {
-            $sectionsNode = array();
+            $sectionsNode = [];
             $sectionsNode['plugin'] = $plugin;
-            $sectionsNode['sections'] = array();
+            $sectionsNode['sections'] = [];
             while ($row = $qSections->fetch_row()) {
-                $sectionsNode['sections'][] = array(
+                $sectionsNode['sections'][] = [
                     'id' => (int) $row[0],
                     'name' => $row[1],
                     'static' => (int) $row[2],
                     'contains' => (int) $row[3]
-                );
+                ];
             }
-            return json_encode($sectionsNode);;
+            if ($this->outputType == 'array') {
+                return $sectionsNode;
+            }
+            else {
+                return json_encode($sectionsNode);
+            }
         }
     }
     
@@ -2309,7 +2480,7 @@ class LangMan extends ServiceMethods implements intLangMan{
         $this->zeroizeError();
         if (!pregPlugin($plugin) || !pregName40($section) || !is_integer($rpp)) {
             $this->setError(ERROR_INCORRECT_DATA, 'sumTextNames: incorrect incoming parameters');
-            return FALSE;
+            return false;
         }
         if ($rpp < 1) {
             $rpp = 1;
@@ -2324,11 +2495,11 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "AND `s`.`section`='$section' ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'sumTextNames: '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'sumTextNames: no one name was found');
-            return FALSE;
+            return false;
         }
         list($totalNames) = $qNames->fetch_row();
         $totalPages = $totalNames/$rpp;
@@ -2342,16 +2513,16 @@ class LangMan extends ServiceMethods implements intLangMan{
         elseif ($totalPages == 0) {
             $totalPages = 1;
         }
-        return array('records' => (int) $totalNames, 'pages' => (int) $totalPages);
+        return ['records' => (int) $totalNames, 'pages' => (int) $totalPages];
     }
     
-    public function getTextNamesXML($plugin, $section, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('id'), $ascent = FALSE) {
+    public function getTextNamesList($plugin, $section, $pageNumber, $totalPages, $rpp = 20, $orderBy = ['id'], $ascent = false) {
         $this->zeroizeError();
         if (!pregPlugin($plugin) || !pregName40($section) || !is_integer($pageNumber) || !is_integer($totalPages) || !is_integer($rpp)) {
-            $this->setError(ERROR_INCORRECT_DATA, 'getTextNamesXML: incorrect incoming parameters');
-            return FALSE;
+            $this->setError(ERROR_INCORRECT_DATA, 'getTextNamesList: incorrect incoming parameters');
+            return false;
         }
-        $rightEntry = array('id', 'name');
+        $rightEntry = ['id', 'name'];
         if (is_array($orderBy)) {
             $arrayLen = count($orderBy);
             if ($arrayLen && count(array_intersect($orderBy, $rightEntry)) == $arrayLen) {
@@ -2366,13 +2537,13 @@ class LangMan extends ServiceMethods implements intLangMan{
             }
         }
         else {
-            $this->setError(ERROR_INCORRECT_DATA, 'getTextNamesXML: value of $orderBy must be string or array');
-            return FALSE;
+            $this->setError(ERROR_INCORRECT_DATA, 'getTextNamesList: value of $orderBy must be string or array');
+            return false;
         }
-        if ($ascent == TRUE) {
+        if ($ascent == true) {
             $direct = '';
         }
-        elseif ($ascent == FALSE) {
+        elseif ($ascent == false) {
             $direct = 'DESC';
         }
         $qNames = $this->dbLink->query("SELECT `n`.`id`, `n`.`name`, "
@@ -2388,12 +2559,12 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "WHERE `p`.`name`='$plugin' AND `s`.`section`='$section' "
                 . "ORDER BY `$orderBy` $direct ;");
         if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'getTextNamesXML: unable to get names -> '.$this->dbLink->error);
-            return FALSE;
+            $this->setError(ERROR_NOT_EXECUTED, 'getTextNamesList: unable to get names -> '.$this->dbLink->error);
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
-            $this->setError(ERROR_NOT_FOUND, 'getTextNamesXML: unable to find defined section');
-            return FALSE;
+            $this->setError(ERROR_NOT_FOUND, 'getTextNamesList: unable to find defined section');
+            return false;
         }
         if ($this->outputType == 'xml') {
             $xml = new \DOMDocument('1.0', 'utf-8');
@@ -2420,23 +2591,28 @@ class LangMan extends ServiceMethods implements intLangMan{
             return $xml;
         }
         else {
-            $pageNode = array();
+            $pageNode = [];
             $pageNode['plugin'] = $plugin;
             $pageNode['section'] = $section;
-            $pageNode['texts'] = array();
+            $pageNode['texts'] = [];
             while ($row = $qNames->fetch_row()) {
                 $languagesArray = explode(";", $row[2]);
-                $lCodes = array();
+                $lCodes = [];
                 foreach ($languagesArray as $langCode) {
                     $lCodes[] = $langCode;
                 }
-                $pageNode['texts'][] = array(
+                $pageNode['texts'][] = [
                     'id' => (int) $row[0],
                     'name' => $row[1],
                     'languages' => $lCodes
-                );
+                ];
             }
-            return json_encode($pageNode);
+            if ($this->outputType == 'array') {
+                return $pageNode;
+            }
+            else {
+                return json_encode($pageNode);
+            }
         }
     }
     
@@ -2444,7 +2620,7 @@ class LangMan extends ServiceMethods implements intLangMan{
         $this->zeroizeError();
         if (!pregPlugin($plugin) || !pregName40($section) || !is_integer($rpp)) {
             $this->setError(ERROR_INCORRECT_DATA, 'sumTitleNames: incorrect incoming parameters');
-            return FALSE;
+            return false;
         }
         if ($rpp < 1) {
             $rpp = 1;
@@ -2459,11 +2635,11 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "AND `s`.`section`='$section' ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'sumTitleNames: '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'sumTitleNames: no one name was found');
-            return FALSE;
+            return false;
         }
         list($totalNames) = $qNames->fetch_row();
         $totalPages = $totalNames/$rpp;
@@ -2477,16 +2653,16 @@ class LangMan extends ServiceMethods implements intLangMan{
         elseif ($totalPages == 0) {
             $totalPages = 1;
         }
-        return array('records' => (int) $totalNames, 'pages' => (int) $totalPages);
+        return ['records' => (int) $totalNames, 'pages' => (int) $totalPages];
     }
     
-    public function getTitleNamesXML($plugin, $section, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('id'), $ascent = FALSE) {
+    public function getTitleNamesList($plugin, $section, $pageNumber, $totalPages, $rpp = 20, $orderBy = ['id'], $ascent = false) {
         $this->zeroizeError();
         if (!pregPlugin($plugin) || !pregName40($section) || !is_integer($pageNumber) || !is_integer($totalPages) || !is_integer($rpp)) {
-            $this->setError(ERROR_INCORRECT_DATA, 'getTitleNamesXML: incorrect incoming parameters');
-            return FALSE;
+            $this->setError(ERROR_INCORRECT_DATA, 'getTitleNamesList: incorrect incoming parameters');
+            return false;
         }
-        $rightEntry = array('id', 'name');
+        $rightEntry = ['id', 'name'];
         if (is_array($orderBy)) {
             $arrayLen = count($orderBy);
             if ($arrayLen && count(array_intersect($orderBy, $rightEntry)) == $arrayLen) {
@@ -2501,13 +2677,13 @@ class LangMan extends ServiceMethods implements intLangMan{
             }
         }
         else {
-            $this->setError(ERROR_INCORRECT_DATA, 'getTitleNamesXML: value of $orderBy must be string or array');
-            return FALSE;
+            $this->setError(ERROR_INCORRECT_DATA, 'getTitleNamesList: value of $orderBy must be string or array');
+            return false;
         }
-        if ($ascent == TRUE) {
+        if ($ascent == true) {
             $direct = '';
         }
-        elseif ($ascent == FALSE) {
+        elseif ($ascent == false) {
             $direct = 'DESC';
         }
         $qNames = $this->dbLink->query("SELECT `n`.`id`, `n`.`name`, "
@@ -2523,12 +2699,12 @@ class LangMan extends ServiceMethods implements intLangMan{
                 . "WHERE `p`.`name`='$plugin' AND `s`.`section`='$section' "
                 . "ORDER BY `$orderBy` $direct ;");
         if ($this->dbLink->errno) {
-            $this->setError(ERROR_NOT_EXECUTED, 'getTitleNamesXML: unable to get names -> '.$this->dbLink->error);
-            return FALSE;
+            $this->setError(ERROR_NOT_EXECUTED, 'getTitleNamesList: unable to get names -> '.$this->dbLink->error);
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
-            $this->setError(ERROR_NOT_FOUND, 'getTitleNamesXML: unable to find defined section');
-            return FALSE;
+            $this->setError(ERROR_NOT_FOUND, 'getTitleNamesList: unable to find defined section');
+            return false;
         }
         if ($this->outputType == 'xml') {
             $xml = new \DOMDocument('1.0', 'utf-8');
@@ -2555,23 +2731,28 @@ class LangMan extends ServiceMethods implements intLangMan{
             return $xml;
         }
         else {
-            $pageNode = array();
+            $pageNode = [];
             $pageNode['plugin'] = $plugin;
             $pageNode['section'] = $section;
-            $pageNode['titles'] = array();
+            $pageNode['titles'] = [];
             while ($row = $qNames->fetch_row()) {
                 $languagesArray = explode(";", $row[2]);
-                $lCodes = array();
+                $lCodes = [];
                 foreach ($languagesArray as $langCode) {
                     $lCodes[] = $langCode;
                 }
-                $pageNode['titles'][] = array(
+                $pageNode['titles'][] = [
                     'id' => (int) $row[0],
                     'name' => $row[1],
                     'languages' => $lCodes
-                );
+                ];
             }
-            return json_encode($pageNode);
+            if ($this->outputType == 'array') {
+                return $pageNode;
+            }
+            else {
+                return json_encode($pageNode);
+            }
         }
     }
 }

@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   onload="__init__(evt)"
+   width="60"
+   height="35"
+   viewBox="0 0 192 112"
+   id="svg3359"
+   version="1.1">
+  <title
+     id="title4141">Loading language</title>
+  <defs
+     id="defs3361" />
+  <metadata
+     id="metadata3364">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title>Loading language</dc:title>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>Alexei Muzarov</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <dc:date>2015-06-30</dc:date>
+        <dc:source>https://bitbucket.org/azexmail/phpmeccano</dc:source>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <script
+     id="script5"
+     type="text/ecmascript"><![CDATA[
+    // gear elements
+    var leftGear
+    var rightGear
+    // gear attributes
+    var leftGearTransform
+    var rightGearTransform
+    // start angle
+    var leftGearAngle = 0;
+    var rightGearAngle = 360;
+    // speed
+    var stepAngle = 1;
+    var stepTime = 10;
+    
+    function __init__(evt) {
+      leftGear = evt.target.ownerDocument.getElementById("leftGear");
+      leftGearTransform = leftGear.getAttribute("transform");
+      rightGear = evt.target.ownerDocument.getElementById("rightGear");
+      rightGearTransform = rightGear.getAttribute("transform");
+      __rotate__();
+    }
+    
+    function __rotate__() {
+      leftGearAngle += stepAngle;
+      rightGearAngle -= stepAngle;
+      if (leftGearAngle > 359) {
+        leftGearAngle -= 360;
+      }
+      if (rightGearAngle < 1) {
+        rightGearAngle += 360;
+      }
+      leftGear.setAttribute('transform', leftGearTransform + ' rotate(' + leftGearAngle +')');
+      rightGear.setAttribute('transform', rightGearTransform + ' rotate(' + rightGearAngle +')');
+      setTimeout("__rotate__()", stepTime);
+    }
+    
+    ]]></script>
+  <g
+     style="fill:none;stroke:none;stroke-width:1.20000005;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     transform="translate(54.553083,56.000002)"
+     id="leftGear">
+    <path
+       style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#db270a;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1.20000005;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
+       d="m 56.378906,7.0292969 -3.310547,7.3125001 -0.251953,2.59375 0.650391,4.421875 -7.830078,2.097656 -1.648438,-4.154297 -1.513672,-2.11914 -6.52539,-4.679688 -3.763672,2.173828 0.789062,7.990235 1.078125,2.371093 2.773438,3.50586 -5.730469,5.730469 L 27.591797,31.5 25.21875,30.421875 l -7.990234,-0.789063 -2.171875,3.763672 4.677734,6.523438 2.119141,1.515625 4.154296,1.648437 -2.097656,7.828125 -4.421875,-0.648437 -2.591797,0.251953 -7.3144528,3.310547 v 4.347656 l 7.3144528,3.310547 2.591797,0.251953 4.421875,-0.648437 2.097656,7.828125 -4.154296,1.648437 -2.119141,1.515625 -4.677734,6.523438 2.171875,3.763672 7.990234,-0.789063 2.373047,-1.078125 3.503906,-2.773438 5.730469,5.730469 -2.773438,3.50586 -1.078125,2.371093 -0.789062,7.990235 3.763672,2.173828 6.52539,-4.679688 1.513672,-2.11914 1.648438,-4.154297 7.830078,2.097656 -0.650391,4.421875 0.251953,2.59375 3.310547,7.312497 h 4.347656 l 3.310547,-7.312497 0.251953,-2.59375 -0.648437,-4.421875 7.828125,-2.097656 1.648438,4.154297 1.515624,2.11914 6.523438,4.679688 3.765625,-2.173828 -0.791016,-7.990235 -1.078125,-2.371093 -2.773437,-3.50586 5.732422,-5.730469 3.503906,2.773438 2.371094,1.078125 7.990234,0.789063 2.173827,-3.763672 -4.679686,-6.523438 -2.119141,-1.515625 -4.154297,-1.648437 2.097656,-7.828125 4.421876,0.648437 2.593752,-0.251953 7.31445,-3.310547 v -4.347656 l -7.31445,-3.310547 -2.593752,-0.251953 -4.421876,0.648437 -2.097656,-7.828125 4.154297,-1.648437 2.119141,-1.515625 4.679686,-6.523438 -2.173827,-3.763672 -7.990234,0.789063 -2.371094,1.078125 -3.503906,2.773438 -5.732422,-5.730469 2.773437,-3.50586 1.078125,-2.371093 0.791016,-7.990235 -3.765625,-2.173828 -6.523438,4.679688 -1.515624,2.11914 -1.648438,4.154297 -7.828125,-2.097656 0.648437,-4.421875 -0.251953,-2.59375 -3.310547,-7.3125001 z M 58.552734,43.5 c 6.903559,0 12.5,5.596441 12.5,12.5 0,6.903559 -5.596441,12.5 -12.5,12.5 -6.903559,0 -12.5,-5.596441 -12.5,-12.5 0,-6.903559 5.596441,-12.5 12.5,-12.5 z"
+       transform="translate(-58.55308,-56)"
+       id="path5758" />
+  </g>
+  <g
+     style="stroke:none"
+     id="rightGear"
+     transform="rotate(15,-143.40458,554.20757)">
+    <path
+       style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#db270a;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1.20000005;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
+       d="m 131.97852,8.1347656 -4.19922,1.125 -1.30469,7.9218754 0.42773,2.570312 1.77149,4.103516 -7.01953,4.050781 -2.66797,-3.583984 -2.01172,-1.65625 -7.51367,-2.830078 -3.07227,3.072265 2.83008,7.513672 1.65625,2.011719 3.58398,2.667968 -4.05078,7.017579 -4.10351,-1.771485 -2.57031,-0.427734 -7.92188,1.30664 -1.125,4.197266 6.20898,5.091797 2.43946,0.914063 4.4375,0.517578 v 8.105468 l -4.4375,0.517578 -2.43946,0.914063 -6.20898,5.091797 1.125,4.197266 7.92188,1.30664 2.57031,-0.427734 4.10351,-1.771485 4.05078,7.017579 -3.58398,2.667968 -1.65625,2.011719 -2.83008,7.513672 3.07227,3.072265 7.51367,-2.830078 2.01172,-1.65625 2.66797,-3.583984 7.01953,4.050781 -1.77149,4.103516 -0.42773,2.570312 1.30469,7.921871 4.19922,1.125 5.08984,-6.207027 0.91602,-2.441406 0.51562,-4.4375 h 8.10547 l 0.51758,4.4375 0.91406,2.441406 5.0918,6.207027 4.19726,-1.125 1.30664,-7.921871 -0.42773,-2.570312 -1.77149,-4.103516 7.01758,-4.050781 2.66797,3.583984 2.01172,1.65625 7.51367,2.830078 3.07422,-3.072265 -2.83203,-7.513672 -1.6543,-2.011719 -3.58594,-2.667968 4.05274,-7.017579 4.10156,1.771485 2.57031,0.427734 7.92188,-1.30664 1.125,-4.197266 -6.20703,-5.091797 -2.43946,-0.914063 -4.43945,-0.517578 v -8.105468 l 4.43945,-0.517578 2.43946,-0.914063 6.20703,-5.091797 -1.125,-4.197266 -7.92188,-1.30664 -2.57031,0.427734 -4.10156,1.771485 -4.05274,-7.017579 3.58594,-2.667968 1.6543,-2.011719 2.83203,-7.513672 -3.07422,-3.072265 -7.51367,2.830078 -2.01172,1.65625 -2.66797,3.583984 -7.01758,-4.050781 1.77149,-4.103516 0.42773,-2.570312 -1.30664,-7.9218754 -4.19726,-1.125 -5.0918,6.2070314 -0.91406,2.441406 -0.51758,4.4375 H 138.5 l -0.51562,-4.4375 -0.91602,-2.441406 z M 142.44141,43.5 c 1.13,-0.01004 2.25614,0.133187 3.34765,0.425781 6.66759,1.787202 10.62427,8.640787 8.83789,15.308594 -1.78634,6.668375 -8.64019,10.626089 -15.30859,8.839844 -6.66838,-1.786337 -10.62609,-8.640195 -8.83984,-15.308594 1.45309,-5.425439 6.34646,-9.215503 11.96289,-9.265625 z"
+       transform="rotate(-15,-141.40458,569.39906)"
+       id="path5786" />
+  </g>
+  <g
+     id="g4270" />
+</svg>

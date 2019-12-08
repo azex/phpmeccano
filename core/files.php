@@ -1,8 +1,8 @@
 <?php
 
 /*
- *     phpMeccano v0.1.0. Web-framework written with php programming language. Core module [files.php].
- *     Copyright (C) 2015-2016  Alexei Muzarov
+ *     phpMeccano v0.2.0. Web-framework written with php programming language. Core module [files.php].
+ *     Copyright (C) 2015-2019  Alexei Muzarov
  * 
  *     This program is free software; you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -30,9 +30,9 @@ require_once MECCANO_CORE_DIR.'/swconst.php';
 interface intFiles {
     public static function errId();
     public static function errExp();
-    public static function copy($sourcePath, $destPath, $mergeDirs = FALSE, $rewriteFiles = FALSE, $skipExistentFiles = FALSE, $skipNotReadable = FALSE, $skipWriteProtected = FALSE, $skipConflicts = FALSE, $removeConflictFiles = FALSE);
-    public static function move($sourcePath, $destPath, $mergeDirs = FALSE, $replaceFiles = FALSE, $skipExistentFiles = FALSE, $skipNotReadable = FALSE, $skipWriteProtected = FALSE, $skipConflicts = FALSE, $removeConflictFiles = FALSE);
-    public static function remove($sourcePath, $skipNotReadable = FALSE, $skipWriteProtected = FALSE, $skipConflicts = FALSE);
+    public static function copy($sourcePath, $destPath, $mergeDirs = false, $rewriteFiles = false, $skipExistentFiles = false, $skipNotReadable = false, $skipWriteProtected = false, $skipConflicts = false, $removeConflictFiles = false);
+    public static function move($sourcePath, $destPath, $mergeDirs = false, $replaceFiles = false, $skipExistentFiles = false, $skipNotReadable = false, $skipWriteProtected = false, $skipConflicts = false, $removeConflictFiles = false);
+    public static function remove($sourcePath, $skipNotReadable = false, $skipWriteProtected = false, $skipConflicts = false);
 }
 
 class Files implements intFiles {
@@ -59,23 +59,23 @@ class Files implements intFiles {
         return self::$errexp;
     }
 
-    public static function copy($sourcePath, $destPath, $mergeDirs = FALSE, $rewriteFiles = FALSE, $skipExistentFiles = FALSE, $skipNotReadable = FALSE, $skipWriteProtected = FALSE, $skipConflicts = FALSE, $removeConflictFiles = FALSE) {
+    public static function copy($sourcePath, $destPath, $mergeDirs = false, $rewriteFiles = false, $skipExistentFiles = false, $skipNotReadable = false, $skipWriteProtected = false, $skipConflicts = false, $removeConflictFiles = false) {
         self::zeroizeError();
         $sourcePath = rtrim(preg_replace('#[/]+#', '/', $sourcePath), '/');
         $destPath = rtrim(preg_replace('#[/]+#', '/', $destPath), '/');
         if (!file_exists($sourcePath)) {
             self::setError(ERROR_NOT_FOUND, 'copy: source was not found');
-            return FALSE;
+            return false;
         }
         elseif (!is_readable($sourcePath)) {
             self::setError(ERROR_RESTRICTED_ACCESS, 'copy: source is not readable');
-            return FALSE;
+            return false;
         }
         // source is symbolic link
         if (is_link($sourcePath)) {
             if (is_dir($destPath) && !is_link($destPath)) {
                 self::setError(ERROR_NOT_EXECUTED, "copy: unable to replace directory [$destPath] with file");
-                return FALSE;
+                return false;
             }
             else {
                 $destDirPath = dirname($destPath);
@@ -84,27 +84,27 @@ class Files implements intFiles {
                 }
                 else {
                     self::setError(ERROR_NOT_FOUND, "copy: directory [$destDirPath] was not found");
-                    return FALSE;
+                    return false;
                 }
                 if (!$destDirWriteStatus) {
                     self::setError(ERROR_RESTRICTED_ACCESS, "copy: destination directory [$destDirPath] is write-protected");
-                    return FALSE;
+                    return false;
                 }
                 else {
                     if (is_file($destPath) || is_link($destPath)) {
                         if (!$rewriteFiles) {
                             self::setError(ERROR_NOT_EXECUTED, 'copy: rewriting of files is not allowed');
-                            return FALSE;
+                            return false;
                         }
                         unlink($destPath);
                         $sourceLinkTarget = readlink($sourcePath);
                         symlink($sourceLinkTarget, $destPath);
-                        return TRUE;
+                        return true;
                     }
                     else {
                         $sourceLinkTarget = readlink($sourcePath);
                         symlink($sourceLinkTarget, $destPath);
-                        return TRUE;
+                        return true;
                     }
                 }
             }
@@ -113,7 +113,7 @@ class Files implements intFiles {
         elseif (is_file($sourcePath)) {
             if (is_dir($destPath) && !is_link($destPath)) {
                 self::setError(ERROR_NOT_EXECUTED, "copy: unable to replace directory [$destPath] with file");
-                return FALSE;
+                return false;
             }
             else {
                 $destDirPath = dirname($destPath);
@@ -122,43 +122,43 @@ class Files implements intFiles {
                 }
                 else {
                     self::setError(ERROR_NOT_FOUND, "copy: directory [$destDirPath] was not found");
-                    return FALSE;
+                    return false;
                 }
                 if (is_link($destPath)) {
                     if (!$rewriteFiles) {
                         self::setError(ERROR_NOT_EXECUTED, 'copy: rewriting of files is not allowed');
-                        return FALSE;
+                        return false;
                     }
                     if (!$destDirWriteStatus) {
                         self::setError(ERROR_RESTRICTED_ACCESS, "copy: destination directory [$destDirPath] is write-protected");
-                        return FALSE;
+                        return false;
                     }
                     unlink($destPath);
                     copy($sourcePath, $destPath);
-                    return TRUE;
+                    return true;
                 }
                 elseif (is_file($destPath)) {
                     $destFileWriteStatus = is_writable($destPath);
                     if (!$rewriteFiles) {
                         self::setError(ERROR_NOT_EXECUTED, "copy: rewriting of files is not allowed");
-                        return FALSE;
+                        return false;
                     }
                     elseif ($destFileWriteStatus) {
                         copy($sourcePath, $destPath);
-                        return TRUE;
+                        return true;
                     }
                     elseif (!$destFileWriteStatus) {
                         self::setError(ERROR_RESTRICTED_ACCESS, "copy: destination file [$destPath] is write-protected");
-                        return  FALSE;
+                        return  false;
                     }
                 }
                 else {
                     if (!$destDirWriteStatus) {
                         self::setError(ERROR_RESTRICTED_ACCESS, "copy: destination directory [$destDirPath] is write-protected");
-                        return FALSE;
+                        return false;
                     }
                     copy($sourcePath, $destPath);
-                    return TRUE;
+                    return true;
                 }
             }
         }
@@ -166,7 +166,7 @@ class Files implements intFiles {
         else {
             if (is_file($destPath)) {
                 self::setError(ERROR_NOT_EXECUTED, 'copy: unable to replace file with directory');
-                return FALSE;
+                return false;
             }
             $destDirPath = dirname($destPath);
             if (!is_dir($destPath)) {
@@ -175,16 +175,16 @@ class Files implements intFiles {
                 }
                 else {
                     self::setError(ERROR_RESTRICTED_ACCESS, "copy: unable to create destination directory [$destPath]");
-                    return FALSE;
+                    return false;
                 }
             }
             elseif (!is_writable($destPath)) {
                 self::setError(ERROR_RESTRICTED_ACCESS, "copy: destination directory [$destPath] is write-protected");
-                return FALSE;
+                return false;
             }
             elseif (!$mergeDirs) {
                 self::setError(ERROR_NOT_EXECUTED, 'copy: merging of directories is not allowed');
-                return FALSE;
+                return false;
             }
             $sourceReal = realpath($sourcePath);
             $destReal = realpath($destPath);
@@ -192,15 +192,15 @@ class Files implements intFiles {
             $destLen = strlen($destReal);
             if (($sourceReal == $destReal) || (($sourceLen < $destLen) && ($sourceReal == substr($destReal, 0, $sourceLen)))) {
                 self::setError(ERROR_NOT_EXECUTED, "copy: unable to copy directory [$sourcePath] into itself");
-                return FALSE;
+                return false;
             }
-            $stack = array($sourcePath);
+            $stack = [$sourcePath];
             $divPosition = strlen($sourcePath) + 1;
             while (count($stack)) {
                 $sourceDirPath = array_pop($stack);
                 $destDirPath = rtrim("$destPath/".substr($sourceDirPath, $divPosition), "/");
                 $destDirWriteStatus = is_writable($destDirPath);
-                $sourceDirContent = array_diff(scandir($sourceDirPath), array('.', '..'));
+                $sourceDirContent = array_diff(scandir($sourceDirPath), ['.', '..']);
                 foreach ($sourceDirContent as $sourceItemName) {
                     $sourceFullPath = "$sourceDirPath/$sourceItemName";
                     $destFullPath = "$destDirPath/$sourceItemName";
@@ -208,12 +208,12 @@ class Files implements intFiles {
                     if (is_link($sourceFullPath)) {// link handling
                         if ($removeConflictFiles && is_dir($destFullPath) && !is_link($destFullPath)) {
                             if (!self::remove($destFullPath)) {
-                                return FALSE;
+                                return false;
                             }
                         }
                         if (is_dir($destFullPath) && !is_link($destFullPath) && !$skipConflicts) {
                             self::setError(ERROR_ALREADY_EXISTS, "copy: unable to replace directory [$destFullPath] with link [$sourceFullPath]");
-                            return FALSE;
+                            return false;
                         }
                         elseif (is_file($destFullPath) || is_link($destFullPath)) {
                             if ($rewriteFiles && $destDirWriteStatus && $sourceItemReadStatus) {
@@ -223,15 +223,15 @@ class Files implements intFiles {
                             }
                             elseif ($rewriteFiles && !$sourceItemReadStatus && !$skipNotReadable) {
                                 self::setError(ERROR_RESTRICTED_ACCESS, "copy: unable to read link [$sourceFullPath]");
-                                return FALSE;
+                                return false;
                             }
                             elseif ($rewriteFiles && !$destDirWriteStatus && !$skipWriteProtected) {
                                 self::setError(ERROR_RESTRICTED_ACCESS, "copy: directory [$destDirPath] is write-protected");
-                                return FALSE;
+                                return false;
                             }
                             elseif (!$skipExistentFiles) {
                                 self::setError(ERROR_NOT_EXECUTED, "copy: file [$destFullPath] already exists");
-                                return FALSE;
+                                return false;
                             }
                         }
                         elseif (!is_dir($destFullPath) && $destDirWriteStatus && $sourceItemReadStatus) {
@@ -240,22 +240,22 @@ class Files implements intFiles {
                         }
                         elseif (!$sourceItemReadStatus && !$skipNotReadable) {
                             self::setError(ERROR_RESTRICTED_ACCESS, "copy: unable to read link [$sourceFullPath]");
-                            return FALSE;
+                            return false;
                         }
                         elseif (!$destDirWriteStatus && !$skipWriteProtected) {
                             self::setError(ERROR_RESTRICTED_ACCESS, "copy: directory [$destDirPath] is write-protected");
-                            return FALSE;
+                            return false;
                         }
                     }
                     elseif (is_file($sourceFullPath)) { // file handling
                         if ($removeConflictFiles && is_dir($destFullPath) && !is_link($destFullPath)) {
                             if (!self::remove($destFullPath)) {
-                                return FALSE;
+                                return false;
                             }
                         }
                         if (is_dir($destFullPath) && !is_link($destFullPath) && !$skipConflicts) {
                             self::setError(ERROR_ALREADY_EXISTS, "copy: unable to replace directory [$destFullPath] with file [$sourceFullPath]");
-                            return FALSE;
+                            return false;
                         }
                         //
                         elseif (is_link($destFullPath)) {
@@ -266,15 +266,15 @@ class Files implements intFiles {
                             }
                             elseif ($rewriteFiles && !$sourceItemReadStatus && !$skipNotReadable) {
                                 self::setError(ERROR_RESTRICTED_ACCESS, "copy: unable to read file [$sourceFullPath]");
-                                return FALSE;
+                                return false;
                             }
                             elseif ($rewriteFiles && !$destDirWriteStatus && !$skipWriteProtected) {
                                 self::setError(ERROR_RESTRICTED_ACCESS, "copy: directory [$destDirPath] is write-protected");
-                                return FALSE;
+                                return false;
                             }
                             elseif (!$skipExistentFiles) {
                                 self::setError(ERROR_NOT_EXECUTED, "copy: file [$destFullPath] already exists");
-                                return FALSE;
+                                return false;
                             }
                         }
                         elseif (is_file($destFullPath)) {
@@ -284,15 +284,15 @@ class Files implements intFiles {
                             }
                             elseif ($rewriteFiles && !$sourceItemReadStatus && !$skipNotReadable) {
                                 self::setError(ERROR_RESTRICTED_ACCESS, "copy: unable to read file [$sourceFullPath]");
-                                return FALSE;
+                                return false;
                             }
                             elseif ($rewriteFiles && !$destFileWriteStatus && !$skipWriteProtected) {
                                 self::setError(ERROR_RESTRICTED_ACCESS, "copy: file [$destFullPath] is write-protected");
-                                return FALSE;
+                                return false;
                             }
                             elseif (!$skipExistentFiles) {
                                 self::setError(ERROR_NOT_EXECUTED, "copy: file [$destFullPath] already exists");
-                                return FALSE;
+                                return false;
                             }
                         }
                         elseif (!is_dir($destFullPath) && $destDirWriteStatus && $sourceItemReadStatus) {
@@ -300,23 +300,23 @@ class Files implements intFiles {
                         }
                         elseif (!$destDirWriteStatus && !$skipWriteProtected) {
                             self::setError(ERROR_RESTRICTED_ACCESS, "copy: directory [$destDirPath] is write-protected");
-                            return FALSE;
+                            return false;
                         }
                         elseif (!$sourceItemReadStatus && !$skipNotReadable) {
                             self::setError(ERROR_RESTRICTED_ACCESS, "copy: unable to read file [$sourceFullPath]");
-                            return FALSE;
+                            return false;
                         }
                     }
                     elseif (is_dir($sourceFullPath)) { // directory handling
                         if ($removeConflictFiles && is_file($destFullPath)) {
                             if (!self::remove($destFullPath)) {
-                                return FALSE;
+                                return false;
                             }
                         }
                         $fileConflict = is_file($destFullPath);
                         if ($fileConflict && !$skipConflicts) {
                             self::setError(ERROR_ALREADY_EXISTS, "copy: unable to replace file [$destFullPath] with directory [$sourceFullPath]");
-                            return FALSE;
+                            return false;
                         }
                         elseif ($sourceItemReadStatus && is_dir($destFullPath)) {
                             $stack[] = $sourceFullPath;
@@ -327,73 +327,73 @@ class Files implements intFiles {
                         }
                         elseif (!$sourceItemReadStatus && !$skipNotReadable) {
                             self::setError(ERROR_RESTRICTED_ACCESS, "copy: unable to read directory [$sourceFullPath]");
-                            return FALSE;
+                            return false;
                         }
                         elseif (is_dir($destFullPath) && !is_writable($destFullPath) && !$skipWriteProtected) {
                             self::setError(ERROR_RESTRICTED_ACCESS, "copy: directory [$destFullPath] is write-protected");
-                            return FALSE;
+                            return false;
                         }
                         elseif (!$destDirWriteStatus && !$skipWriteProtected) {
                             self::setError(ERROR_RESTRICTED_ACCESS, "copy: directory [$destDirPath] is write-protected");
-                            return FALSE;
+                            return false;
                         }
                     }
                     elseif (!$skipNotReadable) {
                         self::setError(ERROR_RESTRICTED_ACCESS, "copy: directory [$sourceDirPath] lists files only");
-                        return FALSE;
+                        return false;
                     }
                     else {
-                        $sourceDirContent = array();
+                        $sourceDirContent = [];
                     }
                 }
             }
-            return TRUE;
+            return true;
         }
     }
     
-    public static function move($sourcePath, $destPath, $mergeDirs = FALSE, $replaceFiles = FALSE, $skipExistentFiles = FALSE, $skipNotReadable = FALSE, $skipWriteProtected = FALSE, $skipConflicts = FALSE, $removeConflictFiles = FALSE) {
+    public static function move($sourcePath, $destPath, $mergeDirs = false, $replaceFiles = false, $skipExistentFiles = false, $skipNotReadable = false, $skipWriteProtected = false, $skipConflicts = false, $removeConflictFiles = false) {
         self::zeroizeError();
         $sourcePath = rtrim(preg_replace('#[/]+#', '/', $sourcePath), '/');
         $destPath = rtrim(preg_replace('#[/]+#', '/', $destPath), '/');
         if (!file_exists($sourcePath)) {
             self::setError(ERROR_NOT_FOUND, "move: source [$sourcePath] was not found");
-            return FALSE;
+            return false;
         }
         // source is file or symbolic link
         if (is_file($sourcePath) || is_link($sourcePath)) {
             if (is_dir($destPath)) {
                 self::setError(ERROR_NOT_EXECUTED, "move: unable to replace directory [$destPath] with file");
-                return FALSE;
+                return false;
             }
             else {
                 $sourceDirPath = dirname($sourcePath);
                 if (!is_writable($sourceDirPath)) {
                     self::setError(ERROR_RESTRICTED_ACCESS, "move: source directory [$sourceDirPath] is write-protected");
-                    return FALSE;
+                    return false;
                 }
                 $destDirPath = dirname($destPath);
                 if (is_dir($destDirPath)) {
                     if (!is_writable($destDirPath)) {
                         self::setError(ERROR_RESTRICTED_ACCESS, "move: destination directory [$destDirPath] is write-protected");
-                        return FALSE;
+                        return false;
                     }
                 }
                 else {
                     self::setError(ERROR_NOT_FOUND, "move: directory [$destDirPath] was not found");
-                    return FALSE;
+                    return false;
                 }
                 if (is_file($destPath) || is_link($destPath)) {
                     if (!$replaceFiles) {
                         self::setError(ERROR_NOT_EXECUTED, 'move: replacing of files is not allowed');
-                        return FALSE;
+                        return false;
                     }
                 }
                 if (@rename($sourcePath, $destPath)) {
-                    return TRUE;
+                    return true;
                 }
                 else {
                     self::setError(ERROR_RESTRICTED_ACCESS, "move: unable to move file [$sourcePath]. Probably you tried to move not readable file to another disk partition.");
-                    return FALSE;
+                    return false;
                 }
             }
         }
@@ -401,11 +401,11 @@ class Files implements intFiles {
         elseif (is_dir($sourcePath)) {
             if (!is_readable($sourcePath)) {
                 self::setError(ERROR_RESTRICTED_ACCESS, "move: source directory [$sourcePath] is not readable");
-                return FALSE;
+                return false;
             }
             if (is_file($destPath)) {
                 self::setError(ERROR_NOT_EXECUTED, "move: unable to replace file [$destPath] with directory [$sourcePath]");
-                return FALSE;
+                return false;
             }
             $destDirPath = dirname($destPath);
             if (!is_dir($destPath) && !is_link($destPath)) {
@@ -414,20 +414,20 @@ class Files implements intFiles {
                 }
                 elseif (!is_dir($destDirPath)) {
                     self::setError(ERROR_NOT_FOUND, "move: directory [$destDirPath] does not exist");
-                    return FALSE;
+                    return false;
                 }
                 else {
                     self::setError(ERROR_RESTRICTED_ACCESS, "move: destination directory [$destDirPath] is write-protected");
-                    return FALSE;
+                    return false;
                 }
             }
             elseif (!$mergeDirs) {
                 self::setError(ERROR_NOT_EXECUTED, "move: merging of directories is not allowed");
-                return FALSE;
+                return false;
             }
             elseif (!is_writable($destPath)) {
                 self::setError(ERROR_RESTRICTED_ACCESS, "move: destination directory [$destPath] is write-protected");
-                return FALSE;
+                return false;
             }
             $sourceReal = realpath($sourcePath);
             $destReal = realpath($destPath);
@@ -435,9 +435,9 @@ class Files implements intFiles {
             $destLen = strlen($destReal);
             if (($sourceReal == $destReal) || (($sourceLen < $destLen) && ($sourceReal == substr($destReal, 0, $sourceLen)))) {
                 self::setError(ERROR_NOT_EXECUTED, "move: unable to move directory [$sourcePath] into itself");
-                return FALSE;
+                return false;
             }
-            $stack = array($sourcePath);
+            $stack = [$sourcePath];
             $divPosition = strlen($sourcePath) + 1;
             while (count($stack)) {
                 $sourceDirPath = array_pop($stack);
@@ -445,7 +445,7 @@ class Files implements intFiles {
                 $dirTree[] = $sourceDirPath;
                 $destDirPath = rtrim("$destPath/".substr($sourceDirPath, $divPosition), "/");
                 $destDirWriteStatus = is_writable($destDirPath);
-                foreach (array_diff(scandir($sourceDirPath), array('.', '..')) as $sourceItemName) {
+                foreach (array_diff(scandir($sourceDirPath), ['.', '..']) as $sourceItemName) {
                     $sourceFullPath = "$sourceDirPath/$sourceItemName";
                     $destFullPath = "$destDirPath/$sourceItemName";
                     if ((is_file($sourceFullPath) || is_link($sourceFullPath))) {
@@ -463,39 +463,39 @@ class Files implements intFiles {
                         }
                         if ($removeConflictFiles && is_dir($destFullPath) && !is_link($destFullPath)) {
                             if (!self::remove($destFullPath)) {
-                                return FALSE;
+                                return false;
                             }
                         }
                         if (is_dir($destFullPath) && !is_link($destFullPath) && !$skipConflicts) {
                             self::setError(ERROR_ALREADY_EXISTS, "move: unable to replace directory [$destFullPath] with file [$sourceFullPath]");
-                            return FALSE;
+                            return false;
                         }
                         elseif (!$destIsFile) {
                             if (!@rename($sourceFullPath, $destFullPath) && !$skipNotReadable) {
                                 self::setError(ERROR_RESTRICTED_ACCESS, "move: unable to move file [$sourceFullPath]. Probably you tried to move not readable file to another disk partition.");
-                                return FALSE;
+                                return false;
                             }
                         }
                         elseif ($destIsFile && $replaceFiles) {
                             if (!@rename($sourceFullPath, $destFullPath) && !$skipNotReadable) {
                                 self::setError(ERROR_RESTRICTED_ACCESS, "move: unable to move file [$sourceFullPath]. Probably you tried to move not readable file to another disk partition.");
-                                return FALSE;
+                                return false;
                             }
                         }
                         elseif ($destIsFile && !$skipExistentFiles) {
                             self::setError(ERROR_NOT_EXECUTED, "move: file [$destFullPath] already exists");
-                            return FALSE;
+                            return false;
                         }
                     }
                     elseif (!$sourceIsNotDir) { // directory handling
                         if ($removeConflictFiles && is_file($destFullPath)) {
                             if (!self::remove($destFullPath)) {
-                                return FALSE;
+                                return false;
                             }
                         }
                         if (is_file($destFullPath) && !$skipConflicts) {
                             self::setError(ERROR_ALREADY_EXISTS, "move: unable to replace file [$destFullPath] with directory [$sourceFullPath]");
-                            return FALSE;
+                            return false;
                         }
                         elseif (is_readable($sourceFullPath) && is_dir($destFullPath)) {
                             $stack[] = $sourceFullPath;
@@ -506,20 +506,20 @@ class Files implements intFiles {
                         }
                         elseif (!is_readable($sourceFullPath) && !$skipNotReadable) {
                             self::setError(ERROR_RESTRICTED_ACCESS, "move: unable to read directory [$sourceFullPath]");
-                            return FALSE;
+                            return false;
                         }
                         elseif (is_dir($destFullPath) && !is_writable($destFullPath) && !$skipWriteProtected) {
                             self::setError(ERROR_RESTRICTED_ACCESS, "move: unable to write into [$destFullPath]");
-                            return FALSE;
+                            return false;
                         }
                     }
                     elseif (!$sourceDirWriteStatus && !$skipWriteProtected) {
                         self::setError(ERROR_RESTRICTED_ACCESS, "move: unable to move file [$sourceFullPath] because source directory [$sourceDirPath] is write-protected");
-                        return FALSE;
+                        return false;
                     }
                     elseif (!$destDirWriteStatus && !$skipWriteProtected) {
                         self::setError(ERROR_RESTRICTED_ACCESS, "move: unable to move file [$sourceFullPath] because destination directory [$destDirPath] is write-protected");
-                        return FALSE;
+                        return false;
                     }
                 }
             }
@@ -527,53 +527,53 @@ class Files implements intFiles {
             foreach ($dirTree as $dirPath) {
                 $parentDir = dirname($dirPath);
                 $parentDirWriteStatus = is_writable($parentDir);
-                $dirIsNotEmpty = array_diff(scandir($dirPath), array('.', '..'));
+                $dirIsNotEmpty = array_diff(scandir($dirPath), ['.', '..']);
                 if ($dirIsNotEmpty && !$skipConflicts) {
                     self::setError(ERROR_NOT_EXECUTED, "move: source directory [$dirPath] is not empty");
-                    return  FALSE;
+                    return  false;
                 }
                 elseif (!$parentDirWriteStatus && !$skipWriteProtected) {
                     self::setError(ERROR_RESTRICTED_ACCESS, "move: unable to remove directory [$dirPath] because parent directory [$parentDir] is write-protected");
-                    return  FALSE;
+                    return  false;
                 }
                 elseif (!$dirIsNotEmpty && $parentDirWriteStatus) {
                     rmdir($dirPath);
                 }
             }
-            return TRUE;
+            return true;
         }
     }
     
-    public static function remove($sourcePath, $skipNotReadable = FALSE, $skipWriteProtected = FALSE, $skipConflicts = FALSE) {
+    public static function remove($sourcePath, $skipNotReadable = false, $skipWriteProtected = false, $skipConflicts = false) {
         self::zeroizeError();
         $sourcePath = rtrim(preg_replace('#[/]+#', '/', $sourcePath), '/');
         if (!file_exists($sourcePath)) {
             self::setError(ERROR_NOT_FOUND, "remove: source [$sourcePath] was not found");
-            return FALSE;
+            return false;
         }
         // source is file or symbolic link
         if (is_file($sourcePath) || is_link($sourcePath)) {
             $sourceDirPath = dirname($sourcePath);
             if (!is_writable($sourceDirPath)) {
                 self::setError(ERROR_RESTRICTED_ACCESS, "remove: source directory [$sourceDirPath] is write-protected");
-                return FALSE;
+                return false;
             }
             unlink($sourcePath);
-            return TRUE;
+            return true;
         }
         // source is directory
         elseif (is_dir($sourcePath)) {
             if (!is_readable($sourcePath)) {
                 self::setError(ERROR_RESTRICTED_ACCESS, "remove: source directory [$sourcePath] is not readable");
-                return FALSE;
+                return false;
             }
-            $stack = array($sourcePath);
+            $stack = [$sourcePath];
             $divPosition = strlen($sourcePath) + 1;
             while (count($stack)) {
                 $sourceDirPath = array_pop($stack);
                 $sourceDirWriteStatus = is_writable($sourceDirPath);
                 $dirTree[] = $sourceDirPath;
-                foreach (array_diff(scandir($sourceDirPath), array('.', '..')) as $sourceItemName) {
+                foreach (array_diff(scandir($sourceDirPath), ['.', '..']) as $sourceItemName) {
                     $sourceFullPath = "$sourceDirPath/$sourceItemName";
                     if ((is_file($sourceFullPath) || is_link($sourceFullPath))) {
                         $sourceIsNotDir = 1;
@@ -592,12 +592,12 @@ class Files implements intFiles {
                         }
                         elseif (!$skipNotReadable) {
                             self::setError(ERROR_RESTRICTED_ACCESS, "remove: unable to read directory [$sourceFullPath]");
-                            return FALSE;
+                            return false;
                         }
                     }
                     elseif (!$sourceDirWriteStatus && !$skipWriteProtected) {
                         self::setError(ERROR_RESTRICTED_ACCESS, "remove: unable to remove file [$sourceFullPath] because source directory [$sourceDirPath] is write-protected");
-                        return FALSE;
+                        return false;
                     }
                 }
             }
@@ -605,20 +605,20 @@ class Files implements intFiles {
             foreach ($dirTree as $dirPath) {
                 $parentDir = dirname($dirPath);
                 $parentDirWriteStatus = is_writable($parentDir);
-                $dirIsNotEmpty = array_diff(scandir($dirPath), array('.', '..'));
+                $dirIsNotEmpty = array_diff(scandir($dirPath), ['.', '..']);
                 if ($dirIsNotEmpty && !$skipConflicts) {
                     self::setError(ERROR_NOT_EXECUTED, "remove: source directory [$dirPath] is not empty");
-                    return  FALSE;
+                    return  false;
                 }
                 elseif (!$parentDirWriteStatus && !$skipWriteProtected) {
                     self::setError(ERROR_RESTRICTED_ACCESS, "remove: unable to remove directory [$dirPath] because parent directory [$parentDir] is write-protected");
-                    return  FALSE;
+                    return  false;
                 }
                 elseif (!$dirIsNotEmpty && $parentDirWriteStatus) {
                     rmdir($dirPath);
                 }
             }
-            return TRUE;
+            return true;
         }
     }
 }

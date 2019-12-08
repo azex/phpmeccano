@@ -1,5 +1,99 @@
 # Changelog #
 
+## v0.2.0 ##
+
+1) Web-installer:
+
+* in component *webinstaller.php*:
+    * added comments to some tables of the installed database;
+    * little fix to prevent an appearance of errors while the installation of the database to new MySQL versions;
+    * fixed some other bugs;
+* corrected the headers inside of components *makeinstall.php*, *valconf.php* and *selfremove.php*;
+* fixed the interface styles to display them correctly on Firefox browser on Ubuntu OS while using of some 3rd party desktop themes;
+* added an ability to change the web interface language without the page reloading;
+* considerably improved the caching and processing of errors.
+
+2) In module *plugins.php* in class **Plugins**:
+
+* fixed the bug that had been made by a misprint while the coding;
+* fixed the bug that appeared in methods **unpack** and **install** on php7.2;
+* method **pluginData** now returns only **false** and doesn't set an error code if a requested plug-in isn't found.
+
+3) In module *auth.php* in class **Auth**:
+
+* fixed the bug of not saving the cookies;
+* added an ability to use the e-mail address equally with the username in method **userLogin**;
+* added an ability to create an unlimited number of the sessions for every password of the user;
+* added an ability to pass the first step of 2-factor authentication through method **userLogin**;
+* added new method **login2FA** to pass the second step of 2-factor authentication;
+* added a new session variable with the key **AUTH_2FA_SWAP** in which are saved session variables of the user until the passing of the second step of the authentication;
+* added new method **userSessions** to get an information about actual sessions of the user (the access is controled by the new policy *'auth_user_sessions'*);
+* added new method **destroySession** to delete a defined session of the user (the access is controled by the new policy *'auth_destroy_sessions'*);
+* added new method **destroyAllSessions** to delete all sessions of the user (the access is controled by the new policy *'auth_destroy_sessions'*).
+
+4) In module *userman.php* in class **UserMan**:
+
+* added new method **enable2FA** to enable 2-factor authentication of the passwords;
+* added new method **disable2FA** to disable 2-factor authentication of the passwords.
+
+5) In module *discuss.php* in class **Discuss**:
+
+* added new method **getAllComments** to get instantly all the comments to the topic with the defined identifier.
+
+6) В модуле *share.php* в классе **Share**:
+
+* added new method **getMsgAllComments** to get instantly all the comments to the message with the defined identifier;
+*  in case of failures method **getFile** now returns pages of the HTTP-statuses instead of **false**.
+
+7) The specification of the installation package of the plug-ins is updated - added an ability to install CSS-styles. The specification is raised to 0.3.
+
+8) New core module *\_\_loader\_\_.php*, that is loaded with configuration file *conf.php*, contains:
+
+* function **loadPHP** to load PHP libraries of the core or any other installed plug-in;
+* function **loadJS** to load JavaScript libraries of the core or any other installed plug-in;
+* function **loadCSS** to load CSS libraries of the core or any other installed plug-in;
+* function **loadDOC** to get files from the core documents or any other installed plug-in with the help of *mod_xsendfile* (for *Apache2*) or *X-Accel-Redirect* (for *NGINX*) or *X-LIGHTTPD-send-file* (for *lighttpd*);
+* function **mntc** to replace a requested page by the maintenance mode stub-page of the web service;
+* function **dbLink** for easy getting of the database link based on parameters of configuration file *conf.php*.
+
+9) New core module *maintenance.php* with class **Maintenance** to manage the maintenance mode contains:
+* method **state** to get settings of the maintenance mode;
+* method **write** to write settings of the maintenance mode;
+* method **enable** to enable the maintenance mode;
+* method **disable** to disable the maintenance mode;
+* method **timeout** to set an estimated time of the work of the maintenance mode;
+* method **startpoint** to set a start point of the timeout counting out of the maintenance mode;
+* method **prmsg** to set a primary message of the maintenance mode;
+* method **secmsg** to set a secondary message of the maintenance mode;
+* method **reset** to reset settings of the maintenance mode at default values;
+* the access to the methods is controled by new policy *'maintenance_configure'*.
+
+10) In configuration file *conf.php*:
+
+* added new constant **MECCANO_CSS_DIR** to define a path to the folder storing CSS-styles of the installed plug-ins;
+* added new constant **MECCANO_SERVICE_PAGES** to define a path to the folder that stores pages of the HTTP-statuses, a stub-page of the maintenance mode and a file with the settings of the maintenance mode;
+* added new constant **MECCANO_MNTC_IP** to define IP addresses which aren't affected by the maintenance mode;
+* core module **__loader__.php** is loaded with the configuration file itself.
+
+11) In module *extclass.php* in class **ServiceMethods**:
+
+* added new format *'array'* to method **outputFormat**;
+* new argument *$userId* is added to method **checkFuncAccess** to provide an user access to the functions bypassing access policies in cases connected to  the user's personal data and thus reducing a load at the database.
+
+12) In module *langman.php* in class **LangMan**:
+
+* the following methods are renamed:
+    * **getTitleSectionsXML** => **getTitleSectionsList**;
+    * **getTitleNamesXML** => **getTitleNamesList**;
+    * **getTitlesXML** => **getTitlesList**;
+    * **getAllTitlesXML** => **getAllTitlesList**;
+    * **getTextSectionsXML** => **getTextSectionsList**;
+    * **getTextNamesXML** => **getTextNamesList**;
+    * **getTextsXML** => **getTextsList**;
+    * **getAllTextsXML** => **getAllTextsList**.
+
+13) *'utf8mb4'* is used as encoding of the database tables to provide storage of emoji.
+
 ## v0.1.0 ##
 
 1) New module *discuss.php* with class **Discuss** to create topics to discuss and to comment something;

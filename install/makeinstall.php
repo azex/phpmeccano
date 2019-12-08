@@ -1,8 +1,8 @@
 <?php
 
 /*
- *     phpMeccano v0.1.0. Web-framework written with php programming language. Component of the web installer.
- *     Copyright (C) 2015-2016  Alexei Muzarov
+ *     phpMeccano v0.2.0. Web-framework written with php programming language. Component of the web installer.
+ *     Copyright (C) 2015-2019  Alexei Muzarov
  * 
  *     This program is free software; you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  *     https://bitbucket.org/azexmail/phpmeccano
  */
 
-header('Content-type: text/plain; charset=utf-8');
+header('Content-type: application/json; charset=utf-8');
 
 require_once 'getconf.php';
 require_once 'webinstaller.php';
@@ -31,7 +31,7 @@ require_once 'webinstaller.php';
 $webinst = new \core\WebInstaller();
 
 if (isset($_SESSION['webinstaller_step'])) {
-    // make step
+    // do the step
     if ($_SESSION['webinstaller_step'] == 1) {
         $webinst->createDbTables();
     }
@@ -45,24 +45,24 @@ if (isset($_SESSION['webinstaller_step'])) {
     if (!$webinst->errId()) {
         $_SESSION['webinstaller_step'] += 1;
         $removeId = core\makeIdent();
-        echo json_encode(array("response" => $_SESSION['webinstaller_step'], "rid" => $removeId));
+        echo json_encode(["response" => $_SESSION['webinstaller_step'], "rid" => $removeId]);
         if ($_SESSION['webinstaller_step'] == 4) {
-            $_SESSION = array();
+            $_SESSION = [];
             $_SESSION['rid'] = $removeId;
         }
     }
     else {
-        echo json_encode(array("response" => FALSE, "error" => $webinst->errExp()));
-        $_SESSION = array();
+        echo json_encode(["response" => false, "error" => $webinst->errExp()]);
+        $_SESSION = [];
     }
 }
 else {
     if ($webinst->revalidateAll($_POST)) {
         $_SESSION['webinstaller_step'] = 1;
         $_SESSION['user_param'] = $_POST;
-        echo json_encode(array("response" => $_SESSION['webinstaller_step']));
+        echo json_encode(["response" => $_SESSION['webinstaller_step']]);
     }
     else {
-        echo json_encode(array("response" => 0, "error" => $webinst->errExp()));
+        echo json_encode(["response" => 0, "error" => $webinst->errExp()]);
     }
 }

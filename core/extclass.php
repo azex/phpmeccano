@@ -1,8 +1,8 @@
 <?php
 
 /*
- *     phpMeccano v0.1.0. Web-framework written with php programming language. Core module [extclass.php].
- *     Copyright (C) 2015-2016  Alexei Muzarov
+ *     phpMeccano v0.2.0. Web-framework written with php programming language. Core module [extclass.php].
+ *     Copyright (C) 2015-2019  Alexei Muzarov
  * 
  *     This program is free software; you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -33,14 +33,14 @@ interface intServiceMethods {
     public function errExp();
     public function applyPolicy($flag);
     public function outputFormat($output = 'xml');
-    public function checkFuncAccess($plugin, $func); // old name [checkAccess]
+    public function checkFuncAccess($plugin, $func, $userId = 0);
     public function newLogRecord($plugin, $event, $insertion = ''); // old name [newRecord]
 }
 
 class ServiceMethods implements intServiceMethods {
     protected $errid = 0; // error's id
     protected $errexp = ''; // error's explanation
-    protected $usePolicy = TRUE; // flag of the policy application
+    protected $usePolicy = true; // flag of the policy application
     protected $outputType = 'json'; // format of the output data
     
     protected function setError($id, $exp, $errtype = E_USER_NOTICE) {
@@ -63,12 +63,12 @@ class ServiceMethods implements intServiceMethods {
         return $this->errexp;
     }
     
-    public function applyPolicy($flag = FALSE) {
+    public function applyPolicy($flag = false) {
         if ($flag) {
-            $this->usePolicy = TRUE;
+            $this->usePolicy = true;
         }
         else {
-            $this->usePolicy = FALSE;
+            $this->usePolicy = false;
         }
     }
     
@@ -79,20 +79,32 @@ class ServiceMethods implements intServiceMethods {
         elseif ($output == 'json') {
             $this->outputType = 'json';
         }
+        elseif ($output == 'array') {
+            $this->outputType = 'array';
+        }
         else {
             $this->outputType = 'json';
         }
     }
     
     // method came from core module policy.php
-    public function checkFuncAccess($plugin, $func) {
+    // Method [checkFuncAccess] grants access to the user independently from the access policy, if argument $userId is equal to ID of the authenticated user. For example, it may be useful, if the user going to get it's own data.
+    public function checkFuncAccess($plugin, $func, $userId = 0) {
         $this->zeroizeError();
         if (!pregPlugin($plugin) || !pregPlugin($func)) {
             $this->setError(ERROR_INCORRECT_DATA, 'checkFuncAccess: check incoming parameters');
-            return FALSE;
+            return false;
+        }
+        // grant access if policy is disabled
+        if (!$this->usePolicy) {
+            return 1;
         }
         if (isset($_SESSION[AUTH_USER_ID])) {
-            $qAccess = $this->dbLink->query("SELECT `a`.`access` "
+            if ($_SESSION[AUTH_USER_ID] == $userId) {
+                return 1;
+            }
+            else {
+                $qAccess = $this->dbLink->query("SELECT `a`.`access` "
                     . "FROM `".MECCANO_TPREF."_core_policy_access` `a` "
                     . "JOIN `".MECCANO_TPREF."_core_policy_summary_list` `s` "
                     . "ON `a`.`funcid`=`s`.`id` "
@@ -104,23 +116,24 @@ class ServiceMethods implements intServiceMethods {
                     . "AND `s`.`name`='$plugin' "
                     . "AND `s`.`func`='$func' "
                     . "LIMIT 1 ;");
+            }
         }
         else {
             $qAccess = $this->dbLink->query("SELECT `n`.`access` "
-                    . "FROM `".MECCANO_TPREF."_core_policy_nosession` `n` "
-                    . "JOIN `".MECCANO_TPREF."_core_policy_summary_list` `s` "
-                    . "ON `n`.`funcid`=`s`.`id` "
-                    . "WHERE `s`.`name`='$plugin' "
-                    . "AND `s`.`func`='$func' "
-                    . "LIMIT 1 ;");
+                . "FROM `".MECCANO_TPREF."_core_policy_nosession` `n` "
+                . "JOIN `".MECCANO_TPREF."_core_policy_summary_list` `s` "
+                . "ON `n`.`funcid`=`s`.`id` "
+                . "WHERE `s`.`name`='$plugin' "
+                . "AND `s`.`func`='$func' "
+                . "LIMIT 1 ;");
         }
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'checkFuncAccess: something went wrong -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'checkFuncAccess: policy is not found');
-            return FALSE;
+            return false;
         }
         list($access) = $qAccess->fetch_row();
         return (int) $access;
@@ -131,7 +144,7 @@ class ServiceMethods implements intServiceMethods {
         $this->zeroizeError();
         if (!pregPlugin($plugin) || !pregPlugin($keyword) || !is_string($insertion)) {
             $this->setError(ERROR_INCORRECT_DATA, 'newLogRecord: check arguments');
-            return FALSE;
+            return false;
         }
         $keyword = $this->dbLink->real_escape_string($keyword);
         $insertion = $this->dbLink->real_escape_string($insertion);
@@ -144,11 +157,11 @@ class ServiceMethods implements intServiceMethods {
                 . "AND `p`.`name`='$plugin' ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'newLogRecord: unable to get event identifier -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'newLogRecord: plugin or event not found');
-            return FALSE;
+            return false;
         }
         list($eventId) = $qEvent->fetch_row();
         // make new record
@@ -162,8 +175,8 @@ class ServiceMethods implements intServiceMethods {
         }
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'newLogRecord: unable to make new record -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
-        return TRUE;
+        return true;
     }
 }

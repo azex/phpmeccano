@@ -1,8 +1,8 @@
 <?php
 
 /*
- *     phpMeccano v0.1.0. Web-framework written with php programming language. Configuration file [conf.php].
- *     Copyright (C) 2015-2016  Alexei Muzarov
+ *     phpMeccano v0.2.0. Web-framework written with php programming language. Configuration file [conf.php].
+ *     Copyright (C) 2015-2019  Alexei Muzarov
  * 
  *     This program is free software; you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -41,9 +41,11 @@ define('MECCANO_CORE_DIR', MECCANO_ROOT_DIR.'/core');
 define('MECCANO_TMP_DIR', MECCANO_ROOT_DIR.'/tmp');
 define('MECCANO_PHP_DIR', MECCANO_ROOT_DIR.'/phplibs');
 define('MECCANO_JS_DIR', MECCANO_ROOT_DIR.'/jslibs');
+define('MECCANO_CSS_DIR', MECCANO_ROOT_DIR.'/csslibs');
 define('MECCANO_DOCUMENTS_DIR', MECCANO_ROOT_DIR.'/documents');
 define('MECCANO_UNPACKED_PLUGINS', MECCANO_ROOT_DIR.'/unpacked');
 define('MECCANO_UNINSTALL', MECCANO_ROOT_DIR.'/uninstall');
+define('MECCANO_SERVICE_PAGES', MECCANO_ROOT_DIR.'/servpages');
 
 // storage of shared files
 define('MECCANO_SHARED_FILES', MECCANO_ROOT_DIR.'/shfiles');
@@ -57,4 +59,9 @@ define('MECCANO_AUTH_LIMIT', 5);
 define('MECCANO_AUTH_BLOCK_PERIOD', '00:05:00');
 
 // displaying of errors
-define('MECCANO_SHOW_ERRORS', FALSE);
+define('MECCANO_SHOW_ERRORS', false);
+
+// IP addresses that will ignore maintenance mode
+define('MECCANO_MNTC_IP', '127.0.0.1');
+
+require_once MECCANO_CORE_DIR.'/__loader__.php';

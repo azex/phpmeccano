@@ -1,8 +1,8 @@
 <?php
 
 /*
- *     phpMeccano v0.1.0. Web-framework written with php programming language. Core module [swconst.php].
- *     Copyright (C) 2015-2016  Alexei Muzarov
+ *     phpMeccano v0.2.0. Web-framework written with php programming language. Core module [swconst.php].
+ *     Copyright (C) 2015-2019  Alexei Muzarov
  * 
  *     This program is free software; you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -47,6 +47,7 @@ define('AUTH_UNIQUE_SESSION_ID', 'core_auth_usid');
 define('AUTH_IP', 'core_auth_ip');
 define('AUTH_USER_AGENT', 'core_auth_uagent');
 define('AUTH_TOKEN', 'core_auth_token');
+define('AUTH_2FA_SWAP', 'core_auth_2fa_swap');
 
 // cookie variables
 define('COOKIE_UNIQUE_SESSION_ID', 'core_auth_usid');

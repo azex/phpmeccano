@@ -1,8 +1,8 @@
 <?php
 
 /*
- *     phpMeccano v0.1.0. Web-framework written with php programming language. Core module [share.php].
- *     Copyright (C) 2015-2016  Alexei Muzarov
+ *     phpMeccano v0.2.0. Web-framework written with php programming language. Core module [share.php].
+ *     Copyright (C) 2015-2019  Alexei Muzarov
  * 
  *     This program is free software; you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -40,10 +40,10 @@ interface intShare {
     public function createMsg($userId, $title, $text);
     public function stageFile($file, $filename, $userId, $title, $comment);
     public function shareFile($fileId, $userId, $circles);
-    public function getFile($fileId, $contDisp = 'inline');
+    public function getFile($fileId, $disp = 'inline', $nocache = false);
     public function attachFile($fileId, $msgId, $userId);
     public function unattachFile($fileId, $msgId, $userId);
-    public function delFile($fileId, $userId, $force = FALSE);
+    public function delFile($fileId, $userId, $force = false);
     public function getFileInfo($fileId);
     public function shareMsg($msgId, $userId, $circles);
     public function getMsg($msgId);
@@ -51,22 +51,22 @@ interface intShare {
     public function getFileShares($fileId, $userId);
     public function getMsgShares($msgId, $userId);
     public function editFile($fileId, $userId, $title, $comment);
-    public function repostMsg($msgId, $userId, $hlink = TRUE);
+    public function repostMsg($msgId, $userId, $hlink = true);
     public function editMsg($msgId, $userid, $title, $text);
-    public function delMsg($msgId, $userId, $keepFiles = TRUE);
-    public function repostFile($fileId, $userId, $hlink = TRUE);
+    public function delMsg($msgId, $userId, $keepFiles = true);
+    public function repostFile($fileId, $userId, $hlink = true);
     public function sumUserMsgs($userId, $rpp = 20);
-    public function userMsgs($userId, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('time'), $ascent = FALSE);
+    public function userMsgs($userId, $pageNumber, $totalPages, $rpp = 20, $orderBy = ['time'], $ascent = false);
     public function msgStripe($userId, $rpp = 20);
     public function appendMsgStripe($userId, $minMark, $rpp = 20);
     public function updateMsgStripe($userId, $maxMark);
     public function sumUserFiles($userId, $rpp = 20);
-    public function userFiles($userId, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('time'), $ascent = FALSE);
+    public function userFiles($userId, $pageNumber, $totalPages, $rpp = 20, $orderBy = ['time'], $ascent = false);
     public function fileStripe($userId, $rpp = 20);
     public function appendFileStripe($userId, $minMark, $rpp = 20);
     public function updateFileStripe($userId, $maxMark);
     public function sumUserSubs($userId, $rpp = 20);
-    public function userSubs($userId, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('time'), $ascent = FALSE);
+    public function userSubs($userId, $pageNumber, $totalPages, $rpp = 20, $orderBy = ['time'], $ascent = false);
     public function subStripe($userId, $rpp = 20);
     public function appendSubStripe($userId, $minMark, $rpp = 20);
     public function updateSubStripe($userId, $maxMark);
@@ -75,6 +75,7 @@ interface intShare {
     public function getMsgComment($commentId, $userId);
     public function eraseMsgComment($commentId, $userId);
     public function getMsgComments($msgId, $rpp = 20);
+    public function getMsgAllComments($msgId);
     public function appendMsgComments($msgId, $minMark, $rpp = 20);
     public function updateMsgComments($msgId, $maxMark);
     public function pubMsgs($rpp = 20);
@@ -91,7 +92,7 @@ class Share extends Discuss implements intShare {
         $this->zeroizeError();
         if (!pregGuid($fileId)) {
             $this->setError(ERROR_INCORRECT_DATA, 'checkFileAccess: incorrect file identifier');
-            return FALSE;
+            return false;
         }
         //check whether file exists
         $this->dbLink->query(
@@ -100,15 +101,15 @@ class Share extends Discuss implements intShare {
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'checkFileAccess: '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         elseif (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, "checkFileAccess: file [$fileId] not found in the database");
-            return FALSE;
+            return false;
         }
         // check for full viewing access
         if ($this->checkFuncAccess('core', 'share_viewing_access')) {
-            return TRUE;
+            return true;
         }
         // check for public access
         $this->dbLink->query(
@@ -118,16 +119,16 @@ class Share extends Discuss implements intShare {
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'checkFileAccess: '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         elseif ($this->dbLink->affected_rows) {
-            return TRUE;
+            return true;
         }
         elseif (!isset($_SESSION[AUTH_USER_ID])) {
-            return FALSE;
+            return false;
         }
         else {
-            $sql = array(
+            $sql = [
                 // check for access shared with circles
                 "SELECT `a`.`id` "
                 . "FROM `".MECCANO_TPREF."_core_share_files_accessibility` `a` "
@@ -141,26 +142,26 @@ class Share extends Discuss implements intShare {
                 . "FROM `".MECCANO_TPREF."_core_share_files` "
                 . "WHERE `id`='$fileId' "
                 . "AND `userid`={$_SESSION[AUTH_USER_ID]} ;"
-            );
+            ];
             foreach ($sql as $value) {
                 $this->dbLink->query($value);
                 if ($this->dbLink->errno) {
                     $this->setError(ERROR_NOT_EXECUTED, 'checkFileAccess: '.$this->dbLink->error);
-                    return FALSE;
+                    return false;
                 }
                 elseif ($this->dbLink->affected_rows) {
-                    return TRUE;
+                    return true;
                 }
             }
         }
-        return FALSE;
+        return false;
     }
     
     private function checkMsgAccess($msgId) {
         $this->zeroizeError();
         if (!pregGuid($msgId)) {
             $this->setError(ERROR_INCORRECT_DATA, 'checkMsgAccess: incorrect message identifier');
-            return FALSE;
+            return false;
         }
         //check whether message exists
         $this->dbLink->query(
@@ -169,15 +170,15 @@ class Share extends Discuss implements intShare {
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'checkMsgAccess: '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         elseif (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, "checkMsgAccess: message [$msgId] not found in the database");
-            return FALSE;
+            return false;
         }
         // check for full viewing access
         if ($this->checkFuncAccess('core', 'share_viewing_access')) {
-            return TRUE;
+            return true;
         }
         // check for public access
         $this->dbLink->query(
@@ -187,16 +188,16 @@ class Share extends Discuss implements intShare {
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'checkMsgAccess: '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         elseif ($this->dbLink->affected_rows) {
-            return TRUE;
+            return true;
         }
         elseif (!isset($_SESSION[AUTH_USER_ID])) {
-            return FALSE;
+            return false;
         }
         else {
-            $sql = array(
+            $sql = [
                 // check for access shared with circles
                 "SELECT `a`.`id` "
                 . "FROM `".MECCANO_TPREF."_core_share_msg_accessibility` `a` "
@@ -210,26 +211,26 @@ class Share extends Discuss implements intShare {
                 . "FROM `".MECCANO_TPREF."_core_share_msgs` "
                 . "WHERE `id`='$msgId' "
                 . "AND `userid`={$_SESSION[AUTH_USER_ID]} ;"
-            );
+            ];
             foreach ($sql as $value) {
                 $this->dbLink->query($value);
                 if ($this->dbLink->errno) {
                     $this->setError(ERROR_NOT_EXECUTED, 'checkMsgAccess: '.$this->dbLink->error);
-                    return FALSE;
+                    return false;
                 }
                 elseif ($this->dbLink->affected_rows) {
-                    return TRUE;
+                    return true;
                 }
             }
         }
-        return FALSE;
+        return false;
     }
     
     function createCircle($userId, $name) {
         $this->zeroizeError();
         if (!is_integer($userId) || !is_string($name) || !strlen($name)) {
             $this->setError(ERROR_INCORRECT_DATA, 'createCircle: incorrect parameters');
-            return FALSE;
+            return false;
         }
         $qUser = $this->dbLink->query(
                 "SELECT `username` "
@@ -238,11 +239,11 @@ class Share extends Discuss implements intShare {
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'createCircle: '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'createCircle: user not found');
-            return FALSE;
+            return false;
         }
         $name = $this->dbLink->real_escape_string($name);
         $id = guid();
@@ -253,7 +254,7 @@ class Share extends Discuss implements intShare {
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'createCircle: unable to create circle -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         return $id;
     }
@@ -262,7 +263,7 @@ class Share extends Discuss implements intShare {
         $this->zeroizeError();
         if (!is_integer($userId)) {
             $this->setError(ERROR_INCORRECT_DATA, 'userCircles: incorrect parameter');
-            return FALSE;
+            return false;
         }
         $qCircles = $this->dbLink->query(
                 "SELECT `id`, `cname` "
@@ -272,7 +273,7 @@ class Share extends Discuss implements intShare {
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'userCircles: '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if ($this->outputType == 'xml') {
             $xml = new \DOMDocument('1.0', 'utf-8');
@@ -291,14 +292,19 @@ class Share extends Discuss implements intShare {
             return $xml;
         }
         else {
-            $circlesNode = array();
+            $circlesNode = [];
             while ($row = $qCircles->fetch_row()) {
-                $circleNode = array();
+                $circleNode = [];
                 $circleNode['id'] = $row[0];
                 $circleNode['name'] = $row[1];
                 $circlesNode[] = $circleNode;
             }
-            return json_encode($circlesNode);
+            if ($this->outputType == 'json') {
+                return json_encode($circlesNode);
+            }
+            else {
+                return $circlesNode;
+            }
         }
     }
     
@@ -306,7 +312,7 @@ class Share extends Discuss implements intShare {
         $this->zeroizeError();
         if (!is_integer($userId) || !pregGuid($circleId) || !is_string($newName)) {
             $this->setError(ERROR_INCORRECT_DATA, 'renameCircle: incorrect parameters');
-            return FALSE;
+            return false;
         }
         $newName = $this->dbLink->real_escape_string($newName);
         $this->dbLink->query(
@@ -318,16 +324,16 @@ class Share extends Discuss implements intShare {
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'renameCircle: '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
-        return TRUE;
+        return true;
     }
     
     public function addToCircle($contactId, $circleId, $userId) {
         $this->zeroizeError();
         if (!is_integer($contactId) || !pregGuid($circleId) || !is_integer($userId)) {
             $this->setError(ERROR_INCORRECT_DATA, 'addToCircle: incorrect parameters');
-            return FALSE;
+            return false;
         }
         $this->dbLink->query(
                 "SELECT `cname` "
@@ -337,11 +343,11 @@ class Share extends Discuss implements intShare {
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'addToCircle: unable to check user and circle -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'addToCircle: circle or user not exist');
-            return FALSE;
+            return false;
         }
         $this->dbLink->query(
                 "SELECT `username` "
@@ -350,11 +356,11 @@ class Share extends Discuss implements intShare {
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'addToCircle: unable to check contact -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'addToCircle: contact not found');
-            return FALSE;
+            return false;
         }
         $this->dbLink->query(
                 "SELECT `id` "
@@ -364,11 +370,11 @@ class Share extends Discuss implements intShare {
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'addToCircle: unable to check contact -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if ($this->dbLink->affected_rows) {
             $this->setError(ERROR_ALREADY_EXISTS, 'addToCircle: contact already in circle');
-            return FALSE;
+            return false;
         }
         $id = guid();
         $this->dbLink->query(
@@ -378,16 +384,16 @@ class Share extends Discuss implements intShare {
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'addToCircle: unable to insert contact into circle -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
-        return TRUE;
+        return true;
     }
     
     public function circleContacts($userId, $circleId) {
         $this->zeroizeError();
         if (!is_integer($userId) || !pregGuid($circleId)) {
             $this->setError(ERROR_INCORRECT_DATA, 'circleContacts: incorrect parameters');
-            return FALSE;
+            return false;
         }
         $qCircle = $this->dbLink->query(
                 "SELECT `cname` "
@@ -397,11 +403,11 @@ class Share extends Discuss implements intShare {
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'circleContacts: unable to check circle'.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'circleContacts: circle no found');
-            return FALSE;
+            return false;
         }
         list($circleName) = $qCircle->fetch_row();
         $qContacts = $this->dbLink->query(
@@ -417,7 +423,7 @@ class Share extends Discuss implements intShare {
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'circleContacts: '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if ($this->outputType == 'xml') {
             $xml = new \DOMDocument('1.0', 'utf-8');
@@ -442,18 +448,23 @@ class Share extends Discuss implements intShare {
             return $xml;
         }
         else {
-            $rootNode = array();
+            $rootNode = [];
             $rootNode['cid'] = $circleId;
             $rootNode['cname'] = $circleName;
-            $rootNode['contacts'] = array();
+            $rootNode['contacts'] = [];
             while ($row = $qContacts->fetch_row()) {
-                $rootNode['contacts'][] = array(
+                $rootNode['contacts'][] = [
                     'id' => (int) $row[0],
                     'username' => $row[1],
                     'fullname' =>$row[2]
-                        );
+                        ];
             }
-            return json_encode($rootNode);
+            if ($this->outputType == 'json') {
+                return json_encode($rootNode);
+            }
+            else {
+                return $rootNode;
+            }
         }
     }
     
@@ -461,7 +472,7 @@ class Share extends Discuss implements intShare {
         $this->zeroizeError();
         if (!is_integer($userId) || !pregGuid($circleId) || !is_integer($contactId)) {
             $this->setError(ERROR_INCORRECT_DATA, 'rmFromCircle: incorrect parameters');
-            return FALSE;
+            return false;
         }
         $this->dbLink->query(
                 "SELECT `cname` "
@@ -471,11 +482,11 @@ class Share extends Discuss implements intShare {
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'rmFromCircle: unable to check circle -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'rmFromCircle: circle not found');
-            return FALSE;
+            return false;
         }
         $this->dbLink->query(
                 "DELETE FROM `".MECCANO_TPREF."_core_share_buddy_list` "
@@ -484,20 +495,20 @@ class Share extends Discuss implements intShare {
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'rmFromCircle: unable to remove contact -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'rmFromCircle: contact not found');
-            return FALSE;
+            return false;
         }
-        return TRUE;
+        return true;
     }
     
     public function delCircle($userId, $circleId) {
         $this->zeroizeError();
         if (!is_integer($userId) || !pregGuid($circleId)) {
             $this->setError(ERROR_INCORRECT_DATA, 'delCircle: incorrect parameters');
-            return FALSE;
+            return false;
         }
         $qCircles = $this->dbLink->query(
                 "SELECT `cname` "
@@ -507,13 +518,13 @@ class Share extends Discuss implements intShare {
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'delCircle:  unable to check circle -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'createCircle: circle not found');
-            return FALSE;
+            return false;
         }
-        $sql = array(
+        $sql = [
             "DELETE FROM `".MECCANO_TPREF."_core_share_msg_accessibility` "
             . "WHERE `cid`='$circleId' ;",
             "DELETE FROM `".MECCANO_TPREF."_core_share_files_accessibility` "
@@ -522,22 +533,22 @@ class Share extends Discuss implements intShare {
             . "WHERE `cid`='$circleId' ;",
             "DELETE FROM `".MECCANO_TPREF."_core_share_circles` "
             . "WHERE `id`='$circleId' ;",
-        );
+        ];
         foreach ($sql as $value) {
             $this->dbLink->query($value);
             if ($this->dbLink->errno) {
                 $this->setError(ERROR_NOT_EXECUTED, 'delCircle: unable to delete circle -> '.$this->dbLink->error);
-                return FALSE;
+                return false;
             }
         }
-        return TRUE;
+        return true;
     }
     
     public function createMsg($userId, $title = '', $text = '') {
         $this->zeroizeError();
         if (!is_integer($userId) || !is_string($title) || !is_string($text) || !(strlen($title) || strlen($text))) {
             $this->setError(ERROR_INCORRECT_DATA, 'createMsg: incorrect parameters');
-            return FALSE;
+            return false;
         }
         $this->dbLink->query(
                 "SELECT `username` "
@@ -546,16 +557,16 @@ class Share extends Discuss implements intShare {
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'createMsg: unable to check user -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'createMsg: user not found');
-            return FALSE;
+            return false;
         }
         $title = $this->dbLink->real_escape_string($title);
         $text = $this->dbLink->real_escape_string($text);
         $id = guid();
-        $mtMark = microtime(TRUE);
+        $mtMark = microtime(true);
         // create message
         $this->dbLink->query(
                 "INSERT INTO `".MECCANO_TPREF."_core_share_msgs` "
@@ -564,11 +575,11 @@ class Share extends Discuss implements intShare {
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'createMsg: unable to create message -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         // create topic
         if (!$topicId = $this->createTopic()) {
-            return FALSE;
+            return false;
         }
         // relate message and topic
         $this->dbLink->query(
@@ -578,7 +589,7 @@ class Share extends Discuss implements intShare {
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'createMsg: unable to relate message and topic -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         return $id;
     }
@@ -587,15 +598,15 @@ class Share extends Discuss implements intShare {
         $this->zeroizeError();
         if (!is_string($file) || !is_string($filename) || !is_integer($userId) || !is_string($title) || !is_string($comment)) {
             $this->setError(ERROR_INCORRECT_DATA, 'stageFile: incorrect parameters');
-            return FALSE;
+            return false;
         }
         if (!is_file($file) || is_link($file)) {
             $this->setError(ERROR_INCORRECT_DATA, 'stageFile: this is not file');
-            return FALSE;
+            return false;
         }
         elseif (!is_readable($file)) {
             $this->setError(ERROR_RESTRICTED_ACCESS, 'stageFile: file is not readable');
-            return FALSE;
+            return false;
         }
         $this->dbLink->query(
                 "SELECT `username` "
@@ -604,14 +615,14 @@ class Share extends Discuss implements intShare {
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'stageFile: unable to check user -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'stageFile: user not found');
-            return FALSE;
+            return false;
         }
         $id = guid();
-        $mtMark = microtime(TRUE);
+        $mtMark = microtime(true);
         $title = $this->dbLink->real_escape_string($title);
         $comment = $this->dbLink->real_escape_string($comment);
         $mimeType = mime_content_type($file);
@@ -620,12 +631,12 @@ class Share extends Discuss implements intShare {
         if (!is_dir(MECCANO_SHARED_FILES."/$storageDir")) {
            if (!@mkdir(MECCANO_SHARED_FILES."/$storageDir")) {
                $this->setError(ERROR_NOT_EXECUTED, "stageFile: unable to create storage directory");
-               return FALSE;
+               return false;
            }
         }
         if (!Files::move($file, MECCANO_SHARED_FILES.'/'."$storageDir/$id")) {
             $this->setError(Files::errId(), 'stageFile -> '.Files::errExp());
-            return FALSE;
+            return false;
         }
         $this->dbLink->query(
                 "INSERT INTO `".MECCANO_TPREF."_core_share_files` "
@@ -635,7 +646,7 @@ class Share extends Discuss implements intShare {
         if ($this->dbLink->errno) {
             unlink(MECCANO_SHARED_FILES."/$id");
             $this->setError(ERROR_NOT_EXECUTED, 'stageFile: unable to stage file -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         return $id;
     }
@@ -644,7 +655,7 @@ class Share extends Discuss implements intShare {
         $this->zeroizeError();
         if (!pregGuid($fileId) || !is_integer($userId) || !is_array($circles)) {
             $this->setError(ERROR_INCORRECT_DATA, 'shareFile: incorrect parameters');
-            return FALSE;
+            return false;
         }
         // check file
         $this->dbLink->query(
@@ -655,18 +666,18 @@ class Share extends Discuss implements intShare {
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'shareFile: unable to check file -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'shareFile: file or user not found');
-            return FALSE;
+            return false;
         }
         // check circles
         $cKeys = \array_keys($circles);
         foreach ($cKeys as $value) {
             if (!pregGuid($value) && $value !== 'public') {
                 $this->setError(ERROR_INCORRECT_DATA, 'shareFile: incorrect circle identifiers');
-                return FALSE;
+                return false;
             }
         }
         $stmt = $this->dbLink->prepare(
@@ -677,7 +688,7 @@ class Share extends Discuss implements intShare {
                 );
         if (!$stmt) {
             $this->setError(ERROR_NOT_EXECUTED, 'shareFile: unable to check circle ->'.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         foreach ($cKeys as $value) {
             if ($value != 'public') {
@@ -686,7 +697,7 @@ class Share extends Discuss implements intShare {
                 $stmt->store_result();
                 if (!$stmt->affected_rows) {
                     $this->setError(ERROR_NOT_FOUND, "shareFile: circle [$value] not found");
-                    return FALSE;
+                    return false;
                 }
             }
         }
@@ -699,7 +710,7 @@ class Share extends Discuss implements intShare {
                 );
         if (!$stmtInsert) {
             $this->setError(ERROR_NOT_EXECUTED, 'shareFile: unable to grant access ->'.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         $stmtDelete = $this->dbLink->prepare(
                 "DELETE FROM `".MECCANO_TPREF."_core_share_files_accessibility` "
@@ -719,14 +730,18 @@ class Share extends Discuss implements intShare {
         }
         $stmtInsert->close();
         $stmtDelete->close();
-        return TRUE;
+        return true;
     }
     
-    public function getFile($fileId, $contDisp = 'inline') {
+    public function getFile($fileId, $disp = 'inline', $nocache = false) {
         $this->zeroizeError();
-        if (!in_array($contDisp, array('inline', 'attachment'))) {
-            $this->setError(ERROR_INCORRECT_DATA, 'getFile: incorrect content disposition value');
-            return FALSE;
+        if (!isset($_SERVER['SERVER_SOFTWARE'])) {
+            $this->setError(ERROR_NOT_EXECUTED, "getFile: the method must be executed on a web server");
+            return false;
+        }
+        if (!pregGuid($fileId) || !in_array($disp, ['inline', 'attachment'])) {
+            include MECCANO_SERVICE_PAGES.'/400.php'; // Bad Request
+            exit();
         }
         if ($this->checkFileAccess($fileId)) {
             $qFile = $this->dbLink->query(
@@ -735,51 +750,55 @@ class Share extends Discuss implements intShare {
                     . "WHERE `id`='$fileId' ;"
                     );
             if ($this->dbLink->errno) {
-                $this->setError(ERROR_NOT_EXECUTED, 'getFile: unable to get file information -> '.$this->dbLink->error);
-                return FALSE;
+                include MECCANO_SERVICE_PAGES.'/503.php'; // Service Unavailable
+                exit();
             }
             list($fileName, $storageDir, $mimeType, $fileSize) = $qFile->fetch_row();
             $fullPath = realpath(MECCANO_SHARED_FILES."/$storageDir/$fileId");
-            if (is_file($fullPath) && is_readable($fullPath)) {
-                if (isset($_SERVER['SERVER_SOFTWARE'])) {
-                    if (preg_match('/.*Apache.*/', $_SERVER['SERVER_SOFTWARE'])) {
-                        // https://tn123.org/mod_xsendfile/
-                        header("X-SendFile: $fullPath");
-                    }
-                    elseif (preg_match('/.*nginx.*/', $_SERVER['SERVER_SOFTWARE'])) {
-                        // https://www.nginx.com/resources/wiki/start/topics/examples/xsendfile/
-                        header("X-Accel-Redirect: /".basename(MECCANO_SHARED_FILES)."/$storageDir/$fileId");
-                    }
-                    elseif (preg_match('/.*lighttpd.*/', $_SERVER['SERVER_SOFTWARE'])) {
-                        // https://redmine.lighttpd.net/projects/lighttpd/wiki/X-LIGHTTPD-send-file
-                        header("X-LIGHTTPD-send-file: " . realpath($fullPath));
-                    }
-                    else {
-                        $this->setError(ERROR_NOT_EXECUTED, "getFile: unknown web server");
-                        return FALSE;
-                    }
-                }
-                else {
-                    $this->setError(ERROR_NOT_EXECUTED, "getFile: must be run with web server (Apache, NGINX or lighttpd)");
-                    return FALSE;
-                }
-                header("Content-Type: $mimeType");
-                header("Content-Length: $fileSize");
-                header("Content-Disposition: $contDisp; filename=$fileName");
-                exit;
+            if (!$fullPath || !is_file($fullPath)) {
+                include MECCANO_SERVICE_PAGES.'/404.php'; // Not Found
+                exit();
+            }
+            if (!is_readable($fullPath)) {
+                include MECCANO_SERVICE_PAGES.'/403.php'; // Forbidden
+                exit();
+            }
+            if (preg_match('/.*Apache.*/', $_SERVER['SERVER_SOFTWARE'])) {
+                // https://tn123.org/mod_xsendfile/
+                header("X-SendFile: $fullPath");
+            }
+            elseif (preg_match('/.*nginx.*/', $_SERVER['SERVER_SOFTWARE'])) {
+                // https://www.nginx.com/resources/wiki/start/topics/examples/xsendfile/
+                header("X-Accel-Redirect: /".basename(MECCANO_SHARED_FILES)."/$storageDir/$fileId");
+            }
+            elseif (preg_match('/.*lighttpd.*/', $_SERVER['SERVER_SOFTWARE'])) {
+                // https://redmine.lighttpd.net/projects/lighttpd/wiki/X-LIGHTTPD-send-file
+                header("X-LIGHTTPD-send-file: $fullPath");
             }
             else {
-                $this->setError(ERROR_NOT_FOUND, "getFile: file [$fileId] not found on the disk");
-                return FALSE;
+                include MECCANO_SERVICE_PAGES.'/501.php'; // Not Implemented
+                exit();
             }
+            if ($nocache) { // if the file should't be cached
+                header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+                header("Pragma: no-cache");
+            }
+            header("Content-Type: $mimeType");
+            header("Content-Length: $fileSize");
+            header("Content-Disposition: $disp; filename=$fileName");
+            exit();
         }
-        elseif ($this->errid) {
-            $this->setError($this->errid, 'getFile -> '.$this->errexp);
-            return FALSE;
+        elseif ($this->errid == ERROR_NOT_FOUND) {
+            include MECCANO_SERVICE_PAGES.'/404.php'; // Not Found
+            exit();
+        }
+        elseif ($this->errid == ERROR_NOT_EXECUTED) {
+            include MECCANO_SERVICE_PAGES.'/503.php'; // Service Unavailable
+            exit();
         }
         else {
-            $this->setError(ERROR_RESTRICTED_ACCESS, 'getFile: access denied');
-            return FALSE;
+            include MECCANO_SERVICE_PAGES.'/403.php'; // Forbidden
+            exit();
         }
     }
     
@@ -787,7 +806,7 @@ class Share extends Discuss implements intShare {
         $this->zeroizeError();
         if (!pregGuid($fileId) || !pregGuid($msgId) || !is_integer($userId)) {
             $this->setError(ERROR_INCORRECT_DATA, 'attachFile: incorrect parameters');
-            return FALSE;
+            return false;
         }
         $this->dbLink->query(
                 "SELECT `name` "
@@ -797,11 +816,11 @@ class Share extends Discuss implements intShare {
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'attachFile: unable to check file -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'attachFile: file not found');
-            return FALSE;
+            return false;
         }
         $this->dbLink->query(
                 "SELECT `title` "
@@ -811,11 +830,11 @@ class Share extends Discuss implements intShare {
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'attachFile: unable to check message -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'attachFile: message not found');
-            return FALSE;
+            return false;
         }
         $id = guid();
         $this->dbLink->query(
@@ -825,16 +844,16 @@ class Share extends Discuss implements intShare {
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'attacheFile: unable to create relation -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
-        return TRUE;
+        return true;
     }
     
     public function unattachFile($fileId, $msgId, $userId) {
         $this->zeroizeError();
         if (!pregGuid($fileId) || !pregGuid($msgId) || !is_integer($userId)) {
             $this->setError(ERROR_INCORRECT_DATA, 'unattachFile: incorrect parameters');
-            return FALSE;
+            return false;
         }
         $this->dbLink->query(
                 "DELETE FROM `".MECCANO_TPREF."_core_share_msgfile_relations` "
@@ -844,24 +863,24 @@ class Share extends Discuss implements intShare {
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'unattachFiles: unable to unattach file -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'unattachFile: file not found');
-            return FALSE;
+            return false;
         }
-        return TRUE;
+        return true;
     }
     
-    public function delFile($fileId, $userId, $force = FALSE) {
+    public function delFile($fileId, $userId, $force = false) {
         $this->zeroizeError();
         if (!pregGuid($fileId) || !is_integer($userId)) {
             $this->setError(ERROR_INCORRECT_DATA, 'delFile: incorrect parameters');
-            return FALSE;
+            return false;
         }
         if (!(isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) && !$this->checkFuncAccess('core', 'share_modify_msgs_files')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, 'delFile: access denied');
-            return FALSE;
+            return false;
         }
         // whether file exists
         $qFile = $this->dbLink->query(
@@ -872,11 +891,11 @@ class Share extends Discuss implements intShare {
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'delFile: unable to get file info -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'delFile: file not found');
-            return FALSE;
+            return false;
         }
         // whether file is related
         if (!$force) {
@@ -887,11 +906,11 @@ class Share extends Discuss implements intShare {
                     );
             if ($this->dbLink->errno) {
                 $this->setError(ERROR_NOT_EXECUTED, 'delFile: unable to check file ralations -> '.$this->dbLink->error);
-                return FALSE;
+                return false;
             }
             if ($this->dbLink->affected_rows) {
                 $this->setError(ERROR_ALREADY_EXISTS, 'delFile: unable to delete file related with message(s)');
-                return FALSE;
+                return false;
             }
         }
         // directory of the staged file
@@ -899,14 +918,14 @@ class Share extends Discuss implements intShare {
         Files::remove(MECCANO_SHARED_FILES."/$stdir/$fileId");
         if (Files::errId()) {
             $this->setError(Files::errId(), 'delFile -> '.Files::errExp());
-            return FALSE;
+            return false;
         }
-        $sql = array(
+        $sql = [
             "DELETE FROM `".MECCANO_TPREF."_core_share_files_accessibility` "
             . "WHERE `fid`='$fileId' ;",
             "DELETE FROM `".MECCANO_TPREF."_core_share_files` "
             . "WHERE `id`='$fileId' ;"
-        );
+        ];
         if ($force) { 
             array_unshift(
                     $sql, 
@@ -918,17 +937,17 @@ class Share extends Discuss implements intShare {
             $this->dbLink->query($value);
             if ($this->dbLink->errno) {
                 $this->setError(ERROR_NOT_EXECUTED, 'delFile: unable to delete file from database -> '.$this->dbLink->error);
-                return FALSE;
+                return false;
             }
         }
-        return TRUE;
+        return true;
     }
     
     public function getFileInfo($fileId) {
         $this->zeroizeError();
         if (!pregGuid($fileId)) {
             $this->setError(ERROR_INCORRECT_DATA, 'getFileInfo: incorrect parameters');
-            return FALSE;
+            return false;
         }
         if ($this->checkFileAccess($fileId)) {
             $qFileInfo = $this->dbLink->query(
@@ -942,7 +961,7 @@ class Share extends Discuss implements intShare {
                     );
             if ($this->dbLink->errno) {
                 $this->setError(ERROR_NOT_EXECUTED, 'getFileInfo: unable to get file info -> '.$this->dbLink->error);
-                return FALSE;
+                return false;
             }
             elseif (!$this->dbLink->affected_rows) {
                 $this->setError(ERROR_NOT_FOUND, "getFileInfo: file not found");
@@ -977,7 +996,7 @@ class Share extends Discuss implements intShare {
                 return $xml;
             }
             else {
-                $fileInfoNode = array();
+                $fileInfoNode = [];
                 //
                 $fileInfoNode['id'] = $fileInfo[0];
                 $fileInfoNode['username'] = $fileInfo[1];
@@ -986,18 +1005,23 @@ class Share extends Discuss implements intShare {
                 $fileInfoNode['filename'] = $fileInfo[4];
                 $fileInfoNode['comment'] = $fileInfo[5];
                 $fileInfoNode['mime'] = $fileInfo[6];
-                $fileInfoNode['size'] = $fileInfo[7];
+                $fileInfoNode['size'] = (int) $fileInfo[7];
                 $fileInfoNode['time'] = $fileInfo[8];
-                return json_encode($fileInfoNode);
+                if ($this->outputType == 'json') {
+                    return json_encode($fileInfoNode);
+                }
+                else {
+                    return $fileInfoNode;
+                }
             }
         }
         elseif ($this->errid) {
             $this->setError($this->errid, 'getFileInfo -> '.$this->errexp);
-            return FALSE;
+            return false;
         }
         else {
             $this->setError(ERROR_RESTRICTED_ACCESS, 'getFileInfo: access denied');
-            return FALSE;
+            return false;
         }
     }
     
@@ -1005,7 +1029,7 @@ class Share extends Discuss implements intShare {
         $this->zeroizeError();
         if (!pregGuid($msgId) || !is_integer($userId) || !is_array($circles)) {
             $this->setError(ERROR_INCORRECT_DATA, 'shareMsg: incorrect parameters');
-            return FALSE;
+            return false;
         }
         // check message
         $this->dbLink->query(
@@ -1016,18 +1040,18 @@ class Share extends Discuss implements intShare {
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'shareMsg: unable to check message -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'shareMsg: message or user not found');
-            return FALSE;
+            return false;
         }
         // check circles
         $cKeys = \array_keys($circles);
         foreach ($cKeys as $value) {
             if (!pregGuid($value) && $value !== 'public') {
                 $this->setError(ERROR_INCORRECT_DATA, 'shareMsg: incorrect circle identifiers');
-                return FALSE;
+                return false;
             }
         }
         $stmt = $this->dbLink->prepare(
@@ -1038,7 +1062,7 @@ class Share extends Discuss implements intShare {
                 );
         if (!$stmt) {
             $this->setError(ERROR_NOT_EXECUTED, 'shareMsg: unable to check circle ->'.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         foreach ($cKeys as $value) {
             if ($value != 'public') {
@@ -1047,7 +1071,7 @@ class Share extends Discuss implements intShare {
                 $stmt->store_result();
                 if (!$stmt->affected_rows) {
                     $this->setError(ERROR_NOT_FOUND, "shareMsg: circle [$value] not found");
-                    return FALSE;
+                    return false;
                 }
             }
         }
@@ -1060,7 +1084,7 @@ class Share extends Discuss implements intShare {
                 );
         if (!$stmtInsert) {
             $this->setError(ERROR_NOT_EXECUTED, 'shareMsg: unable to grant access ->'.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         $stmtDelete = $this->dbLink->prepare(
                 "DELETE FROM `".MECCANO_TPREF."_core_share_msg_accessibility` "
@@ -1080,7 +1104,7 @@ class Share extends Discuss implements intShare {
         }
         $stmtInsert->close();
         $stmtDelete->close();
-        return TRUE;
+        return true;
     }
     
     public function getMsg($msgId) {
@@ -1097,7 +1121,7 @@ class Share extends Discuss implements intShare {
                     );
             if ($this->dbLink->errno) {
                 $this->setError(ERROR_NOT_EXECUTED, 'getMsg: unable to get message -> '.$this->dbLink->error);
-                return FALSE;
+                return false;
             }
             list($msgSource, $msgTitle, $msgText, $msgTime, $username, $fullName) = $qMsg->fetch_row();
             if ($this->outputType == 'xml') {
@@ -1124,7 +1148,7 @@ class Share extends Discuss implements intShare {
                 return $xml;
             }
             else {
-                $msgNode = array();
+                $msgNode = [];
                 //
                 $msgNode['id'] = $msgId;
                 $msgNode['source'] = $msgSource;
@@ -1133,16 +1157,21 @@ class Share extends Discuss implements intShare {
                 $msgNode['time'] = $msgTime;
                 $msgNode['username'] = $username;
                 $msgNode['fullname'] = $fullName;
-                return json_encode($msgNode);
+                if ($this->outputType == 'json') {
+                    return json_encode($msgNode);
+                }
+                else {
+                    return $msgNode;
+                }
             }
         }
         elseif ($this->errid) {
             $this->setError($this->errid, 'getMsg -> '.$this->errexp);
-            return FALSE;
+            return false;
         }
         else {
             $this->setError(ERROR_RESTRICTED_ACCESS, 'getMsg: access denied');
-            return FALSE;
+            return false;
         }
     }
     
@@ -1158,7 +1187,7 @@ class Share extends Discuss implements intShare {
                     );
             if ($this->dbLink->errno) {
                 $this->setError(ERROR_NOT_EXECUTED, 'msgFiles: unable to get message files -> '.$this->dbLink->error);
-                return FALSE;
+                return false;
             }
             if ($this->outputType == 'xml') {
                 $xml = new \DOMDocument('1.0', 'utf-8');
@@ -1186,30 +1215,35 @@ class Share extends Discuss implements intShare {
                 return $xml;
             }
             else {
-                $filesNode = array();
+                $filesNode = [];
                 //
                 $filesNode['msgid'] = $msgId;
-                $filesNode['files'] = array();
+                $filesNode['files'] = [];
                 while ($fileInfo = $qFiles->fetch_row()) {
                     if ($this->checkFileAccess($fileInfo[0])) {
-                        $filesNode['files'][] = array(
+                        $filesNode['files'][] = [
                             'id' => $fileInfo[0],
                             'title' => $fileInfo[1],
                             'filename' => $fileInfo[2],
                             'mime' => $fileInfo[3]
-                        );
+                        ];
                     }
                 }
-                return json_encode($filesNode);
+                if ($this->outputType == 'json') {
+                    return json_encode($filesNode);
+                }
+                else {
+                    return $filesNode;
+                }
             }
         }
         elseif ($this->errid) {
             $this->setError($this->errid, 'msgFiles -> '.$this->errexp);
-            return FALSE;
+            return false;
         }
         else {
             $this->setError(ERROR_RESTRICTED_ACCESS, 'msgFiles: access denied');
-            return FALSE;
+            return false;
         }
     }
     
@@ -1217,7 +1251,7 @@ class Share extends Discuss implements intShare {
         $this->zeroizeError();
         if (!pregGuid($fileId) || !is_integer($userId)) {
             $this->setError(ERROR_INCORRECT_DATA, 'getFileShares: incorrect parameters');
-            return FALSE;
+            return false;
         }
         // check whether the user owns the file
         $this->dbLink->query("SELECT `filetime` "
@@ -1226,11 +1260,11 @@ class Share extends Discuss implements intShare {
                 . "AND `userid`=$userId ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'getFileShares: unable to check whether the user owns the file -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'getFileShares: file not found');
-            return FALSE;
+            return false;
         }
         // get user circles
         $qCircles = $this->dbLink->query(
@@ -1241,7 +1275,7 @@ class Share extends Discuss implements intShare {
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'getFileShares: '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         // get file shares
         $qShares = $this->dbLink->query("SELECT `cid` "
@@ -1249,9 +1283,9 @@ class Share extends Discuss implements intShare {
                 . "WHERE `fid`='$fileId' ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'getFileShares: unable to get file shares -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
-        $fileShares = array();
+        $fileShares = [];
         while ($row = $qShares->fetch_row()) {
             $fileShares[] = $row[0];
         }
@@ -1266,14 +1300,14 @@ class Share extends Discuss implements intShare {
             $sharesNode->appendChild($fileIdAttribute);
         }
         else {
-            $sharesNode = array();
+            $sharesNode = [];
             $sharesNode['fileId'] = $fileId;
-            $sharesNode['circles'] = array();
+            $sharesNode['circles'] = [];
         }
-        $row = array('public', '');
+        $row = ['public', ''];
         do {
             // check access
-            if (in_array($row[0], $fileShares, TRUE)) {
+            if (in_array($row[0], $fileShares, true)) {
                 $access = 1;
             }
             else {
@@ -1290,14 +1324,17 @@ class Share extends Discuss implements intShare {
                 $sharesNode->appendChild($circleNode);
             }
             else {
-                $sharesNode['circles'][] = array('id' => $row[0], 'name' => $row[1], 'access' => $access);
+                $sharesNode['circles'][] = ['id' => $row[0], 'name' => $row[1], 'access' => $access];
             }
         } while ($row = $qCircles->fetch_row());
         if ($this->outputType == 'xml') {
             return $xml;
         }
-        else {
+        elseif ($this->outputType == 'json') {
             return json_encode($sharesNode);
+        }
+        else {
+            return $sharesNode;
         }
     }
     
@@ -1305,7 +1342,7 @@ class Share extends Discuss implements intShare {
         $this->zeroizeError();
         if (!pregGuid($msgId) || !is_integer($userId)) {
             $this->setError(ERROR_INCORRECT_DATA, 'getMsgShares: incorrect parameters');
-            return FALSE;
+            return false;
         }
         // check whether the user owns the message
         $this->dbLink->query("SELECT `msgtime` "
@@ -1314,11 +1351,11 @@ class Share extends Discuss implements intShare {
                 . "AND `userid`=$userId ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'getMsgShares: unable to check whether the user owns the message -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'getMsgShares: message not found');
-            return FALSE;
+            return false;
         }
         // get user circles
         $qCircles = $this->dbLink->query(
@@ -1329,7 +1366,7 @@ class Share extends Discuss implements intShare {
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'getMsgShares: '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         // get message shares
         $qShares = $this->dbLink->query("SELECT `cid` "
@@ -1337,9 +1374,9 @@ class Share extends Discuss implements intShare {
                 . "WHERE `mid`='$msgId' ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'getMsgShares: unable to get message shares -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
-        $fileShares = array();
+        $fileShares = [];
         while ($row = $qShares->fetch_row()) {
             $fileShares[] = $row[0];
         }
@@ -1354,14 +1391,14 @@ class Share extends Discuss implements intShare {
             $sharesNode->appendChild($msgIdAttribute);
         }
         else {
-            $sharesNode = array();
+            $sharesNode = [];
             $sharesNode['msgId'] = $msgId;
-            $sharesNode['circles'] = array();
+            $sharesNode['circles'] = [];
         }
-        $row = array('public', '');
+        $row = ['public', ''];
         do {
             // check access
-            if (in_array($row[0], $fileShares, TRUE)) {
+            if (in_array($row[0], $fileShares, true)) {
                 $access = 1;
             }
             else {
@@ -1378,14 +1415,17 @@ class Share extends Discuss implements intShare {
                 $sharesNode->appendChild($circleNode);
             }
             else {
-                $sharesNode['circles'][] = array('id' => $row[0], 'name' => $row[1], 'access' => $access);
+                $sharesNode['circles'][] = ['id' => $row[0], 'name' => $row[1], 'access' => $access];
             }
         } while ($row = $qCircles->fetch_row());
         if ($this->outputType == 'xml') {
             return $xml;
         }
-        else {
+        elseif ($this->outputType == 'json') {
             return json_encode($sharesNode);
+        }
+        else {
+            return $sharesNode;
         }
     }
     
@@ -1393,11 +1433,11 @@ class Share extends Discuss implements intShare {
         $this->zeroizeError();
         if (!pregGuid($fileId) || !is_integer($userId) || !is_string($title) || !is_string($comment)) {
             $this->setError(ERROR_INCORRECT_DATA, 'updateFile: incorrect parameters');
-            return FALSE;
+            return false;
         }
         if (!(isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) && !$this->checkFuncAccess('core', 'share_modify_msgs_files')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, 'editFile: access denied');
-            return FALSE;
+            return false;
         }
         $title = $this->dbLink->real_escape_string($title);
         $comment = $this->dbLink->real_escape_string($comment);
@@ -1407,20 +1447,20 @@ class Share extends Discuss implements intShare {
                 . "AND `userid`=$userId ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'updateFile: unable to change file description -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'updateFile: file not found');
-            return FALSE;
+            return false;
         }
-        return TRUE;
+        return true;
     }
     
-    public function repostMsg($msgId, $userId, $hlink = TRUE) {
+    public function repostMsg($msgId, $userId, $hlink = true) {
         $this->zeroizeError();
         if (!pregGuid($msgId) || !is_integer($userId)) {
             $this->setError(ERROR_INCORRECT_DATA, 'repostMsg: incorrect parameters');
-            return FALSE;
+            return false;
         }
         // check whether user exists
         $this->dbLink->query(
@@ -1430,17 +1470,17 @@ class Share extends Discuss implements intShare {
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'repostMsg: unable to check whether user exists -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'repostMsg: user not found');
-            return FALSE;
+            return false;
         }
         if ($this->checkMsgAccess($msgId)) {
             // repost id
             $newMsgId = guid();
             // microtime mark
-            $mtMark = microtime(TRUE);
+            $mtMark = microtime(true);
             // copy message title and text
             $this->dbLink->query(
                     "INSERT INTO `".MECCANO_TPREF."_core_share_msgs` "
@@ -1451,11 +1491,11 @@ class Share extends Discuss implements intShare {
                     );
             if ($this->dbLink->errno) {
                 $this->setError(ERROR_NOT_EXECUTED, 'repostMsg: unable to repost message -> '.$this->dbLink->error);
-                return FALSE;
+                return false;
             }
             // create topic
             if (!$topicId = $this->createTopic()) {
-                return FALSE;
+                return false;
             }
             // relate message and topic
             $this->dbLink->query(
@@ -1465,7 +1505,7 @@ class Share extends Discuss implements intShare {
                     );
             if ($this->dbLink->errno) {
                 $this->setError(ERROR_NOT_EXECUTED, 'repostMsg: unable to relate message and topic -> '.$this->dbLink->error);
-                return FALSE;
+                return false;
             }
             // get files related with message
             $qFiles = $this->dbLink->query(
@@ -1475,11 +1515,11 @@ class Share extends Discuss implements intShare {
                     . "ON `f`.`id`=`r`.`fid` "
                     . "WHERE `r`.`mid`='$msgId' ;"
                     );
-            $relFiles = array();
-            $fileDirs = array();
+            $relFiles = [];
+            $fileDirs = [];
             if ($this->dbLink->errno) {
                 $this->setError(ERROR_NOT_EXECUTED, 'repostMsg: unable to get file identifiers -> '.$this->dbLink->error);
-                return FALSE;
+                return false;
             }
             // old ids => new ids
             while ($fileData = $qFiles->fetch_row()) {
@@ -1495,7 +1535,7 @@ class Share extends Discuss implements intShare {
                 if (!is_dir(MECCANO_SHARED_FILES."/$storageDir")) {
                    if (!@mkdir(MECCANO_SHARED_FILES."/$storageDir")) {
                        $this->setError(ERROR_NOT_EXECUTED, "repostMsg: unable to create storage directory");
-                       return FALSE;
+                       return false;
                    }
                 }
                 // copy records of related files
@@ -1508,7 +1548,7 @@ class Share extends Discuss implements intShare {
                         );
                 if (!$stmtAdd) {
                     $this->setError(ERROR_NOT_EXECUTED, 'repostMsg: unable to copy file enty -> '.$this->dbLink->error);
-                    return FALSE;
+                    return false;
                 }
                 // relate file to reposted message
                 $stmtRelate = $this->dbLink->prepare(
@@ -1518,31 +1558,31 @@ class Share extends Discuss implements intShare {
                         );
                 if (!$stmtRelate) {
                     $this->setError(ERROR_NOT_EXECUTED, 'repostMsg: unable to relate copied file enty -> '.$this->dbLink->error);
-                    return FALSE;
+                    return false;
                 }
                 foreach ($relFiles as $key => $value) {
                     $stmtAdd->bind_param('sss', $newId, $fmtMark, $oldId);
                     $stmtRelate->bind_param('ss', $newRelId, $newId);
                     $oldId = $key;
-                    $fmtMark = microtime(TRUE);
+                    $fmtMark = microtime(true);
                     $newRelId = guid();
                     $newId = $value;
                     $stmtAdd->execute();
                     if ($stmtAdd->errno) {
                         $this->setError(ERROR_NOT_EXECUTED, 'repostMsg: unable to execute copying of file enty -> '.$stmtAdd->error);
-                        return FALSE;
+                        return false;
                     }
                     $stmtRelate->execute();
                     if ($stmtRelate->errno) {
                         $this->setError(ERROR_NOT_EXECUTED, 'repostMsg: unable to execute relating of copied file enty -> '.$stmtRelate->error);
-                        return FALSE;
+                        return false;
                     }
                     if (
                             !$hlink && 
                             !Files::copy(MECCANO_SHARED_FILES."/".$fileDirs[$key]."/$key", MECCANO_SHARED_FILES."/$storageDir/$value")
                             ) {
                         $this->setError(Files::errId(), 'repostMsg -> '.Files::errExp());
-                        return FALSE;
+                        return false;
                     }
                     elseif (
                             $hlink && 
@@ -1550,21 +1590,21 @@ class Share extends Discuss implements intShare {
                             !Files::copy(MECCANO_SHARED_FILES."/".$fileDirs[$key]."/$key", MECCANO_SHARED_FILES."/$storageDir/$value")
                             ) {
                         $this->setError(Files::errId(), "repostMsg: unable to create hard link for $key -> ".Files::errExp());
-                        return FALSE;
+                        return false;
                     }
                 }
                 $stmtAdd->close();
                 $stmtRelate->close();
             }
-            return array('message' => $newMsgId, 'files' => array_values($relFiles));
+            return ['message' => $newMsgId, 'files' => array_values($relFiles)];
         }
         elseif ($this->errid) {
             $this->setError($this->errid, 'repostMsg -> '.$this->errexp);
-            return FALSE;
+            return false;
         }
         else {
             $this->setError(ERROR_RESTRICTED_ACCESS, 'repostMsg: access denied');
-            return FALSE;
+            return false;
         }
     }
     
@@ -1572,11 +1612,11 @@ class Share extends Discuss implements intShare {
         $this->zeroizeError();
         if (!pregGuid($msgId) || !is_integer($userId) || !is_string($title) || !is_string($text)) {
             $this->setError(ERROR_INCORRECT_DATA, 'editMsg: incorrect parameters');
-            return FALSE;
+            return false;
         }
         if (!(isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) && !$this->checkFuncAccess('core', 'share_modify_msgs_files')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, 'editMsg: access denied');
-            return FALSE;
+            return false;
         }
         $title = $this->dbLink->real_escape_string($title);
         $comment = $this->dbLink->real_escape_string($comment);
@@ -1586,24 +1626,24 @@ class Share extends Discuss implements intShare {
                 . "AND `userid`=$userId ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'editMsg: unable to edit message -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'editMsg: message not found');
-            return FALSE;
+            return false;
         }
-        return TRUE;
+        return true;
     }
     
-    public function delMsg($msgId, $userId, $keepFiles = TRUE) {
+    public function delMsg($msgId, $userId, $keepFiles = true) {
         $this->zeroizeError();
         if (!pregGuid($msgId) || !is_integer($userId)) {
             $this->setError(ERROR_INCORRECT_DATA, 'delMsg: incorrect parameters');
-            return FALSE;
+            return false;
         }
         if (!(isset($_SESSION[AUTH_USER_ID]) && $_SESSION[AUTH_USER_ID] == $userId) && !$this->checkFuncAccess('core', 'share_modify_msgs_files')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, 'delMsg: access denied');
-            return FALSE;
+            return false;
         }
         // check whether message exists
         $this->dbLink->query("SELECT `msgtime` "
@@ -1612,11 +1652,11 @@ class Share extends Discuss implements intShare {
                 . "AND `userid`=$userId ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'delMsg: unable to check message existence -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'delMsg: message not found');
-            return FALSE;
+            return false;
         }
         if ($keepFiles) {
             // delete relations
@@ -1624,7 +1664,7 @@ class Share extends Discuss implements intShare {
                     . "WHERE `mid`='$msgId' ;");
             if ($this->dbLink->errno) {
                 $this->setError(ERROR_NOT_EXECUTED, 'delMsg: unable to unrelate files -> '.$this->dbLink->error);
-                return FALSE;
+                return false;
             }
         }
         else {
@@ -1636,11 +1676,11 @@ class Share extends Discuss implements intShare {
                     . "WHERE `r`.`mid`='$msgId' ;");
             if ($this->dbLink->errno) {
                 $this->setError(ERROR_NOT_EXECUTED, 'delMsg: unable to get related files -> '.$this->dbLink->error);
-                return FALSE;
+                return false;
             }
             if ($this->dbLink->affected_rows) {
                 // ids and storage dirs of related files
-                $relFiles = array();
+                $relFiles = [];
                 while (list($fileId, $storageDir) = $qFiles->fetch_row()) {
                     $relFiles[$fileId] = $storageDir;
                 }
@@ -1649,21 +1689,21 @@ class Share extends Discuss implements intShare {
                         . "WHERE `fid`=? ;");
                 if ($this->dbLink->errno) {
                     $this->setError(ERROR_NOT_EXECUTED, 'delMsg: unable to delete file relations -> '.$this->dbLink->error);
-                    return FALSE;
+                    return false;
                 }
                 // delete file access rights
                 $stmtDelAccess = $this->dbLink->prepare("DELETE FROM `".MECCANO_TPREF."_core_share_files_accessibility` "
                         . "WHERE `fid`=? ;");
                 if ($this->dbLink->errno) {
                     $this->setError(ERROR_NOT_EXECUTED, 'delMsg: unable to delete file access rights -> '.$this->dbLink->error);
-                    return FALSE;
+                    return false;
                 }
                 // delete file
                 $stmtDelFile = $this->dbLink->prepare("DELETE FROM `".MECCANO_TPREF."_core_share_files` "
                         . "WHERE `id`=? ;");
                 if ($this->dbLink->errno) {
                     $this->setError(ERROR_NOT_EXECUTED, 'delMsg: unable to delete file record -> '.$this->dbLink->error);
-                    return FALSE;
+                    return false;
                 }
                 foreach ($relFiles as $fid => $storageDir) {
                     $stmtDelRel->bind_param('s', $fid);
@@ -1674,7 +1714,7 @@ class Share extends Discuss implements intShare {
                     $stmtDelFile->execute();
                     if (!Files::remove(MECCANO_SHARED_FILES."/$storageDir/$fid")) {
                         $this->setError(Files::errId(), 'delMsg -> '.Files::errExp());
-                        return FALSE;
+                        return false;
                     }
                 }
             }
@@ -1684,30 +1724,30 @@ class Share extends Discuss implements intShare {
                 . "WHERE `mid`='$msgId' ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'delMsg: unable to delete message access rights -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         // delete relation with comments
         $this->dbLink->query("DELETE FROM `".MECCANO_TPREF."_core_share_msg_topic_rel` "
                 . "WHERE `id`='$msgId' ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'delMsg: unable to delete relation with comments -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         // delete message
         $this->dbLink->query("DELETE FROM `".MECCANO_TPREF."_core_share_msgs` "
                 . "WHERE `id`='$msgId' ;");
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'delMsg: unable to delete message -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
-        return TRUE;
+        return true;
     }
     
-    public function repostFile($fileId, $userId, $hlink = TRUE) {
+    public function repostFile($fileId, $userId, $hlink = true) {
         $this->zeroizeError();
         if (!pregGuid($fileId) || !is_integer($userId)) {
             $this->setError(ERROR_INCORRECT_DATA, 'repostFile: incorrect parameters');
-            return FALSE;
+            return false;
         }
         // check whether user exists
         $this->dbLink->query(
@@ -1717,11 +1757,11 @@ class Share extends Discuss implements intShare {
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'repostFile: unable to check whether user exists -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'repostFile: user not found');
-            return FALSE;
+            return false;
         }
         if ($this->checkFileAccess($fileId)) {
             // get file record
@@ -1732,21 +1772,21 @@ class Share extends Discuss implements intShare {
                     );
             if ($this->dbLink->errno) {
                 $this->setError(ERROR_NOT_EXECUTED, 'repostFile: unable to get file record -> '.$this->dbLink->error);
-                return FALSE;
+                return false;
             }
             if (!$this->dbLink->affected_rows) {
                 $this->setError(ERROR_NOT_FOUND, 'repostFile: file not found');
-                return FALSE;
+                return false;
             }
             list($title, $fileName, $comment, $stdir, $mimeType, $fileSize) = $qFile->fetch_row();
             $newFileId = guid();
-            $mtMark = microtime(TRUE);
+            $mtMark = microtime(true);
             // file storage directory
             $storageDir = MECCANO_SHARED_STDIR;
             if (!is_dir(MECCANO_SHARED_FILES."/$storageDir")) {
                if (!@mkdir(MECCANO_SHARED_FILES."/$storageDir")) {
                    $this->setError(ERROR_NOT_EXECUTED, "repostFile: unable to create storage directory");
-                   return FALSE;
+                   return false;
                }
             }
             // replicate file data
@@ -1757,7 +1797,7 @@ class Share extends Discuss implements intShare {
                     );
             if ($this->dbLink->errno) {
                 $this->setError(ERROR_NOT_EXECUTED, 'repostFile: file data not replicated -> '.$this->dbLink->error);
-                return FALSE;
+                return false;
             }
             // replicate file
             if (
@@ -1765,7 +1805,7 @@ class Share extends Discuss implements intShare {
                     !Files::copy(MECCANO_SHARED_FILES."/".$stdir."/$fileId", MECCANO_SHARED_FILES."/$storageDir/$newFileId")
                     ) {
                 $this->setError(Files::errId(), 'repostFile -> '.Files::errExp());
-                return FALSE;
+                return false;
             }
             elseif (
                     $hlink && 
@@ -1773,17 +1813,17 @@ class Share extends Discuss implements intShare {
                     !Files::copy(MECCANO_SHARED_FILES."/".$stdir."/$fileId", MECCANO_SHARED_FILES."/$storageDir/$newFileId")
                     ) {
                 $this->setError(Files::errId(), "repostFile: unable to create hard link for $key -> ".Files::errExp());
-                return FALSE;
+                return false;
             }
             return $newFileId;
         }
         elseif ($this->errid) {
             $this->setError($this->errid, 'repostFile -> '.$this->errexp);
-            return FALSE;
+            return false;
         }
         else {
             $this->setError(ERROR_RESTRICTED_ACCESS, 'repostFile: access denied');
-            return FALSE;
+            return false;
         }
     }
     
@@ -1791,7 +1831,7 @@ class Share extends Discuss implements intShare {
         $this->zeroizeError();
         if (!is_integer($userId) || !is_integer($rpp)) {
             $this->setError(ERROR_INCORRECT_DATA, 'sumUserMsgs: incorrect parameters');
-            return FALSE;
+            return false;
         }
         if ($rpp < 1) {
             $rpp = 1;
@@ -1834,7 +1874,7 @@ class Share extends Discuss implements intShare {
         }
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'sumUserMsgs: unable to count total messages -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         list($totalRecs) = $qResult->fetch_row();
         $totalPages = $totalRecs/$rpp;
@@ -1848,17 +1888,17 @@ class Share extends Discuss implements intShare {
         elseif ($totalPages == 0) {
             $totalPages = 1;
         }
-        return array('records' => (int) $totalRecs, 'pages' => (int) $totalPages);
+        return ['records' => (int) $totalRecs, 'pages' => (int) $totalPages];
     }
     
-    public function userMsgs($userId, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('time'), $ascent = FALSE) {
+    public function userMsgs($userId, $pageNumber, $totalPages, $rpp = 20, $orderBy = ['time'], $ascent = false) {
         $this->zeroizeError();
         // validate parameters
         if (!is_integer($userId) || !is_integer($pageNumber) || !is_integer($totalPages) || !is_integer($rpp)) {
             $this->setError(ERROR_INCORRECT_DATA, 'userMsgs: incorrect parameters');
-            return FALSE;
+            return false;
         }
-        $rightEntry = array('time', 'title');
+        $rightEntry = ['time', 'title'];
         if (is_array($orderBy)) {
             $arrayLen = count($orderBy);
             if ($arrayLen && count(array_intersect($orderBy, $rightEntry)) == $arrayLen) {
@@ -1874,7 +1914,7 @@ class Share extends Discuss implements intShare {
         }
         else {
             $this->setError(ERROR_INCORRECT_DATA, 'userMsgs: check order parameters');
-            return FALSE;
+            return false;
         }
         if ($pageNumber < 1) {
             $pageNumber = 1;
@@ -1888,10 +1928,10 @@ class Share extends Discuss implements intShare {
         if ($rpp < 1) {
             $rpp = 1;
         }
-        if ($ascent == TRUE) {
+        if ($ascent == true) {
             $direct = '';
         }
-        elseif ($ascent == FALSE) {
+        elseif ($ascent == false) {
             $direct = 'DESC';
         }
         $start = ($pageNumber - 1) * $rpp;
@@ -1905,11 +1945,11 @@ class Share extends Discuss implements intShare {
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'userMsgs: unable to get username and full name -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, "userMsgs: user not found");
-            return FALSE;
+            return false;
         }
         //
         list($userName, $fullName) = $qUser->fetch_row();
@@ -1954,7 +1994,7 @@ class Share extends Discuss implements intShare {
         }
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'userMsgs: unable to get messages -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if ($this->outputType == 'xml') {
             $xml = new \DOMDocument('1.0', 'utf-8');
@@ -1971,11 +2011,11 @@ class Share extends Discuss implements intShare {
             $msgsNode->appendChild($fnameAtt);
         }
         else {
-            $msgsNode = array();
+            $msgsNode = [];
             $msgsNode['username'] = $userName;
             $msgsNode['uid'] = $userId;
             $msgsNode['fullname'] = $fullName;
-            $msgsNode['messages'] = array();
+            $msgsNode['messages'] = [];
         }
         while ($msgData = $qResult->fetch_row()) {
             list($msgId, $source, $title, $text, $msgTime, $mtMark) = $msgData;
@@ -1989,20 +2029,23 @@ class Share extends Discuss implements intShare {
                 $msgsNode->appendChild($msgNode);
             }
             else {
-                $msgsNode['messages'][] = array(
+                $msgsNode['messages'][] = [
                     'id' => $msgId,
                     'source' => $source,
                     'title' => $title,
                     'text' => $text,
                     'time' => $msgTime
-                );
+                ];
             }
         }
         if ($this->outputType == 'xml') {
             return $xml;
         }
-        else {
+        elseif ($this->outputType == 'json') {
             return json_encode($msgsNode);
+        }
+        else {
+            return $msgsNode;
         }
     }
     
@@ -2010,7 +2053,7 @@ class Share extends Discuss implements intShare {
         $this->zeroizeError();// validate parameters
         if (!is_integer($userId) || !is_integer($rpp)) {
             $this->setError(ERROR_INCORRECT_DATA, 'msgStripe: incorrect parameters');
-            return FALSE;
+            return false;
         }
         // get username and full name
         $qUser = $this->dbLink->query(
@@ -2022,11 +2065,11 @@ class Share extends Discuss implements intShare {
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'msgStripe: unable to get username and full name -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this ->setError(ERROR_NOT_FOUND, "msgStripe: user not found");
-            return FALSE;
+            return false;
         }
         //
         list($userName, $fullName) = $qUser->fetch_row();
@@ -2071,7 +2114,7 @@ class Share extends Discuss implements intShare {
         }
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'msgStripe: unable to get messages -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if ($this->outputType == 'xml') {
             $xml = new \DOMDocument('1.0', 'utf-8');
@@ -2088,11 +2131,11 @@ class Share extends Discuss implements intShare {
             $msgsNode->appendChild($fnameAtt);
         }
         else {
-            $msgsNode = array();
+            $msgsNode = [];
             $msgsNode['username'] = $userName;
             $msgsNode['uid'] = $userId;
             $msgsNode['fullname'] = $fullName;
-            $msgsNode['messages'] = array();
+            $msgsNode['messages'] = [];
         }
         // default values of min and max microtime marks
         $minMark = 0;
@@ -2113,13 +2156,13 @@ class Share extends Discuss implements intShare {
                 $msgsNode->appendChild($msgNode);
             }
             else {
-                $msgsNode['messages'][] = array(
+                $msgsNode['messages'][] = [
                     'id' => $msgId,
                     'source' => $source,
                     'title' => $title,
                     'text' => $text,
                     'time' => $msgTime
-                );
+                ];
             }
         }
         if ($maxMark && !$minMark) {
@@ -2137,7 +2180,12 @@ class Share extends Discuss implements intShare {
         else {
             $msgsNode['minmark'] = (double) $minMark;
             $msgsNode['maxmark'] = (double) $maxMark;
-            return json_encode($msgsNode);
+            if ($this->outputType == 'json') {
+                return json_encode($msgsNode);
+            }
+            else {
+                return $msgsNode;
+            }
         }
     }
     
@@ -2145,7 +2193,7 @@ class Share extends Discuss implements intShare {
         $this->zeroizeError();
         if (!is_integer($userId) || !is_integer($rpp) || !is_double($minMark)) {
             $this->setError(ERROR_INCORRECT_DATA, 'appendMsgStripe: incorrect parameters');
-            return FALSE;
+            return false;
         }
         // get username and full name
         $qUser = $this->dbLink->query(
@@ -2157,11 +2205,11 @@ class Share extends Discuss implements intShare {
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'appendMsgStripe: unable to get username and full name -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this ->setError(ERROR_NOT_FOUND, "appendMsgStripe: user not found");
-            return FALSE;
+            return false;
         }
         //
         list($userName, $fullName) = $qUser->fetch_row();
@@ -2209,7 +2257,7 @@ class Share extends Discuss implements intShare {
         }
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'appendMsgStripe: unable to get messages -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if ($this->outputType == 'xml') {
             $xml = new \DOMDocument('1.0', 'utf-8');
@@ -2226,11 +2274,11 @@ class Share extends Discuss implements intShare {
             $msgsNode->appendChild($fnameAtt);
         }
         else {
-            $msgsNode = array();
+            $msgsNode = [];
             $msgsNode['username'] = $userName;
             $msgsNode['uid'] = $userId;
             $msgsNode['fullname'] = $fullName;
-            $msgsNode['messages'] = array();
+            $msgsNode['messages'] = [];
         }
         // default value max microtime mark
         $maxMark = 0;
@@ -2250,13 +2298,13 @@ class Share extends Discuss implements intShare {
                 $msgsNode->appendChild($msgNode);
             }
             else {
-                $msgsNode['messages'][] = array(
+                $msgsNode['messages'][] = [
                     'id' => $msgId,
                     'source' => $source,
                     'title' => $title,
                     'text' => $text,
                     'time' => $msgTime
-                );
+                ];
             }
         }
         if ($maxMark) {
@@ -2270,7 +2318,12 @@ class Share extends Discuss implements intShare {
         }
         else {
             $msgsNode['minmark'] = (double) $minMark;
-            return json_encode($msgsNode);
+            if ($this->outputType == 'json') {
+                return json_encode($msgsNode);
+            }
+            else {
+                return $msgsNode;
+            }
         }
     }
     
@@ -2278,7 +2331,7 @@ class Share extends Discuss implements intShare {
         $this->zeroizeError();
         if (!is_integer($userId) || !is_double($maxMark)) {
             $this->setError(ERROR_INCORRECT_DATA, 'updateMsgStripe: incorrect parameters');
-            return FALSE;
+            return false;
         }
         // get username and full name
         $qUser = $this->dbLink->query(
@@ -2290,11 +2343,11 @@ class Share extends Discuss implements intShare {
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'updateMsgStripe: unable to get username and full name -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this ->setError(ERROR_NOT_FOUND, "updateMsgStripe: user not found");
-            return FALSE;
+            return false;
         }
         //
         list($userName, $fullName) = $qUser->fetch_row();
@@ -2342,7 +2395,7 @@ class Share extends Discuss implements intShare {
         }
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'updateMsgStripe: unable to get messages -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if ($this->outputType == 'xml') {
             $xml = new \DOMDocument('1.0', 'utf-8');
@@ -2359,11 +2412,11 @@ class Share extends Discuss implements intShare {
             $msgsNode->appendChild($fnameAtt);
         }
         else {
-            $msgsNode = array();
+            $msgsNode = [];
             $msgsNode['username'] = $userName;
             $msgsNode['uid'] = $userId;
             $msgsNode['fullname'] = $fullName;
-            $msgsNode['messages'] = array();
+            $msgsNode['messages'] = [];
         }
         // default value of max microtime mark
         $maxMarkBak = $maxMark;
@@ -2384,13 +2437,13 @@ class Share extends Discuss implements intShare {
                 $msgsNode->appendChild($msgNode);
             }
             else {
-                $msgsNode['messages'][] = array(
+                $msgsNode['messages'][] = [
                     'id' => $msgId,
                     'source' => $source,
                     'title' => $title,
                     'text' => $text,
                     'time' => $msgTime
-                );
+                ];
             }
         }
         // if there is not any new message
@@ -2405,7 +2458,12 @@ class Share extends Discuss implements intShare {
         }
         else {
             $msgsNode['maxmark'] = (double) $maxMark;
-            return json_encode($msgsNode);
+            if ($this->outputType == 'json') {
+                return json_encode($msgsNode);
+            }
+            else {
+                return $msgsNode;
+            }
         }
     }
     
@@ -2413,7 +2471,7 @@ class Share extends Discuss implements intShare {
         $this->zeroizeError();
         if (!is_integer($userId) || !is_integer($rpp)) {
             $this->setError(ERROR_INCORRECT_DATA, 'sumUserFiles: incorrect parameters');
-            return FALSE;
+            return false;
         }
         if ($rpp < 1) {
             $rpp = 1;
@@ -2456,7 +2514,7 @@ class Share extends Discuss implements intShare {
         }
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'sumUserFiles: unable to count total files -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         list($totalRecs) = $qResult->fetch_row();
         $totalPages = $totalRecs/$rpp;
@@ -2470,17 +2528,17 @@ class Share extends Discuss implements intShare {
         elseif ($totalPages == 0) {
             $totalPages = 1;
         }
-        return array('records' => (int) $totalRecs, 'pages' => (int) $totalPages);
+        return ['records' => (int) $totalRecs, 'pages' => (int) $totalPages];
     }
     
-    public function userFiles($userId, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('time'), $ascent = FALSE) {
+    public function userFiles($userId, $pageNumber, $totalPages, $rpp = 20, $orderBy = ['time'], $ascent = false) {
         $this->zeroizeError();
         // validate parameters
         if (!is_integer($userId) || !is_integer($pageNumber) || !is_integer($totalPages) || !is_integer($rpp)) {
             $this->setError(ERROR_INCORRECT_DATA, 'userFiles: incorrect parameters');
-            return FALSE;
+            return false;
         }
-        $rightEntry = array('time', 'title', 'mime');
+        $rightEntry = ['time', 'title', 'mime'];
         if (is_array($orderBy)) {
             $arrayLen = count($orderBy);
             if ($arrayLen && count(array_intersect($orderBy, $rightEntry)) == $arrayLen) {
@@ -2496,7 +2554,7 @@ class Share extends Discuss implements intShare {
         }
         else {
             $this->setError(ERROR_INCORRECT_DATA, 'userFiles: check order parameters');
-            return FALSE;
+            return false;
         }
         if ($pageNumber < 1) {
             $pageNumber = 1;
@@ -2510,10 +2568,10 @@ class Share extends Discuss implements intShare {
         if ($rpp < 1) {
             $rpp = 1;
         }
-        if ($ascent == TRUE) {
+        if ($ascent == true) {
             $direct = '';
         }
-        elseif ($ascent == FALSE) {
+        elseif ($ascent == false) {
             $direct = 'DESC';
         }
         $start = ($pageNumber - 1) * $rpp;
@@ -2527,11 +2585,11 @@ class Share extends Discuss implements intShare {
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'userFiles: unable to get username and full name -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, "userFiles: user not found");
-            return FALSE;
+            return false;
         }
         //
         list($userName, $fullName) = $qUser->fetch_row();
@@ -2576,7 +2634,7 @@ class Share extends Discuss implements intShare {
         }
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'userFiles: unable to get files -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if ($this->outputType == 'xml') {
             $xml = new \DOMDocument('1.0', 'utf-8');
@@ -2593,11 +2651,11 @@ class Share extends Discuss implements intShare {
             $filesNode->appendChild($fnameAtt);
         }
         else {
-            $filesNode = array();
+            $filesNode = [];
             $filesNode['username'] = $userName;
             $filesNode['uid'] = $userId;
             $filesNode['fullname'] = $fullName;
-            $filesNode['files'] = array();
+            $filesNode['files'] = [];
         }
         while ($fileData = $qResult->fetch_row()) {
             list($fileId, $title, $fileName, $comment, $mimeType, $fileSize, $fileTime, $mtMark) = $fileData;
@@ -2613,7 +2671,7 @@ class Share extends Discuss implements intShare {
                 $filesNode->appendChild($fileNode);
             }
             else {
-                $filesNode['files'][] = array(
+                $filesNode['files'][] = [
                     'id' => $fileId,
                     'title' => $title,
                     'filename' => $fileName,
@@ -2621,14 +2679,17 @@ class Share extends Discuss implements intShare {
                     'mime' => $mimeType,
                     'size' => (int) $fileSize,
                     'time' => $fileTime
-                );
+                ];
             }
         }
         if ($this->outputType == 'xml') {
             return $xml;
         }
-        else {
+        elseif ($this->outputType == 'json') {
             return json_encode($filesNode);
+        }
+        else {
+            return $filesNode;
         }
     }
     
@@ -2637,7 +2698,7 @@ class Share extends Discuss implements intShare {
         // validate parameters
         if (!is_integer($userId) || !is_integer($rpp)) {
             $this->setError(ERROR_INCORRECT_DATA, 'fileStripe: incorrect parameters');
-            return FALSE;
+            return false;
         }
         // get username and full name
         $qUser = $this->dbLink->query(
@@ -2649,11 +2710,11 @@ class Share extends Discuss implements intShare {
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'fileStripe: unable to get username and full name -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, "fileStripe: user not found");
-            return FALSE;
+            return false;
         }
         //
         list($userName, $fullName) = $qUser->fetch_row();
@@ -2698,7 +2759,7 @@ class Share extends Discuss implements intShare {
         }
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'fileStripe: unable to get files -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if ($this->outputType == 'xml') {
             $xml = new \DOMDocument('1.0', 'utf-8');
@@ -2715,11 +2776,11 @@ class Share extends Discuss implements intShare {
             $filesNode->appendChild($fnameAtt);
         }
         else {
-            $filesNode = array();
+            $filesNode = [];
             $filesNode['username'] = $userName;
             $filesNode['uid'] = $userId;
             $filesNode['fullname'] = $fullName;
-            $filesNode['files'] = array();
+            $filesNode['files'] = [];
         }
         // default values of min and max microtime marks
         $minMark = 0;
@@ -2742,7 +2803,7 @@ class Share extends Discuss implements intShare {
                 $filesNode->appendChild($fileNode);
             }
             else {
-                $filesNode['files'][] = array(
+                $filesNode['files'][] = [
                     'id' => $fileId,
                     'title' => $title,
                     'filename' => $fileName,
@@ -2750,7 +2811,7 @@ class Share extends Discuss implements intShare {
                     'mime' => $mimeType,
                     'size' => (int) $fileSize,
                     'time' => $fileTime
-                );
+                ];
             }
         }
         if ($maxMark && !$minMark) {
@@ -2768,7 +2829,12 @@ class Share extends Discuss implements intShare {
         else {
             $filesNode['minmark'] = (double) $minMark;
             $filesNode['maxmark'] = (double) $maxMark;
-            return json_encode($filesNode);
+            if ($this->outputType == 'json') {
+                return json_encode($filesNode);
+            }
+            else {
+                return $filesNode;
+            }
         }
     }
     
@@ -2777,7 +2843,7 @@ class Share extends Discuss implements intShare {
         // validate parameters
         if (!is_integer($userId) || !is_integer($rpp) || !is_double($minMark)) {
             $this->setError(ERROR_INCORRECT_DATA, 'appendFileStripe: incorrect parameters');
-            return FALSE;
+            return false;
         }
         // get username and full name
         $qUser = $this->dbLink->query(
@@ -2789,11 +2855,11 @@ class Share extends Discuss implements intShare {
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'appendFileStripe: unable to get username and full name -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, "appendFileStripe: user not found");
-            return FALSE;
+            return false;
         }
         //
         list($userName, $fullName) = $qUser->fetch_row();
@@ -2841,7 +2907,7 @@ class Share extends Discuss implements intShare {
         }
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'appendFileStripe: unable to get files -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if ($this->outputType == 'xml') {
             $xml = new \DOMDocument('1.0', 'utf-8');
@@ -2858,11 +2924,11 @@ class Share extends Discuss implements intShare {
             $filesNode->appendChild($fnameAtt);
         }
         else {
-            $filesNode = array();
+            $filesNode = [];
             $filesNode['username'] = $userName;
             $filesNode['uid'] = $userId;
             $filesNode['fullname'] = $fullName;
-            $filesNode['files'] = array();
+            $filesNode['files'] = [];
         }
         // default value max microtime mark
         $maxMark = 0;
@@ -2884,7 +2950,7 @@ class Share extends Discuss implements intShare {
                 $filesNode->appendChild($fileNode);
             }
             else {
-                $filesNode['files'][] = array(
+                $filesNode['files'][] = [
                     'id' => $fileId,
                     'title' => $title,
                     'filename' => $fileName,
@@ -2892,7 +2958,7 @@ class Share extends Discuss implements intShare {
                     'mime' => $mimeType,
                     'size' => (int) $fileSize,
                     'time' => $fileTime
-                );
+                ];
             }
         }
         if ($maxMark) {
@@ -2906,7 +2972,12 @@ class Share extends Discuss implements intShare {
         }
         else {
             $filesNode['minmark'] = (double) $minMark;
-            return json_encode($filesNode);
+            if ($this->outputType == 'json') {
+                return json_encode($filesNode);
+            }
+            else {
+                return $filesNode;
+            }
         }
     }
     
@@ -2915,7 +2986,7 @@ class Share extends Discuss implements intShare {
         // validate parameters
         if (!is_integer($userId) || !is_double($maxMark)) {
             $this->setError(ERROR_INCORRECT_DATA, 'updateFileStripe: incorrect parameters');
-            return FALSE;
+            return false;
         }
         // get username and full name
         $qUser = $this->dbLink->query(
@@ -2927,11 +2998,11 @@ class Share extends Discuss implements intShare {
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'updateFileStripe: unable to get username and full name -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, "updateFileStripe: user not found");
-            return FALSE;
+            return false;
         }
         //
         list($userName, $fullName) = $qUser->fetch_row();
@@ -2979,7 +3050,7 @@ class Share extends Discuss implements intShare {
         }
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'updateFileStripe: unable to get files -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if ($this->outputType == 'xml') {
             $xml = new \DOMDocument('1.0', 'utf-8');
@@ -2996,11 +3067,11 @@ class Share extends Discuss implements intShare {
             $filesNode->appendChild($fnameAtt);
         }
         else {
-            $filesNode = array();
+            $filesNode = [];
             $filesNode['username'] = $userName;
             $filesNode['uid'] = $userId;
             $filesNode['fullname'] = $fullName;
-            $filesNode['files'] = array();
+            $filesNode['files'] = [];
         }
         // default value of max microtime mark
         $maxMarkBak = $maxMark;
@@ -3023,7 +3094,7 @@ class Share extends Discuss implements intShare {
                 $filesNode->appendChild($fileNode);
             }
             else {
-                $filesNode['files'][] = array(
+                $filesNode['files'][] = [
                     'id' => $fileId,
                     'title' => $title,
                     'filename' => $fileName,
@@ -3031,7 +3102,7 @@ class Share extends Discuss implements intShare {
                     'mime' => $mimeType,
                     'size' => (int) $fileSize,
                     'time' => $fileTime
-                );
+                ];
             }
         }
         // if there is not any new file
@@ -3046,7 +3117,12 @@ class Share extends Discuss implements intShare {
         }
         else {
             $filesNode['maxmark'] = (double) $maxMark;
-            return json_encode($filesNode);
+            if ($this->outputType == 'json') {
+                return json_encode($filesNode);
+            }
+            else {
+                return $filesNode;
+            }
         }
     }
     
@@ -3054,7 +3130,7 @@ class Share extends Discuss implements intShare {
         $this->zeroizeError();
         if (!is_integer($userId) || !is_integer($rpp)) {
             $this->setError(ERROR_INCORRECT_DATA, 'sumUserSubs: incorrect parameters');
-            return FALSE;
+            return false;
         }
         if ($rpp < 1) {
             $rpp = 1;
@@ -3077,7 +3153,7 @@ class Share extends Discuss implements intShare {
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'sumUserSubs: unable to count total messages -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         list($totalRecs) = $qResult->fetch_row();
         $totalPages = $totalRecs/$rpp;
@@ -3091,17 +3167,17 @@ class Share extends Discuss implements intShare {
         elseif ($totalPages == 0) {
             $totalPages = 1;
         }
-        return array('records' => (int) $totalRecs, 'pages' => (int) $totalPages);
+        return ['records' => (int) $totalRecs, 'pages' => (int) $totalPages];
     }
     
-    public function userSubs($userId, $pageNumber, $totalPages, $rpp = 20, $orderBy = array('time'), $ascent = FALSE) {
+    public function userSubs($userId, $pageNumber, $totalPages, $rpp = 20, $orderBy = ['time'], $ascent = false) {
         $this->zeroizeError();
         // validate parameters
         if (!is_integer($userId) || !is_integer($pageNumber) || !is_integer($totalPages) || !is_integer($rpp)) {
             $this->setError(ERROR_INCORRECT_DATA, 'userSubs: incorrect parameters');
-            return FALSE;
+            return false;
         }
-        $rightEntry = array('time', 'title');
+        $rightEntry = ['time', 'title'];
         if (is_array($orderBy)) {
             $arrayLen = count($orderBy);
             if ($arrayLen && count(array_intersect($orderBy, $rightEntry)) == $arrayLen) {
@@ -3117,7 +3193,7 @@ class Share extends Discuss implements intShare {
         }
         else {
             $this->setError(ERROR_INCORRECT_DATA, 'userSubs: check order parameters');
-            return FALSE;
+            return false;
         }
         if ($pageNumber < 1) {
             $pageNumber = 1;
@@ -3131,10 +3207,10 @@ class Share extends Discuss implements intShare {
         if ($rpp < 1) {
             $rpp = 1;
         }
-        if ($ascent == TRUE) {
+        if ($ascent == true) {
             $direct = '';
         }
-        elseif ($ascent == FALSE) {
+        elseif ($ascent == false) {
             $direct = 'DESC';
         }
         $start = ($pageNumber - 1) * $rpp;
@@ -3162,7 +3238,7 @@ class Share extends Discuss implements intShare {
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'userSubs: unable to get messages -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if ($this->outputType == 'xml') {
             $xml = new \DOMDocument('1.0', 'utf-8');
@@ -3170,7 +3246,7 @@ class Share extends Discuss implements intShare {
             $xml->appendChild($msgsNode);
         }
         else {
-            $msgsNode = array();
+            $msgsNode = [];
         }
         while ($msgData = $qResult->fetch_row()) {
             list($msgId, $source, $title, $text, $msgTime, $mtMark, $userId, $userName, $fullName) = $msgData;
@@ -3195,7 +3271,7 @@ class Share extends Discuss implements intShare {
                 $msgsNode->appendChild($msgNode);
             }
             else {
-                $msgsNode[] = array(
+                $msgsNode[] = [
                     'uid' => (int) $userId,
                     'username' => $userName,
                     'fullname' => $fullName,
@@ -3204,14 +3280,19 @@ class Share extends Discuss implements intShare {
                     'title' => $title,
                     'text' => $text,
                     'time' => $msgTime
-                );
+                ];
             }
         }
         if ($this->outputType == 'xml') {
             return $xml;
         }
         else {
-            return json_encode($msgsNode);
+            if ($this->outputType == 'json') {
+                return json_encode($msgsNode);
+            }
+            else {
+                return $msgsNode;
+            }
         }
     }
     
@@ -3220,7 +3301,7 @@ class Share extends Discuss implements intShare {
         // validate parameters
         if (!is_integer($userId) || !is_integer($rpp)) {
             $this->setError(ERROR_INCORRECT_DATA, 'subStripe: incorrect parameters');
-            return FALSE;
+            return false;
         }
         // get subscriptions
         $qResult = $this->dbLink->query(
@@ -3246,7 +3327,7 @@ class Share extends Discuss implements intShare {
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'subStripe: unable to get messages -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if ($this->outputType == 'xml') {
             $xml = new \DOMDocument('1.0', 'utf-8');
@@ -3254,7 +3335,7 @@ class Share extends Discuss implements intShare {
             $xml->appendChild($msgsNode);
         }
         else {
-            $msgsNode = array('messages' => array());
+            $msgsNode = ['messages' => []];
         }
         // default values of min and max microtime marks
         $minMark = 0;
@@ -3286,7 +3367,7 @@ class Share extends Discuss implements intShare {
                 $msgsNode->appendChild($msgNode);
             }
             else {
-                $msgsNode['messages'][] = array(
+                $msgsNode['messages'][] = [
                     'uid' => (int) $userId,
                     'username' => $userName,
                     'fullname' => $fullName,
@@ -3295,7 +3376,7 @@ class Share extends Discuss implements intShare {
                     'title' => $title,
                     'text' => $text,
                     'time' => $msgTime
-                );
+                ];
             }
         }
         if ($maxMark && !$minMark) {
@@ -3313,7 +3394,12 @@ class Share extends Discuss implements intShare {
         else {
             $msgsNode['minmark'] = (double) $minMark;
             $msgsNode['maxmark'] = (double) $maxMark;
-            return json_encode($msgsNode);
+            if ($this->outputType == 'json') {
+                return json_encode($msgsNode);
+            }
+            else {
+                return $msgsNode;
+            }
         }
     }
     
@@ -3322,7 +3408,7 @@ class Share extends Discuss implements intShare {
         // validate parameters
         if (!is_integer($userId) || !is_double($minMark) || !is_integer($rpp)) {
             $this->setError(ERROR_INCORRECT_DATA, 'appendSubStripe: incorrect parameters');
-            return FALSE;
+            return false;
         }
         // get subscriptions
         $qResult = $this->dbLink->query(
@@ -3349,7 +3435,7 @@ class Share extends Discuss implements intShare {
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'appendSubStripe: unable to get messages -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if ($this->outputType == 'xml') {
             $xml = new \DOMDocument('1.0', 'utf-8');
@@ -3357,7 +3443,7 @@ class Share extends Discuss implements intShare {
             $xml->appendChild($msgsNode);
         }
         else {
-            $msgsNode = array('messages' => array());
+            $msgsNode = ['messages' => []];
         }
         // default value max microtime mark
         $maxMark = 0;
@@ -3388,7 +3474,7 @@ class Share extends Discuss implements intShare {
                 $msgsNode->appendChild($msgNode);
             }
             else {
-                $msgsNode['messages'][] = array(
+                $msgsNode['messages'][] = [
                     'uid' => (int) $userId,
                     'username' => $userName,
                     'fullname' => $fullName,
@@ -3397,7 +3483,7 @@ class Share extends Discuss implements intShare {
                     'title' => $title,
                     'text' => $text,
                     'time' => $msgTime
-                );
+                ];
             }
         }
         if ($maxMark) {
@@ -3411,7 +3497,12 @@ class Share extends Discuss implements intShare {
         }
         else {
             $msgsNode['minmark'] = (double) $minMark;
-            return json_encode($msgsNode);
+            if ($this->outputType == 'json') {
+                return json_encode($msgsNode);
+            }
+            else {
+                return $msgsNode;
+            }
         }
     }
     
@@ -3420,7 +3511,7 @@ class Share extends Discuss implements intShare {
         // validate parameters
         if (!is_integer($userId) || !is_double($maxMark)) {
             $this->setError(ERROR_INCORRECT_DATA, 'updateSubStripe: incorrect parameters');
-            return FALSE;
+            return false;
         }
         // get subscriptions
         $qResult = $this->dbLink->query(
@@ -3447,7 +3538,7 @@ class Share extends Discuss implements intShare {
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'updateSubStripe: unable to get messages -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if ($this->outputType == 'xml') {
             $xml = new \DOMDocument('1.0', 'utf-8');
@@ -3455,7 +3546,7 @@ class Share extends Discuss implements intShare {
             $xml->appendChild($msgsNode);
         }
         else {
-            $msgsNode = array('messages' => array());
+            $msgsNode = ['messages' => []];
         }
         // default value of max microtime mark
         $maxMarkBak = $maxMark;
@@ -3487,7 +3578,7 @@ class Share extends Discuss implements intShare {
                 $msgsNode->appendChild($msgNode);
             }
             else {
-                $msgsNode['messages'][] = array(
+                $msgsNode['messages'][] = [
                     'uid' => (int) $userId,
                     'username' => $userName,
                     'fullname' => $fullName,
@@ -3496,7 +3587,7 @@ class Share extends Discuss implements intShare {
                     'title' => $title,
                     'text' => $text,
                     'time' => $msgTime
-                );
+                ];
             }
         }
         // if there is not any new message
@@ -3511,7 +3602,12 @@ class Share extends Discuss implements intShare {
         }
         else {
             $msgsNode['maxmark'] = (double) $maxMark;
-            return json_encode($msgsNode);
+            if ($this->outputType == 'json') {
+                return json_encode($msgsNode);
+            }
+            else {
+                return $msgsNode;
+            }
         }
     }
     
@@ -3519,7 +3615,7 @@ class Share extends Discuss implements intShare {
         $this->zeroizeError();
         if (!pregGuid($msgId) || !is_integer($userId)) {
             $this->setError(ERROR_INCORRECT_DATA, 'createMsgComment: incorrect parameters');
-            return FALSE;
+            return false;
         }
         $this->dbLink->query(
                 "SELECT `username` "
@@ -3532,7 +3628,7 @@ class Share extends Discuss implements intShare {
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'createMsgComment: user not found');
-            return FALSE;
+            return false;
         }
         if (isset($_SESSION[AUTH_USER_ID]) && $this->checkMsgAccess($msgId)) {
             $qTopicId = $this->dbLink->query(
@@ -3542,36 +3638,36 @@ class Share extends Discuss implements intShare {
                     );
             if ($this->dbLink->errno) {
                 $this->setError(ERROR_NOT_EXECUTED, 'createMsgComment: unable to get topic id -> '.$this->dbLink->error);
-                return FALSE;
+                return false;
             }
             if (!$this->dbLink->affected_rows) {
                 $this->setError(ERROR_NOT_FOUND, 'createMsgComment: topic of message not found');
-                return FALSE;
+                return false;
             }
             list($topicId) = $qTopicId->fetch_row();
             if ($commentId = $this->createComment($comment, $userId, $topicId, $parentId)) {
                 return $commentId;
             }
-            return FALSE;
+            return false;
         }
         elseif ($this->errid) {
             $this->setError($this->errid, 'createMsgComment -> '.$this->errexp);
-            return FALSE;
+            return false;
         }
         else {
             $this->setError(ERROR_RESTRICTED_ACCESS, 'createMsgComment: access denied');
-            return FALSE;
+            return false;
         }
     }
     
     public function editMsgComment($comment, $commentId, $userId) {
         if (!$this->checkFuncAccess('core', 'share_modify_comments')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, 'editMsgComment: access denied');
-            return FALSE;
+            return false;
         }
         if(!pregGuid($commentId)) {
             $this->setError(ERROR_INCORRECT_DATA, 'editMsgComment: incorrect parameters');
-            return FALSE;
+            return false;
         }
         $qTopic = $this->dbLink->query(
                 "SELECT `r`.`id` "
@@ -3582,18 +3678,18 @@ class Share extends Discuss implements intShare {
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'editMsgComment: unable to get message identifies -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'editMsgComment: message not found');
-            return FALSE;
+            return false;
         }
         list($msgId) = $qTopic->fetch_row();
         if ($this->editComment($comment, $commentId, $userId)) {
-            return TRUE;
+            return true;
         }
         else {
-            return FALSE;
+            return false;
         }
     }
     
@@ -3601,7 +3697,7 @@ class Share extends Discuss implements intShare {
         $this->zeroizeError();
         if(!pregGuid($commentId)) {
             $this->setError(ERROR_INCORRECT_DATA, 'getMsgComment: incorrect parameters');
-            return FALSE;
+            return false;
         }
         $qTopic = $this->dbLink->query(
                 "SELECT `r`.`id` "
@@ -3612,11 +3708,11 @@ class Share extends Discuss implements intShare {
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'getMsgComment: unable to get message identifies -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'getMsgComment: message not found');
-            return FALSE;
+            return false;
         }
         list($msgId) = $qTopic->fetch_row();
         if ($this->checkMsgAccess($msgId)) {
@@ -3624,27 +3720,27 @@ class Share extends Discuss implements intShare {
                 return $comment;
             }
             else {
-                return FALSE;
+                return false;
             }
         }
         elseif ($this->errid) {
             $this->setError($this->errid, 'getMsgComment -> '.$this->errexp);
-            return FALSE;
+            return false;
         }
         else {
             $this->setError(ERROR_RESTRICTED_ACCESS, 'getMsgComment: access denied');
-            return FALSE;
+            return false;
         }
     }
     
     public function eraseMsgComment($commentId, $userId) {
         if (!$this->checkFuncAccess('core', 'share_modify_comments')) {
             $this->setError(ERROR_RESTRICTED_ACCESS, 'eraseMsgComment: access denied');
-            return FALSE;
+            return false;
         }
         if(!pregGuid($commentId)) {
             $this->setError(ERROR_INCORRECT_DATA, 'eraseMsgComment: incorrect parameters');
-            return FALSE;
+            return false;
         }
         $qTopic = $this->dbLink->query(
                 "SELECT `r`.`id` "
@@ -3655,18 +3751,18 @@ class Share extends Discuss implements intShare {
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'eraseMsgComment: unable to get message identifies -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if (!$this->dbLink->affected_rows) {
             $this->setError(ERROR_NOT_FOUND, 'eraseMsgComment: message not found');
-            return FALSE;
+            return false;
         }
         list($msgId) = $qTopic->fetch_row();
         if ($this->eraseComment($commentId, $userId)) {
-            return TRUE;
+            return true;
         }
         else {
-            return FALSE;
+            return false;
         }
     }
     
@@ -3674,7 +3770,7 @@ class Share extends Discuss implements intShare {
         $this->zeroizeError();
         if (!pregGuid($msgId)) {
             $this->setError(ERROR_INCORRECT_DATA, 'getMsgComments: incorrect parameters');
-            return FALSE;
+            return false;
         }
         if ($this->checkMsgAccess($msgId)) {
             $qTopicId = $this->dbLink->query(
@@ -3684,25 +3780,61 @@ class Share extends Discuss implements intShare {
                     );
             if ($this->dbLink->errno) {
                 $this->setError(ERROR_NOT_EXECUTED, 'getMsgComments: unable to get topic id -> '.$this->dbLink->error);
-                return FALSE;
+                return false;
             }
             if (!$this->dbLink->affected_rows) {
                 $this->setError(ERROR_NOT_FOUND, 'getMsgComments: topic of message not found');
-                return FALSE;
+                return false;
             }
             list($topicId) = $qTopicId->fetch_row();
             if ($comments = $this->getComments($topicId, $rpp)) {
                 return $comments;
             }
-            return FALSE;
+            return false;
         }
         elseif ($this->errid) {
             $this->setError($this->errid, 'getMsgComments -> '.$this->errexp);
-            return FALSE;
+            return false;
         }
         else {
             $this->setError(ERROR_RESTRICTED_ACCESS, 'getMsgComments: access denied');
-            return FALSE;
+            return false;
+        }
+    }
+    
+    public function getMsgAllComments($msgId) {
+        $this->zeroizeError();
+        if (!pregGuid($msgId)) {
+            $this->setError(ERROR_INCORRECT_DATA, 'getMsgComments: incorrect parameters');
+            return false;
+        }
+        if ($this->checkMsgAccess($msgId)) {
+            $qTopicId = $this->dbLink->query(
+                    "SELECT `tid` "
+                    . "FROM `".MECCANO_TPREF."_core_share_msg_topic_rel` "
+                    . "WHERE `id`='$msgId' ;"
+                    );
+            if ($this->dbLink->errno) {
+                $this->setError(ERROR_NOT_EXECUTED, 'getMsgComments: unable to get topic id -> '.$this->dbLink->error);
+                return false;
+            }
+            if (!$this->dbLink->affected_rows) {
+                $this->setError(ERROR_NOT_FOUND, 'getMsgComments: topic of message not found');
+                return false;
+            }
+            list($topicId) = $qTopicId->fetch_row();
+            if ($comments = $this->getAllComments($topicId)) {
+                return $comments;
+            }
+            return false;
+        }
+        elseif ($this->errid) {
+            $this->setError($this->errid, 'getMsgComments -> '.$this->errexp);
+            return false;
+        }
+        else {
+            $this->setError(ERROR_RESTRICTED_ACCESS, 'getMsgComments: access denied');
+            return false;
         }
     }
     
@@ -3710,7 +3842,7 @@ class Share extends Discuss implements intShare {
         $this->zeroizeError();
         if (!pregGuid($msgId)) {
             $this->setError(ERROR_INCORRECT_DATA, 'appendMsgComments: incorrect parameters');
-            return FALSE;
+            return false;
         }
         if ($this->checkMsgAccess($msgId)) {
             $qTopicId = $this->dbLink->query(
@@ -3720,25 +3852,25 @@ class Share extends Discuss implements intShare {
                     );
             if ($this->dbLink->errno) {
                 $this->setError(ERROR_NOT_EXECUTED, 'appendMsgComments: unable to get topic id -> '.$this->dbLink->error);
-                return FALSE;
+                return false;
             }
             if (!$this->dbLink->affected_rows) {
                 $this->setError(ERROR_NOT_FOUND, 'appendMsgComments: topic of message not found');
-                return FALSE;
+                return false;
             }
             list($topicId) = $qTopicId->fetch_row();
             if ($comments = $this->appendComments($topicId, $minMark, $rpp)) {
                 return $comments;
             }
-            return FALSE;
+            return false;
         }
         elseif ($this->errid) {
             $this->setError($this->errid, 'appendMsgComments -> '.$this->errexp);
-            return FALSE;
+            return false;
         }
         else {
             $this->setError(ERROR_RESTRICTED_ACCESS, 'appendMsgComments: access denied');
-            return FALSE;
+            return false;
         }
     }
     
@@ -3746,7 +3878,7 @@ class Share extends Discuss implements intShare {
         $this->zeroizeError();
         if (!pregGuid($msgId)) {
             $this->setError(ERROR_INCORRECT_DATA, 'updateMsgComments: incorrect parameters');
-            return FALSE;
+            return false;
         }
         if ($this->checkMsgAccess($msgId)) {
             $qTopicId = $this->dbLink->query(
@@ -3756,25 +3888,25 @@ class Share extends Discuss implements intShare {
                     );
             if ($this->dbLink->errno) {
                 $this->setError(ERROR_NOT_EXECUTED, 'updateMsgComments: unable to get topic id -> '.$this->dbLink->error);
-                return FALSE;
+                return false;
             }
             if (!$this->dbLink->affected_rows) {
                 $this->setError(ERROR_NOT_FOUND, 'updateMsgComments: topic of message not found');
-                return FALSE;
+                return false;
             }
             list($topicId) = $qTopicId->fetch_row();
             if ($comments = $this->updateComments($topicId, $maxMark)) {
                 return $comments;
             }
-            return FALSE;
+            return false;
         }
         elseif ($this->errid) {
             $this->setError($this->errid, 'updateMsgComments -> '.$this->errexp);
-            return FALSE;
+            return false;
         }
         else {
             $this->setError(ERROR_RESTRICTED_ACCESS, 'updateMsgComments: access denied');
-            return FALSE;
+            return false;
         }
     }
     
@@ -3783,7 +3915,7 @@ class Share extends Discuss implements intShare {
         // validate parameters
         if (!is_integer($rpp)) {
             $this->setError(ERROR_INCORRECT_DATA, 'pubMsgs: incorrect parameters');
-            return FALSE;
+            return false;
         }
         // get subscriptions
         $qResult = $this->dbLink->query(
@@ -3800,7 +3932,7 @@ class Share extends Discuss implements intShare {
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'pubMsgs: unable to get messages -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if ($this->outputType == 'xml') {
             $xml = new \DOMDocument('1.0', 'utf-8');
@@ -3808,7 +3940,7 @@ class Share extends Discuss implements intShare {
             $xml->appendChild($msgsNode);
         }
         else {
-            $msgsNode = array();
+            $msgsNode = [];
         }
         // default values of min and max microtime marks
         $minMark = 0;
@@ -3840,7 +3972,7 @@ class Share extends Discuss implements intShare {
                 $msgsNode->appendChild($msgNode);
             }
             else {
-                $msgsNode[] = array(
+                $msgsNode[] = [
                     'uid' => (int) $userId,
                     'username' => $userName,
                     'fullname' => $fullName,
@@ -3849,7 +3981,7 @@ class Share extends Discuss implements intShare {
                     'title' => $title,
                     'text' => $text,
                     'time' => $msgTime
-                );
+                ];
             }
         }
         if ($maxMark && !$minMark) {
@@ -3867,7 +3999,12 @@ class Share extends Discuss implements intShare {
         else {
             $msgsNode['minmark'] = (double) $minMark;
             $msgsNode['maxmark'] = (double) $maxMark;
-            return json_encode($msgsNode);
+            if ($this->outputType == 'json') {
+                return json_encode($msgsNode);
+            }
+            else {
+                return $msgsNode;
+            }
         }
     }
     
@@ -3876,7 +4013,7 @@ class Share extends Discuss implements intShare {
         // validate parameters
         if (!is_double($minMark) || !is_integer($rpp)) {
             $this->setError(ERROR_INCORRECT_DATA, 'appendPubMsgs: incorrect parameters');
-            return FALSE;
+            return false;
         }
         // get subscriptions
         $qResult = $this->dbLink->query(
@@ -3894,7 +4031,7 @@ class Share extends Discuss implements intShare {
                 );
         if ($this->dbLink->errno) {
             $this->setError(ERROR_NOT_EXECUTED, 'appendPubMsgs: unable to get messages -> '.$this->dbLink->error);
-            return FALSE;
+            return false;
         }
         if ($this->outputType == 'xml') {
             $xml = new \DOMDocument('1.0', 'utf-8');
@@ -3902,7 +4039,7 @@ class Share extends Discuss implements intShare {
             $xml->appendChild($msgsNode);
         }
         else {
-            $msgsNode = array();
+            $msgsNode = [];
         }
         // default value max microtime mark
         $maxMark = 0;
@@ -3933,7 +4070,7 @@ class Share extends Discuss implements intShare {
                 $msgsNode->appendChild($msgNode);
             }
             else {
-                $msgsNode[] = array(
+                $msgsNode[] = [
                     'uid' => (int) $userId,
                     'username' => $userName,
                     'fullname' => $fullName,
@@ -3942,7 +4079,7 @@ class Share extends Discuss implements intShare {
                     'title' => $title,
                     'text' => $text,
                     'time' => $msgTime
-                );
+                ];
             }
         }
         if ($maxMark) {
@@ -3956,7 +4093,12 @@ class Share extends Discuss implements intShare {
         }
         else {
             $msgsNode['minmark'] = (double) $minMark;
-            return json_encode($msgsNode);
+            if ($this->outputType == 'json') {
+                return json_encode($msgsNode);
+            }
+            else {
+                return $msgsNode;
+            }
         }
     }
 }

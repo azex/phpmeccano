@@ -1,6 +1,6 @@
 /*
- *     phpMeccano v0.1.0. Web-framework written with php programming language. Component of the web installer.
- *     Copyright (C) 2015-2016  Alexei Muzarov
+ *     phpMeccano v0.2.0. Web-framework written with php programming language. Component of the web installer.
+ *     Copyright (C) 2015-2019  Alexei Muzarov
  * 
  *     This program is free software; you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -27,6 +27,9 @@ var WebInstaller = {};
 
 WebInstaller.enableSubmitByConf = 0;
 WebInstaller.enableSubmitByUser = 0;
+WebInstaller.stopValidating = 0;
+WebInstaller.isError = 0;
+WebInstaller.currentLanguage = "";
 WebInstaller.inputConfirm = {
     "groupname" : false,
     "username" : false,
@@ -61,11 +64,18 @@ WebInstaller.sendRequest = function(dataURL, execFunc) {
     request.onreadystatechange = function() {
         if (request.readyState === 4) {
             if (request.status === 200) {
+                if (!WebInstaller.stopValidating && WebInstaller.isError) {
+                    WebInstaller.hideError();
+                }
                 var response = request.responseText;
                 execFunc(response);
+            }            
+            else {
+                WebInstaller.showError("Location: " + dataURL + " | " + "Status code: " + request.status);
+                window.setTimeout("WebInstaller.sendRequest('"+ dataURL +"', " + execFunc + ")", 5000);
             }
         }
-    }
+    } ;
     request.send(null);
 } ;
 
@@ -85,31 +95,102 @@ WebInstaller.submitForm = function (dataURL, form, execFunc) {
                 var response = request.responseText;
                 execFunc(response);
             }
+            else {
+                WebInstaller.showError("Location: " + dataURL + " | " + "Status code: " + request.status);
+            }
         }
     }
     request.send(sendData);
 } ;
 
 WebInstaller.validateConf = function(respData) {
-    var i, key, span;
-    var respJSON = JSON.parse(respData);
-    var respKeys = Object.keys(respJSON);
-    var doEnabled = 1;
-    for (i = 0; i < respKeys.length; ++i) {
-        key = respKeys[i];
-        span = document.getElementById(key);
-        if (respJSON[key][0]) {
-            span.setAttribute("class", "true");
+    if (!WebInstaller.stopValidating) {
+        var i, key, span;
+        try {
+            var respJSON = JSON.parse(respData);
+            var respKeys = Object.keys(respJSON);
+            var doEnabled = 1;
+            for (i = 0; i < respKeys.length; ++i) {
+                key = respKeys[i];
+                span = document.getElementById(key);
+                if (respJSON[key][0]) {
+                    span.setAttribute("class", "true");
+                }
+                else {
+                    span.setAttribute("class", "false");
+                    doEnabled = 0;
+                }
+                span.innerHTML = respJSON[key][1];
+            }
+            WebInstaller.enableSubmitByConf = doEnabled;
+            WebInstaller.enableSubmit();
         }
-        else {
-            span.setAttribute("class", "false");
-            doEnabled = 0;
+        catch (e) {
+            WebInstaller.showError("validateConf: " + e);
         }
-        span.innerHTML = respJSON[key][1];
+        finally {
+            window.setTimeout("WebInstaller.sendRequest('valconf.php?' + Math.random(), WebInstaller.validateConf)", 2000);
+        }
     }
-    WebInstaller.enableSubmitByConf = doEnabled;
-    WebInstaller.enableSubmit();
-    window.setTimeout("WebInstaller.sendRequest('valconf.php?' + Math.random(), WebInstaller.validateConf)", 2000);
+} ;
+
+WebInstaller.showLanguages = function(respData) {
+    try {
+        var i, key, languages;
+        var respJSON = JSON.parse(respData);
+        var respKeys = Object.keys(respJSON);
+        var languages = document.getElementById("languages");
+        languages.innerHTML = "";
+        for (i = 0; i < respKeys.length; ++i) {
+            key = respKeys[i];
+            if (WebInstaller.currentLanguage != key) {
+                var langButton = document.createElement("span");
+                langButton.setAttribute("class", "lang");
+                langButton.setAttribute("onClick", "WebInstaller.requireLanguage('" + key + "')");
+                langButton.innerHTML = respJSON[key];
+                languages.appendChild(langButton);
+            }
+        }
+    }
+    catch (e) {
+        WebInstaller.showError("showLanguages: " + e);
+    }
+} ;
+
+WebInstaller.requireLanguage = function(code) {
+    var languages = document.getElementById("languages");
+    languages.innerHTML = '<iframe style="border: none;" src="svg/load-lang.svg" width="60" height="35"></iframe>';
+    WebInstaller.currentLanguage = code;
+    setTimeout("WebInstaller.sendRequest('lang/" + code + ".json?' + Math.random(), WebInstaller.loadLanguage)", 500);
+} ;
+
+WebInstaller.loadLanguage = function(respData) {
+    try {    
+        var i, key, uiElement;
+        var respJSON = JSON.parse(respData);
+        var respKeys = Object.keys(respJSON);
+        for (i = 0; i < respKeys.length; ++i) {
+            key = respKeys[i];
+            if (key === "metadata") { // language properties
+                uiElement = document.getElementById("main");
+                uiElement.setAttribute("dir", respJSON[key]["dir"]);
+                uiElement = document.getElementsByTagName("html")[0];
+                uiElement.setAttribute("lang", respJSON[key]["code"]);
+            }
+            else if (key === "runinst") { // run installation button
+                uiElement = document.getElementById(key);
+                uiElement.setAttribute("value", respJSON[key]);
+            }
+            else { // other ui elements
+                uiElement = document.getElementById(key);
+                uiElement.innerHTML = respJSON[key];
+            }
+        }
+        WebInstaller.sendRequest('langlist.php?' + Math.random(), WebInstaller.showLanguages);
+    }
+    catch (e) {
+        WebInstaller.showError("loadLanguage: " + e);
+    }
 } ;
 
 WebInstaller.validateForm = function() {
@@ -124,11 +205,11 @@ WebInstaller.validateForm = function() {
     }
     WebInstaller.enableSubmitByUser = doEnabled;
     WebInstaller.enableSubmit();
-}
+} ;
 
 WebInstaller.enableSubmit = function() {
     var submit = document.forms.userconf.elements.submit;
-    if (WebInstaller.enableSubmitByConf && WebInstaller.enableSubmitByUser) {
+    if (WebInstaller.enableSubmitByConf && WebInstaller.enableSubmitByUser && !WebInstaller.isError) {
         submit.removeAttribute("disabled");
     }
     else {
@@ -222,48 +303,49 @@ WebInstaller.errorGears = function() {
 } ;
 
 WebInstaller.makeInstall = function(respData) {
-    var error = document.getElementById("error");
-    error.setAttribute("class", "hidden");
-    var respJSON = JSON.parse(respData);
-    if (!respJSON["response"]) {
-        if (typeof respJSON["response"] == "boolean") {
-            WebInstaller.errorGears();
+    try {
+        var respJSON = JSON.parse(respData);
+        if (!respJSON["response"]) {
+            if (typeof respJSON["response"] === "boolean") {
+                WebInstaller.errorGears();
+            }
+            WebInstaller.showError(respJSON["error"]);
         }
-        var errexp = document.getElementById("errexp");
-        errexp.innerHTML = respJSON["error"];
-        error.setAttribute("class", "center");
-        window.scrollTo(0, 0);
+        else {
+            WebInstaller.stopValidating = 1;
+            switch (respJSON["response"]) {
+                case 1:
+                    document.getElementById("instprogress").removeAttribute("class");
+                    document.getElementById("creatingdb").removeAttribute("class");
+                    document.getElementById("settings").setAttribute("class", "hidden");
+                    document.getElementById("progress").setAttribute("class", "center");
+                    window.setTimeout("WebInstaller.submitForm('makeinstall.php?' + Math.random(), document.forms.userconf, WebInstaller.makeInstall)", 25);
+                    break;
+                case 2:
+                    window.gears.stepAngle = 4;
+                    document.getElementById("creatingdb").setAttribute("class", "true");
+                    document.getElementById("instpack").removeAttribute("class");
+                    window.setTimeout("WebInstaller.submitForm('makeinstall.php?' + Math.random(), document.forms.userconf, WebInstaller.makeInstall)", 25);
+                    break;
+                case 3:
+                    window.gears.stepAngle = 12;
+                    document.getElementById("instpack").setAttribute("class", "true");
+                    document.getElementById("creatingroot").removeAttribute("class");
+                    window.setTimeout("WebInstaller.submitForm('makeinstall.php?' + Math.random(), document.forms.userconf, WebInstaller.makeInstall)", 25);
+                    break;
+                case 4:
+                    window.gears.stepAngle = 19;
+                    document.getElementById("creatingroot").setAttribute("class", "true");
+                    document.getElementById("instprogress").setAttribute("class", "hidden");
+                    document.getElementById("completed").removeAttribute("class");
+                    document.getElementById("selfremove").setAttribute("class", "center false");
+                    WebInstaller.rid = respJSON["rid"];
+                    break;
+            }
+        }
     }
-    else {
-        switch (respJSON["response"]) {
-            case 1:
-                document.getElementById("instprogress").removeAttribute("class");
-                document.getElementById("creatingdb").removeAttribute("class");
-                document.getElementById("settings").setAttribute("class", "hidden");
-                document.getElementById("progress").setAttribute("class", "center");
-                window.setTimeout("WebInstaller.submitForm('makeinstall.php?' + Math.random(), document.forms.userconf, WebInstaller.makeInstall)", 25);
-                break;
-            case 2:
-                window.gears.stepAngle = 4;
-                document.getElementById("creatingdb").setAttribute("class", "true");
-                document.getElementById("instpack").removeAttribute("class");
-                window.setTimeout("WebInstaller.submitForm('makeinstall.php?' + Math.random(), document.forms.userconf, WebInstaller.makeInstall)", 25);
-                break;
-            case 3:
-                window.gears.stepAngle = 12;
-                document.getElementById("instpack").setAttribute("class", "true");
-                document.getElementById("creatingroot").removeAttribute("class");
-                window.setTimeout("WebInstaller.submitForm('makeinstall.php?' + Math.random(), document.forms.userconf, WebInstaller.makeInstall)", 25);
-                break;
-            case 4:
-                window.gears.stepAngle = 19;
-                document.getElementById("creatingroot").setAttribute("class", "true");
-                document.getElementById("instprogress").setAttribute("class", "hidden");
-                document.getElementById("completed").removeAttribute("class");
-                document.getElementById("selfremove").setAttribute("class", "center false");
-                WebInstaller.rid = respJSON["rid"];
-                break;
-        }
+    catch (e) {
+        WebInstaller.showError("makeInstall: " + e);
     }
 } ;
 
@@ -271,19 +353,35 @@ WebInstaller.selfRemove = function(value) {
     document.getElementById("trash").setAttribute("class", "hidden");
     document.getElementById("waitgear").removeAttribute("class");
     window.setTimeout('WebInstaller.sendRequest("selfremove.php?rid=" + WebInstaller.rid + Math.random(), WebInstaller.selfRemoved)', 2000);
-}
+} ;
 
 WebInstaller.selfRemoved = function(respData) {
-    var respJSON = JSON.parse(respData);
-    if (respJSON["response"]) {
-        document.getElementById("selfremove").setAttribute("class", "hidden");
-        document.getElementById("removed").setAttribute("class", "center true");
+    try {
+        var respJSON = JSON.parse(respData);
+        if (respJSON["response"]) {
+            document.getElementById("selfremove").setAttribute("class", "hidden");
+            document.getElementById("removed").setAttribute("class", "center true");
+        }
+        else {
+            WebInstaller.showError(respJSON["error"]);
+        }
     }
-    else {
-        var error = document.getElementById("error");
-        var errexp = document.getElementById("errexp");
-        errexp.innerHTML = respJSON["error"];
-        error.setAttribute("class", "center");
-        window.scrollTo(0, 0);
+    catch (e) {
+        WebInstaller.showError("selfRemoved: " + e);
     }
-}
+} ;
+
+WebInstaller.showError = function(errorText) {
+    var error = document.getElementById("errormsg");
+    var errexp = document.getElementById("errexp");
+    errexp.innerHTML = errorText;
+    error.setAttribute("class", "center");
+    WebInstaller.isError = 1;
+    WebInstaller.enableSubmit();
+} ;
+
+WebInstaller.hideError = function() {
+    var error = document.getElementById("errormsg");
+    error.setAttribute("class", "hidden");
+    WebInstaller.isError = 0;
+} ;
